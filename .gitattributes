@@ -1,8 +1,9 @@
 BUAdSDK.a filter=lfs diff=lfs merge=lfs -text
 ATAdapterTiktok filter=lfs diff=lfs merge=lfs -text
-AppLovinSDK filter=lfs diff=lfs merge=lfs -text
+AnyThinkSDK/ThrirdPartySDK/AppLovinSDK.framework/AppLovinSDK filter=lfs diff=lfs merge=lfs -text
 BUAdSDK filter=lfs diff=lfs merge=lfs -text
 FBAudienceNetwork filter=lfs diff=lfs merge=lfs -text
 GoogleMobileAds filter=lfs diff=lfs merge=lfs -text
 InMobiSDK filter=lfs diff=lfs merge=lfs -text
 WindSDK filter=lfs diff=lfs merge=lfs -text
+AnyThinkSDK/ThrirdPartySDK/BUAdSDK.framework/Versions/A/BUAdSDK filter=lfs diff=lfs merge=lfs -text
