@@ -1,0 +1,6 @@
+framework module Maio {
+  umbrella header "Maio.h"
+
+  export *
+  module * { export * }
+}

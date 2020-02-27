@@ -1,0 +1,6 @@
+framework module OguryConsentManager {
+  umbrella header "OguryConsentManager.h"
+
+  export *
+  module * { export * }
+}

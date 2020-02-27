@@ -1,0 +1,6 @@
+framework module WindSDK {
+  umbrella header "WindSDK.h"
+
+  export *
+  module * { export * }
+}
