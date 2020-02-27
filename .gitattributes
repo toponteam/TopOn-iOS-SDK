@@ -1,0 +1,2 @@
+BUAdSDK.a filter=lfs diff=lfs merge=lfs -text
+ATAdapterTiktok filter=lfs diff=lfs merge=lfs -text
