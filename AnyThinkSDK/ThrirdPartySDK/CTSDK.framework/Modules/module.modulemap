@@ -1,0 +1,6 @@
+framework module CTSDK {
+  umbrella header "CTSDK.h"
+
+  export *
+  module * { export * }
+}
