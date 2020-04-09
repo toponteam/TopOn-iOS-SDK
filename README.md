@@ -30,7 +30,7 @@ If you have any questions, you can file the issue by github or email developer@t
 
 ## SDK Usage
 
-Drag&Drop the SDK you need into xcode and follow the [integration guide](!https://docs.toponad.com/#/zh-cn/ios/GetStarted/TopOn_Get_Started) to implement your advertisement logic.
+Drag&Drop the frameworks you need into xcode and follow the [integration guide](!https://docs.toponad.com/#/zh-cn/ios/GetStarted/TopOn_Get_Started) to implement your advertisement logic.
 
 ## License
 To view the full license, visit [GPL License](LICENSE)<br>
