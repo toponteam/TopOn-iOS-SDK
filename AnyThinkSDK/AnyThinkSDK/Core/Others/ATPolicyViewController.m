@@ -65,6 +65,7 @@
 - (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(null_unspecified WKNavigation *)navigation withError:(NSError *)error{
     _refreshButton.hidden = !(_loadingImageView.hidden = YES);
     [_loadingImageView.layer removeAllAnimations];
+    if (_loadingFailureCallback != nil) { _loadingFailureCallback(error); }
     
 }
 - (void)webView:(WKWebView *)webView didFinishNavigation:(null_unspecified WKNavigation *)navigation{

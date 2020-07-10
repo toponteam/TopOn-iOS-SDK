@@ -11,4 +11,5 @@
 @interface ATPolicyViewController : UIViewController
 @property(nonatomic) NSURL *policyPageURL;
 @property(nonatomic, copy) void(^dismissalCallback)(void);
+@property(nonatomic, copy) void(^loadingFailureCallback)(NSError *error);
 @end

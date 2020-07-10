@@ -8,6 +8,6 @@
 
 #import "ATInterstitialCustomEvent.h"
 #import "ATMintegralInterstitialAdapter.h"
-@interface ATMintegralInterstitialCustomEvent : ATInterstitialCustomEvent<ATMTGInterstitialAdLoadDelegate, ATMTGInterstitialAdShowDelegate, ATMTGInterstitialVideoDelegate>
+@interface ATMintegralInterstitialCustomEvent : ATInterstitialCustomEvent<ATMTGInterstitialAdLoadDelegate, ATMTGInterstitialAdShowDelegate, ATMTGInterstitialVideoDelegate, MTGInterstitialVideoDelegate>
 
 @end

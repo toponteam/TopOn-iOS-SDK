@@ -26,6 +26,7 @@ static NSString *const kATAppSettingUsesServerConsentFlagKey = @"gdpr_so";
 static NSString *const kATAppSettingThirdPartySDKConsentDefaultFlagKey = @"nw_eu_def";
 
 static NSString *const kUserDefaultsATIDKey = @"com.anythink.data.up_id";
+static NSString *const kUserDefaultsGDPRFlagKey = @"com.anythink.data.gdpr_flag";
 @interface ATAppSettingManager()
 @property(nonatomic, readonly) ATThreadSafeAccessor *settingAccessor;
 @property(nonatomic) NSDictionary *currentSetting_impl;
@@ -106,6 +107,9 @@ static NSString *const kSettingArchiveExpireDateKey = @"expire_date";
 -(void) setCurrentSetting:(NSDictionary *)currentSetting {
     [_settingAccessor writeWithBlock:^{
         _currentSetting_impl = currentSetting;
+        [[NSUserDefaults standardUserDefaults] setValue:_currentSetting_impl[kATAppSettingGDPAFlag] != nil ? _currentSetting_impl[kATAppSettingGDPAFlag] : @0 forKey:kUserDefaultsGDPRFlagKey];
+        [[NSUserDefaults standardUserDefaults] synchronize];
+        
         if ([_currentSetting_impl[@"logger"] isKindOfClass:[NSDictionary class]]) { _trackingSetting_impl = [[ATTrackingSetting alloc] initWithDictionary:_currentSetting_impl[@"logger"]]; }
         _currentSettingExpireDate = [NSDate dateWithTimeIntervalSinceNow:[_currentSetting_impl[kATAppSettingExpireIntervalKey] floatValue] / 1000.0f];
         if ([_currentSetting_impl[@"n_l"] isKindOfClass:[NSString class]]) {
@@ -242,6 +246,10 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
     return [[ATAppSettingManager sharedManager].currentSetting[@"n_psid_tm"] doubleValue] / 1000.0f;
 }
 
+-(NSTimeInterval) psIDIntervalForHotLaunch {
+    return [[ATAppSettingManager sharedManager].currentSetting[@"psid_hl"] doubleValue] / 1000.0f;
+}
+
 -(NSString*)showNotificationName {
     return [ATAppSettingManager sharedManager].notifications[@"show"];
 }
@@ -269,7 +277,7 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
 }
 
 -(void) preInitNetwrok:(NSString *)adapter withContent:(NSDictionary *)content {
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         id<ATAdAdapter> adapterPreInit = [[NSClassFromString(adapter) alloc] initWithNetworkCustomInfo:content];
     });
 }
@@ -290,6 +298,36 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
 -(BOOL) inDataProtectedArea {
     NSDictionary *appSetting = [[ATAppSettingManager sharedManager].currentSetting count] > 0 ? [ATAppSettingManager sharedManager].currentSetting : [ATAppSettingManager sharedManager].defaultSetting;
     return [appSetting[kATAppSettingGDPAFlag] boolValue];
+}
+
+-(void) getUserLocationWithCallback:(void(^)(ATUserLocation location))callback {
+    NSDictionary *appSetting = [ATAppSettingManager sharedManager].currentSetting;
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsGDPRFlagKey] == nil) {
+        NSNumber *timestamp = [Utilities normalizedTimeStamp];
+#ifdef UNDER_DEVELOPMENT
+        NSString *host = @"http://test.aa.toponad.com/v1/open/eu";
+#else
+        NSString *host = @"https://aa.toponad.com/v1/open/eu";
+#endif
+        
+        NSString *address = [NSString stringWithFormat:@"%@?t=%@&sign=%@", host, timestamp, [NSString stringWithFormat:@"%@", timestamp].md5];
+        [[ATNetworkingManager sharedManager] sendHTTPRequestToAddress:address HTTPMethod:ATNetworkingHTTPMethodPOST parameters:@{} completion:^(NSData * _Nonnull data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+            if (error != nil) {
+                callback(ATUserLocationUnknown);
+            } else {
+                __block NSDictionary *responseObject = nil;
+                //AT_SafelyRun is used to guard against exception that's beyond our precaution, which includes the nullability of responseData.
+                AT_SafelyRun(^{ responseObject = [NSJSONSerialization JSONObjectWithData:[[NSData alloc] initWithBase64EncodedData:data options:0] options:NSJSONReadingMutableContainers error:nil]; });
+                if ([responseObject isKindOfClass:[NSDictionary class]] && [responseObject[@"data"] isKindOfClass:[NSDictionary class]] && [responseObject[@"data"][@"is_eu"] respondsToSelector:@selector(integerValue)]) {
+                    callback([responseObject[@"data"][@"is_eu"] integerValue] == 1 ? ATUserLocationInEU : ATUserLocationOutOfEU);
+                } else {
+                    callback(ATUserLocationUnknown);
+                }
+            }
+        }];
+    } else {
+        callback([[[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsGDPRFlagKey] boolValue] ? ATUserLocationInEU : ATUserLocationOutOfEU);
+    }
 }
 
 -(NSString*) ATID {
@@ -405,7 +443,8 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
                                        @"sdk_ver":[ATAPI sharedInstance].version,
                                        @"nw_ver":[Utilities networkVersions],
                                        @"orient":[Utilities screenOrientation],
-                                       @"system":@(1)
+                                       @"system":@(1),
+                                       @"gdpr_cs":[NSString stringWithFormat:@"%ld", [[ATAppSettingManager sharedManager] commonTkDataConsentSet]]
                                        };
     [parameters addEntriesFromDictionary:nonSubjectFields];
     [parameters addEntriesFromDictionary:protectedFields];
@@ -434,8 +473,8 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
 
 @implementation ATTrackingSetting
 +(instancetype) defaultSetting {
-    return [[self alloc] initWithDictionary:@{@"tk_address":@"https://tt.toponad.com/v2/tk", @"tk_max_amount":@8, @"tk_interval":@10000,
-                                              @"da_address":@"https://dd.toponad.com/v2/da", @"da_max_amount":@8, @"da_interval":@1800000,
+    return [[self alloc] initWithDictionary:@{@"tk_address":@"https://tt.toponad.com/v1/open/tk", @"tk_max_amount":@8, @"tk_interval":@10000,
+                                              @"da_address":@"https://dd.toponad.com/v1/open/da", @"da_max_amount":@8, @"da_interval":@1800000,
                                               kATAppSettingDefaultFlagKey:@YES
                                               }];
 }
@@ -452,15 +491,24 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
         _agentEventNumberThreadhold = _trackerNumberThreadhold;
         _agentEventInterval = _trackerInterval;
         
-        if ([dictionary[@"da_not_keys"] isKindOfClass:[NSString class]] && [dictionary[@"da_not_keys"] dataUsingEncoding:NSUTF8StringEncoding] != nil) { _agentEventDropKeys = [NSJSONSerialization JSONObjectWithData:[dictionary[@"da_not_keys"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
-        if ([dictionary[@"da_rt_keys"] isKindOfClass:[NSString class]] && [dictionary[@"da_rt_keys"] dataUsingEncoding:NSUTF8StringEncoding] != nil) { _agentEventRTKeys = [NSJSONSerialization JSONObjectWithData:[dictionary[@"da_rt_keys"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
+        NSString *key = @"da_not_keys_ft";
+        if ([dictionary[key] isKindOfClass:[NSString class]] && [dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] != nil) { _agentEventDropFormats = [NSJSONSerialization JSONObjectWithData:[dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
+//        _agentEventDropFormats = @{@"1004630":@[@"0"]};
+        
+        key = @"da_rt_keys_ft";
+        if ([dictionary[key] isKindOfClass:[NSString class]] && [dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] != nil) { _agentEventRTFormats = [NSJSONSerialization JSONObjectWithData:[dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
+//        _agentEventRTFormats = @{@"1004631":@[@"1"]};
         
         _agentEventBatNumberThreadhold = [dictionary[@"da_max_amount"] integerValue];
         _agentEventBatInterval = [dictionary[@"da_interval"] doubleValue] / 1000.0f;
         
-        if ([dictionary[@"up_da_li"] isKindOfClass:[NSString class]] && [dictionary[@"up_da_li"] dataUsingEncoding:NSUTF8StringEncoding] != nil) { _tcHosts = [NSJSONSerialization JSONObjectWithData:[[dictionary[@"up_da_li"] base64DecodingUsingTable:kBase64Table1] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
-        if ([dictionary[@"tk_no_t"] isKindOfClass:[NSString class]] && [dictionary[@"tk_no_t"]
-            dataUsingEncoding:NSUTF8StringEncoding] != nil) { _tcTKSkipTypes = [NSJSONSerialization JSONObjectWithData:[dictionary[@"tk_no_t"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
+        key = @"up_da_li";
+        if ([dictionary[key] isKindOfClass:[NSString class]] && [dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] != nil) { _tcHosts = [NSJSONSerialization JSONObjectWithData:[[dictionary[key] base64DecodingUsingTable:kBase64Table1] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
+        
+        key = @"tk_no_t_ft";
+        if ([dictionary[key] isKindOfClass:[NSString class]] && [dictionary[key]
+            dataUsingEncoding:NSUTF8StringEncoding] != nil) { _tcTKSkipFormats = [NSJSONSerialization JSONObjectWithData:[dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
+//        _tcTKSkipFormats = @{@"1":@[@"1", @"2"]};
     }
     return self;
 }

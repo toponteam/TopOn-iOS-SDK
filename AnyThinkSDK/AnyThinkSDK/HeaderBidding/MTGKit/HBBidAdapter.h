@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic,strong,readonly) HBAdBidResponse *bidResponse;
 
-- (void)getBidNetwork:(HBBidNetworkItem *)networkItem adFormat:(HBAdBidFormat)format responseCallback:(void(^)(HBAdBidResponse *bidResponse))callback;
+- (void)getBidNetwork:(HBBidNetworkItem *)networkItem extra:(NSDictionary*)extra adFormat:(HBAdBidFormat)format responseCallback:(void(^)(HBAdBidResponse *bidResponse))callback;
 
 - (void)win;
 - (void)loss;

@@ -58,6 +58,7 @@ typedef NS_ENUM(NSInteger,ATMTGBannerSizeType) {
 
 @protocol ATMTGSDK<NSObject>
 +(instancetype) sharedInstance;
++(NSString *)sdkVersion;
 - (void)setUserPrivateInfoType:(ATMTGUserPrivateType)type agree:(BOOL)agree;
 - (void)setAppID:(nonnull NSString *)appID ApiKey:(nonnull NSString *)apiKey;
 @property (nonatomic, assign) BOOL consentStatus;
@@ -78,20 +79,18 @@ typedef NS_ENUM(NSInteger,ATMTGBannerSizeType) {
 
 
 - (nonnull instancetype)initBannerAdViewWithBannerSizeType:(ATMTGBannerSizeType)bannerSizeType
-                                            unitId:(nonnull NSString *) unitId
-                                rootViewController:(nullable UIViewController *)rootViewController;
+       placementId:(nullable NSString *)placementId
+            unitId:(nonnull NSString *) unitId
+rootViewController:(nullable UIViewController *)rootViewController;
 - (void)loadBannerAd;
 - (void)loadBannerAdWithBidToken:(nonnull NSString *)bidToken;
 - (void)destroyBannerAdView;
 @end
 
 @protocol ATMTGBannerAdViewDelegate <NSObject>
+@end
 
-- (void)adViewLoadSuccess:(id<ATMTGBannerAdView>)adView;
-- (void)adViewLoadFailedWithError:(NSError *)error adView:(id<ATMTGBannerAdView>)adView;
-- (void)adViewWillLogImpression:(id<ATMTGBannerAdView>)adView;
-- (void)adViewDidClicked:(id<ATMTGBannerAdView>)adView;
-- (void)adViewWillLeaveApplication:(id<ATMTGBannerAdView>)adView;
-- (void)adViewWillOpenFullScreen:(id<ATMTGBannerAdView>)adView;
-- (void)adViewCloseFullScreen:(id<ATMTGBannerAdView>)adView;
+@protocol ATBannerMTGAdCustomConfig<NSObject>
++(instancetype)sharedInstance;
+-(void)setCustomInfo:(NSString*)customInfo type:(NSInteger)type unitId:(NSString*)unitID;
 @end

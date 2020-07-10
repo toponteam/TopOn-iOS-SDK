@@ -22,7 +22,7 @@
 @end
 
 #ifdef UNDER_DEVELOPMENT
-NSString *const kAPIDomain = @"test.aa.toponad.com";//@"test.go-api.toponad.com";//@"test.aa.toponad.com";//
+NSString *const kAPIDomain = @"test.aa.toponad.com";//@"18.140.1.181:8080";//@"test.go-api.toponad.com";//@"test.aa.toponad.com";//
 NSString *const kTrackDomain = @"test.tk.toponad.com";
 NSString *const kAgentDomain = @"test.tk.toponad.com";
 #else

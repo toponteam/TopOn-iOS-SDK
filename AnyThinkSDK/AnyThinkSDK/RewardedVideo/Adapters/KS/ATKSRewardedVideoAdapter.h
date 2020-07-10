@@ -44,8 +44,6 @@ typedef NS_ENUM(NSInteger, ATKSAdSDKLogLevel) {
 + (void)setUserInfoBlock:(void(^)(id<ATKSAdUserInfo>))userInfoBlock;
 + (void)setLoglevel:(ATKSAdSDKLogLevel)level;
 + (NSString *)appId;
-+ (NSString *)SDKDetailVersion;
-
 @end
 
 @protocol ATKSVideoAd <NSObject>

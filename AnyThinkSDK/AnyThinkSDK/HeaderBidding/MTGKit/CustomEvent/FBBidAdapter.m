@@ -17,7 +17,7 @@ NSString * const FBErrorDomain = @"com.facebook";
     DLog(@"");
 }
 
--(void)getBidNetwork:(HBBidNetworkItem *)networkItem adFormat:(HBAdBidFormat)format responseCallback:(void (^)(HBAdBidResponse * _Nonnull))callback{
+-(void)getBidNetwork:(HBBidNetworkItem *)networkItem extra:(NSDictionary*)extra adFormat:(HBAdBidFormat)format responseCallback:(void (^)(HBAdBidResponse * _Nonnull))callback{
 
     __block HBAdFBAdBidFormat currentAdFormat;
     NSError *error = nil;

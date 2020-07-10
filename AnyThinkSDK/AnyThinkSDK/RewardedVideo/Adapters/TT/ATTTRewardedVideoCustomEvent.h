@@ -8,6 +8,6 @@
 
 #import "ATRewardedVideoCustomEvent.h"
 #import "ATTTRewardedVideoAdapter.h"
-@interface ATTTRewardedVideoCustomEvent : ATRewardedVideoCustomEvent<BURewardedVideoAdDelegate>
+@interface ATTTRewardedVideoCustomEvent : ATRewardedVideoCustomEvent<BURewardedVideoAdDelegate, BUNativeExpressRewardedVideoAdDelegate>
 @property (nonatomic) BOOL isFailed;
 @end

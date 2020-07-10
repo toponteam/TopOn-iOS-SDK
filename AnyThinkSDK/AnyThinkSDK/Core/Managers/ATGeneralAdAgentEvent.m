@@ -73,9 +73,7 @@ static NSString *kEventKey = @"1004620";
 
 +(NSArray<NSString*>*)networksInAd:(id<ATAd>)ad {
     NSMutableArray<NSString*>* nws = [NSMutableArray<NSString*> array];
-    NSArray<ATUnitGroupModel*>* unitGroups = nil;
-    if ([ad.placementModel.headerBiddingUnitGroups count] > 0) { unitGroups = [ad.placementModel unitGroupsForRequestID:ad.requestID]; }
-    unitGroups = [unitGroups count] > 0 ? unitGroups : ad.placementModel.unitGroups;
+    NSArray<ATUnitGroupModel*>* unitGroups = [ad.placementModel unitGroupsForRequestID:ad.requestID];
     [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [nws addObject:[self networkNameWithNetworkFirmID:obj.networkFirmID]];
     }];

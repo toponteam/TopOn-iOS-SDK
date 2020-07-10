@@ -13,12 +13,14 @@
 #import "ATNativeADView.h"
 #import "ATVideoView.h"
 #import "ATThreadSafeAccessor.h"
+#import "NSString+KAKit.h"
 #import "ATAPI.h"
 #import "ATLogger.h"
 #import "ATGeneralAdAgentEvent.h"
 #import "ATLoadingScheduler.h"
 #import "ATAdManager+Internal.h"
 #import "ATAdCustomEvent.h"
+#import "Utilities.h"
 #import "ATAppSettingManager.h"
 @interface ATNativeADCustomEvent()
 /**
@@ -87,11 +89,12 @@
 -(void) trackShow:(BOOL)refresh {
     ATNativeADCache *offer = (ATNativeADCache*)self.adView.nativeAd;
     [[ATLoadingScheduler sharedScheduler] cancelScheduleLoadingWithPlacementModel:offer.placementModel unitGroup:offer.unitGroup requestID:offer.requestID];
+    offer.sdkTime = [Utilities normalizedTimeStamp];
     NSMutableDictionary *generalAdAgentEventExtraInfo = [NSMutableDictionary dictionaryWithDictionary:[ATAgentEvent generalAdAgentInfoWithPlacementModel:offer.placementModel unitGroupModel:offer.unitGroup requestID:offer.requestID]];
     generalAdAgentEventExtraInfo[kGeneralAdAgentEventExtraInfoAutoRequestFlagKey] = [self.requestExtra[kAdLoadingExtraAutoloadFlagKey] boolValue] ? @"1" : @"0";
     [ATLogger logMessage:[NSString stringWithFormat:@"\nImpression with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:offer event:ATGeneralAdAgentEventTypeImpression extra:self.requestExtra error:nil]] type:ATLogTypeTemporary];
     NSDictionary *loadExtra = [self.requestExtra isKindOfClass:[NSDictionary class]] ? self.requestExtra : nil;
-    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:offer.unitGroup requestID:offer.requestID], kATTrackerExtraHeaderBiddingInfoKey, offer.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(offer.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(offer.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:offer.unitGroup requestID:offer.requestID], kATTrackerExtraHeaderBiddingInfoKey, offer.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(offer.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(offer.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey,offer.sdkTime,kATTrackerExtraAdShowSDKTimeKey,nil];
     [[ATTracker sharedTracker] trackWithPlacementID:offer.placementModel.placementID requestID:offer.requestID trackType:ATNativeADTrackTypeADShow extra:trackingExtra];
 }
 
@@ -126,5 +129,26 @@
 
 -(BOOL) isVideoContents {
     return self.adView.isVideoContents;
+}
+
+-(NSDictionary*)delegateExtra {
+    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATNativeDelegateExtraNetworkIDKey:@(cache.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:cache.unitGroup.unitID != nil ? cache.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(cache.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(cache.priorityIndex),kATNativeDelegateExtraPrice:@(cache.unitGroup.price), kATADDelegateExtraECPMLevelKey:@(cache.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(cache.placementModel.groupID)}];
+    
+    NSString *channel = [ATAPI sharedInstance].channel;
+    if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
+    NSString *subchannel = [ATAPI sharedInstance].subchannel;
+    if (subchannel != nil) { extra[kATADDelegateExtraSubChannelKey] = subchannel; }
+    if ([cache.placementModel.associatedCustomData count] > 0) { extra[kATADDelegateExtraCustomRuleKey] = cache.placementModel.associatedCustomData; }
+    NSString *extraID = [NSString stringWithFormat:@"%@%@%@",cache.requestID,cache.unitGroup.unitID,cache.sdkTime];
+    extra[kATADDelegateExtraIDKey] = [extraID md5];
+    extra[kATADDelegateExtraAdunitIDKey] = cache.placementModel.placementID;
+    extra[kATADDelegateExtraPublisherRevenueKey] = @(cache.unitGroup.price / 1000.0f);
+     extra[kATADDelegateExtraCurrencyKey] = cache.placementModel.callback[@"currency"];
+    extra[kATADDelegateExtraCountryKey] = cache.placementModel.callback[@"cc"];
+    extra[kATADDelegateExtraFormatKey] = @"Native";
+    extra[kATADDelegateExtraPrecisionKey] = cache.unitGroup.precision;
+    extra[kATADDelegateExtraNetworkTypeKey] = cache.unitGroup.networkFirmID == 35 ? @"Cross_promotion":@"Network";
+    return extra;
 }
 @end

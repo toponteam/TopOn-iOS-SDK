@@ -14,6 +14,7 @@
 #import "NSObject+ExtraInfo.h"
 #import "ATNativeADView+Internal.h"
 #import "ATImageLoader.h"
+#import "ATNativeADCache.h"
 @implementation ATYeahmobiNativeCustomEvent
 -(void) loadSuccessed:(NSArray<id<ATCTNativeAdModel>>*)ads {
     [ATLogger logMessage:@"YeahmobiNative::loadSuccessed:" type:ATLogTypeExternal];
@@ -61,5 +62,12 @@
 
 -(void)CTNativeAdJumpfail:(NSObject *)nativeModel {
     [ATLogger logMessage:@"YeahmobiNaitve::CTNativeAdJumpfail:" type:ATLogTypeExternal];
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"slot_id"];
+    return extra;
 }
 @end

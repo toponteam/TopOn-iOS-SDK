@@ -27,7 +27,7 @@
 @property(nonatomic, readonly) ATKSNativeCustomEvent *customEvent;
 @property(nonatomic, readonly) id<ATKSNativeAd> nativeAd;
 @property(nonatomic, readonly) id<ATKSFeedAd> feedAd;
-
+@property(nonatomic, readonly) id<ATKSDrawAd> drawAd;
 @property(nonatomic) id<ATKSNativeAdRelatedView> relatedView;
 @end
 
@@ -50,21 +50,19 @@
     [super renderOffer:offer];
     [self bindCustomEvent];
     id<KSAd> KSAD = offer.assets[kAdAssetsCustomObjectKey];
-//    _customEvent = (ATKSNativeCustomEvent*)self.ADView.customEvent;
     if ([KSAD isKindOfClass:NSClassFromString(@"KSFeedAd")]) {
         id<ATKSFeedAd> feedAd = offer.assets[kAdAssetsCustomObjectKey];
         _feedAd = feedAd;
         _feedAd.delegate = _customEvent;
-        _feedAd.feedView.frame = self.ADView.frame;
+        _feedAd.feedView.frame = self.ADView.bounds;
         [_feedAd setVideoSoundEnable:[offer.assets[kKSAdVideoSoundEnableFlag] boolValue]];
         [self.ADView addSubview:(UIView*)_feedAd.feedView];
-        _feedAd.feedView.center = CGPointMake(CGRectGetMidX(self.ADView.bounds), CGRectGetMidY(self.ADView.bounds));
     } else if ([KSAD isKindOfClass:NSClassFromString(@"KSNativeAd")]) {
         id<ATKSNativeAd> nativeAd = offer.assets[kAdAssetsCustomObjectKey];
         _nativeAd = nativeAd;
         _nativeAd.delegate = _customEvent;
         _nativeAd.rootViewController = [UIApplication sharedApplication].keyWindow.rootViewController;
-        if ([offer.assets[kKSNativeAdIsVideoFlag] boolValue]) {
+        if (nativeAd.data.materialType == KSAdMaterialTypeVideo) {
             _relatedView = [NSClassFromString(@"KSNativeAdRelatedView") new];
             _relatedView.adLabel.text = nativeAd.data.actionDescription;
             if ([self.ADView respondsToSelector:@selector(mediaView)]) {
@@ -81,6 +79,11 @@
         if ([_nativeAd respondsToSelector:@selector(registerContainer:withClickableViews:)]) {
             [_nativeAd registerContainer:self.ADView withClickableViews:[self.ADView clickableViews]];
         }
+    } else if ([KSAD isKindOfClass:NSClassFromString(@"KSDrawAd")]) {
+        _drawAd = offer.assets[kAdAssetsCustomObjectKey];
+        _drawAd.delegate = _customEvent;
+        [_drawAd registerContainer:self.ADView];
+//        [self.ADView addSubview:(UIView*)_drawAd];
     }
 
 }

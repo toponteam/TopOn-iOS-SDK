@@ -31,6 +31,12 @@ extern NSString *const kNendPlacement;
 extern NSString *const kBannerShownNotification;
 extern NSString *const kBannerLoadingFailedNotification;
 extern NSString *const kHeaderBiddingPlacement;
+extern NSString *const kFyberPlacement;
+extern NSString *const kStartAppPlacement;
+extern NSString *const kChartboostPlacementName;
+extern NSString *const kVunglePlacementName;
+extern NSString *const kAdcolonyPlacementName;
+
 
 @interface ATBannerViewController : UIViewController
 -(instancetype) initWithPlacementName:(NSString*)name;

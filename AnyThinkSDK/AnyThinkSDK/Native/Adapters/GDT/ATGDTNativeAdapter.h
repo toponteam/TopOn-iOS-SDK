@@ -24,6 +24,7 @@ extern NSString *const kGDTNativeAssetsImgList;
 @end
 
 @protocol ATGDTSDKConfig<NSObject>
++ (BOOL)registerAppId:(NSString *)appId;
 + (NSString *)sdkVersion;
 @end
 
@@ -50,27 +51,7 @@ typedef NS_ENUM(NSUInteger, GDTMediaPlayerStatus) {
 };
 
 
-@protocol ATGDTNativeExpressAd;
-
 @protocol GDTNativeExpressAdDelegete <NSObject>
-@optional
-- (void)nativeExpressAdSuccessToLoad:(id<ATGDTNativeExpressAd>)nativeExpressAd views:(NSArray<id<ATGDTNativeExpressAdView>> *)views;
-- (void)nativeExpressAdFailToLoad:(id<ATGDTNativeExpressAd>)nativeExpressAd error:(NSError *)error;
-- (void)nativeExpressAdViewRenderSuccess:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewRenderFail:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewExposure:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewClicked:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewClosed:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewWillPresentScreen:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewDidPresentScreen:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewWillDissmissScreen:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewDidDissmissScreen:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewApplicationWillEnterBackground:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdView:(id<ATGDTNativeExpressAdView>)nativeExpressAdView playerStatusChanged:(GDTMediaPlayerStatus)status;
-- (void)nativeExpressAdViewWillPresentVideoVC:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewDidPresentVideoVC:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewWillDismissVideoVC:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
-- (void)nativeExpressAdViewDidDismissVideoVC:(id<ATGDTNativeExpressAdView>)nativeExpressAdView;
 @end
 
 @protocol ATGDTNativeExpressAd<NSObject>
@@ -136,34 +117,17 @@ typedef NS_ENUM(NSUInteger, GDTMediaPlayerStatus) {
 @end
 
 @protocol GDTUnifiedNativeAdDelegate <NSObject>
-- (void)gdt_unifiedNativeAdLoaded:(NSArray<id<ATGDTUnifiedNativeAdDataObject>> * _Nullable)unifiedNativeAdDataObjects error:(NSError * _Nullable)error;
+- (void)gdt_unifiedNativeAdLoaded:(NSArray<id<ATGDTUnifiedNativeAdDataObject>> *)unifiedNativeAdDataObjects error:(NSError *)error;
 @end
 
 @protocol ATGDTUnifiedNativeAd<NSObject>
 @property (nonatomic, weak) id<GDTUnifiedNativeAdDelegate> delegate;
-- (instancetype)initWithAppId:(NSString *)appId placementId:(NSString *)placementId;
+- (instancetype)initWithPlacementId:(NSString *)placementId;
 - (void)loadAd;
 - (void)loadAdWithAdCount:(int)adCount;
 @end
 
-@protocol ATGDTUnifiedNativeAdView;
 @protocol GDTUnifiedNativeAdViewDelegate <NSObject>
-- (void)gdt_unifiedNativeAdViewWillExpose:(id<ATGDTUnifiedNativeAdView>)unifiedNativeAdView;
-- (void)gdt_unifiedNativeAdViewDidClick:(id<ATGDTUnifiedNativeAdView>)unifiedNativeAdView;
-- (void)gdt_unifiedNativeAdDetailViewClosed:(id<ATGDTUnifiedNativeAdView>)unifiedNativeAdView;
-- (void)gdt_unifiedNativeAdViewApplicationWillEnterBackground:(id<ATGDTUnifiedNativeAdView>)unifiedNativeAdView;
-- (void)gdt_unifiedNativeAdDetailViewWillPresentScreen:(id<ATGDTUnifiedNativeAdView>)unifiedNativeAdView;
-- (void)gdt_unifiedNativeAdView:(id<ATGDTUnifiedNativeAdView>)unifiedNativeAdView playerStatusChanged:(NSUInteger)status userInfo:(NSDictionary *)userInfo;
-/*
- typedef NS_ENUM(NSUInteger, GDTMediaPlayerStatus) {
- GDTMediaPlayerStatusInitial = 0,         // 初始状态
- GDTMediaPlayerStatusLoading = 1,         // 加载中
- GDTMediaPlayerStatusStarted = 2,         // 开始播放
- GDTMediaPlayerStatusPaused = 3,          // 用户行为导致暂停
- GDTMediaPlayerStatusStoped = 4,          // 播放停止
- GDTMediaPlayerStatusError = 5,           // 播放出错
- };
- */
 @end
 
 @protocol ATGDTMediaView<NSObject>

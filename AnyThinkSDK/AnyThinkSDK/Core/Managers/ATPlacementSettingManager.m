@@ -19,6 +19,8 @@
 @interface ATPlacementSettingManager()
 @property(nonatomic, readonly) ATThreadSafeAccessor *placementSettingsAccessor;
 @property(nonatomic, readonly) NSMutableDictionary<NSString*, ATPlacementModel*>* placementSettings;
+@property(nonatomic, readonly) ATThreadSafeAccessor *placementIDsStorageAccessor;
+@property(nonatomic, readonly) NSMutableDictionary<NSNumber*, NSMutableArray<NSString*>*> *placementIDsStorage;
 //UpStatus
 @property(nonatomic, readonly) NSMutableDictionary *placementStatusStorage;
 @property(nonatomic, readonly) ATThreadSafeAccessor *placementStatusStorageAccessor;
@@ -55,6 +57,9 @@
 
 @property(nonatomic, readonly) NSMutableDictionary<NSString*, NSString*>* cappedMyOfferIDwithDateStorage;
 @property(nonatomic, readonly) ATThreadSafeAccessor *cappedMyOfferIDwithDateStorageAccessor;
+
+@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSDictionary*>* customDataStorage;
+@property(nonatomic, readonly) ATThreadSafeAccessor *customDataStorageAccessor;
 @end
 
 static NSString *const kPlacementStegatryLoadingErrorDescription = @"AT SDK has failed to load placement stragety.";
@@ -77,6 +82,10 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
         _placementSettingsAccessor = [ATThreadSafeAccessor new];
         _placementSettings = [NSMutableDictionary<NSString*, ATPlacementModel*> dictionary];
         
+        _placementIDsStorage = [[NSMutableDictionary<NSNumber*, NSMutableArray<NSString*>*> alloc] initWithContentsOfFile:[ATPlacementSettingManager placementIDsArchivePath]];
+        if (![_placementIDsStorage isKindOfClass:[NSMutableDictionary class]]) { _placementIDsStorage = [NSMutableDictionary<NSNumber*, NSMutableArray<NSString*>*> dictionary]; }
+        _placementIDsStorageAccessor = [ATThreadSafeAccessor new];
+        
         _placementStatusStorage = [NSMutableDictionary dictionary];
         _placementStatusStorageAccessor = [ATThreadSafeAccessor new];
         
@@ -95,6 +104,9 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
         if (_cappedMyOfferIDwithDateStorage == nil) { _cappedMyOfferIDwithDateStorage = [NSMutableDictionary<NSString*,NSString*> dictionary]; }
         _cappedMyOfferIDwithDateStorageAccessor = [ATThreadSafeAccessor new];
         
+        _customDataStorage = [NSMutableDictionary<NSString*, NSDictionary*> dictionary];
+        _customDataStorageAccessor = [ATThreadSafeAccessor new];
+        
         if (![[NSFileManager defaultManager] fileExistsAtPath:[ATPlacementSettingManager placementSettingPath]]) { [[NSFileManager defaultManager] createDirectoryAtPath:[ATPlacementSettingManager placementSettingPath] withIntermediateDirectories:NO attributes:nil error:nil]; }
         [self loadPlacementSettingsFromDisk];
     }
@@ -103,6 +115,10 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
 
 +(NSString*)cappedMyOfferIDwithDateArchivePath {
     return [[Utilities documentsPath] stringByAppendingPathComponent:@"com.anythink.MyOfferCappedID"];
+}
+
++(NSString*) placementIDsArchivePath {
+    return [[Utilities documentsPath] stringByAppendingPathComponent:@"com.anythink.PlacementIDsByAdFormat"];
 }
 
 +(BOOL) myOfferExhaustedInPlacementModel:(ATPlacementModel*)placementModel {
@@ -137,6 +153,36 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
 -(NSMutableDictionary<NSString *,NSString*>*) cappedMyOfferIDs {
     __weak typeof(self) weakSelf = self;
     return [_cappedMyOfferIDwithDateStorageAccessor readWithBlock:^id{ return [weakSelf.cappedMyOfferIDwithDateStorage copy]; }];
+}
+
+-(void) setCustomData:(NSDictionary *)customData forPlacementID:(NSString*)placementID {
+    __weak typeof(self) weakSelf = self;
+    [_customDataStorageAccessor writeWithBlock:^{
+        weakSelf.customDataStorage[placementID] = customData;
+    }];
+}
+
+-(NSDictionary*) customDataForPlacementID:(NSString*)placementID {
+    __weak typeof(self) weakSelf = self;
+    return [_customDataStorageAccessor readWithBlock:^id{ return weakSelf.customDataStorage[placementID]; }];
+}
+
+-(NSDictionary*)calculateCustomDataForPlacementID:(NSString*)placementID {
+    NSMutableDictionary * customData = [NSMutableDictionary dictionary];
+    
+    NSDictionary *appCustomData = [ATAPI sharedInstance].customData;
+    if ([appCustomData count] > 0) { [customData addEntriesFromDictionary:appCustomData]; }
+    
+    NSDictionary *placementCustomData = [self customDataForPlacementID:placementID];
+    if ([placementCustomData count] > 0) { [customData addEntriesFromDictionary:placementCustomData]; }
+    
+    if ([ATAPI sharedInstance].channel != nil) { customData[kATCustomDataChannelKey] = [ATAPI sharedInstance].channel; }
+    if ([ATAPI sharedInstance].subchannel != nil) { customData[kATCustomDataSubchannelKey] = [ATAPI sharedInstance].subchannel; }
+    
+    NSArray<NSString*>* keys = [customData allKeys];
+    [keys enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { customData[obj] = [NSString stringWithFormat:@"%@", customData[obj]]; }];
+    
+    return customData;
 }
 
 +(NSString*)sessionStoragePath {
@@ -213,14 +259,32 @@ static NSString *const kSessionIDStorageSessionIDKey = @"session_id";
  */
 -(void) addNewPlacementSetting:(ATPlacementModel*)placementModel {
     [_placementSettingsAccessor writeWithBlock:^{ [_placementSettings setObject:placementModel forKey:placementModel.placementID]; }];
+    [_placementIDsStorageAccessor writeWithBlock:^{
+        NSMutableArray<NSString*> *placementIDs = _placementIDsStorage[[NSString stringWithFormat:@"%ld", placementModel.format]];
+        if (placementIDs != nil) {
+            if (![placementIDs containsObject:placementModel.placementID]) {
+                [placementIDs addObject:placementModel.placementID];
+                [_placementIDsStorage writeToFile:[ATPlacementSettingManager placementIDsArchivePath] atomically:YES];
+            }
+        } else {
+            _placementIDsStorage[[NSString stringWithFormat:@"%ld", placementModel.format]] = [NSMutableArray arrayWithObject:placementModel.placementID];
+            [_placementIDsStorage writeToFile:[ATPlacementSettingManager placementIDsArchivePath] atomically:YES];
+        }
+    }];
+}
+
+-(NSArray<NSString*>*) placementIDsForAdFormat:(ATAdFormat)format {
+    return [_placementIDsStorageAccessor readWithBlock:^id{ return [_placementIDsStorage[[NSString stringWithFormat:@"%ld", format]] count] > 0 ? [NSArray arrayWithArray:_placementIDsStorage[[NSString stringWithFormat:@"%ld", format]]] : nil; }];
 }
 
 -(ATPlacementModel*) placementSettingWithPlacementID:(NSString*)placementID {
     return [_placementSettingsAccessor readWithBlock:^id{ return _placementSettings[placementID]; }];
 }
 
-+(void) savePlacementSettings:(NSDictionary*)settings forPlacementID:(NSString*)placementID {
-    [settings writeToFile:[self placementSettingPathForPlacementID:placementID] atomically:YES];
++(void) savePlacementSettings:(NSDictionary*)settings associatedCustomData:(NSDictionary*)customData forPlacementID:(NSString*)placementID {
+    NSMutableDictionary *settingsToStore = [NSMutableDictionary dictionaryWithDictionary:settings];
+    if ([customData isKindOfClass:[NSDictionary class]]) { settingsToStore[kPlacementModelCustomDataKey] = customData; }
+    [settingsToStore writeToFile:[self placementSettingPathForPlacementID:placementID] atomically:YES];
 }
 
 +(NSString*) placementSettingPathForPlacementID:(NSString*)placementID {
@@ -290,9 +354,9 @@ static NSInteger errorCodeDuration = 20 * 60;
                     responseObject = tempResponseObject;
                     
                     [weakSelf configurePSIDWithDictionary:responseObject[@"data"]];
-                    ATPlacementModel *placement = [[ATPlacementModel alloc] initWithDictionary:responseObject[@"data"] placementID:placementID];
+                    ATPlacementModel *placement = [[ATPlacementModel alloc] initWithDictionary:responseObject[@"data"] associatedCustomData:customData placementID:placementID];
                     if (placement != nil) {
-                        if (placement.cachesPlacementSetting) { [ATPlacementSettingManager savePlacementSettings:responseObject[@"data"] forPlacementID:placementID]; }
+                        if (placement.cachesPlacementSetting) { [ATPlacementSettingManager savePlacementSettings:responseObject[@"data"] associatedCustomData:customData forPlacementID:placementID]; }
                         [ATAgentEvent saveRequestAPIName:@"placement" requestDate:requestTime responseDate:[Utilities normalizedTimeStamp] extra:placementID != nil ?  @{kAgentEventExtraInfoPlacementIDKey:placementID} : nil];
                         completion(placement, nil);
                     } else {
@@ -326,7 +390,7 @@ static NSInteger errorCodeDuration = 20 * 60;
 }
 
 +(void) saveAPIErrorWithPlacementID:(NSString*)placementID error:(NSError*)error {
-    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyNetworkRequestFail placementID:placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoAPINameKey:@"placement",
+    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyNetworkRequestFail placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoAPINameKey:@"placement",
                                                                                                                                             kAgentEventExtraInfoNetworkErrorCodeKey:@(error.code),
                                                                                                                                             kAgentEventExtraInfoNetworkErrorMsgKey:[NSString stringWithFormat:@"%@", error],
                                                                                                                                             kAgentEventExtraInfoTKHostKey:@"aa.toponad.com"
@@ -374,14 +438,15 @@ static NSInteger errorCodeDuration = 20 * 60;
                                        @"pl_id":placementID,
                                        @"ps_id":[ATAPI sharedInstance].psID != nil ? [ATAPI sharedInstance].psID : @"",
                                        @"session_id":sessionID != nil ? sessionID : @"",
-                                       @"custom":([[ATAPI sharedInstance].customData isKindOfClass:[NSDictionary class]] && [[ATAPI sharedInstance].customData count] > 0) ? [ATAPI sharedInstance].customData : @{},
+                                       @"custom":([customData isKindOfClass:[NSDictionary class]] && [customData count] > 0) ? customData : @{},
                                        @"package_name":[Utilities appBundleID],
                                        @"app_vn":[Utilities appBundleVersion],
                                        @"app_vc":[Utilities appBundleVersion],
                                        @"sdk_ver":[ATAPI sharedInstance].version,
                                        @"nw_ver":[Utilities networkVersions],
                                        @"orient":[Utilities screenOrientation],
-                                       @"system":@(1)
+                                       @"system":@(1),
+                                       @"gdpr_cs":[NSString stringWithFormat:@"%ld", [[ATAppSettingManager sharedManager] commonTkDataConsentSet]]
                                        };
     [parameters addEntriesFromDictionary:nonSubjectFields];
     [parameters addEntriesFromDictionary:protectedFields];

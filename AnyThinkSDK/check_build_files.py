@@ -11,7 +11,7 @@ import os
 #4、打成zip包
 
 #configuration for iOS build setting
-AnyThink_VERSION = "5.5.0"
+AnyThink_VERSION = "5.5.9"
 CONFIGURATION = "Release"
 EXPORT_OPTIONS_PLIST = "exportOptions.plist"
 #保存发布包的路径
@@ -42,7 +42,7 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        ,'AnyThinkTTNativeAdapter'
                        ,'AnyThinkNendNativeAdapter'
                        ,'AnyThinkBaiduNativeAdapter'
-                       , 'AnyThinkKSNativeAdapter'
+                       ,'AnyThinkKSNativeAdapter'
                        #Rewarded Video Adapters
                        ,'AnyThinkOnewayRewardedVideoAdapter'
                        ,'AnyThinkKSRewardedVideoAdapter'
@@ -68,6 +68,8 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        ,'AnyThinkMaioRewardedVideoAdapter'
                        ,'AnyThinkSigmobRewardedVideoAdapter'
                        ,'AnyThinkOguryRewardedVideoAdapter'
+                       ,'AnyThinkStartAppRewardedVideoAdapter'
+                       ,'AnyThinkFyberRewardedVideoAdapter'
                        #Banner Adapters
                        ,'AnyThinkInmobiBannerAdapter'
                        ,'AnyThinkFlurryBannerAdapter'
@@ -82,6 +84,11 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        ,'AnyThinkAppnextBannerAdapter'
                        ,'AnyThinkBaiduBannerAdapter'
                        ,'AnyThinkNendBannerAdapter'
+                       ,'AnyThinkFyberBannerAdapter'
+                       ,'AnyThinkStartAppBannerAdapter'
+                       ,'AnyThinkVungleBannerAdapter'
+                       ,'AnyThinkAdColonyBannerAdapter'
+                       ,'AnyThinkChartboostBannerAdapter'
                        #Interstitial Adapters
                        ,'AnyThinkAdColonyInterstitialAdapter'
                        ,'AnyThinkKSInterstitialAdapter'
@@ -107,11 +114,14 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        ,'AnyThinkNendInterstitialAdapter'
                        ,'AnyThinkSigmobInterstitialAdapter'
                        ,'AnyThinkOguryInterstitialAdapter'
+                       ,'AnyThinkStartAppInterstitialAdapter'
+                       ,'AnyThinkFyberInterstitialAdapter'
                        #Splash Adapters
                        ,'AnyThinkBaiduSplashAdapter'
                        ,'AnyThinkGDTSplashAdapter'
                        ,'AnyThinkTTSplashAdapter'
                        ,'AnyThinkSigmobSplashAdapter'
+                       ,'AnyThinkMintegralSplashAdapter'
                        #TraminiSDK
                        ,'TraminiSDK'
                        ]

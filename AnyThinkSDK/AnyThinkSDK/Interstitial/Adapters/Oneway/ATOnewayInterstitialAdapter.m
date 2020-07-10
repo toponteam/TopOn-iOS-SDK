@@ -12,17 +12,128 @@
 #import "Utilities.h"
 #import "ATInterstitialManager.h"
 #import "ATAdAdapter.h"
+
+NSString *const kATOnewayInterstitialReadyNotification = @"com.anythink.OWInterstitialReadyNotificaiton";
+NSString *const kATOnewayInterstitialShowNotification = @"com.anythink.OWInterstitialShowNotificaiton";
+NSString *const kATOnewayInterstitialClickNotification = @"com.anythink.OWInterstitialClickNotificaiton";
+NSString *const kATOnewayInterstitialFinishNotification = @"com.anythink.OWInterstitialFinishNotificaiton";
+NSString *const kATOnewayInterstitialCloseNotification = @"com.anythink.OWInterstitialCloseNotificaiton";
+NSString *const kATOnewayInterstitialErrorNotification = @"com.anythink.OWErrorNotificaiton";
+
+NSString *const kATOnewayInterstitialImageReadyNotification = @"com.anythink.OWInterstitialImageReadyNotificaiton";
+NSString *const kATOnewayInterstitialImageShowNotification = @"com.anythink.OWInterstitialImageShowNotificaiton";
+NSString *const kATOnewayInterstitialImageClickNotification = @"com.anythink.OWInterstitialImageClickNotificaiton";
+NSString *const kATOnewayInterstitialImageFinishNotification = @"com.anythink.OWInterstitialImageFinishNotificaiton";
+NSString *const kATOnewayInterstitialImageCloseNotification = @"com.anythink.OWInterstitialImageCloseNotificaiton";
+NSString *const kATOnewayInterstitialImageErrorNotification = @"com.anythink.OWInterstitialImageErrorNotificaiton";
+
+NSString *const kATOnewayInterstitialNotificationUserInfoTagKey = @"tag";
+NSString *const kATOnewayInterstitialNotificationUserInfoMessageKey = @"message";
+NSString *const kATOnewayInterstitialNotificationUserInfoErrorCodeKey = @"error_code";
+NSString *const kATOnewayInterstitialNotificationUserInfoStateKey = @"state";
+NSString *const kATOnewayInterstitialNotificationUserInfoSessionKey = @"session";
+
+@interface ATOWInterstitialDelegate:NSObject<oneWaySDKInterstitialAdDelegate,oneWaySDKInterstitialImageAdDelegate>
++(instancetype) sharedDelegate;
+@end
+@implementation ATOWInterstitialDelegate
++(instancetype) sharedDelegate {
+    static ATOWInterstitialDelegate *sharedDelegate = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedDelegate = [[ATOWInterstitialDelegate alloc] init];
+    });
+    return sharedDelegate;
+}
+
+#pragma mark - image
+- (void)oneWaySDKInterstitialImageAdReady {
+    [ATLogger logMessage:@"oneWaySDKInterstitialImageAdReady" type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialImageReadyNotification object:nil userInfo:@{}];
+}
+
+- (void)oneWaySDKInterstitialImageAdDidShow:(NSString *)tag {
+    [ATLogger logMessage:[NSString stringWithFormat:@"oneWaySDKInterstitialImageAdDidShow:%@", tag] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialImageShowNotification object:nil userInfo:@{kATOnewayInterstitialNotificationUserInfoTagKey:tag != nil ? tag : @""}];
+}
+
+- (void)oneWaySDKInterstitialImageAdDidFinish:(NSString *)tag withState:(NSNumber *)state session:(NSString *)session {
+    [ATLogger logMessage:[NSString stringWithFormat:@"oneWaySDKInterstitialImageAdDidFinish:%@ withState:%@ session:%@", tag, state, session] type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+    if (tag != nil) { userInfo[kATOnewayInterstitialNotificationUserInfoTagKey] = tag; }
+    if (state != nil) { userInfo[kATOnewayInterstitialNotificationUserInfoStateKey] = state; }
+    if (session != nil) { userInfo[kATOnewayInterstitialNotificationUserInfoSessionKey] = session; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialImageFinishNotification object:nil userInfo:userInfo];
+}
+
+- (void)oneWaySDKInterstitialImageAdDidClose:(NSString *)tag withState:(NSNumber *)state {
+    [ATLogger logMessage:[NSString stringWithFormat:@"oneWaySDKInterstitialImageAdDidClose:%@ withState:%@", tag, state] type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+    if (tag != nil) { userInfo[kATOnewayInterstitialNotificationUserInfoTagKey] = tag; }
+    if (state != nil) { userInfo[kATOnewayInterstitialNotificationUserInfoStateKey] = state; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialImageCloseNotification object:nil userInfo:userInfo];
+}
+
+- (void)oneWaySDKInterstitialImageAdDidClick:(NSString *)tag {
+    [ATLogger logMessage:[NSString stringWithFormat:@"oneWaySDKInterstitialImageAdDidClick:%@", tag] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialImageClickNotification object:nil userInfo:@{kATOnewayInterstitialNotificationUserInfoTagKey:tag != nil ? tag : @""}];
+}
+
+- (void)oneWaySDKDidError:(NSInteger)error withMessage:(NSString *)message {
+    [ATLogger logMessage:[NSString stringWithFormat:@"oneWaySDKDidError:oneWaySDKDidError:%ld :%@", error, message] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialErrorNotification object:nil userInfo:@{kATOnewayInterstitialNotificationUserInfoErrorCodeKey:@(error), kATOnewayInterstitialNotificationUserInfoMessageKey:message != nil ? message : @""}];
+}
+
+#pragma mark - video
+- (void)oneWaySDKInterstitialAdReady {
+    [ATLogger logMessage:@"oneWaySDKInterstitialAdReady" type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialReadyNotification object:nil userInfo:@{}];
+}
+
+- (void)oneWaySDKInterstitialAdDidShow:(NSString *)tag {
+    [ATLogger logMessage:[NSString stringWithFormat:@"oneWaySDKInterstitialAdDidShow:%@", tag] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialShowNotification object:nil userInfo:@{kATOnewayInterstitialNotificationUserInfoTagKey:tag != nil ? tag : @""}];
+}
+
+- (void)oneWaySDKInterstitialAdDidFinish:(NSString *)tag withState:(NSNumber *)state session:(NSString *)session {
+    [ATLogger logMessage:[NSString stringWithFormat:@"oneWaySDKInterstitialAdDidFinish:%@ withState:%@ session:%@", tag, state, session] type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+    if (tag != nil) { userInfo[kATOnewayInterstitialNotificationUserInfoTagKey] = tag; }
+    if (state != nil) { userInfo[kATOnewayInterstitialNotificationUserInfoStateKey] = state; }
+    if (session != nil) { userInfo[kATOnewayInterstitialNotificationUserInfoSessionKey] = session; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialFinishNotification object:nil userInfo:userInfo];
+}
+
+- (void)oneWaySDKInterstitialAdDidClose:(NSString *)tag withState:(NSNumber *)state {
+    [ATLogger logMessage:[NSString stringWithFormat:@"oneWaySDKInterstitialAdDidClose:%@ withState:%@", tag, state] type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+    if (tag != nil) { userInfo[kATOnewayInterstitialNotificationUserInfoTagKey] = tag; }
+    if (state != nil) { userInfo[kATOnewayInterstitialNotificationUserInfoStateKey] = state; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialCloseNotification object:nil userInfo:userInfo];
+}
+
+- (void)oneWaySDKInterstitialAdDidClick:(NSString *)tag {
+    [ATLogger logMessage:[NSString stringWithFormat:@"oneWaySDKInterstitialAdDidClick:%@", tag] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialClickNotification object:nil userInfo:@{kATOnewayInterstitialNotificationUserInfoTagKey:tag != nil ? tag : @""}];
+}
+@end
+
 @interface ATOnewayInterstitialAdapter()
 @property(nonatomic, readonly) ATOnewayInterstitialCustomEvent *customEvent;
 @end
 @implementation ATOnewayInterstitialAdapter
 +(BOOL) adReadyWithCustomObject:(id)customObject info:(NSDictionary*)info {
-    return [NSClassFromString(@"OWInterstitialAd") isReady];
+    return [info[@"is_video"] boolValue] ? [NSClassFromString(@"OWInterstitialAd") isReady] : [NSClassFromString(@"OWInterstitialImageAd") isReady];
 }
 
 +(void) showInterstitial:(ATInterstitial*)interstitial inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate {
     interstitial.customEvent.delegate = delegate;
-    [NSClassFromString(@"OWInterstitialAd") show:viewController];
+    [((ATOnewayInterstitialCustomEvent*)interstitial.customEvent) showWithTag:@""];
+    if ([interstitial.unitGroup.content[@"is_video"] boolValue]) {
+        [NSClassFromString(@"OWInterstitialAd") show:viewController];
+    } else {
+        [NSClassFromString(@"OWInterstitialImageAd") show:viewController];
+    }
 }
 
 -(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
@@ -38,31 +149,17 @@
 }
 
 -(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
-    if (NSClassFromString(@"OWInterstitialAd") != nil) {
+    if (NSClassFromString(@"OWInterstitialAd") != nil && NSClassFromString(@"OWInterstitialImageAd") != nil) {
         _customEvent = [[ATOnewayInterstitialCustomEvent alloc] initWithUnitID:info[@"publisher_id"] customInfo:info];
         _customEvent.requestCompletionBlock = completion;
-        if ([NSClassFromString(@"OWInterstitialAd") isReady]) {
-            NSArray<id<ATAd>>* ads = [[ATInterstitialManager sharedManager] adsWithPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID];
-            __block id<ATAd> ad = nil;
-            [ads enumerateObjectsUsingBlock:^(id<ATAd>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                if ([obj.unitID isEqualToString:info[@"publisher_id"]]) {
-                    ad = obj;
-                    *stop = YES;
-                }
-            }];
-            if (ad == nil) {
-                completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:@"OWRewardedAd can't load interstitial ad this time, please relaunch the app."}]);
-            } else {
-                [_customEvent oneWaySDKInterstitialAdReady];
-            }
-            
+        if ([info[@"is_video"] boolValue]) {
+            static dispatch_once_t onceToken;
+            dispatch_once(&onceToken, ^{ [NSClassFromString(@"OWInterstitialAd") initWithDelegate:[ATOWInterstitialDelegate sharedDelegate]]; });
+            if ([NSClassFromString(@"OWInterstitialAd") isReady]) { [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialReadyNotification object:nil]; }
         } else {
-            if ([[ATInterstitialManager sharedManager] firstLoadFlagForNetwork:kNetworkNameOneway]) {
-                completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:@"OWInterstitialAd class' initWithDelegate: method has been invoked before and its isReady method returns NO at the moment; please try again later to check it."}]);
-            } else {
-                [[ATInterstitialManager sharedManager] setFirstLoadFlagForNetwork:kNetworkNameOneway];
-                [NSClassFromString(@"OWInterstitialAd") initWithDelegate:_customEvent];
-            }
+            static dispatch_once_t onceToken;
+            dispatch_once(&onceToken, ^{ [NSClassFromString(@"OWInterstitialImageAd") initWithDelegate:[ATOWInterstitialDelegate sharedDelegate]]; });
+            if ([NSClassFromString(@"OWInterstitialImageAd") isReady]) { [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialImageReadyNotification object:nil]; }
         }
     } else {
         completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Oneway"]}]);

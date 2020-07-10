@@ -21,6 +21,7 @@ typedef NS_ENUM(NSInteger, ATMTGUserPrivateType) {
 
 @protocol ATMTGSDK<NSObject>
 +(instancetype) sharedInstance;
++(NSString *)sdkVersion;
 - (void)setUserPrivateInfoType:(ATMTGUserPrivateType)type agree:(BOOL)agree;
 - (void)setAppID:(nonnull NSString *)appID ApiKey:(nonnull NSString *)apiKey;
 @property (nonatomic, assign) BOOL consentStatus;
@@ -29,43 +30,39 @@ typedef NS_ENUM(NSInteger, ATMTGUserPrivateType) {
 @protocol ATMTGInterstitialAdManager;
 #pragma mark - MTGInterstitialAdManagerDelegate
 @protocol ATMTGInterstitialAdLoadDelegate <NSObject>
-@optional
-- (void) onInterstitialLoadSuccess:(id<ATMTGInterstitialAdManager>)adManager;
-- (void) onInterstitialLoadFail:(nonnull NSError *)error adManager:(id<ATMTGInterstitialAdManager>)adManager;
 @end
 
 @protocol ATMTGInterstitialAdShowDelegate <NSObject>
-@optional
-- (void) onInterstitialShowSuccess:(id<ATMTGInterstitialAdManager>)adManager;
-- (void) onInterstitialShowFail:(nonnull NSError *)error adManager:(id<ATMTGInterstitialAdManager>)adManager;
-- (void) onInterstitialClosed:(id<ATMTGInterstitialAdManager>)adManager;
-- (void) onInterstitialAdClick:(id<ATMTGInterstitialAdManager>)adManager;
+@end
+
+@protocol MTGBidInterstitialVideoDelegate <NSObject>
+@end
+
+@protocol MTGInterstitialVideoDelegate <NSObject>
 @end
 
 @protocol ATMTGInterstitialAdManager<NSObject>
 @property (nonatomic, readonly)   NSString * _Nonnull currentUnitId;
-- (nonnull instancetype)initWithUnitID:(nonnull NSString *)unitId adCategory:(NSInteger)adCategory;
+- (nonnull instancetype)initWithPlacementId:(nullable NSString *)placementId
+    unitId:(nonnull NSString *)unitId
+adCategory:(NSInteger)adCategory;
 - (void)loadWithDelegate:(nullable id <ATMTGInterstitialAdLoadDelegate>) delegate;
 - (void)showWithDelegate:(nullable id <ATMTGInterstitialAdShowDelegate>)delegate presentingViewController:(nullable UIViewController *)viewController;
 @end
 
 @protocol ATMTGInterstitialVideoAdManager;
 @protocol ATMTGInterstitialVideoDelegate <NSObject>
-@optional
-- (void) onInterstitialAdLoadSuccess:(id<ATMTGInterstitialVideoAdManager>)adManager;
-- (void) onInterstitialVideoLoadSuccess:(id<ATMTGInterstitialVideoAdManager>)adManager;
-- (void) onInterstitialVideoLoadFail:(nonnull NSError *)error adManager:(id<ATMTGInterstitialVideoAdManager>)adManager;
-- (void) onInterstitialVideoShowSuccess:(id<ATMTGInterstitialVideoAdManager>)adManager;
-- (void) onInterstitialVideoShowFail:(nonnull NSError *)error adManager:(id<ATMTGInterstitialVideoAdManager>)adManager;
-- (void) onInterstitialVideoAdClick:(id<ATMTGInterstitialVideoAdManager>)adManager;
-- (void)onInterstitialVideoAdDismissedWithConverted:(BOOL)converted adManager:(id<ATMTGInterstitialVideoAdManager>)adManager;
 @end
 
 @protocol ATMTGInterstitialVideoAdManager<NSObject>
 @property (nonatomic, weak) id  <ATMTGInterstitialVideoDelegate> _Nullable delegate;
 @property (nonatomic, readonly)   NSString * _Nonnull currentUnitId;
 @property (nonatomic, assign) BOOL  playVideoMute;
-- (nonnull instancetype)initWithUnitID:(nonnull NSString *)unitId delegate:(nullable id<ATMTGInterstitialVideoDelegate>)delegate;
+
+
+- (nonnull instancetype)initWithPlacementId:(nullable NSString *)placementId
+                                     unitId:(nonnull NSString *)unitId
+                                   delegate:(nullable id<MTGInterstitialVideoDelegate>)delegate;
 - (void)loadAd;
 - (void)showFromViewController:(UIViewController *_Nonnull)viewController;
 - (void)cleanAllVideoFileCache;
@@ -76,9 +73,16 @@ typedef NS_ENUM(NSInteger, ATMTGUserPrivateType) {
 @property (nonatomic, weak) id  <ATMTGInterstitialVideoDelegate> _Nullable delegate;
 @property (nonatomic, readonly)   NSString * _Nonnull currentUnitId;
 @property (nonatomic, assign) BOOL  playVideoMute;
-- (nonnull instancetype)initWithUnitID:(nonnull NSString *)unitId delegate:(nullable id<ATMTGInterstitialVideoDelegate>)delegate;
+- (nonnull instancetype)initWithPlacementId:(nullable NSString *)placementId
+  unitId:(nonnull NSString *)unitId
+delegate:(nullable id<MTGBidInterstitialVideoDelegate>)delegate;
 - (void)loadAdWithBidToken:(nonnull NSString *)bidToken;
 - (void)showFromViewController:(UIViewController *_Nonnull)viewController;
 - (BOOL)isVideoReadyToPlay:(nonnull NSString *)unitId;
 - (void)cleanAllVideoFileCache;
+@end
+
+@protocol ATInterstitialMTGAdCustomConfig<NSObject>
++(instancetype)sharedInstance;
+-(void)setCustomInfo:(NSString*)customInfo type:(NSInteger)type unitId:(NSString*)unitID;
 @end

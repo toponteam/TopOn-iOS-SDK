@@ -43,7 +43,8 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             id<ATBUSize> size = [NSClassFromString(@"BUSize") sizeBy:[info[@"media_size"] integerValue]];
             if ([info[@"layout_type"] integerValue] == 1) {
-                self->_expressBannerView = [[NSClassFromString(@"BUNativeExpressBannerView") alloc]initWithSlotID:info[@"slot_id"] rootViewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]] adSize:CGSizeMake(adSize.width, adSize.width * size.height / size.width) IsSupportDeepLink:YES];                self->_expressBannerView.frame = CGRectMake(.0f, .0f, adSize.width, adSize.width * size.height / size.width);
+                self->_expressBannerView = [[NSClassFromString(@"BUNativeExpressBannerView") alloc]initWithSlotID:info[@"slot_id"] rootViewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]] adSize:CGSizeMake(adSize.width, adSize.width * size.height / size.width) IsSupportDeepLink:YES];
+                self->_expressBannerView.frame = CGRectMake(.0f, .0f, adSize.width, adSize.width * size.height / size.width);
                 self->_expressBannerView.delegate = self->_customEvent;
                 [self->_expressBannerView loadAdData];
             } else {

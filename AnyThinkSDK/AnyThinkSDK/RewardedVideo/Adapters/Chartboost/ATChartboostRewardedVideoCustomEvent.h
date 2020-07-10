@@ -8,5 +8,6 @@
 
 #import "ATRewardedVideoCustomEvent.h"
 #import "ATChartboostRewardedVideoAdapter.h"
-@interface ATChartboostRewardedVideoCustomEvent : ATRewardedVideoCustomEvent
+@interface ATChartboostRewardedVideoCustomEvent : ATRewardedVideoCustomEvent<CHBRewardedDelegate>
+@property(nonatomic, weak) id<ATCHBRewarded> rewardedVideoAd;
 @end

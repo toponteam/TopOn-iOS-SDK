@@ -18,6 +18,9 @@
  Kick off the ad loading process
  */
 -(void) loadADWithPlacementID:(NSString*)placementID extra:(NSDictionary*)extra customData:(NSDictionary*)customData delegate:(id<ATAdLoadingDelegate>)delegate;
+//
++(NSArray<ATUnitGroupModel*>*)rankAndShuffleUnitGroups:(NSArray<ATUnitGroupModel*>*)unitGroups;
++(NSDictionary*)statisticsInfoWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel requestID:(NSString*)requestID bidRequest:(BOOL)bidRequest;
 @end
 
 @protocol ATMyOfferWrapper<NSObject>

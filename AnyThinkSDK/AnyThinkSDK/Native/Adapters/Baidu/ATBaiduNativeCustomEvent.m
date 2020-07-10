@@ -11,6 +11,7 @@
 #import "ATAdManagement.h"
 #import "ATAPI+Internal.h"
 #import "ATImageLoader.h"
+#import "ATNativeADCache.h"
 @implementation ATBaiduNativeCustomEvent
 - (void)nativeAdObjectsSuccessLoad:(NSArray<id<ATBaiduMobAdNativeAdObject>> *)nativeAds {
     [ATLogger logMessage:@"BaiduNative::nativeAdObjectsSuccessLoad::" type:ATLogTypeExternal];
@@ -63,5 +64,12 @@
 
 - (void)didDismissLandingPage:(UIView *)nativeAdView {
     [ATLogger logMessage:@"BaiduNative::didDismissLandingPage:" type:ATLogTypeExternal];
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"placement_id"];
+    return extra;
 }
 @end

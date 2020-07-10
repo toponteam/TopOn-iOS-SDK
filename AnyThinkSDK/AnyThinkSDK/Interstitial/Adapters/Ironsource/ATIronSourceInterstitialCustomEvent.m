@@ -29,6 +29,8 @@
 -(void) handleLoaded:(NSNotification*)notification {
     if ([notification.userInfo[kATIronSourceInterstitialNotificationUserInfoInstanceID] isEqualToString:self.unitID]) {
         [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:self.unitID != nil ? self.unitID : @""}];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATIronSourceInterstitialNotificationLoaded object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATIronSourceInterstitialNotificationLoadFailed object:nil];
     }
 }
 
@@ -36,13 +38,16 @@
     if ([notification.userInfo[kATIronSourceInterstitialNotificationUserInfoInstanceID] isEqualToString:self.unitID]) {
         NSError *error = notification.userInfo[kATIronSourceInterstitialNotificationUserInfoError];
         [self handleLoadingFailure:error != nil ? error : [NSError errorWithDomain:@"com.anythink.IronSourceInterstitialLoading" code:100001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load interstitial", NSLocalizedFailureReasonErrorKey:@"IronSource has failed to load interstitial"}]];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATIronSourceInterstitialNotificationLoaded object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATIronSourceInterstitialNotificationLoadFailed object:nil];
     }
 }
 
 -(void) handleShow:(NSNotification*)notification {
     if ([notification.userInfo[kATIronSourceInterstitialNotificationUserInfoInstanceID] isEqualToString:self.unitID] && self.interstitial != nil) {
         [self trackShow];
-        if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}]; }
+        if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATIronSourceInterstitialNotificationShow object:nil];
     }
 }
 
@@ -50,7 +55,7 @@
     if ([notification.userInfo[kATIronSourceInterstitialNotificationUserInfoInstanceID] isEqualToString:self.unitID] && self.interstitial != nil) {
         [self trackClick];
         if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-            [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
+            [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
         }
     }
 }
@@ -59,8 +64,15 @@
     if ([notification.userInfo[kATIronSourceInterstitialNotificationUserInfoInstanceID] isEqualToString:self.unitID] && self.interstitial != nil) {
         [self handleClose];
         if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-            [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
+            [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
         }
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATIronSourceInterstitialNotificationClose object:nil];
     }
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"instance_id"];
+    return extra;
 }
 @end

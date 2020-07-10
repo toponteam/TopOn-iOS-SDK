@@ -13,6 +13,8 @@
 #import "ATAdAdapter.h"
 #import "ATAdLoader+HeaderBidding.h"
 #import "ATAppSettingManager.h"
+#import "ATCapsManager.h"
+#import <objc/runtime.h>
 
 @interface ATMintegralInterstitialAdapter()
 @property(nonatomic, readonly) id<ATMTGInterstitialVideoAdManager> videoAdManager;
@@ -32,6 +34,7 @@
 +(void) showInterstitial:(ATInterstitial*)interstitial inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate {
     interstitial.customEvent.delegate = delegate;
     id mtgInterstitial = interstitial.customObject;
+    
     if ([mtgInterstitial respondsToSelector:@selector(showWithDelegate:presentingViewController:)]) {
         [mtgInterstitial showWithDelegate:(ATMintegralInterstitialCustomEvent*)interstitial.customEvent presentingViewController:viewController];
     } else if ([mtgInterstitial respondsToSelector:@selector(showFromViewController:)]) {
@@ -44,31 +47,16 @@
     if (self != nil) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameMintegral];
+            [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"MTGSDK") sdkVersion] forNetwork:kNetworkNameMintegral];
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameMintegral]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameMintegral];
                 void(^blk)(void) = ^{
-                    if ([[ATAPI sharedInstance].networkConsentInfo containsObjectForKey:kNetworkNameMintegral]) {
-                        NSDictionary *consent = [ATAPI sharedInstance].networkConsentInfo[kNetworkNameMintegral];
-                        if ([consent isKindOfClass:[NSDictionary class]]) {
-                            [consent enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-                                [[NSClassFromString(@"MTGSDK") sharedInstance] setUserPrivateInfoType:[key integerValue] agree:[obj boolValue]];
-                            }];
-                        }
-                    } else {
-                        BOOL set = NO;
-                        BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
-                        if (set) {
-                            /*
-                             consentStatus: 1 Personalized, 0 Nonpersonalized
-                             */
-                            id<ATMTGSDK> mtgSDK = [NSClassFromString(@"MTGSDK") sharedInstance];
-                            mtgSDK.consentStatus = !limit;
-                        }
-                    }
+                    BOOL set = NO;
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    if (set) { ((id<ATMTGSDK>)[NSClassFromString(@"MTGSDK") sharedInstance]).consentStatus = !limit; }
                     [[NSClassFromString(@"MTGSDK") sharedInstance] setAppID:info[@"appid"] ApiKey:info[@"appkey"]];
                 };
-                if ([NSThread mainThread]) blk();
+                if ([NSThread currentThread].isMainThread) blk();
                 else dispatch_sync(dispatch_get_main_queue(), blk);
             }
         });
@@ -85,16 +73,24 @@
             ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)info[kAdapterCustomInfoUnitGroupModelKey];
             NSString *requestID = info[kAdapterCustomInfoRequestIDKey];
              if ([unitGroupModel bidTokenWithRequestID:requestID] != nil) {
-                _bidInterstitialAdManager = [[NSClassFromString(@"MTGBidInterstitialVideoAdManager") alloc] initWithUnitID:info[@"unitid"] delegate:_customEvent];
+                 if (NSClassFromString(@"MTGAdCustomConfig") != nil && [NSClassFromString(@"MTGAdCustomConfig") respondsToSelector:@selector(sharedInstance)] && [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] respondsToSelector:@selector(setCustomInfo:type:unitId:)]) {
+                     [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] setCustomInfo:[info[kADapterCustomInfoStatisticsInfoKey] jsonString_anythink] type:1 unitId:info[@"unitid"]];
+                 }
+                _bidInterstitialAdManager = [[NSClassFromString(@"MTGBidInterstitialVideoAdManager") alloc] initWithPlacementId:info[@"placement_id"] unitId:info[@"unitid"] delegate:_customEvent];
                 [_bidInterstitialAdManager loadAdWithBidToken:[unitGroupModel bidTokenWithRequestID:requestID]];
                 [unitGroupModel setBidTokenUsedFlagForRequestID:requestID];
             } else {
-                _videoAdManager = [[NSClassFromString(@"MTGInterstitialVideoAdManager") alloc] initWithUnitID:info[@"unitid"] delegate:_customEvent];
-                _videoAdManager.delegate = _customEvent;
+                if (NSClassFromString(@"MTGAdCustomConfig") != nil && [NSClassFromString(@"MTGAdCustomConfig") respondsToSelector:@selector(sharedInstance)] && [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] respondsToSelector:@selector(setCustomInfo:type:unitId:)]) {
+                    [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] setCustomInfo:[info[kADapterCustomInfoStatisticsInfoKey] jsonString_anythink] type:0 unitId:info[@"unitid"]];
+                }
+                _videoAdManager = [[NSClassFromString(@"MTGInterstitialVideoAdManager") alloc] initWithPlacementId:info[@"placement_id"] unitId:info[@"unitid"] delegate:_customEvent];
                 [_videoAdManager loadAd];
             }
         } else {
-            _interstitialAdManager = [[NSClassFromString(@"MTGInterstitialAdManager") alloc] initWithUnitID:info[@"unitid"] adCategory:0];
+            if (NSClassFromString(@"MTGAdCustomConfig") != nil && [NSClassFromString(@"MTGAdCustomConfig") respondsToSelector:@selector(sharedInstance)] && [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] respondsToSelector:@selector(setCustomInfo:type:unitId:)]) {
+                [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] setCustomInfo:[info[kADapterCustomInfoStatisticsInfoKey] jsonString_anythink] type:0 unitId:info[@"unitid"]];
+            }
+            _interstitialAdManager = [[NSClassFromString(@"MTGInterstitialAdManager") alloc] initWithPlacementId:info[@"placement_id"] unitId:info[@"unitid"] adCategory:0];
             [_interstitialAdManager loadWithDelegate:_customEvent];
         }
     } else {

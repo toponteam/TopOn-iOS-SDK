@@ -16,7 +16,7 @@
 #import "ATImageLoader.h"
 #import "ATAdManagement.h"
 #import "ATAdCustomEvent.h"
-
+#import "ATNativeADCache.h"
 NSString *const kATTTNativeExpressAdManager = @"native_express_tt_admanager";
 
 @implementation ATTTNativeCustomEvent
@@ -147,6 +147,7 @@ NSString *const kATTTNativeExpressAdManager = @"native_express_tt_admanager";
         }];
         self.requestCompletionBlock(assets, nil);
     }
+    
 }
 
 - (void)nativeExpressAdFailToLoad:(id<ATBUNativeExpressAdManager>)nativeExpressAd error:(NSError *_Nullable)error {
@@ -197,5 +198,12 @@ NSString *const kATTTNativeExpressAdManager = @"native_express_tt_admanager";
 
 -(void) dealloc {
     NSLog(@"TT Native customEvent dealloc");
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"slot_id"];
+    return extra;
 }
 @end

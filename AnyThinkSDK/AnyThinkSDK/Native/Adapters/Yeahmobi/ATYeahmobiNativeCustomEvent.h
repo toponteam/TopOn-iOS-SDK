@@ -8,6 +8,7 @@
 
 #import "ATNativeADCustomEvent.h"
 #import "ATYeahmobiNativeAdapter.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface ATYeahmobiNativeCustomEvent : ATNativeADCustomEvent<CTNativeModelDelegate>

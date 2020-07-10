@@ -8,6 +8,6 @@
 
 #import "ATInterstitialCustomEvent.h"
 #import "ATTTInterstitialAdapter.h"
-@interface ATTTInterstitialCustomEvent : ATInterstitialCustomEvent<BUInterstitialAdDelegate, BUFullscreenVideoAdDelegate, BUNativeExpresInterstitialAdDelegate>
+@interface ATTTInterstitialCustomEvent : ATInterstitialCustomEvent<BUInterstitialAdDelegate, BUFullscreenVideoAdDelegate, BUNativeExpresInterstitialAdDelegate, BUNativeExpressFullscreenVideoAdDelegate>
 @property (nonatomic)BOOL isFailed;
 @end

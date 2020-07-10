@@ -37,7 +37,6 @@ extern NSString *const kAgentEventExtraInfoPSIDKey;
 extern NSString *const kAgentEventExtraInfoSessionIDKey;
 extern NSString *const kAgentEventExtraInfoRequestIDKey;
 extern NSString *const kAgentEventExtraInfoGroupIDKey;
-extern NSString *const kAgentEventExtraInfoFormatKey;
 extern NSString *const kAgentEventExtraInfoLoadingEventTypeKey;
 extern NSString *const kAgentEventExtraInfoSDKCallFlagKey;
 extern NSString *const kAgentEventExtraInfoSDKNotCalledReasonKey;
@@ -94,6 +93,16 @@ extern NSString *const kAgentEventExtraInfoGDPRThirdPartySDKLevelKey;
 extern NSString *const kAgentEventExtraInfoGDPRDevConsentKey;
 extern NSString *const kAgentEventExtraInfoServerGDPRIAValueKey;
 
+extern NSString *const kAgentEventExtraInfoLifecycleEventTypeKey;
+extern NSString *const kAgentEventExtraInfoActivateTimeKey;
+extern NSString *const kAgentEventExtraInfoResignActiveTimeKey;
+extern NSString *const kAgentEventExtraInfoLifecycleIntervalKey;
+
+extern NSString *const kAgentEventExtraInfoFormatKey;
+extern NSString *const kAgentEventExtraInfoShowTimestampKey;
+extern NSString *const kAgentEventExtraInfoCloseTimestampKey;
+extern NSString *const kAgentEventExtraInfoShowDurationKey;
+
 extern NSString *const kATAgentEventKeyLoadFail;
 extern NSString *const kATAgentEventKeyFailToPlay;
 extern NSString *const kATAgentEventKeyRequestFail;
@@ -107,6 +116,8 @@ extern NSString *const kATAgentEventKeyMyOfferVideoDownload;
 extern NSString *const kATAgentEventKeyAdSourceStatusFillKey;
 extern NSString *const kATAgentEventKeyMetadataAndAdDataLoadingTimeKey;
 extern NSString *const kATAgentEventKeyGDPRLevelKey;
+extern NSString *const kATAgentEventKeyAppLifecycleKey;
+extern NSString *const kATAgentEventKeyAdShowDurationKey;
 
 typedef NS_ENUM(NSInteger, ATAgentEventAdNotReason) {
     ATAgentEventAdNotReasonStatusFalse = 0,

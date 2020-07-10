@@ -45,8 +45,9 @@ extern NSString *const kATMintegralNativeAssetCustomEvent;
 
 @protocol ATMTGSDK<NSObject>
 +(instancetype) sharedInstance;
++(NSString *)sdkVersion;
 - (void)setUserPrivateInfoType:(ATMTGUserPrivateType)type agree:(BOOL)agree;
-- (void)setAppID:(nonnull NSString *)appID ApiKey:(nonnull NSString *)apiKey;
+- (void)setAppID:(NSString *)appID ApiKey:( NSString *)apiKey;
 @property (nonatomic, assign) BOOL consentStatus;
 @end
 
@@ -57,29 +58,30 @@ extern NSString *const kATMintegralNativeAssetCustomEvent;
 @protocol ATMTGNativeAdManagerDelegate;
 @protocol ATMTGCampaign;
 @protocol ATMTGNativeAdManager<NSObject>
-- (nonnull instancetype)initWithUnitID:(nonnull NSString *)unitId
-                         fbPlacementId:(nullable NSString *)fbPlacementId
-                    supportedTemplates:(nullable NSArray *)templates
-                        autoCacheImage:(BOOL)autoCacheImage
-                            adCategory:(ATMTGAdCategory)adCategory
-              presentingViewController:(nullable UIViewController *)viewController;
-- (void)registerViewForInteraction:(nonnull UIView *)view
-                withClickableViews:(nonnull NSArray *)clickableViews
+- (instancetype)initWithPlacementId:(NSString *)placementId
+                  unitID:(NSString *)unitId
+           fbPlacementId:(NSString *)fbPlacementId
+      supportedTemplates:(NSArray *)templates
+          autoCacheImage:(BOOL)autoCacheImage
+              adCategory:(NSInteger)adCategory
+                   presentingViewController:(UIViewController *)viewController;
+- (void)registerViewForInteraction:(UIView *)view
+                withClickableViews:(NSArray *)clickableViews
                       withCampaign:(id<ATMTGCampaign>)campaign;
 - (void)loadAds;
-@property (nonatomic, weak, nullable) id <ATMTGNativeAdManagerDelegate> delegate;
+@property (nonatomic, weak) id <ATMTGNativeAdManagerDelegate> delegate;
 @end
 
 @protocol ATMTGNativeAdManagerDelegate <NSObject>
-- (void)nativeAdsLoaded:(nullable NSArray *)nativeAds;
-- (void)nativeAdsFailedToLoadWithError:(nonnull NSError *)error;
+- (void)nativeAdsLoaded:(NSArray *)nativeAds;
+- (void)nativeAdsFailedToLoadWithError:(NSError *)error;
 @end
 
 @protocol ATMTGMediaViewDelegate;
 @protocol ATMTGCampaign;
 @protocol ATMTGMediaView<NSObject>
 - (void)setMediaSourceWithCampaign:(id<ATMTGCampaign>)campaign unitId:(NSString*)unitId;
-@property (nonatomic, weak, nullable) id<ATMTGMediaViewDelegate> delegate;
+@property (nonatomic, weak) id<ATMTGMediaViewDelegate> delegate;
 @property (nonatomic,readonly,getter = isVideoContent) BOOL videoContent;
 @end
 
@@ -94,27 +96,51 @@ extern NSString *const kATMintegralNativeAssetCustomEvent;
 @end
 
 @protocol ATMTGMediaViewDelegate <NSObject>
-- (void)nativeAdImpressionWithType:(ATMTGAdSourceType)type mediaView:(id<ATMTGMediaView>)mediaView;
-- (void)nativeAdDidClick:(nonnull id<ATMTGCampaign>)nativeAd;
 @end
 
 @protocol MTGBidNativeAdManagerDelegate;
 @protocol ATMTGBidNativeAdManager<NSObject>
-@property (nonatomic, weak, nullable) id <MTGBidNativeAdManagerDelegate> delegate;
+@property (nonatomic, weak) id <MTGBidNativeAdManagerDelegate> delegate;
 @property (nonatomic, assign) BOOL showLoadingView;
-@property (nonatomic, readonly) NSString * _Nonnull currentUnitId;
-@property (nonatomic, weak) UIViewController * _Nullable  viewController;
-- (nonnull instancetype)initWithUnitID:(nonnull NSString *)unitId presentingViewController:(nullable UIViewController *)viewController;
-- (nonnull instancetype)initWithUnitID:(nonnull NSString *)unitId autoCacheImage:(BOOL)autoCacheImage presentingViewController:(nullable UIViewController *)viewController;
-- (void)loadWithBidToken:(nonnull NSString *)bidToken;
-- (void)registerViewForInteraction:(nonnull UIView *)view withCampaign:(nonnull id<ATMTGCampaign>)campaign;
-- (void)unregisterView:(nonnull UIView *)view;
-- (void)registerViewForInteraction:(nonnull UIView *)view withClickableViews:(nonnull NSArray *)clickableViews withCampaign:(nonnull id<ATMTGCampaign>)campaign;
-- (void)unregisterView:(nonnull UIView *)view clickableViews:(nonnull NSArray *)clickableViews;
+@property (nonatomic, readonly) NSString *currentUnitId;
+@property (nonatomic, weak) UIViewController *viewController;
+- (instancetype)initWithPlacementId:(NSString *)placementId unitID:(NSString *)unitId presentingViewController:(UIViewController *)viewController;
+- (void)loadWithBidToken:(NSString *)bidToken;
+- (void)registerViewForInteraction:(UIView *)view withCampaign:(id<ATMTGCampaign>)campaign;
+- (void)unregisterView:(UIView *)view;
+- (void)registerViewForInteraction:(UIView *)view withClickableViews:(NSArray *)clickableViews withCampaign:(id<ATMTGCampaign>)campaign;
+- (void)unregisterView:(UIView *)view clickableViews:(NSArray *)clickableViews;
 - (void)cleanAdsCache;
 -(void)setVideoViewSize:(CGSize)size;
 -(void)setVideoViewSizeWithWidth:(CGFloat)width height:(CGFloat)height;
 @end
 
 @protocol MTGBidNativeAdManagerDelegate<NSObject>
+@end
+
+@protocol ATNativeMTGAdCustomConfig<NSObject>
++(instancetype)sharedInstance;
+-(void)setCustomInfo:(NSString*)customInfo type:(NSInteger)type unitId:(NSString*)unitID;
+@end
+
+
+@protocol MTGNativeAdvancedAdDelegate <NSObject>
+@end
+
+@protocol ATMTGNativeAdvancedAd<NSObject>
+@property(nonatomic,weak) id <MTGNativeAdvancedAdDelegate> delegate;
+/**
+ MTGVideoPlayTypeOnlyWiFi = 1,// the video will play only if the network is WiFi
+ MTGVideoPlayTypeJustTapped = 2,// the video will play when user tap the adView
+ MTGVideoPlayTypeAuto = 3
+ */
+@property(nonatomic,assign) NSInteger autoPlay;
+@property(nonatomic,assign) BOOL mute;
+@property(nonatomic,assign) BOOL showCloseButton;
+- (void)setAdElementsStyle:(NSDictionary *)style;
+- (void)loadAd;
+- (void)loadAdWithBidToken:(NSString *)bidToken;
+- (UIView *)fetchAdView;
+- (void)destroyNativeAd;
+- (instancetype)initWithPlacementID:(NSString *)placementID unitID:(NSString *)unitID adSize:(CGSize)adSize rootViewController:(UIViewController *)rootViewControlle;
 @end

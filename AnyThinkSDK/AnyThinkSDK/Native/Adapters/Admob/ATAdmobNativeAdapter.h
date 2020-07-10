@@ -51,8 +51,12 @@ extern NSString * const ATGADUnifiedNativeAdChoicesViewAsset;
 - (void)registerAdNetworkExtras:(id<ATGADAdNetworkExtras>)extras;
 @end
 
-@protocol ATGADMultipleAdsAdLoaderOptions<ATGADVideoOptions>
+@protocol ATGADMultipleAdsAdLoaderOptions<ATGADAdLoaderOptions>
 @property(nonatomic) NSInteger numberOfAds;
+@end
+
+@protocol ATGADNativeAdMediaAdLoaderOptions<ATGADAdLoaderOptions>
+@property(nonatomic, assign) NSInteger mediaAspectRatio;
 @end
 
 @protocol ATGADAdLoaderDelegate;
@@ -60,7 +64,7 @@ extern NSString * const ATGADUnifiedNativeAdChoicesViewAsset;
 - (instancetype)initWithAdUnitID:(NSString *)adUnitID
               rootViewController:(UIViewController *)rootViewController
                          adTypes:(NSArray<NSString*> *)adTypes
-                         options:(NSArray<id<ATGADMultipleAdsAdLoaderOptions>> *)options;
+                         options:(NSArray<id<ATGADAdLoaderOptions>> *)options;
 @property(nonatomic, weak) id<ATGADAdLoaderDelegate> delegate;
 - (void)loadRequest:(id<ATGADRequest>)request;
 @end

@@ -33,7 +33,7 @@
 - (void)interstitialWillPresentScreen:(id<ATBaiduMobAdInterstitial>)interstitial {
     [ATLogger logMessage:@"BaiduInterstitial::interstitialWillPresentScreen:" type:ATLogTypeExternal];
     [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}]; }
+    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)interstitialSuccessPresentScreen:(id<ATBaiduMobAdInterstitial>)interstitial {
@@ -48,7 +48,7 @@
     [ATLogger logMessage:@"BaiduInterstitial::interstitialDidAdClicked:" type:ATLogTypeExternal];
     [self trackClick];
     if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-        [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
+        [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
     }
 }
 
@@ -56,7 +56,7 @@
     [ATLogger logMessage:@"BaiduInterstitial::interstitialDidDismissScreen:" type:ATLogTypeExternal];
     [self handleClose];
     if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
+        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
     }
     interstitial.delegate = nil;
     self.delegate = nil;
@@ -64,5 +64,11 @@
 
 - (void)interstitialDidDismissLandingPage:(id<ATBaiduMobAdInterstitial>)interstitial {
     [ATLogger logMessage:@"BaiduInterstitial::interstitialDidDismissLandingPage:" type:ATLogTypeExternal];
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"ad_place_id"];
+    return extra;
 }
 @end

@@ -105,7 +105,7 @@ static NSString *const kOfferLoadingErrorDomain = @"com.anythink.MyOfferResource
                                             } else {
                                                 agentEventExtra[kAgentEventExtraInfoMyOfferVideoDownloadFailReasonKey] = [NSString stringWithFormat:@"%@%ld", error, ((NSHTTPURLResponse*)response).statusCode];
                                             }
-                                            [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyMyOfferVideoDownload placementID:nil unitGroupModel:nil extraInfo:agentEventExtra];
+                                            [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyMyOfferVideoDownload placementID:setting.placementID unitGroupModel:nil extraInfo:agentEventExtra];
                                         }
                                         
                                         if (numberOfFinishedDownload == [offerModel.resourceURLs count]) {

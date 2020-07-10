@@ -27,6 +27,7 @@
 @protocol ATWindSplashAd<NSObject>
 @property (nonatomic,weak) id<WindSplashAdDelegate> delegate;
 @property (nonatomic, assign) int fetchDelay;
+@property(nonatomic, weak) UIWindowScene *windowScene API_AVAILABLE(ios(13.0));
 - (instancetype)initWithPlacementId:(NSString *)placementId;
 -(void)loadAdAndShowWithBottomView:(UIView *)bottomView;
 @end

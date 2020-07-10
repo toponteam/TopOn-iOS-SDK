@@ -75,7 +75,7 @@ static NSString *const kBannerStorageRequestIDKey = @"request_id";
 -(ATBanner*) bannerForPlacementID:(NSString*)placementID invalidateStatus:(BOOL)invalidateStatus extra:(NSDictionary* __autoreleasing*)extra {
     __weak typeof(self) weakSelf = self;
     return [_bannerStorageAccessor readWithBlock:^id{
-        ATBanner *banner = [ATAdStorageUtility adInStorage:weakSelf.bannerStorage statusStorage:weakSelf.statusStorage forPlacementID:placementID extra:extra];
+        ATBanner *banner = [ATAdStorageUtility adInStorage:weakSelf.bannerStorage statusStorage:weakSelf.statusStorage forPlacementID:placementID caller:invalidateStatus ? ATAdManagerReadyAPICallerShow : ATAdManagerReadyAPICallerReady extra:extra];
         if (invalidateStatus) { [ATAdStorageUtility invalidateStatusForAd:banner inStatusStorage:weakSelf.statusStorage]; }
         return banner;
     }];

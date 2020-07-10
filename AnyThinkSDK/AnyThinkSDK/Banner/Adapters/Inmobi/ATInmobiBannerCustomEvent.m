@@ -15,6 +15,14 @@
 @property(nonatomic, readonly) BOOL interacted;
 @end
 @implementation ATInmobiBannerCustomEvent
+-(void)banner:(id<ATIMBanner>)banner gotSignals:(NSData*)signals { [ATLogger logMessage:@"InmobiBanner::banner:gotSignals:" type:ATLogTypeExternal]; }
+
+-(void)banner:(id<ATIMBanner>)banner failedToGetSignalsWithError:(id)status { [ATLogger logMessage:[NSString stringWithFormat:@"InmobiBanner::banner:failedToGetSignalsWithError:%@", status] type:ATLogTypeExternal]; }
+
+-(void)banner:(id<ATIMBanner>)banner didReceiveWithMetaInfo:(id)info { [ATLogger logMessage:[NSString stringWithFormat:@"InmobiBanner::banner:didReceiveWithMetaInfo:"] type:ATLogTypeExternal]; }
+
+-(void)banner:(id<ATIMBanner>)banner didFailToReceiveWithError:(id)error { [ATLogger logMessage:[NSString stringWithFormat:@"InmobiBanner::banner:didFailToReceiveWithError:%@", error] type:ATLogTypeExternal]; }
+
 -(void)bannerDidFinishLoading:(id<ATIMBanner>)banner {
     [ATLogger logMessage:@"InmobiBanner::bannerDidFinishLoading:" type:ATLogTypeExternal];
     NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:banner, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, nil];
@@ -65,15 +73,19 @@
 }
 
 -(void)banner:(id<ATIMBanner>)banner rewardActionCompletedWithRewards:(NSDictionary*)rewards {
-    [ATLogger logMessage:@"InmobiBanner::" type:ATLogTypeExternal];
+    [ATLogger logMessage:[NSString stringWithFormat:@"InmobiBanner::banner:rewardActionCompletedWithRewards:%@", rewards] type:ATLogTypeExternal];
 }
 
 -(void) handleClick {
     if (!_interacted || !_clickHandled) {
         [self trackClick];
-        if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-            [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.priorityIndex),kATBannerDelegateExtraPrice:@(self.banner.unitGroup.price)}];
-        }
+        if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) { [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]]; }
     }
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"unit_id"];
+    return extra;
 }
 @end

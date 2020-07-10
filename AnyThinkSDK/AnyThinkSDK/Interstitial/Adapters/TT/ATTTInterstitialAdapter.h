@@ -51,26 +51,10 @@ typedef NS_ENUM(NSInteger, ATWMProposalSize) {
 @end
 
 @protocol BUInterstitialAdDelegate <NSObject>
-@optional
-- (void)interstitialAdDidClick:(id<ATBUInterstitialAd>)interstitialAd;
-- (void)interstitialAdDidClose:(id<ATBUInterstitialAd>)interstitialAd;
-- (void)interstitialAdWillClose:(id<ATBUInterstitialAd>)interstitialAd;
-- (void)interstitialAdDidLoad:(id<ATBUInterstitialAd>)interstitialAd;
-- (void)interstitialAd:(id<ATBUInterstitialAd>)interstitialAd didFailWithError:(NSError *)error;
-- (void)interstitialAdWillVisible:(id<ATBUInterstitialAd>)interstitialAd;
 @end
 
 @protocol ATBUFullscreenVideoAd;
 @protocol BUFullscreenVideoAdDelegate <NSObject>
-@optional
-- (void)fullscreenVideoMaterialMetaAdDidLoad:(id<ATBUFullscreenVideoAd>)fullscreenVideoAd;
-- (void)fullscreenVideoAdVideoDataDidLoad:(id<ATBUFullscreenVideoAd>)fullscreenVideoAd;
-- (void)fullscreenVideoAdWillVisible:(id<ATBUFullscreenVideoAd>)fullscreenVideoAd;
-- (void)fullscreenVideoAdDidClose:(id<ATBUFullscreenVideoAd>)fullscreenVideoAd;
-- (void)fullscreenVideoAdDidClick:(id<ATBUFullscreenVideoAd>)fullscreenVideoAd;
-- (void)fullscreenVideoAd:(id<ATBUFullscreenVideoAd>)fullscreenVideoAd didFailWithError:(NSError *)error;
-- (void)fullscreenVideoAdDidPlayFinish:(id<ATBUFullscreenVideoAd>)fullscreenVideoAd didFailWithError:(NSError *)error;
-- (void)fullscreenVideoAdDidClickSkip:(id<ATBUFullscreenVideoAd>)fullscreenVideoAd;
 @end
 
 @protocol ATBUFullscreenVideoAd<NSObject>
@@ -83,15 +67,6 @@ typedef NS_ENUM(NSInteger, ATWMProposalSize) {
 
 @protocol ATBUNativeExpressInterstitialAd;
 @protocol BUNativeExpresInterstitialAdDelegate <NSObject>
-@optional
-- (void)nativeExpresInterstitialAdDidLoad:(id<ATBUNativeExpressInterstitialAd>)interstitialAd;
-- (void)nativeExpresInterstitialAd:(id<ATBUNativeExpressInterstitialAd>)interstitialAd didFailWithError:(NSError * __nullable)error;
-- (void)nativeExpresInterstitialAdRenderSuccess:(id<ATBUNativeExpressInterstitialAd>)interstitialAd;
-- (void)nativeExpresInterstitialAdRenderFail:(id<ATBUNativeExpressInterstitialAd>)interstitialAd error:(NSError * __nullable)error;
-- (void)nativeExpresInterstitialAdWillVisible:(id<ATBUNativeExpressInterstitialAd>)interstitialAd;
-- (void)nativeExpresInterstitialAdDidClick:(id<ATBUNativeExpressInterstitialAd>)interstitialAd;
-- (void)nativeExpresInterstitialAdWillClose:(id<ATBUNativeExpressInterstitialAd>)interstitialAd;
-- (void)nativeExpresInterstitialAdDidClose:(id<ATBUNativeExpressInterstitialAd>)interstitialAd;
 @end
 
 @protocol ATBUNativeExpressInterstitialAd<NSObject>
@@ -104,29 +79,16 @@ typedef NS_ENUM(NSInteger, ATWMProposalSize) {
 - (BOOL)showAdFromRootViewController:(UIViewController *)rootViewController;
 @end
 
-@protocol ATBUNativeExpressFullscreenVideoAdDelegate;
+@protocol BUNativeExpressFullscreenVideoAdDelegate;
 @protocol ATBUNativeExpressFullscreenVideoAd <NSObject>
-@property (nonatomic, weak, nullable) id<ATBUNativeExpressFullscreenVideoAdDelegate> delegate;
+@property (nonatomic, weak, nullable) id<BUNativeExpressFullscreenVideoAdDelegate> delegate;
 @property (nonatomic, getter=isAdValid, readonly) BOOL adValid;
 - (instancetype)initWithSlotID:(NSString *)slotID;
 - (void)loadAdData;
 - (BOOL)showAdFromRootViewController:(UIViewController *)rootViewController;
 @end
 
-@protocol ATBUNativeExpressFullscreenVideoAdDelegate <NSObject>
-@optional
-- (void)nativeExpressFullscreenVideoAdDidLoad:(id <ATBUNativeExpressFullscreenVideoAd>)fullscreenVideoAd;
-- (void)nativeExpressFullscreenVideoAd:(id <ATBUNativeExpressFullscreenVideoAd>)fullscreenVideoAd didFailWithError:(NSError *_Nullable)error;
-- (void)nativeExpressFullscreenVideoAdViewRenderSuccess:(id <ATBUNativeExpressFullscreenVideoAd>)rewardedVideoAd;
-- (void)nativeExpressFullscreenVideoAdViewRenderFail:(id <ATBUNativeExpressFullscreenVideoAd>)rewardedVideoAd error:(NSError *_Nullable)error;
-- (void)nativeExpressFullscreenVideoAdDidDownLoadVideo:(id <ATBUNativeExpressFullscreenVideoAd>)fullscreenVideoAd;
-- (void)nativeExpressFullscreenVideoAdWillVisible:(id <ATBUNativeExpressFullscreenVideoAd>)fullscreenVideoAd;
-- (void)nativeExpressFullscreenVideoAdDidVisible:(id <ATBUNativeExpressFullscreenVideoAd>)fullscreenVideoAd;
-- (void)nativeExpressFullscreenVideoAdDidClick:(id <ATBUNativeExpressFullscreenVideoAd>)fullscreenVideoAd;
-- (void)nativeExpressFullscreenVideoAdDidClickSkip:(id <ATBUNativeExpressFullscreenVideoAd>)fullscreenVideoAd;
-- (void)nativeExpressFullscreenVideoAdWillClose:(id <ATBUNativeExpressFullscreenVideoAd>)fullscreenVideoAd;
-- (void)nativeExpressFullscreenVideoAdDidClose:(id <ATBUNativeExpressFullscreenVideoAd>)fullscreenVideoAd;
-- (void)nativeExpressFullscreenVideoAdDidPlayFinish:(id <ATBUNativeExpressFullscreenVideoAd>)fullscreenVideoAd didFailWithError:(NSError *_Nullable)error;
+@protocol BUNativeExpressFullscreenVideoAdDelegate <NSObject>
 @end
 
 

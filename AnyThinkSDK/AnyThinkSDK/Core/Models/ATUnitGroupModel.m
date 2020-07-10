@@ -35,11 +35,13 @@ CGSize sizeFromString(NSString *sizeStr) {
         _networkFirmID = [dictionary[@"nw_firm_id"] integerValue];
         _networkRequestNum = [dictionary[@"nw_req_num"] integerValue];
         _networkDataTimeout = [dictionary[@"n_d_t"] doubleValue];
-        _networkTimeout = [dictionary[@"nw_timeout"] doubleValue];
+        _networkTimeout = [dictionary[@"nw_timeout"] doubleValue] / 1000.0f;
+        _skipIntervalAfterLastLoadingFailure = [dictionary[@"nx_req_time"] doubleValue] / 1000.0f;
         _showingInterval = [dictionary[@"pacing"] doubleValue];
         _unitGroupID = [NSString stringWithFormat:@"%@", dictionary[@"ug_id"]];
         _unitID = [NSString stringWithFormat:@"%@", dictionary[@"unit_id"]];
         _price = [dictionary[@"ecpm"] doubleValue];
+        _ecpmLevel = [dictionary[@"ecpm_level"] integerValue];
         _content = [NSJSONSerialization JSONObjectWithData:[dictionary[@"content"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil];
         _adSize = sizeFromString([_content[@"size"] length] > 0 ? _content[@"size"] : [ATUnitGroupModel defaultSizeWithNetworkFirmID:_networkFirmID]);
         _headerBiddingRequestTimeout = [dictionary[@"hb_timeout"] doubleValue];
@@ -53,6 +55,8 @@ CGSize sizeFromString(NSString *sizeStr) {
         _statusTime = [dictionary[@"l_s_t"] doubleValue] / 1000.0f;
         _postsNotificationOnShow = [dictionary[@"s_sw"] boolValue];
         _postsNotificationOnClick = [dictionary[@"c_sw"] boolValue];
+        NSString *precision = dictionary[@"precision"];
+        _precision = _headerBidding ? @"exact" : ([precision isKindOfClass:[NSString class]] && [precision length] > 0 ? precision : @"publisher_defined");
     }
     return self;
 }
@@ -137,6 +141,6 @@ CGSize sizeFromString(NSString *sizeStr) {
 }
 
 -(NSString*)description {
-    return [NSString stringWithFormat:@"%@", @{@"unit_group_id":_unitGroupID != nil ? _unitGroupID : @"", @"network_firm_id":@(_networkFirmID), @"adapter_class":_adapterClassString, @"ad_source_id":_unitID}];
+    return [NSString stringWithFormat:@"%@", @{@"unit_group_id":_unitGroupID != nil ? _unitGroupID : @"", @"network_firm_id":@(_networkFirmID), @"adapter_class":_adapterClassString, @"ad_source_id":_unitID, @"price":@(_price)}];
 }
 @end

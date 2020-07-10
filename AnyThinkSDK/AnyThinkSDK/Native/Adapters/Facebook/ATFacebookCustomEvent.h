@@ -11,5 +11,5 @@
 #import "ATFacebookNativeAdapter.h"
 extern NSString *const kATFBNativeADAssetsADChoiceImageKey;
 extern NSInteger const kATFBNativeAdViewIconMediaViewFlag;
-@interface ATFacebookCustomEvent : ATNativeADCustomEvent<FBNativeAdDelegate, ATFBMediaViewDelegate>
+@interface ATFacebookCustomEvent : ATNativeADCustomEvent<FBNativeAdDelegate, ATFBMediaViewDelegate, FBNativeBannerAdDelegate>
 @end

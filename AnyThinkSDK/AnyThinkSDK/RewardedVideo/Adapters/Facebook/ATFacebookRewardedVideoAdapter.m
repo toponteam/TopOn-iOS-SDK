@@ -34,7 +34,7 @@ static NSString *const kRewardedVideoClassName = @"FBRewardedVideoAd";
 }
 
 +(void) showRewardedVideo:(ATRewardedVideo*)rewardedVideo inViewController:(UIViewController*)viewController delegate:(id<ATRewardedVideoDelegate>)delegate {
-    ATFacebookRewardedVideoCustomEvent *customEvent = objc_getAssociatedObject(rewardedVideo.customObject, (__bridge_retained void*)kFacebookRVCustomEventKey);
+    ATFacebookRewardedVideoCustomEvent *customEvent = (ATFacebookRewardedVideoCustomEvent*)rewardedVideo.customEvent;
     customEvent.rewardedVideo = rewardedVideo;
     customEvent.delegate = delegate;
     [((id<ATFBRewardedVideoAd>)rewardedVideo.customObject) showAdFromRootViewController:viewController];

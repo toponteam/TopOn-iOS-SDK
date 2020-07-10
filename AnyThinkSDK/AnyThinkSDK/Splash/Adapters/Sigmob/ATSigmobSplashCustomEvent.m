@@ -24,7 +24,7 @@
 - (void)onSplashAdClicked:(id<ATWindSplashAd>)splashAd {
     [ATLogger logMessage:@"SigmobSplash::onSplashAdClicked:" type:ATLogTypeExternal];
     [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:@{kATSplashDelegateExtraNetworkIDKey:@(self.ad.unitGroup.networkFirmID),kATSplashDelegateExtraAdSourceIDKey:self.ad.unitGroup.unitID != nil ? self.ad.unitGroup.unitID : @"",kATSplashDelegateExtraIsHeaderBidding:@(self.ad.unitGroup.headerBidding),kATSplashDelegateExtraPriority:@(self.priorityIndex),kATSplashDelegateExtraPrice:@(self.ad.unitGroup.price)}]; }
+    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)onSplashAdWillClosed:(id<ATWindSplashAd>)splashAd {
@@ -33,7 +33,13 @@
 
 - (void)onSplashAdClosed:(id<ATWindSplashAd>)splashAd {
     [ATLogger logMessage:@"SigmobSplash::onSplashAdClosed:" type:ATLogTypeExternal];
-    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:@{kATSplashDelegateExtraNetworkIDKey:@(self.ad.unitGroup.networkFirmID),kATSplashDelegateExtraAdSourceIDKey:self.ad.unitGroup.unitID != nil ? self.ad.unitGroup.unitID : @"",kATSplashDelegateExtraIsHeaderBidding:@(self.ad.unitGroup.headerBidding),kATSplashDelegateExtraPriority:@(self.priorityIndex),kATSplashDelegateExtraPrice:@(self.ad.unitGroup.price)}];
+    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]];
     }
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"placement_id"];
+    return extra;
 }
 @end

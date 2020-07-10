@@ -18,6 +18,8 @@
 -(void) trackClick;
 -(void) trackShow;
 
+-(NSDictionary*)delegateExtra;
+
 -(instancetype) initWithUnitID:(NSString*)unitID customInfo:(NSDictionary*)customInfo;
 @property(nonatomic, weak) id<ATRewardedVideoDelegate> delegate;
 @property(nonatomic, weak) ATRewardedVideo *rewardedVideo;

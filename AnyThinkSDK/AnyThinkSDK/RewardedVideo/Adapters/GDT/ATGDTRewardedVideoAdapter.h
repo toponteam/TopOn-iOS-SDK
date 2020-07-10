@@ -13,6 +13,7 @@
 @end
 
 @protocol ATGDTSDKConfig<NSObject>
++ (BOOL)registerAppId:(NSString *)appId;
 + (NSString *)sdkVersion;
 @end
 
@@ -21,23 +22,11 @@
 @property (nonatomic, getter=isAdValid, readonly) BOOL adValid;
 @property (nonatomic, assign, readonly) NSInteger expiredTimestamp;
 @property (nonatomic, weak) id <GDTRewardedVideoAdDelegate> delegate;
-- (instancetype)initWithAppId:(NSString *)appId placementId:(NSString *)placementId;
+- (instancetype)initWithPlacementId:(NSString *)placementId;
 - (void)loadAd;
 - (BOOL)showAdFromRootViewController:(UIViewController *)rootViewController;
-
 @end
 
 
 @protocol GDTRewardedVideoAdDelegate <NSObject>
-@optional
-- (void)gdt_rewardVideoAdDidLoad:(id<ATGDTRewardVideoAd>)rewardedVideoAd;
-- (void)gdt_rewardVideoAdVideoDidLoad:(id<ATGDTRewardVideoAd>)rewardedVideoAd;
-- (void)gdt_rewardVideoAdWillVisible:(id<ATGDTRewardVideoAd>)rewardedVideoAd;
-- (void)gdt_rewardVideoAdDidExposed:(id<ATGDTRewardVideoAd>)rewardedVideoAd;
-- (void)gdt_rewardVideoAdDidClose:(id<ATGDTRewardVideoAd>)rewardedVideoAd;
-- (void)gdt_rewardVideoAdDidClicked:(id<ATGDTRewardVideoAd>)rewardedVideoAd;
-- (void)gdt_rewardVideoAd:(id<ATGDTRewardVideoAd>)rewardedVideoAd didFailWithError:(NSError *)error;
-- (void)gdt_rewardVideoAdDidRewardEffective:(id<ATGDTRewardVideoAd>)rewardedVideoAd;
-- (void)gdt_rewardVideoAdDidPlayFinish:(id<ATGDTRewardVideoAd>)rewardedVideoAd;
-
 @end

@@ -28,8 +28,28 @@
     }
     return self;
 }
+
++(NSString*) errorMessageWithError:(NSError*)error {
+    NSDictionary *errorMsgMap = @{@0:@"kGADErrorInvalidRequest",
+                                  @1:@"kGADErrorNoFill",
+                                  @2:@"kGADErrorNetworkError",
+                                  @3:@"kGADErrorServerError",
+                                  @5:@"kGADErrorTimeout",
+                                  @7:@"kGADErrorMediationDataError",
+                                  @8:@"kGADErrorMediationAdapterError",
+                                  @10:@"kGADErrorMediationInvalidAdSize",
+                                  @11:@"kGADErrorInternalError",
+                                  @12:@"kGADErrorInvalidArgument",
+                                  @13:@"kGADErrorReceivedInvalidResponse",
+                                  @9:@"kGADErrorMediationNoFill",
+                                  @19:@"kGADErrorAdAlreadyUsed",
+                                  @20:@"kGADErrorApplicationIdentifierMissing"
+    };
+    return errorMsgMap[@(error.code)] != nil ? errorMsgMap[@(error.code)] : @"Undefined Error";
+}
+
 - (void)adLoader:(id<ATGADAdLoader>)adLoader didFailToReceiveAdWithError:(NSError*)error {
-    [ATLogger logMessage:[NSString stringWithFormat:@"ATAdMobCustomEvent::adLoader:didFailToReceiveAdWithError:%@", error] type:ATLogTypeExternal];
+    [ATLogger logMessage:[NSString stringWithFormat:@"ATAdMobCustomEvent::adLoader:didFailToReceiveAdWithError:%@(code:%@)", error, [ATAdMobCustomEvent errorMessageWithError:error]] type:ATLogTypeExternal];
     dispatch_async(dispatch_get_main_queue(), ^{
         _numberOfFailedRequest++;
         if (_numberOfFailedRequest == self.requestNumber && !_finished) {
@@ -168,5 +188,12 @@
             }
         }
     }
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unit_id"];
+    return extra;
 }
 @end

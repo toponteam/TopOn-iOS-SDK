@@ -123,4 +123,11 @@
     [ATLogger logMessage:@"NendNaitve::nadNativeVideoViewDidCloseFullScreen:" type:ATLogTypeExternal];
     [self.adView notifyVideoExitFullScreen];
 }
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"spot_id"];
+    return extra;
+}
 @end

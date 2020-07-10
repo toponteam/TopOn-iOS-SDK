@@ -208,7 +208,7 @@ NSString *const kATExtraNativeImageSizeKey = @"native_image_size";
         
         //Notify delegate
         if ([_delegate respondsToSelector:@selector(didShowNativeAdInAdView:placementID:extra:)]) {
-            [_delegate didShowNativeAdInAdView:[self embededAdView] placementID:_placementID extra:@{kATNativeDelegateExtraNetworkIDKey:@(self.currentOffer.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:self.currentOffer.unitGroup.unitID != nil ? self.currentOffer.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(self.currentOffer.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(self.currentOffer.priorityIndex),kATNativeDelegateExtraPrice:@(self.currentOffer.unitGroup.price)}];
+            [_delegate didShowNativeAdInAdView:[self embededAdView] placementID:_placementID extra:[self.customEvent delegateExtra]];
         }
     }
    
@@ -220,37 +220,43 @@ NSString *const kATExtraNativeImageSizeKey = @"native_image_size";
 
 #pragma mark - internal
 -(void) notifyNativeAdClick {
-    if ([self.delegate respondsToSelector:@selector(didClickNativeAdInAdView:placementID:extra:)]) { [self.delegate didClickNativeAdInAdView:self placementID:_placementID extra:@{kATNativeDelegateExtraNetworkIDKey:@(self.currentOffer.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:self.currentOffer.unitGroup.unitID != nil ? self.currentOffer.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(self.currentOffer.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(self.currentOffer.priorityIndex),kATNativeDelegateExtraPrice:@(self.currentOffer.unitGroup.price)}];
+    if ([self.delegate respondsToSelector:@selector(didClickNativeAdInAdView:placementID:extra:)]) {
+        [self.delegate didClickNativeAdInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
 
 }
 
 -(void) notifyCloseButtonTapped {
-    if ([self.delegate respondsToSelector:@selector(didTapCloseButtonInAdView:placementID:extra:)]) { [self.delegate didTapCloseButtonInAdView:self placementID:_placementID extra:@{kATNativeDelegateExtraNetworkIDKey:@(self.currentOffer.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:self.currentOffer.unitGroup.unitID != nil ? self.currentOffer.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(self.currentOffer.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(self.currentOffer.priorityIndex),kATNativeDelegateExtraPrice:@(self.currentOffer.unitGroup.price)}];
+    if ([self.delegate respondsToSelector:@selector(didTapCloseButtonInAdView:placementID:extra:)]) {
+        [self.delegate didTapCloseButtonInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
 }
 
 -(void) notifyVideoStart {
-    if ([self.delegate respondsToSelector:@selector(didStartPlayingVideoInAdView:placementID:extra:)]) { [self.delegate didStartPlayingVideoInAdView:self placementID:_placementID extra:@{kATNativeDelegateExtraNetworkIDKey:@(self.currentOffer.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:self.currentOffer.unitGroup.unitID != nil ? self.currentOffer.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(self.currentOffer.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(self.currentOffer.priorityIndex),kATNativeDelegateExtraPrice:@(self.currentOffer.unitGroup.price)}];
+    if ([self.delegate respondsToSelector:@selector(didStartPlayingVideoInAdView:placementID:extra:)]) {
+        [self.delegate didStartPlayingVideoInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
 
 }
 
 -(void) notifyVideoEnd {
-    if ([self.delegate respondsToSelector:@selector(didEndPlayingVideoInAdView:placementID:extra:)]) { [self.delegate didEndPlayingVideoInAdView:self placementID:_placementID extra:@{kATNativeDelegateExtraNetworkIDKey:@(self.currentOffer.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:self.currentOffer.unitGroup.unitID != nil ? self.currentOffer.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(self.currentOffer.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(self.currentOffer.priorityIndex),kATNativeDelegateExtraPrice:@(self.currentOffer.unitGroup.price)}];
+    if ([self.delegate respondsToSelector:@selector(didEndPlayingVideoInAdView:placementID:extra:)]) {
+        [self.delegate didEndPlayingVideoInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
 
     
 }
 
 -(void) notifyVideoEnterFullScreen {
-    if ([self.delegate respondsToSelector:@selector(didEnterFullScreenVideoInAdView:placementID: extra:)]) { [self.delegate didEnterFullScreenVideoInAdView:self placementID:_placementID extra:@{kATNativeDelegateExtraNetworkIDKey:@(self.currentOffer.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:self.currentOffer.unitGroup.unitID != nil ? self.currentOffer.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(self.currentOffer.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(self.currentOffer.priorityIndex),kATNativeDelegateExtraPrice:@(self.currentOffer.unitGroup.price)}];
+    if ([self.delegate respondsToSelector:@selector(didEnterFullScreenVideoInAdView:placementID: extra:)]) {
+        [self.delegate didEnterFullScreenVideoInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
 
 }
 
 -(void) notifyVideoExitFullScreen {
-    if ([self.delegate respondsToSelector:@selector(didExitFullScreenVideoInAdView:placementID:extra:)]) { [self.delegate didExitFullScreenVideoInAdView:self placementID:_placementID extra:@{kATNativeDelegateExtraNetworkIDKey:@(self.currentOffer.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:self.currentOffer.unitGroup.unitID != nil ? self.currentOffer.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(self.currentOffer.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(self.currentOffer.priorityIndex),kATNativeDelegateExtraPrice:@(self.currentOffer.unitGroup.price)}];
+    if ([self.delegate respondsToSelector:@selector(didExitFullScreenVideoInAdView:placementID:extra:)]) {
+        [self.delegate didExitFullScreenVideoInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
 
 }

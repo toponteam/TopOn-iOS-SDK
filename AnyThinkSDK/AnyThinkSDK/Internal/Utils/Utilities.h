@@ -70,6 +70,7 @@ extern NSString *const kCallStackSymbolCallerClassKey;
 
 @interface NSArray(ATKit)
 -(NSString*) jsonString_anythink;
+-(NSArray*) shuffledArray_anythink;
 @end
 
 @interface UIImage(ATKit)

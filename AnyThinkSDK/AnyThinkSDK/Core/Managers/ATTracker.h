@@ -38,6 +38,7 @@ extern NSString *const kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey;
 extern NSString *const kATTrackerExtraCustomObjectKey;
 extern NSString *const kATTrackerExtraAdObjectKey;
 extern NSString *const kATTrackerExtraAdShowSceneKey;
+extern NSString *const kATTrackerExtraAdShowSDKTimeKey;
 
 typedef NS_ENUM(NSInteger, ATNativeADTrackType) {
     ATNativeADTrackTypeADRequest = 1,
@@ -54,7 +55,8 @@ typedef NS_ENUM(NSInteger, ATNativeADTrackType) {
     ATNativeAdTrackTypeLoad = 10,
     ATNativeAdTrackTypeBidSort = 11,
     ATNativeAdTrackTypeLoadResult = 12,//currently sent when loading succeeds
-    ATNativeAdTrackTypeShowAPICall = 13
+    ATNativeAdTrackTypeShowAPICall = 13,
+    ATNativeADTrackTypeRankAndShuffle = 15
 };
 
 typedef NS_ENUM(NSInteger, ATNativeADSourceType) {

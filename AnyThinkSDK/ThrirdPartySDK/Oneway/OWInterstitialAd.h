@@ -14,6 +14,8 @@
 
 - (void)oneWaySDKInterstitialAdDidShow:(NSString *)tag;
 
+- (void)oneWaySDKInterstitialAdDidFinish:(NSString *)tag withState:(NSNumber *)state session:(NSString *)session;
+
 - (void)oneWaySDKInterstitialAdDidClose:(NSString *)tag withState:(NSNumber *)state;
 
 - (void)oneWaySDKInterstitialAdDidClick:(NSString *)tag;

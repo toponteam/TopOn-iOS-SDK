@@ -21,6 +21,7 @@ typedef NS_ENUM(NSInteger, ATRVMTGUserPrivateType) {
 
 @protocol ATRVMTGSDK<NSObject>
 + (nonnull instancetype)sharedInstance;
++(NSString *)sdkVersion;
 - (void)setAppID:(nonnull NSString *)appID ApiKey:(nonnull NSString *)apiKey;
 - (void)setUserPrivateInfoType:(ATRVMTGUserPrivateType)type agree:(BOOL)agree;
 @property (nonatomic, assign) BOOL consentStatus;
@@ -33,9 +34,16 @@ typedef NS_ENUM(NSInteger, ATRVMTGUserPrivateType) {
 @protocol ATRVMTGRewardAdShowDelegate;
 @protocol ATRVMTGRewardAdManager<NSObject>
 + (nonnull instancetype)sharedInstance;
-- (void)loadVideo:(nonnull NSString *)unitId delegate:(nullable id <ATRVMTGRewardAdLoadDelegate>)delegate;
-- (void)showVideo:(nonnull NSString *)unitId withRewardId:(nonnull NSString *)rewardId userId:(nullable NSString *)userId delegate:(nullable id <ATRVMTGRewardAdShowDelegate>)delegate viewController:(nonnull UIViewController*)viewController;
-- (BOOL)isVideoReadyToPlay:(nonnull NSString *)unitId;
+- (void)loadVideoWithPlacementId:(nullable NSString *)placementId
+                          unitId:(nonnull NSString *)unitId
+                        delegate:(nullable id <ATRVMTGRewardAdLoadDelegate>)delegate;
+- (void)showVideoWithPlacementId:(nullable NSString *)placementId
+                          unitId:(nonnull NSString *)unitId
+                    withRewardId:(nullable NSString *)rewardId
+                          userId:(nullable NSString *)userId
+                        delegate:(nullable id <ATRVMTGRewardAdShowDelegate>)delegate
+                  viewController:(nonnull UIViewController*)viewController;
+- (BOOL)isVideoReadyToPlayWithPlacementId:(nullable NSString *)placementId unitId:(nonnull NSString *)unitId;
 - (void)cleanAllVideoFileCache;
 @end
 
@@ -57,7 +65,20 @@ typedef NS_ENUM(NSInteger, ATRVMTGUserPrivateType) {
 @protocol ATMTGBidRewardAdManager<NSObject>
 @property (nonatomic, assign) BOOL  playVideoMute;
 + (nonnull instancetype)sharedInstance;
-- (void)loadVideoWithBidToken:(nonnull NSString *)bidToken unitId:(nonnull NSString *)unitId delegate:(nullable id <ATRVMTGRewardAdLoadDelegate>)delegate;
-- (void)showVideo:(nonnull NSString *)unitId withRewardId:(nonnull NSString *)rewardId userId:(nullable NSString *)userId delegate:(nullable id <ATRVMTGRewardAdShowDelegate>)delegate viewController:(nonnull UIViewController*)viewController;
-- (BOOL)isVideoReadyToPlay:(nonnull NSString *)unitId;
+- (void)loadVideoWithBidToken:(nonnull NSString *)bidToken
+placementId:(nullable NSString *)placementId
+     unitId:(nonnull NSString *)unitId
+   delegate:(nullable id <ATRVMTGRewardAdLoadDelegate>)delegate;
+- (void)showVideoWithPlacementId:(nullable NSString *)placementId
+        unitId:(nonnull  NSString *)unitId
+  withRewardId:(nullable NSString *)rewardId
+        userId:(nullable NSString *)userId
+      delegate:(nullable id <ATRVMTGRewardAdShowDelegate>)delegate
+viewController:(nonnull UIViewController*)viewController;
+- (BOOL)isVideoReadyToPlayWithPlacementId:(nullable NSString *)placementId unitId:(nonnull NSString *)unitId;
+@end
+
+@protocol ATRVMTGAdCustomConfig<NSObject>
++(instancetype)sharedInstance;
+-(void)setCustomInfo:(NSString*)customInfo type:(NSInteger)type unitId:(NSString*)unitID;
 @end

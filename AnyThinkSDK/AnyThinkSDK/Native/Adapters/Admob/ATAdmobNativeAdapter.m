@@ -70,9 +70,17 @@ NSString * const ATGADUnifiedNativeAdChoicesViewAsset = @"3013";
         _customEvent.requestNumber = [info[@"request_num"] longValue];
         NSDictionary *extraInfo = info[kAdapterCustomInfoExtraKey];
         _customEvent.requestExtra = extraInfo;
+        
+        NSMutableArray<id<ATGADAdLoaderOptions>>* options = [NSMutableArray<id<ATGADAdLoaderOptions>> array];
         id<ATGADMultipleAdsAdLoaderOptions> option = [NSClassFromString(@"GADMultipleAdsAdLoaderOptions") new];
         option.numberOfAds = [info[@"request_num"] longValue];
-        _loader = [[NSClassFromString(@"GADAdLoader") alloc] initWithAdUnitID:info[@"unit_id"] rootViewController:nil adTypes:@[ kATGADAdLoaderAdTypeUnifiedNative ] options:@[option]];
+        if (option != nil) { [options addObject:option]; }
+        
+        id<ATGADNativeAdMediaAdLoaderOptions> mediaOption = [NSClassFromString(@"GADNativeAdMediaAdLoaderOptions") new];
+        mediaOption.mediaAspectRatio = [info[@"media_ratio"] integerValue];
+        if (mediaOption != nil) { [options addObject:mediaOption]; }
+        
+        _loader = [[NSClassFromString(@"GADAdLoader") alloc] initWithAdUnitID:info[@"unit_id"] rootViewController:nil adTypes:@[ kATGADAdLoaderAdTypeUnifiedNative ] options:options];
         _loader.delegate = _customEvent;
         id<ATGADRequest> request = [NSClassFromString(@"GADRequest") request];
         id<ATPACConsentInformation> consentInfo = [NSClassFromString(@"PACConsentInformation") sharedInstance];

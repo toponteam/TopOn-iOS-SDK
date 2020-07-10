@@ -37,9 +37,13 @@ extern NSString *const kNendInterstitialVideoPlacement;
 extern NSString *const kNendFullScreenInterstitialPlacement;
 extern NSString *const kMaioPlacement;
 extern NSString *const kSigmobPlacement;
+extern NSString *const kSigmobRVIntPlacement;
 extern NSString *const kKSPlacement;
 extern NSString *const kMyOfferPlacement;
 extern NSString *const kOguryPlacement;
+extern NSString *const kStartAppPlacement;
+extern NSString *const kStartAppVideoPlacement;
+extern NSString *const kFyberPlacement;
 
 @interface ATInterstitialViewController : UIViewController
 -(instancetype) initWithPlacementName:(NSString*)name;

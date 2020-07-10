@@ -44,6 +44,7 @@ NSString *const kGDTNativeAssetsImgList = @"img_list";
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameGDT]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameGDT];
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"GDTSDKConfig") sdkVersion] forNetwork:kNetworkNameGDT];
+            [NSClassFromString(@"GDTSDKConfig") registerAppId:info[@"app_id"]];
         }
     }
     return self;
@@ -66,7 +67,7 @@ NSString *const kGDTNativeAssetsImgList = @"img_list";
                 [self->_expressAd loadAd:[info[@"request_num"] integerValue]];
             } else if (adType == 2) {//self rendering
                 if ([info[@"unit_version"] integerValue] == 2) {
-                    self->_unifiedNativeAd = [[NSClassFromString(@"GDTUnifiedNativeAd") alloc] initWithAppId:info[@"app_id"] placementId:info[@"unit_id"]];
+                    self->_unifiedNativeAd = [[NSClassFromString(@"GDTUnifiedNativeAd") alloc] initWithPlacementId:info[@"unit_id"]];
                     self->_unifiedNativeAd.delegate = self->_customEvent;
                     [self->_unifiedNativeAd loadAdWithAdCount:[info[@"request_num"] intValue]];
                 } else {

@@ -14,7 +14,7 @@
 - (void)splashAdDidClick:(id<ATBUSplashAdView>)splashAd {
     [ATLogger logMessage:@"TTSplash::splashAdDidClick" type:ATLogTypeExternal];
     [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:@{kATSplashDelegateExtraNetworkIDKey:@(self.ad.unitGroup.networkFirmID),kATSplashDelegateExtraAdSourceIDKey:self.ad.unitGroup.unitID != nil ? self.ad.unitGroup.unitID : @"",kATSplashDelegateExtraIsHeaderBidding:@(self.ad.unitGroup.headerBidding),kATSplashDelegateExtraPriority:@(self.priorityIndex),kATSplashDelegateExtraPrice:@(self.ad.unitGroup.price)}]; }
+    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)splashAdDidClose:(id<ATBUSplashAdView>)splashAd {
@@ -22,7 +22,7 @@
     [_containerView removeFromSuperview];
     [_backgroundImageView removeFromSuperview];
     [(UIView*)splashAd removeFromSuperview];
-    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:@{kATSplashDelegateExtraNetworkIDKey:@(self.ad.unitGroup.networkFirmID),kATSplashDelegateExtraAdSourceIDKey:self.ad.unitGroup.unitID != nil ? self.ad.unitGroup.unitID : @"",kATSplashDelegateExtraIsHeaderBidding:@(self.ad.unitGroup.headerBidding),kATSplashDelegateExtraPriority:@(self.priorityIndex),kATSplashDelegateExtraPrice:@(self.ad.unitGroup.price)}];
+    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]];
     }
 }
 
@@ -95,7 +95,7 @@
 - (void)nativeExpressSplashViewDidClick:(id<BUNativeExpressSplashView>)splashAdView {
     [ATLogger logMessage:@"TTSplash::splashAdDidClick" type:ATLogTypeExternal];
     [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:@{kATSplashDelegateExtraNetworkIDKey:@(self.ad.unitGroup.networkFirmID),kATSplashDelegateExtraAdSourceIDKey:self.ad.unitGroup.unitID != nil ? self.ad.unitGroup.unitID : @"",kATSplashDelegateExtraIsHeaderBidding:@(self.ad.unitGroup.headerBidding),kATSplashDelegateExtraPriority:@(self.priorityIndex),kATSplashDelegateExtraPrice:@(self.ad.unitGroup.price)}]; }
+    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)nativeExpressSplashViewDidClickSkip:(id<BUNativeExpressSplashView>)splashAdView {
@@ -107,7 +107,7 @@
     [_containerView removeFromSuperview];
     [_backgroundImageView removeFromSuperview];
     [(UIView*)splashAdView removeFromSuperview];
-    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:@{kATSplashDelegateExtraNetworkIDKey:@(self.ad.unitGroup.networkFirmID),kATSplashDelegateExtraAdSourceIDKey:self.ad.unitGroup.unitID != nil ? self.ad.unitGroup.unitID : @"",kATSplashDelegateExtraIsHeaderBidding:@(self.ad.unitGroup.headerBidding),kATSplashDelegateExtraPriority:@(self.priorityIndex),kATSplashDelegateExtraPrice:@(self.ad.unitGroup.price)}];
+    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]];
     }
 
 }
@@ -116,5 +116,10 @@
     
 }
 
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"slot_id"];
+    return extra;
+}
 
 @end

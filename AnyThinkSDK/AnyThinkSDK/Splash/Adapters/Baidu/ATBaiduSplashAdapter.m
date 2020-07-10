@@ -52,6 +52,7 @@
             
             UIView *splashView = [[UIView alloc] initWithFrame:CGRectMake(.0f, .0f, CGRectGetWidth([UIScreen mainScreen].bounds), CGRectGetHeight([UIScreen mainScreen].bounds) - CGRectGetHeight(containerView.bounds))];
             [window addSubview:splashView];
+            _customEvent.splashView = splashView;
             if ([extra containsObjectForKey:kATSplashExtraCanClickFlagKey]) { self->_splash.canSplashClick = [extra[kATSplashExtraCanClickFlagKey] boolValue]; }
             [self->_splash loadAndDisplayUsingContainerView:splashView];
         });

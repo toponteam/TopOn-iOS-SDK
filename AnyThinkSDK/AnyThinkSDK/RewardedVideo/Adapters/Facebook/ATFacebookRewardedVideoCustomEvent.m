@@ -11,8 +11,6 @@
 #import <objc/runtime.h>
 #import "ATRewardedVideoManager.h"
 @interface ATFacebookRewardedVideoCustomEvent()
-@property(nonatomic) BOOL rewarded;
-
 @end
 @implementation ATFacebookRewardedVideoCustomEvent
 
@@ -20,22 +18,21 @@
     [ATLogger logMessage:@"FacebookRewardedVideo::rewardedVideoAdDidClick:" type:ATLogTypeExternal];
     [self trackClick];
     if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
+        [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
     }
 }
 
 - (void)rewardedVideoAdDidLoad:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:@"FacebookRewardedVideo::rewardedVideoAdDidLoad:" type:ATLogTypeExternal];
-    objc_setAssociatedObject(rewardedVideoAd, (__bridge_retained void*)kFacebookRVCustomEventKey, self, OBJC_ASSOCIATION_RETAIN);
-    [self handleAssets:@{kRewardedVideoAssetsUnitIDKey:self.unitID, kAdAssetsCustomObjectKey:rewardedVideoAd}];
+    [self handleAssets:@{kRewardedVideoAssetsUnitIDKey:self.unitID, kAdAssetsCustomObjectKey:rewardedVideoAd, kRewardedVideoAssetsCustomEventKey:self}];
 }
 
 - (void)rewardedVideoAdDidClose:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:@"FacebookRewardedVideo::rewardedVideoAdDidClose:" type:ATLogTypeExternal];
     [self handleClose];
-    [self saveVideoCloseEventRewarded:_rewarded];
+    [self saveVideoCloseEventRewarded:self.rewardGranted];
     if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
+        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
     }
 }
 
@@ -51,17 +48,10 @@
 - (void)rewardedVideoAdVideoComplete:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:[NSString stringWithFormat:@"FacebookRewardedVideo::rewardedVideoAdVideoComplete:"] type:ATLogTypeExternal];
     [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-    }
-    if (self.userID == nil) {
-        [ATLogger logMessage:[NSString stringWithFormat:@"FacebookRewardedVideo::rewardedVideoAdServerRewardDidSucceed:"] type:ATLogTypeExternal];
-        _rewarded = YES;
-        self.rewardGranted = YES;
-        if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-            [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-        }
-    }
+    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) { [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
+    
+    self.rewardGranted = YES;
+    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]) { [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)rewardedVideoAdWillLogImpression:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
@@ -69,23 +59,22 @@
     [self trackShow];
     [self trackVideoStart];
     if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
+        [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
     }
 }
 
 - (void)rewardedVideoAdServerRewardDidSucceed:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:[NSString stringWithFormat:@"FacebookRewardedVideo::rewardedVideoAdServerRewardDidSucceed:"] type:ATLogTypeExternal];
-    _rewarded = YES;
-    self.rewardGranted = YES;
-    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-        [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-    }
 }
 
 - (void)rewardedVideoAdServerRewardDidFail:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
     [ATLogger logError:[NSString stringWithFormat:@"FacebookRewardedVideo::rewardedVideoAdServerRewardDidFail:"] type:ATLogTypeExternal];
-    _rewarded = NO;
-    self.rewardGranted = NO;
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unit_id"];
+    return extra;
 }
 
 @end

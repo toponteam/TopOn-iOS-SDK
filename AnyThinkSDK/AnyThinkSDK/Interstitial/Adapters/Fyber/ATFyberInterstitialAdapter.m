@@ -1,0 +1,93 @@
+//
+//  ATFyberInterstitialAdapter.m
+//  AnyThinkFyberInterstitialAdapter
+//
+//  Created by Topon on 2020/4/9.
+//  Copyright © 2020 AnyThink. All rights reserved.
+//
+
+#import "ATFyberInterstitialAdapter.h"
+#import "ATFyberInterstitialCustomEvent.h"
+#import "ATAPI+Internal.h"
+#import "ATInterstitialManager.h"
+
+@interface ATFyberInterstitialAdapter ()
+@property (nonatomic, readonly) id<ATIAVideoContentController> videoContentController;
+@property (nonatomic, readonly) id<ATIAMRAIDContentController> MRAIDContentController;
+@property (nonatomic, readonly) id<ATIAFullscreenUnitController> fullscreenUnitController;
+@property (nonatomic, readonly) id<ATIAAdSpot> adSpot;
+@property(nonatomic, readonly) ATFyberInterstitialCustomEvent *customEvent;
+@end
+
+@implementation ATFyberInterstitialAdapter
+
++(BOOL) adReadyWithCustomObject:(id)customObject info:(NSDictionary*)info {
+    return customObject != nil;
+}
+
++(void) showInterstitial:(ATInterstitial*)interstitial inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate {
+    ATFyberInterstitialCustomEvent *customEvent = (ATFyberInterstitialCustomEvent*)interstitial.customEvent;
+    customEvent.delegate = delegate;
+    customEvent.viewController = viewController;
+    [customEvent.fullscreenUnitController showAdAnimated:YES completion:nil];
+}
+
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+    self = [super init];
+    if (self != nil) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameFyber]) {
+                [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameFyber];
+                [[ATAPI sharedInstance] setVersion:((id<ATIASDKCore>)[NSClassFromString(@"IASDKCore") sharedInstance]).version forNetwork:kNetworkNameFyber];
+                [[NSClassFromString(@"IASDKCore") sharedInstance] initWithAppID:info[@"app_id"]];
+            }
+        });
+    }
+    return self;
+}
+
+-(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+    if (NSClassFromString(@"IAAdRequest") != nil && NSClassFromString(@"IAVideoContentController") != nil && NSClassFromString(@"IAFullscreenUnitController") != nil && NSClassFromString(@"IAAdSpot") != nil) {
+        _customEvent = [[ATFyberInterstitialCustomEvent alloc] initWithUnitID:info[@"spot_id"] customInfo:info];
+        _customEvent.requestCompletionBlock = completion;
+        
+        id<ATIAAdRequest> request = [NSClassFromString(@"IAAdRequest") build:^(id<IAAdRequestBuilder>  _Nonnull builder) {
+            builder.useSecureConnections = NO;
+            builder.spotID = info[@"spot_id"];
+            builder.muteAudio = [info[@"video_muted"] boolValue];
+        }];
+        
+        _videoContentController = [NSClassFromString(@"IAVideoContentController") build:^(id<IAVideoContentControllerBuilder>  _Nonnull builder) {
+            builder.videoContentDelegate = self.customEvent;
+        }];
+        
+        _MRAIDContentController = [NSClassFromString(@"IAMRAIDContentController") build:^(id<IAMRAIDContentControllerBuilder>  _Nonnull builder) {
+            builder.MRAIDContentDelegate = self.customEvent;
+        }];
+        
+        _fullscreenUnitController = [NSClassFromString(@"IAFullscreenUnitController") build:^(id<IAFullscreenUnitControllerBuilder>  _Nonnull builder) {
+            builder.unitDelegate = self.customEvent;
+            [builder addSupportedContentController:self.videoContentController];
+            [builder addSupportedContentController:self.MRAIDContentController];
+        }];
+        
+        _adSpot = [NSClassFromString(@"IAAdSpot") build:^(id<IAAdSpotBuilder>  _Nonnull builder) {
+            builder.adRequest = request;
+            [builder addSupportedUnitController:self.fullscreenUnitController];
+        }];
+        
+        [_adSpot fetchAdWithCompletion:^(id<ATIAAdSpot>  _Nonnull adSpot, id  _Nullable adModel, NSError * _Nullable error) {
+            if (error != nil) {
+                [self->_customEvent handleLoadingFailure:error];
+            } else {
+                self->_customEvent.fullscreenUnitController = self->_fullscreenUnitController;
+                [self->_customEvent handleAssets:@{kInterstitialAssetsCustomEventKey:self->_customEvent, kInterstitialAssetsUnitIDKey:[info[@"spot_id"] length] > 0 ? info[@"spot_id"] : @"", kAdAssetsCustomObjectKey:self->_fullscreenUnitController}];
+            }
+        }];
+    } else {
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Fyber"]}]);
+    }
+}
+
+@end

@@ -12,7 +12,7 @@
 @implementation ATYeahmobiInterstitialCustomEvent
 -(void) handleShow {
     [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}]; }
+    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)CTAdViewDidRecieveInterstitialAd {
@@ -33,7 +33,7 @@
     [ATLogger logMessage:@"YeahmobiInterstitial::CTAdViewCloseButtonPressed:" type:ATLogTypeExternal];
     [self handleClose];
     if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
+        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
     }
 }
 
@@ -41,7 +41,7 @@
     [ATLogger logMessage:[NSString stringWithFormat:@"YeahmobiInterstitial::CTAdView:shouldOpenURL:%@", url] type:ATLogTypeExternal];
     [self trackClick];
     if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-        [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
+        [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
     }
     return YES;
 }
@@ -69,5 +69,11 @@
 - (BOOL)CTAdView:(id<ATCTADMRAIDView>)adView shouldLogEvent:(NSString*)event ofType:(NSInteger)type {
     [ATLogger logMessage:[NSString stringWithFormat:@"YeahmobiInterstitial::CTAdView:shouldLogEvent:%@ ofType:%ld", event, type] type:ATLogTypeExternal];
     return YES;
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"slot_id"];
+    return extra;
 }
 @end

@@ -27,7 +27,7 @@
 
 #pragma mark Public methods -
 
-- (void)getBidNetwork:(HBBidNetworkItem *)networkItem adFormat:(HBAdBidFormat)format responseCallback:(void(^)(HBAdBidResponse *bidResponse))callback{
+- (void)getBidNetwork:(HBBidNetworkItem *)networkItem extra:(NSDictionary*)extra adFormat:(HBAdBidFormat)format responseCallback:(void(^)(HBAdBidResponse *bidResponse))callback{
     
     NSAssert(networkItem, @"networkItem should not be nil");
     NSAssert(callback, @"callback should not be nil");
@@ -48,7 +48,7 @@
 
     __weak __typeof(self)weakSelf = self;
 
-    [self.customEvent getBidNetwork:networkItem adFormat:format responseCallback:^(HBAdBidResponse * _Nonnull bidResponse) {
+    [self.customEvent getBidNetwork:networkItem extra:extra adFormat:format responseCallback:^(HBAdBidResponse * _Nonnull bidResponse) {
 
         __strong __typeof(weakSelf)strongSelf = weakSelf;
 

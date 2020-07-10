@@ -7,48 +7,32 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "9E613D35-643A-4D95-B2D7-528F754DA1A3"
+            uuid = "B849A640-4387-499A-822D-1A0C75AAF4D1"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "AnyThinkSDK/Native/Adapters/KS/ATKSNativeCustomEvent.m"
+            filePath = "AnyThinkSDKTests/AnyThinkSDKTests.m"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "42"
-            endingLineNumber = "42"
-            landmarkName = "-nativeAdDidClick:withView:"
+            startingLineNumber = "32"
+            endingLineNumber = "32"
+            landmarkName = "-didFinishLoadingADWithPlacementID:"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "549D97A4-4639-49DA-9738-99385998B28F"
+            uuid = "BD6F5A46-D5F6-4763-A8C0-3B53142B68A3"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "AnyThinkSDK/Interstitial/Adapters/GDT/ATGDTInterstitialCustomEvent.m"
+            filePath = "AnyThinkSDKTests/AnyThinkSDKTests.m"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "15"
-            endingLineNumber = "15"
-            landmarkName = "-interstitialSuccessToLoadAd:"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "C911A584-FCBD-456B-AD11-C9F54C0F8971"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "AnyThinkSDK/Interstitial/Adapters/TT/ATTTInterstitialCustomEvent.m"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "19"
-            endingLineNumber = "19"
-            landmarkName = "-interstitialAdDidLoad:"
+            startingLineNumber = "36"
+            endingLineNumber = "36"
+            landmarkName = "-didFailToLoadADWithPlacementID:error:"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

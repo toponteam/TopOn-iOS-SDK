@@ -1,0 +1,60 @@
+/* 
+  SigmobLanguage.strings
+  Sigmob
+
+  Created by happyelements on 2019/11/6.
+  Copyright © 2019 happyelements. All rights reserved.
+*/
+
+// Error
+"Unknown error" = "Unknown error";
+"IDFA information is missing from the request parameter" = "IDFA information is missing from the request parameter";
+"The request parameter is missing device information" = "The request parameter is missing device information";
+"Missing device id information" = "Missing device id information";
+"The requested app has closed its advertising service" = "The requested app has closed its advertising service";
+"Missing placement id information" = "Missing placement id information";
+"PlacementId is Error" = "PlacementId is Error";
+"The placement id does not exist, or the appid does not match the AD type" = "The placement id does not exist, or the appid does not match the AD type";
+"The placementId by closed" = "The placementId by closed";
+"The device's operating system type does not match the requested app's system type" = "The device's operating system type does not match the requested app's system type";
+"The requested placement id does not math the ad type" = "The requested placement id does not math the ad type";
+"The requested app does not exist" = "The requested app does not exist";
+"App does not set aggregation policy" = "App does not set aggregation policy";
+"The app has not opened any advertising channels" = "The app has not opened any advertising channels";
+"No ad return from ad server" = "No ad return from ad server";
+"Network error" = "Network error";
+"Request error" = "Request error";
+"An adapter for the channel was not found" = "An adapter for the channel was not found";
+"The configured policy is empty" = "The configured policy is empty";
+"File download error" = "File download error";
+"Reward Video ad play error" = "Reward Video ad play error";
+"Ad is not ready" = "Ad is not ready";
+"The advertising information sent by server is missing key information" = "The advertising information sent by server is missing key information";
+"The downloaded file checked md5 error" = "The downloaded file checked md5 error";
+"Ad download is timeout" = "Ad download is timeout";
+"Splash ads does not support the direction of the current application" = "Splash ads does not support the direction of the current application";
+"Splash ads does not support the type of resources" = "Splash ads does not support the type of resources";
+"The AD is not ready or expired" = "The AD is not ready or expired";
+"Ignore requests for background calls" = "Ignore requests for background calls";
+"Protobuf protocol resolution error" = "Protobuf protocol resolution error";
+"Splash ads does not support creative types" = "Splash ads does not support creative types";
+"Splash ads does not support image types" = "Splash ads does not support image types";
+"Load ad is timeout by webView" = "Load ad is timeout by webView";
+"Authorized status of GDPR user is Denied, refusing to access the advertising service" = "Authorized status of GDPR user is Denied, refusing to access the advertising service";
+"Users in the eu region do not explicitly authorize or refuse" = "Users in the eu region do not explicitly authorize or refuse";
+"Splash ads is loading or showing" =  "Splash ads is loading or showing";
+"Mraid ads does not support the application os version" = "Mraid ads does not support the application os version";
+"Not loaded into resource bundle(Sigmob.bundle)" = "Not loaded into resource bundle(Sigmob.bundle)";
+"Placement id is empty" = "Placement id is empty";
+
+//splash Ad
+"Skip Ad" = "Skip Ad";b
+"Skip" = "Skip";
+"Ad" = "Ad";
+
+// dialog
+"Close Video?" = "Close video?";
+"Confirm" = "Confirm";
+"Cancel" = "Cancel";
+"You will be rewarded with only _SEC_ seconds." = "You will be rewarded with only _SEC_ seconds.";
+

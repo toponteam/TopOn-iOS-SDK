@@ -18,4 +18,5 @@ extern NSString *const kATSplashExtraCanClickFlagKey;
 @protocol ATSplashDelegate;
 @interface ATAdManager (Splash)
 -(void) loadADWithPlacementID:(NSString*)placementID extra:(NSDictionary*)extra customData:(NSDictionary*)customData delegate:(id<ATSplashDelegate>)delegate window:(UIWindow*)window containerView:(UIView*)containerView;
+-(void) loadADWithPlacementID:(NSString*)placementID extra:(NSDictionary*)extra customData:(NSDictionary*)customData delegate:(id<ATSplashDelegate>)delegate window:(UIWindow*)window windowScene:(UIWindowScene *)windowScene containerView:(UIView*)containerView API_AVAILABLE(ios(13.0));
 @end

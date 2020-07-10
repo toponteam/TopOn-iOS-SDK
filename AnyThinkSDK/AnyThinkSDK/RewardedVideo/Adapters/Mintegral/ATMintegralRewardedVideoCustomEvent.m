@@ -11,60 +11,65 @@
 #import "Utilities.h"
 @implementation ATMintegralRewardedVideoCustomEvent
 #pragma mark - loading delegate
-- (void)onAdLoadSuccess:(nullable NSString *)unitId {
-    [ATLogger logMessage:@"Mintegral: onAdLoadSuccess" type:ATLogTypeExternal];
+- (void)onAdLoadSuccess:(nullable NSString *)placementId unitId:(nullable NSString *)unitId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MintegralRewardedVideo::onAdLoadSuccess:%@ unitId:%@", placementId, unitId] type:ATLogTypeExternal];
     if (self.customEventMetaDataDidLoadedBlock != nil) { self.customEventMetaDataDidLoadedBlock();}
 }
 
-- (void)onVideoAdLoadSuccess:(nullable NSString *)unitId {
-    [ATLogger logMessage:@"Mintegral: onVideoAdLoadSuccess" type:ATLogTypeExternal];
-    /*
-     * The load and retrieving of ad by Mintegral are managed by a manager so there's no custom object; here I am passing unitId in place of custom object...
-     */
+- (void)onVideoAdLoadSuccess:(nullable NSString *)placementId unitId:(nullable NSString *)unitId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MintegralRewardedVideo::onVideoAdLoadSuccess:%@ unitId:%@", placementId, unitId] type:ATLogTypeExternal];
     [self handleAssets:@{kRewardedVideoAssetsUnitIDKey:unitId, kAdAssetsCustomObjectKey:_rewardedVideoMgr, kRewardedVideoAssetsCustomEventKey:self}];
 }
 
-- (void)onVideoAdLoadFailed:(nullable NSString *)unitId error:(nonnull NSError *)error {
-    [ATLogger logError:[NSString stringWithFormat:@"Mintegral has failed to load rewarded video, unitId:%@, error:%@", unitId, error] type:ATLogTypeExternal];
+- (void)onVideoAdLoadFailed:(nullable NSString *)placementId unitId:(nullable NSString *)unitId error:(nonnull NSError *)error {
+    [ATLogger logError:[NSString stringWithFormat:@"MintegralRewardedVideo:onVideoAdLoadFailed:%@ unitId:%@ error:%@", placementId, unitId, error] type:ATLogTypeExternal];
     [self handleLoadingFailure:error];
 }
 
 #pragma mark - showing delegate
-- (void)onVideoAdShowSuccess:(nullable NSString *)unitId {
-    [ATLogger logMessage:@"Mintegral: onVideoAdShowSuccess" type:ATLogTypeExternal];
+- (void)onVideoAdShowSuccess:(nullable NSString *)placementId unitId:(nullable NSString *)unitId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MintegralRewardedVideo::onVideoAdShowSuccess:%@ unitId:%@", placementId, unitId] type:ATLogTypeExternal];
     [self trackShow];
     [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) { [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}]; }
+    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) { [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
-- (void)onVideoAdShowFailed:(nullable NSString *)unitId withError:(nonnull NSError *)error {
-    [ATLogger logError:[NSString stringWithFormat:@"Mintegral: onVideoAdShowFailed, withError: %@", error] type:ATLogTypeExternal];
+- (void)onVideoAdShowFailed:(nullable NSString *)placementId unitId:(nullable NSString *)unitId withError:(nonnull NSError *)error {
+    [ATLogger logError:[NSString stringWithFormat:@"MintegralRewardedVideo:onVideoAdShowFailed:%@ unitId:%@ error:%@", placementId, unitId, error] type:ATLogTypeExternal];
     [self saveVideoPlayEventWithError:error];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidFailToPlayForPlacementID:error:extra:)]) { [self.delegate rewardedVideoDidFailToPlayForPlacementID:self.rewardedVideo.placementModel.placementID error:error extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}]; }
+    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidFailToPlayForPlacementID:error:extra:)]) { [self.delegate rewardedVideoDidFailToPlayForPlacementID:self.rewardedVideo.placementModel.placementID error:error extra:[self delegateExtra]]; }
 }
 
-- (void)onVideoAdClicked:(nullable NSString *)unitId {
-    [ATLogger logMessage:@"Mintegral: onVideoAdClicked" type:ATLogTypeExternal];
+- (void) onVideoPlayCompleted:(nullable NSString *)placementId unitId:(nullable NSString *)unitId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MintegralRewardedVideo::onVideoPlayCompleted:%@ unitId:%@", placementId, unitId] type:ATLogTypeExternal];
+    [self trackVideoEnd];
+    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) { [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
+}
+
+- (void) onVideoEndCardShowSuccess:(nullable NSString *)placementId unitId:(nullable NSString *)unitId { [ATLogger logMessage:[NSString stringWithFormat:@"MintegralRewardedVideo::onVideoEndCardShowSuccess:%@ unitId:%@", placementId, unitId] type:ATLogTypeExternal]; }
+
+- (void)onVideoAdClicked:(nullable NSString *)placementId unitId:(nullable NSString *)unitId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MintegralRewardedVideo::onVideoAdClicked:%@ unitId:%@", placementId, unitId] type:ATLogTypeExternal];
     [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) { [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}]; }
+    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) { [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
-- (void)onVideoAdDismissed:(nullable NSString *)unitId withConverted:(BOOL)converted withRewardInfo:(id<ATRVMTGRewardAdInfo>)rewardInfo {
-    [ATLogger logMessage:[NSString stringWithFormat:@"Mintegral: onVideoAdDismissed, withConverted: %@, withRewardInfo", converted ? @"YES" : @"NO"] type:ATLogTypeExternal];
-    self.rewardGranted = rewardInfo != nil;
+- (void)onVideoAdDismissed:(nullable NSString *)placementId unitId:(nullable NSString *)unitId withConverted:(BOOL)converted withRewardInfo:(id<ATRVMTGRewardAdInfo>)rewardInfo {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MintegralRewardedVideo::onVideoAdDismissed:%@ unitId:%@ withConverted:%@ withRewardInfo", placementId, unitId, converted ? @"YES" : @"NO"] type:ATLogTypeExternal];
+    self.rewardGranted = converted;
+    if (converted) { if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]) { [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; } }
+}
+
+- (void)onVideoAdDidClosed:(nullable NSString *)placementId unitId:(nullable NSString *)unitId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MintegralRewardedVideo::onVideoAdDidClosed:%@ unitId:%@", placementId, unitId] type:ATLogTypeExternal];
     [self handleClose];
-    if (converted) {
-        [self trackVideoEnd];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-            [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-        }
-        if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-            [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-        }
-    }
-    [self saveVideoCloseEventRewarded:rewardInfo != nil];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-    }
+    [self saveVideoCloseEventRewarded:self.rewardGranted];
+    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) { [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]]; }
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unitid"];
+    return extra;
 }
 @end

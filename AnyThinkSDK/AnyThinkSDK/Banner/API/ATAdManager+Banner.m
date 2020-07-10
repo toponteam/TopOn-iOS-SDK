@@ -20,7 +20,7 @@
 #import "ATCapsManager.h"
 
 NSString *const kATBannerDelegateExtraNetworkIDKey = @"network_firm_id";
-NSString *const kATBannerDelegateExtraAdSourceIDKey = @"ad_source_id";
+NSString *const kATBannerDelegateExtraAdSourceIDKey = @"adsource_id";
 NSString *const kATBannerDelegateExtraIsHeaderBidding = @"adsource_isHeaderBidding";
 NSString *const kATBannerDelegateExtraPrice = @"adsource_price";
 NSString *const kATBannerDelegateExtraPriority = @"adsource_index";

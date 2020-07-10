@@ -21,7 +21,7 @@ extern NSString *const kInmobiRVAssetsCustomEventKey;
 
 @protocol ATIMSdk<NSObject>
 +(NSString *)getVersion;
-+(void)initWithAccountID:(NSString *)accountID;
++(void)initWithAccountID:(NSString *)accountID andCompletionHandler:(void (^)(NSError * ))completionBlock;
 +(void) updateGDPRConsent:(NSDictionary *)consentDictionary;
 @end
 

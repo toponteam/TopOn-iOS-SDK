@@ -13,6 +13,7 @@
 #import "NSObject+ExtraInfo.h"
 #import "ATNativeADView+Internal.h"
 #import "ATImageLoader.h"
+#import "ATNativeADCache.h"
 
 @implementation ATAppnextNativeCustomEvent
 - (void) onAdsLoaded:(NSArray<id<ATAppnextAdData>> *)ads forRequest:(id<ATAppnextNativeAdsRequest>)request {
@@ -53,5 +54,11 @@
 
 - (void) onError:(NSString *)error forAdData:(id<ATAppnextAdData>)adData {
     [ATLogger logMessage:[NSString stringWithFormat:@"AppnextNative::onError%@:forAdData:", error] type:ATLogTypeExternal];
+}
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"placement_id"];
+    return extra;
 }
 @end

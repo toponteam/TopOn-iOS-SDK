@@ -9,5 +9,5 @@
 #import <Foundation/Foundation.h>
 #import "ATNativeADCustomEvent.h"
 #import "ATInmobiNativeAdapter.h"
-@interface ATInmobiCustomEvent : ATNativeADCustomEvent<ATIMNativeDelegate>
+@interface ATInmobiCustomEvent : ATNativeADCustomEvent<IMNativeDelegate>
 @end

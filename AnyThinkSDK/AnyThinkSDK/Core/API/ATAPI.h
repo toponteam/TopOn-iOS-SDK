@@ -8,6 +8,26 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+extern NSString *const kATADDelegateExtraECPMLevelKey;
+extern NSString *const kATADDelegateExtraSegmentIDKey;
+extern NSString *const kATADDelegateExtraScenarioIDKey;
+extern NSString *const kATADDelegateExtraChannelKey;
+extern NSString *const kATADDelegateExtraSubChannelKey;
+extern NSString *const kATADDelegateExtraCustomRuleKey;
+extern NSString *const kATADDelegateExtraIDKey;
+extern NSString *const kATADDelegateExtraAdunitIDKey;
+extern NSString *const kATADDelegateExtraPublisherRevenueKey;
+extern NSString *const kATADDelegateExtraCurrencyKey;
+extern NSString *const kATADDelegateExtraCountryKey;
+extern NSString *const kATADDelegateExtraFormatKey;
+extern NSString *const kATADDelegateExtraPrecisionKey;
+extern NSString *const kATADDelegateExtraNetworkTypeKey;
+extern NSString *const kATADDelegateExtraNetworkPlacementIDKey;
+extern NSString *const kATADDelegateExtraScenarioRewardNameKey;
+extern NSString *const kATADDelegateExtraScenarioRewardNumberKey;
+extern NSString *const kATADDelegateExtraPlacementRewardNameKey;
+extern NSString *const kATADDelegateExtraPlacementRewardNumberKey;
+
 extern NSString *const ATADShowingErrorDomain;
 
 extern NSString *const ATADLoadingErrorDomain;
@@ -26,11 +46,16 @@ extern NSInteger const ATADLoadingErrorCodeDataConsentForbidden;
 extern NSInteger const ATADLoadingErrorCodeThirdPartySDKNotImportedProperly;
 extern NSInteger const ATADLoadingErrorCodeInvalidInputEncountered;
 extern NSInteger const ATADLoadingErrorCodePlacementAdDeliverySwitchOff;
+extern NSInteger const ATADLoadingErrorCodePreviousLoadNotFinished;
+extern NSInteger const ATADLoadingErrorCodeNoUnitGroupsFoundInPlacement;
+extern NSInteger const ATADLoadingErrorCodeUnitGroupsFilteredOut;
 
 extern NSString *const ATSDKInitErrorDomain;
 extern NSInteger const ATSDKInitErrorCodeDataConsentNotSet;
 extern NSInteger const ATSDKInitErrorCodeDataConsentForbidden;
 
+extern NSString *const kNetworkNameFyber;
+extern NSString *const kNetworkNameStartApp;
 extern NSString *const kNetworkNameFacebook;
 extern NSString *const kNetworkNameInmobi;
 extern NSString *const kNetworkNameAdmob;
@@ -79,6 +104,21 @@ extern NSString *const kAdColonyGDPRConsentStringKey;
 extern NSString *const kYeahmobiGDPRConsentValueKey;
 extern NSString *const kYeahmobiGDPRConsentTypeKey;
 
+extern NSString *const kATCustomDataAgeKey;//Integer
+extern NSString *const kATCustomDataGenderKey;//Integer
+extern NSString *const kATCustomDataNumberOfIAPKey;//Integer
+extern NSString *const kATCustomDataIAPAmountKey;//Double
+extern NSString *const kATCustomDataIAPCurrencyKey;//string
+extern NSString *const kATCustomDataChannelKey;//string
+extern NSString *const kATCustomDataSubchannelKey;//string
+extern NSString *const kATCustomDataSegmentIDKey;//int
+
+typedef NS_ENUM(NSInteger, ATUserLocation) {
+    ATUserLocationUnknown = 0,
+    ATUserLocationInEU = 1,
+    ATUserLocationOutOfEU = 2
+};
+
 typedef NS_ENUM(NSInteger, ATDataConsentSet) {
     //Let it default to forbidden if not set
     ATDataConsentSetUnknown = 0,
@@ -109,6 +149,8 @@ typedef NS_ENUM(NSInteger, ATDataConsentSet) {
  */
 -(BOOL)inDataProtectionArea;
 
+-(void) getUserLocationWithCallback:(void(^)(ATUserLocation location))callback;
+
 -(NSString*)psID;
     
 
@@ -117,6 +159,7 @@ typedef NS_ENUM(NSInteger, ATDataConsentSet) {
  * viewController might be nil, for which the root view controller of the window will be used instead.
  */
 -(void) presentDataConsentDialogInViewController:(UIViewController*)viewController dismissalCallback:(void(^)(void))dismissCallback;
+-(void) presentDataConsentDialogInViewController:(UIViewController*)viewController loadingFailureCallback:(void(^)(NSError *error))loadingFailureCallback dismissalCallback:(void(^)(void))dismissCallback;
 /**
  * Defaults to forbidden;
  * Thread-safe.
@@ -181,5 +224,7 @@ typedef NS_ENUM(NSInteger, ATDataConsentSet) {
 @property(nonatomic) NSString *channel;
 @property(nonatomic) NSString *subchannel;
 @property(nonatomic) NSDictionary *customData;
+-(void) setCustomData:(NSDictionary *)customData forPlacementID:(NSString*)placementID;
+-(NSDictionary*) customDataForPlacementID:(NSString*)placementID;
 -(NSString*)version;
 @end

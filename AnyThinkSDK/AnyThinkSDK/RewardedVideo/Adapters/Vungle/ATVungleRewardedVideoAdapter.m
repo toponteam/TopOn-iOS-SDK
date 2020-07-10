@@ -119,11 +119,11 @@ static NSString *const kOptionsUserKey = @"user";
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameVungle]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameVungle];
                 if ([[ATAPI sharedInstance].networkConsentInfo containsObjectForKey:kNetworkNameVungle]) {
-                    [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameVungle] integerValue] consentMessageVersion:@"6.3.2"];
+                    [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameVungle] integerValue] consentMessageVersion:@"6.5.4"];
                 } else {
                     BOOL set = NO;
                     BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
-                    if (set) { [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.4.6"]; }
+                    if (set) { [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.5.4"]; }
                 }
             }
         });

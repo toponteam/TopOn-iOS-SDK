@@ -29,6 +29,25 @@
     return self;
 }
 
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.priorityIndex),kATBannerDelegateExtraPrice:@(self.banner.unitGroup.price), kATADDelegateExtraECPMLevelKey:@(self.banner.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.banner.placementModel.groupID)}];
+    NSString *channel = [ATAPI sharedInstance].channel;
+    if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
+    NSString *subchannel = [ATAPI sharedInstance].subchannel;
+    if (subchannel != nil) { extra[kATADDelegateExtraSubChannelKey] = subchannel; }
+    if ([self.banner.placementModel.associatedCustomData count] > 0) { extra[kATADDelegateExtraCustomRuleKey] = self.banner.placementModel.associatedCustomData; }
+    NSString *extraID = [NSString stringWithFormat:@"%@%@%@",self.banner.requestID,self.banner.unitGroup.unitID,self.sdkTime];
+    extra[kATADDelegateExtraIDKey] = [extraID md5];
+    extra[kATADDelegateExtraAdunitIDKey] = self.banner.placementModel.placementID;
+    extra[kATADDelegateExtraPublisherRevenueKey] = @(self.banner.unitGroup.price / 1000.0f);
+    extra[kATADDelegateExtraCurrencyKey] = self.banner.placementModel.callback[@"currency"];
+    extra[kATADDelegateExtraCountryKey] = self.banner.placementModel.callback[@"cc"];
+    extra[kATADDelegateExtraFormatKey] = @"Banner";
+    extra[kATADDelegateExtraPrecisionKey] = self.banner.unitGroup.precision;
+    extra[kATADDelegateExtraNetworkTypeKey] = self.banner.unitGroup.networkFirmID == 35 ? @"Cross_promotion":@"Network";
+    return extra;
+}
+
 +(UIViewController*)rootViewControllerWithPlacementID:(NSString*)placementID requestID:(NSString*)requestID {
     NSDictionary *extra = [[ATAdManager sharedManager] extraInfoForPlacementID:placementID requestID:requestID];
     if ([extra[kExtraInfoRootViewControllerKey] isKindOfClass:[UIViewController class]]) {
@@ -75,4 +94,9 @@
     if (self.banner != nil) { [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyClose placementID:self.banner.placementModel.placementID unitGroupModel:nil
     extraInfo:@{kAgentEventExtraInfoRequestIDKey:self.banner.requestID != nil ? self.banner.requestID : @"", kAgentEventExtraInfoNetworkFirmIDKey:@(self.banner.unitGroup.networkFirmID), kAgentEventExtraInfoUnitGroupUnitIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"", kAgentEventExtraInfoPriorityKey:@(self.banner.priority)}]; }
 }
+
+-(NSInteger)priorityIndex {
+    return [ATAdCustomEvent calculateAdPriority:self.ad];;
+}
+
 @end

@@ -37,7 +37,7 @@ void AT_SafelyRun(void(^Block)(void)) {
                 if ([callerInfo count] > 0) {
                     [callerInfo removeObject:@""];
                     if ([callerInfo count] > 4) {
-                        [ATLogger logError:[NSString stringWithFormat:@"Error: Exception Caught while running block in method: %@ of class: %@, exception:%@.", callerInfo[4], callerInfo[3], exception] type:ATLogTypeExternal];
+                        [ATLogger logError:[NSString stringWithFormat:@"Error: Exception Caught while running block in method: %@ of class: %@, exception:%@.", callerInfo[4], callerInfo[3], exception] type:ATLogTypeInternal];
                     }
                 }//End of callerInfo count
             }
@@ -365,7 +365,6 @@ NSString *const kCallStackSymbolCallerClassKey = @"caller_class";
 @end
 
 @implementation NSArray (ATKit)
-
 -(NSString*) jsonString_anythink {
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:self
@@ -379,6 +378,11 @@ NSString *const kCallStackSymbolCallerClassKey = @"caller_class";
     }
 }
 
+-(NSArray*) shuffledArray_anythink {
+    NSMutableArray *mutableArr = [NSMutableArray arrayWithArray:self];
+    for (NSUInteger i = [self count] - 1; i > 0; i--) { [mutableArr exchangeObjectAtIndex:arc4random_uniform(i + 1) withObjectAtIndex:i]; }
+    return mutableArr;
+}
 @end
 
 @implementation UIImage(ATKit)

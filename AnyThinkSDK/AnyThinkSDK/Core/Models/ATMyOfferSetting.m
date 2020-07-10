@@ -8,9 +8,10 @@
 
 #import "ATMyOfferSetting.h"
 @implementation ATMyOfferSetting
--(instancetype) initWithDictionary:(NSDictionary *)dictionary {
+-(instancetype) initWithDictionary:(NSDictionary *)dictionary placementID:(NSString*)placementID {
     self = [super initWithDictionary:dictionary];
     if (self != nil) {
+        _placementID = placementID;
         _format = [dictionary[@"f_t"] integerValue];
         _videoAreaInteractionEnabled = [dictionary[@"v_c"] boolValue];
         _bannerAppearanceInterval = [dictionary[@"s_b_t"] doubleValue];

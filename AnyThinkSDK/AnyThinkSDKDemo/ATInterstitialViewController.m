@@ -15,6 +15,10 @@ NSString *const kTTVideoPlacement = @"TT(Video)";
 NSString *const kNendInterstitialVideoPlacement = @"Nend(Video)";
 NSString *const kNendFullScreenInterstitialPlacement = @"Nend(Full Screen)";
 NSString *const kHeaderBiddingPlacement = @"Header Bidding";
+NSString *const kStartAppPlacement = @"StartApp";
+NSString *const kStartAppVideoPlacement = @"StartApp(Video)";
+NSString *const kFyberPlacement = @"Fyber";
+NSString *const kSigmobRVIntPlacement = @"Sigmob(RV)";
 
 static NSString *const kGDTPlacementID = @"b5bacad8ea3036";
 static NSString *const kTTPlacementID = @"b5bacad7373b89";
@@ -44,10 +48,14 @@ static NSString *const kNendPlacementID = @"b5cb96db9b3b0f";
 static NSString *const kNendVideoPlacementID = @"b5cb96dd930c57";
 static NSString *const kNendFullScreenPlacementID = @"b5cb96df0f1914";
 static NSString *const kMaioPlacementID = @"b5cb96cf795c4b";
-static NSString *const kSigmobPlacementID = @"b5d771f79e4a32";
+static NSString *const kSigmobPlacementID = @"b5ed8ceb5a286d";
+static NSString *const kSigmobIntRVPlacementID = @"b5d771f79e4a32";
 static NSString *const kKSPlacementID = @"b5d807a4846f50";
 static NSString *const kMyOfferPlacementID = @"b5db6c26999c31";
 static NSString *const kOguryPlacementID = @"b5dde238f2d2ce";
+static NSString *const kStartAppPlacementID = @"b5e731a0acabdf";
+static NSString *const kStartAppVideoPlacementID = @"b5e732a9577182";
+static NSString *const kFyberPlacementID = @"b5e96db2198474";
 
 @interface ATInterstitialViewController ()<ATInterstitialDelegate>
 @property(nonatomic, readonly) NSString *name;
@@ -93,10 +101,14 @@ static NSString *const kOguryPlacementID = @"b5dde238f2d2ce";
                           kNendInterstitialVideoPlacement:kNendVideoPlacementID,
                           kNendFullScreenInterstitialPlacement:kNendFullScreenPlacementID,
                           kMaioPlacement:kMaioPlacementID,
+                          kSigmobRVIntPlacement:kSigmobIntRVPlacementID,
                           kSigmobPlacement:kSigmobPlacementID,
                           kKSPlacement:kKSPlacementID,
                           kMyOfferPlacement:kMyOfferPlacementID,
-                          kOguryPlacement:kOguryPlacementID
+                          kOguryPlacement:kOguryPlacementID,
+                          kStartAppPlacement:kStartAppPlacementID,
+                          kStartAppVideoPlacement:kStartAppVideoPlacementID,
+                          kFyberPlacement:kFyberPlacementID
                           };
     }
     return self;
@@ -104,6 +116,8 @@ static NSString *const kOguryPlacementID = @"b5dde238f2d2ce";
 
 -(void) viewDidLoad {
     [super viewDidLoad];
+    [[ATAPI sharedInstance] setCustomData:@{@"test_key":@"test_val"} forPlacementID:kGDTPlacementID];
+    
     self.title = _name;
     self.view.backgroundColor = [UIColor whiteColor];
     
@@ -163,9 +177,7 @@ static NSString *const kOguryPlacementID = @"b5dde238f2d2ce";
     NSLog(@"Begin loading interstitial ad");
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:nil delegate:self];
-    });
+    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:[_name isEqualToString:kSigmobRVIntPlacement] ? @{kATInterstitialExtraUsesRewardedVideo:@YES} : nil delegate:self];
 }
 
 -(void) showAD {

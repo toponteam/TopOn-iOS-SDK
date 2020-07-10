@@ -15,6 +15,8 @@
 #import "NSObject+ExtraInfo.h"
 #import "ATImageLoader.h"
 #import "ATAdCustomEvent.h"
+#import "ATNativeADCache.h"
+#import "ATAppSettingManager.h"
 
 @implementation ATGDTNativeCustomEvent
 #pragma mark - template delegate
@@ -169,7 +171,7 @@
 }
 
 #pragma mark - unified native ad delegate(s)
-- (void)gdt_unifiedNativeAdLoaded:(NSArray<id<ATGDTUnifiedNativeAdDataObject>> * _Nullable)unifiedNativeAdDataObjects error:(NSError * _Nullable)error {
+- (void)gdt_unifiedNativeAdLoaded:(NSArray<id<ATGDTUnifiedNativeAdDataObject>> *)unifiedNativeAdDataObjects error:(NSError *)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"GDTNative::gdt_unifiedNativeAdLoaded:error:%@", error] type:ATLogTypeExternal];
     if (error != nil) {
         self.requestCompletionBlock(nil, error);
@@ -238,5 +240,12 @@
 
 - (void)gdt_unifiedNativeAdView:(id<ATGDTUnifiedNativeAdView>)unifiedNativeAdView playerStatusChanged:(NSUInteger)status userInfo:(NSDictionary *)userInfo {
     [ATLogger logMessage:[NSString stringWithFormat:@"GDTNative::gdt_unifiedNativeAdView:playerStatusChanged:%ld userInfo:%@", status, userInfo] type:ATLogTypeExternal];
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unit_id"];
+    return extra;
 }
 @end

@@ -8,11 +8,8 @@
 
 #import "ATNativeViewController.h"
 #import "MTAutolayoutCategories.h"
-@import NendAd;
-@import AnyThinkSDK;
-#ifdef NATIVE_INTEGRATED
-@import AnyThinkNative;
-#endif
+
+
 
 NSString *const kMPPlacement = @"MobPower";
 NSString *const kInmobiPlacement = @"Inmobi";
@@ -22,6 +19,7 @@ NSString *const kAdMobPlacement = @"AdMob";
 NSString *const kApplovinPlacement = @"Applovin";
 NSString *const kFlurryPlacement = @"Flurry";
 NSString *const kMintegralPlacement = @"Mintegral";
+NSString *const kMintegralAdvancedPlacement = @"Mintegral(Advanced)";
 NSString *const kMopubPlacementName = @"Mopub";
 NSString *const kMopubVideoPlacementName = @"Mopub Video Placement";
 NSString *const kGDTPlacement = @"GDT";
@@ -33,12 +31,14 @@ NSString *const kTTDrawPlacementName = @"TT(Draw)";
 NSString *const kAllPlacementName = @"All";
 NSString *const kNendVideoPlacement = @"Nend(Video)";
 NSString *const kSigmobPlacement = @"Sigmob";
+NSString *const kKSDrawPlacement = @"KS(Draw)";
 
 
 static NSString *const kMPPlacementID = @"b5c2084d12aca4";
 static NSString *const kPlacement0ID = @"b5ad9ba61dcb39";
 static NSString *const kInmobiPlacementID = @"b5b0f553483724";
 static NSString *const kMintegralPlacementID = @"b5b0f555698607";
+static NSString *const kMintegralAdvancedPlacementID = @"b5ee1d26cb56ee";
 static NSString *const kMintegralHeaderBiddingPlacementID = @"b5d1333d023691";
 static NSString *const kFacebookPlacementID = @"b5b0f551340ea9";
 static NSString *const kFacebookHeaderBiddingPlacementID = @"b5d13342d52304";
@@ -53,23 +53,15 @@ static NSString *const kYeahmobiPlacementID = @"b5bc7fb1d0b02f";
 static NSString *const kAppnextPlacementID = @"b5bc7fb2787f1e";
 static NSString *const kAllPlacementID = @"b5b0f5663c6e4a";
 static NSString *const kTTFeedPlacementID = @"b5c2c6d50e7f44";
-static NSString *const kTTDrawPlacementID = @"b5c2c6d62b9d65";
 static NSString *const kNendPlacementID = @"b5cb96d44c0c5f";
 static NSString *const kNendVideoPlacementID = @"b5cb96d5291e93";
 static NSString *const kBaiduPlacementID = @"b5d36c4ad68a26";
 static NSString *const kKSPlacementID = @"b5e4613e50cbf2";//@"b5e43ac9ca3fc5";
+//static NSString *const kKSDrawPlcementID = @"b5e4613e50cbf2";
+//static NSString *const kTTDrawPlacementID = @"b5c2c6d62b9d65";
 
 #ifdef NATIVE_INTEGRATED
-@interface DMADView:ATNativeADView
-@property(nonatomic, readonly) UILabel *advertiserLabel;
-@property(nonatomic, readonly) UILabel *textLabel;
-@property(nonatomic, readonly) UILabel *titleLabel;
-@property(nonatomic, readonly) UILabel *ctaLabel;
-@property(nonatomic, readonly) UILabel *ratingLabel;
-@property(nonatomic, readonly) UIImageView *iconImageView;
-@property(nonatomic, readonly) UIImageView *mainImageView;
-@property(nonatomic, readonly) UIImageView *sponsorImageView;
-@end
+
 
 @implementation DMADView
 -(void) initSubviews {
@@ -105,7 +97,7 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";//@"b5e43ac9ca3fc5";
 }
 
 -(NSArray<UIView*>*)clickableViews {
-    NSMutableArray<UIView*> *clickableViews = [NSMutableArray<UIView*> arrayWithObjects:_iconImageView, _ctaLabel, nil];
+    NSMutableArray<UIView*> *clickableViews = [NSMutableArray<UIView*> arrayWithObjects:_iconImageView, _ctaLabel, _mainImageView, nil];
     if (self.mediaView != nil) { [clickableViews addObject:self.mediaView]; }
     return clickableViews;
 }
@@ -186,6 +178,7 @@ static NSString *const kCallbackKey = @"request";
     return @{
              kMPPlacement:kMPPlacementID,
              kMintegralPlacement:kMintegralPlacementID,
+             kMintegralAdvancedPlacement:kMintegralAdvancedPlacementID,
              kHeaderBiddingPlacement:kMintegralHeaderBiddingPlacementID,
              kAllPlacementName:kAllPlacementID,
              kInmobiPlacement:kInmobiPlacementID,
@@ -201,7 +194,6 @@ static NSString *const kCallbackKey = @"request";
              kYeahmobiPlacement:kYeahmobiPlacementID,
              kAppnextPlacement:kAppnextPlacementID,
              kTTFeedPlacementName:kTTFeedPlacementID,
-             kTTDrawPlacementName:kTTDrawPlacementID,
              kNendPlacement:kNendPlacementID,
              kNendVideoPlacement:kNendVideoPlacementID,
              kBaiduPlacement:kBaiduPlacementID,
@@ -267,10 +259,7 @@ static NSString *const kCallbackKey = @"request";
         [_loadingView startAnimating];
         [self.view addSubview:_loadingView];
         [self increaseLoad];
-        NADUserFeature *userFeature = [NADUserFeature new];
-        userFeature.gender = NADGenderMale;
-        userFeature.age = 25;
-        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNaitveAdUserFeatureKey:userFeature, kExtraInfoNativeAdTypeKey:@([@{kGDTPlacement:@(ATGDTNativeAdTypeSelfRendering), kGDTTemplatePlacement:@(ATGDTNativeAdTypeTemplate), kMintegralPlacement:@(ATGDTNativeAdTypeSelfRendering)}[_name] integerValue]), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds) - 30.0f, 300.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388} delegate:self];
+        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdTypeKey:@([@{kGDTPlacement:@(ATGDTNativeAdTypeSelfRendering), kGDTTemplatePlacement:@(ATGDTNativeAdTypeTemplate), kMintegralPlacement:@(ATGDTNativeAdTypeSelfRendering)}[_name] integerValue]), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds) - 30.0f, 300.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388} delegate:self];
     }
 }
 
@@ -368,7 +357,7 @@ static NSInteger adViewTag = 3333;
 -(void) didExitFullScreenVideoInAdView:(ATNativeADView*)adView placementID:(NSString*)placementID {
     NSLog(@"ATNativeViewController:: didExitFullScreenVideoInAdView:placementID:%@", placementID);
 }
-#pragma mark - delegate with networkID and adsourceID
+#pragma mark - delegate with extra
 -(void) didStartPlayingVideoInAdView:(ATNativeADView*)adView placementID:(NSString*)placementID extra:(NSDictionary *)extra{
     NSLog(@"ATNativeViewController:: didStartPlayingVideoInAdView:placementID:%@with extra: %@", placementID,extra);
 }

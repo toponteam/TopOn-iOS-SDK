@@ -11,7 +11,7 @@
 #import "ATMintegralNativeAdapter.h"
 //@import AnyThinkNative;
 extern NSString *const kMTGAssetsNativeAdManagerKey;
-@interface ATMintegralNativeCustomEvent : ATNativeADCustomEvent<ATMTGNativeAdManagerDelegate, ATMTGMediaViewDelegate, MTGBidNativeAdManagerDelegate>
+@interface ATMintegralNativeCustomEvent : ATNativeADCustomEvent<ATMTGNativeAdManagerDelegate, ATMTGMediaViewDelegate, MTGBidNativeAdManagerDelegate, MTGNativeAdvancedAdDelegate>
 @property(nonatomic) id<ATMTGNativeAdManager> nativeAdManager;
 @property(nonatomic) id<ATMTGBidNativeAdManager> bidNativeAdManager;
 @end

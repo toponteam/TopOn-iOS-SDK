@@ -12,6 +12,7 @@
 NSString *const kATHeaderBiddingExtraInfoTotalErrorKey = @"total_error";
 NSString *const kATHeaderBiddingExtraInfoDetailErrorKey = @"detail_error";
 NSString *const kATHeaderBiddingExtraInfoUnitGroupsUsingLatestBidInfoKey = @"unit_group_using_latest_bid_info";
+NSString *const kATHeaderBiddingBidRequestExtraStatisticsInfoKey = @"statistics_info";
 
 NSString *const kATHeaderBiddingAdSourceInfoAppIDKey_internal = @"app_id";
 NSString *const kATHeaderBiddingAdSourceInfoUnitIDKey_internal = @"unit_id";
@@ -25,12 +26,13 @@ NSString *const kATHeaderBiddingAdSourceInfoUnitIDKey_internal = @"unit_id";
     NSMutableArray<ATUnitGroupModel*>* activeUnitGroups = [ATAdLoader activeUnitGroupsInPlacementModel:placementModel unitGroups:placementModel.unitGroups inactiveUnitGroupInfos:nil requestID:requestID];
     [activeUnitGroups addObjectsFromArray:offerCachedHBActiveUnitGroups];
     
-    [self sendHeaderBiddingRequestWithPlacementModel:placementModel nonHeaderBiddingUnitGroups:activeUnitGroups headerBiddingUnitGroups:hbActiveUnitGroups completion:^(NSArray<ATUnitGroupModel *> *sortedUnitGroups, NSDictionary *extraInfo) {
+    [self sendHeaderBiddingRequestWithPlacementModel:placementModel nonHeaderBiddingUnitGroups:activeUnitGroups headerBiddingUnitGroups:hbActiveUnitGroups extra:@{kATHeaderBiddingBidRequestExtraStatisticsInfoKey:[ATAdLoader calculateStatisticsInfoWithPlacementModel:placementModel unitGroupModels:hbActiveUnitGroups requestID:requestID]} completion:^(NSArray<ATUnitGroupModel *> *sortedUnitGroups, NSDictionary *extraInfo) {
         if ([sortedUnitGroups count] > 0) {
-            [sortedUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                [obj updateBidInfoForRequestID:requestID];
-            }];
-            [placementModel updateUnitGroups:sortedUnitGroups forRequestID:requestID];
+            [sortedUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { [obj updateBidInfoForRequestID:requestID]; }];
+            
+            //
+            NSArray<ATUnitGroupModel*>* rankedAndShuffledUnitGroups = [ATAdLoader rankAndShuffleUnitGroups:sortedUnitGroups];
+            [placementModel updateUnitGroups:rankedAndShuffledUnitGroups forRequestID:requestID];
             dispatch_async(dispatch_get_main_queue(), ^{ completion(extraInfo); });
         } else {
             completion(extraInfo);
@@ -38,10 +40,10 @@ NSString *const kATHeaderBiddingAdSourceInfoUnitIDKey_internal = @"unit_id";
     }];
 }
 
--(void) sendHeaderBiddingRequestWithPlacementModel:(ATPlacementModel*)placementModel nonHeaderBiddingUnitGroups:(NSArray<ATUnitGroupModel*>*)nonHBUnitGroups headerBiddingUnitGroups:(NSArray<ATUnitGroupModel*>*)hbUnitGroups completion:(void(^)(NSArray<ATUnitGroupModel*>*, NSDictionary*))completion {
+-(void) sendHeaderBiddingRequestWithPlacementModel:(ATPlacementModel*)placementModel nonHeaderBiddingUnitGroups:(NSArray<ATUnitGroupModel*>*)nonHBUnitGroups headerBiddingUnitGroups:(NSArray<ATUnitGroupModel*>*)hbUnitGroups extra:(NSDictionary*)extra completion:(void(^)(NSArray<ATUnitGroupModel*>*, NSDictionary*))completion {
     if (placementModel.headerBiddingFormat != 0) {
         if (NSClassFromString(@"ATHeaderBiddingManager") != nil) {
-            [[NSClassFromString(@"ATHeaderBiddingManager") sharedManager] runHeaderBiddingWithForamt:placementModel.headerBiddingFormat unitID:placementModel.placementID adSources:nonHBUnitGroups headerBiddingAdSources:hbUnitGroups timeout:placementModel.headerBiddingRequestTimeout completion:^(NSArray<ATUnitGroupModel*>* sortedUnitGroups, NSDictionary* extraInfo) {
+            [[NSClassFromString(@"ATHeaderBiddingManager") sharedManager] runHeaderBiddingWithForamt:placementModel.headerBiddingFormat unitID:placementModel.placementID adSources:nonHBUnitGroups headerBiddingAdSources:hbUnitGroups extra:extra timeout:placementModel.headerBiddingRequestTimeout completion:^(NSArray<ATUnitGroupModel*>* sortedUnitGroups, NSDictionary* extraInfo) {
                 completion(sortedUnitGroups, extraInfo);
             }];
         } else {
@@ -54,6 +56,12 @@ NSString *const kATHeaderBiddingAdSourceInfoUnitIDKey_internal = @"unit_id";
         NSError *totalError = [NSError errorWithDomain:@"com.anythink.HeaderBiddingRequest" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"Header bidding request failed", NSLocalizedDescriptionKey:@"This format is not header bidding supported."}];
         completion(nonHBUnitGroups, @{kATHeaderBiddingExtraInfoTotalErrorKey:totalError});
     }
+}
+
++(NSDictionary<NSString*, NSDictionary*>*) calculateStatisticsInfoWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModels:(NSArray<ATUnitGroupModel*>*)unitGroupModels requestID:(NSString*)requestID {
+    NSMutableDictionary<NSString*, NSDictionary*> *statisticsInfo = [NSMutableDictionary<NSString*, NSDictionary*> dictionary];
+    [unitGroupModels enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { statisticsInfo[obj.unitID] = [ATAdLoader statisticsInfoWithPlacementModel:placementModel unitGroupModel:obj requestID:requestID bidRequest:YES]; }];
+    return statisticsInfo;
 }
 
 +(BOOL) headerBiddingSupported {
@@ -91,6 +99,7 @@ NSString* UnitIDContentKey(NSInteger network) {
     if (self.content[UnitIDContentKey(self.networkFirmID)] != nil) { adSourceInfo[kATHeaderBiddingAdSourceInfoUnitIDKey_internal] = self.content[UnitIDContentKey(self.networkFirmID)]; }
     if (self.content[@"appkey"] != nil) { adSourceInfo[@"apiKey"] = self.content[@"appkey"]; }//for mtg
     if (self.content[@"size"] != nil) { adSourceInfo[@"size"] = self.content[@"size"]; } //for banenr
+    if (self.content[@"placement_id"] != nil) { adSourceInfo[@"placement_id"] = self.content[@"placement_id"]; }
     return adSourceInfo;
 }
 @end

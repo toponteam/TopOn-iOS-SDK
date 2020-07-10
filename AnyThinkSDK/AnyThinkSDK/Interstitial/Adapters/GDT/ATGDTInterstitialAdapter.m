@@ -23,7 +23,11 @@
     id<ATGDTMobInterstitial> gdtInterstitial = interstitial.customObject;
     interstitial.customEvent.delegate = delegate;
     if ([interstitial.unitGroup.content[@"unit_version"] integerValue] == 2) {
-        [(id<ATGDTUnifiedInterstitialAd>)gdtInterstitial presentAdFromRootViewController:viewController];
+        if ([interstitial.unitGroup.content[@"is_fullscreen"] integerValue] == 1) {
+            [(id<ATGDTUnifiedInterstitialAd>)gdtInterstitial presentFullScreenAdFromRootViewController:viewController];
+        } else {
+            [(id<ATGDTUnifiedInterstitialAd>)gdtInterstitial presentAdFromRootViewController:viewController];
+        }
     } else {
         [gdtInterstitial presentFromRootViewController:viewController];
     }
@@ -35,6 +39,7 @@
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameGDT]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameGDT];
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"GDTSDKConfig") sdkVersion] forNetwork:kNetworkNameGDT];
+            [NSClassFromString(@"GDTSDKConfig") registerAppId:info[@"app_id"]];
         }
     }
     return self;
@@ -45,14 +50,16 @@
         _customEvent = [[ATGDTInterstitialCustomEvent alloc] initWithUnitID:info[@"unit_id"] customInfo:info];
         _customEvent.requestCompletionBlock = completion;
         if ([info[@"unit_version"] integerValue] == 2) {
-            _unifiedInterstitialAd = [[NSClassFromString(@"GDTUnifiedInterstitialAd") alloc] initWithAppId:info[@"app_id"] placementId:info[@"unit_id"]];
+            _unifiedInterstitialAd = [[NSClassFromString(@"GDTUnifiedInterstitialAd") alloc] initWithPlacementId:info[@"unit_id"]];
             _unifiedInterstitialAd.delegate = _customEvent;
             _unifiedInterstitialAd.videoAutoPlayOnWWAN = [info[@"video_autoplay"] boolValue];
             _unifiedInterstitialAd.videoMuted = [info[@"video_muted"] boolValue];
-            if (info[@"video_duration"] != nil) {
-                _unifiedInterstitialAd.maxVideoDuration = [info[@"video_duration"] integerValue];
+            if (info[@"video_duration"] != nil) { _unifiedInterstitialAd.maxVideoDuration = [info[@"video_duration"] integerValue]; }
+            if ([info[@"is_fullscreen"] integerValue] == 1) {
+                [_unifiedInterstitialAd loadFullScreenAd];
+            } else {
+                [_unifiedInterstitialAd loadAd];
             }
-            [_unifiedInterstitialAd loadAd];
         } else {
             _interstitial = [[NSClassFromString(@"GDTMobInterstitial") alloc] initWithAppId:info[@"app_id"] placementId:info[@"unit_id"]];
             _interstitial.delegate = _customEvent;

@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
  Reqeust a series Nework Bid,and response the best suitable bid
  Default max time out is set to 1000 ms
  */
-+ (void)getBidNetworks:(NSArray<HBBidNetworkItem *>*)networkItems unitId:(NSString *)unitId adFormat:(HBAdBidFormat)format maxTimeoutMS:(NSInteger)maxTimeoutMS responseCallback:(void(^)(HBAuctionResult *auctionResponse,NSError *error))callback;
++ (void)getBidNetworks:(NSArray<HBBidNetworkItem *>*)networkItems statisticsInfo:(NSDictionary*)statisticsInfo unitId:(NSString *)unitId adFormat:(HBAdBidFormat)format maxTimeoutMS:(NSInteger)maxTimeoutMS responseCallback:(void(^)(HBAuctionResult *auctionResponse,NSError *error))callback;
 
 
 

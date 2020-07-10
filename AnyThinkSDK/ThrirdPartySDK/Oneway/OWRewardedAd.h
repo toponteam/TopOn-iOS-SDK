@@ -15,11 +15,15 @@
 
 - (void)oneWaySDKRewardedAdDidShow:(NSString *)tag;
 
+- (void)oneWaySDKRewardedAdDidFinish:(NSString *)tag withState:(NSNumber *)state session:(NSString *)session;
+
 - (void)oneWaySDKRewardedAdDidClose:(NSString *)tag withState:(NSNumber *)state;
 
 - (void)oneWaySDKRewardedAdDidClick:(NSString *)tag;
 
 - (void)oneWaySDKDidError:(OneWaySDKError)error withMessage:(NSString *)message;
+
+
 
 @end
 
@@ -59,4 +63,7 @@
  @param tag 自定义tag,回调时传给开发者,用于优化广告点击.
  */
 + (void)show:(UIViewController *)viewController tag:(NSString *)tag;
+
+
++ (void)setDelegate:(id<oneWaySDKRewardedAdDelegate>)delegate;
 @end

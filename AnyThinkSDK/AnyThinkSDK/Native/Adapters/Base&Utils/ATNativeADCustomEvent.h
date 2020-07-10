@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "ATNativeADView.h"
 #import "ATTracker.h"
+#import "ATNativeADDelegate.h"
 @class ATNativeADCache;
 @interface ATNativeADCustomEvent : NSObject
 -(void) handleAssets:(NSDictionary*)assets;
@@ -22,6 +23,7 @@
 -(void) trackClick;
 -(void) trackVideoStart;
 -(void) trackVideoEnd;
+-(NSDictionary*)delegateExtra;
 -(ATNativeADSourceType) sourceType;
 @property(nonatomic, copy) void(^requestCompletionBlock)(NSArray<NSDictionary*> *assets, NSError *error);
 @property(nonatomic, weak) ATNativeADView *adView;

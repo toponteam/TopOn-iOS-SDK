@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "ATNativeAd.h"
 #import "ATAd.h"
+#import "ATNativeADCustomEvent.h"
 @class ATUnitGroupModel;
 @class ATPlacementModel;
 @interface ATNativeADCache : ATNativeAd<ATAd>
@@ -18,6 +19,7 @@
  Priority is calculate by the index of the unit group in the placement's unit group list; zero is the highest
  */
 @property(nonatomic, readonly) NSInteger priority;
+@property(nonatomic, readonly) NSInteger priorityLevel;
 //@property(nonatomic, readonly) NSString *placementID;
 @property(nonatomic, readonly) ATPlacementModel *placementModel;
 @property(nonatomic, readonly) NSString *requestID;
@@ -26,6 +28,8 @@
 @property(nonatomic, readonly) NSDate *cacheDate;
 @property(nonatomic, readonly) NSDictionary *assets;//To be removed
 @property(nonatomic, readonly) ATUnitGroupModel *unitGroup;
+@property(nonatomic) NSNumber *sdkTime;
+@property(nonatomic, readonly) ATNativeADCustomEvent *customEvent;
 /**
  * Third-party network native ad object.
  */

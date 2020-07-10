@@ -23,6 +23,9 @@ extern NSString *const kUnitGroupBidInfoBidTokenKey;
 extern NSString *const kATHeaderBiddingExtraInfoTotalErrorKey;
 extern NSString *const kATHeaderBiddingExtraInfoDetailErrorKey;//the value keyed by this key is a dictionary which contains the corresponding errors produced by hb, stored using the unit groups' hash as keys.
 extern NSString *const kATHeaderBiddingExtraInfoUnitGroupsUsingLatestBidInfoKey;
+
+extern NSString *const kATHeaderBiddingBidRequestExtraStatisticsInfoKey;
+
 @interface ATAdLoader (HeaderBidding)
 +(BOOL) headerBiddingSupported;
 -(void) runHeaderBiddingWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID completion:(void(^)(NSDictionary *context))completion;
@@ -37,7 +40,7 @@ extern NSString *const kATHeaderBiddingAdSourceInfoAppIDKey_internal;
 extern NSString *const kATHeaderBiddingAdSourceInfoUnitIDKey_internal;
 @protocol ATHeaderBiddingManager<NSObject>
 +(instancetype) sharedManager;
--(void) runHeaderBiddingWithForamt:(NSInteger)format unitID:(NSString*)unitID adSources:(NSArray<ATUnitGroupModel*>*)adsrouces headerBiddingAdSources:(NSArray<ATUnitGroupModel*>*)HBAdSources timeout:(NSTimeInterval)timeout completion:(void(^)(NSArray<ATUnitGroupModel*>*, NSDictionary*))completion;
+-(void) runHeaderBiddingWithForamt:(NSInteger)format unitID:(NSString*)unitID adSources:(NSArray<ATUnitGroupModel*>*)adsrouces headerBiddingAdSources:(NSArray<ATUnitGroupModel*>*)HBAdSources extra:(NSDictionary*)extra timeout:(NSTimeInterval)timeout completion:(void(^)(NSArray<ATUnitGroupModel*>*, NSDictionary*))completion;
 @end
 
 

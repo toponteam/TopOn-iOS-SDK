@@ -16,6 +16,7 @@
 #import "Utilities.h"
 #import "ATAdAdapter.h"
 #import "ATSigmobInterstitialCustomEvent.h"
+#import "ATSigmobInterstitialRewardedVideoDelegate.h"
 NSString *const kATSigmobInterstitialLoadedNotification = @"com.anythink.SigmobFullScreenAdLoaded";
 NSString *const kATSigmobInterstitialFailedToLoadNotification = @"com.anythink.SigmobFullScreenAdFailedToLoad";
 NSString *const kATSigmobInterstitialPlayStartNotification = @"com.anythink.SigmobFullScreenAdPlayStart";
@@ -99,13 +100,18 @@ NSString *const kATSigmobInterstitialDataLoadedNotification = @"com.anythink.Sig
 
 +(void) showInterstitial:(ATInterstitial*)interstitial inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate {
     ((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).delegate = delegate;
-    id<ATWindFullscreenVideoAd> sharedFullScreen = [NSClassFromString(@"WindFullscreenVideoAd") sharedInstance];
+    
     NSError *error = nil;
-    if (![sharedFullScreen playAd:viewController withPlacementId:interstitial.customEvent.unitID options:nil error:&error]) {
-        if ([((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).delegate respondsToSelector:@selector(interstitialDidFailToPlayVideoForPlacementID:error:extra:)]) {
-            [((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).delegate interstitialDidFailToPlayVideoForPlacementID:((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).interstitial.placementModel.placementID error:[NSError errorWithDomain:@"com.anythink.NendInterstitialVideoPlayingFailure" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to play video for interstitial", NSLocalizedFailureReasonErrorKey:@"NendInterstitialVideo failed to play video"}] extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).interstitial.unitGroup.unitID != nil ? ((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).interstitial.unitGroup.unitID : @""}];
-        }
+    BOOL playSuc = NO;
+    if (((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).usesRewardedVideo) {
+        id<ATWindRewardedVideoAd> rewardedVideoAd = [NSClassFromString(@"WindRewardedVideoAd") sharedInstance];
+        playSuc = [rewardedVideoAd playAd:viewController withPlacementId:interstitial.customEvent.unitID options:nil error:&error];
+    } else {
+        id<ATWindFullscreenVideoAd> sharedFullScreen = [NSClassFromString(@"WindFullscreenVideoAd") sharedInstance];
+        playSuc = [sharedFullScreen playAd:viewController withPlacementId:interstitial.customEvent.unitID options:nil error:&error];
     }
+    
+    if (!playSuc) { if ([((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).delegate respondsToSelector:@selector(interstitialDidFailToPlayVideoForPlacementID:error:extra:)]) { [((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).delegate interstitialDidFailToPlayVideoForPlacementID:((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).interstitial.placementModel.placementID error:[NSError errorWithDomain:@"com.anythink.SigmobInterstitialVideoPlayingFailure" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to show interstitial", NSLocalizedFailureReasonErrorKey:@"SigmobInterstitialVideo failed to play video"}] extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).interstitial.unitGroup.unitID != nil ? ((ATSigmobInterstitialCustomEvent*)interstitial.customEvent).interstitial.unitGroup.unitID : @""}]; } }
 }
 
 -(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
@@ -117,25 +123,28 @@ NSString *const kATSigmobInterstitialDataLoadedNotification = @"com.anythink.Sig
             id<ATWindAdOptions> options = [NSClassFromString(@"WindAdOptions") options];
             options.appId = info[@"app_id"];
             options.apiKey = info[@"app_key"];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [NSClassFromString(@"WindAds") startWithOptions:options];
-            });
+            dispatch_async(dispatch_get_main_queue(), ^{ [NSClassFromString(@"WindAds") startWithOptions:options]; });
         }
     }
     return self;
 }
 
 -(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
-    if (NSClassFromString(@"WindAdRequest") != nil && NSClassFromString(@"WindFullscreenVideoAd") != nil) {
+    BOOL usesRV = ([info[kAdapterCustomInfoExtraKey] isKindOfClass:[NSDictionary class]] && [info[kAdapterCustomInfoExtraKey][kATInterstitialExtraUsesRewardedVideo] boolValue]) ? [info[kAdapterCustomInfoExtraKey][kATInterstitialExtraUsesRewardedVideo] boolValue] : NO;
+    if (NSClassFromString(@"WindAdRequest") != nil && (usesRV ? NSClassFromString(@"WindRewardedVideoAd") != nil : NSClassFromString(@"WindFullscreenVideoAd") != nil)) {
         _customEvent = [[ATSigmobInterstitialCustomEvent alloc] initWithUnitID:info[@"placement_id"] customInfo:info];
         _customEvent.requestCompletionBlock = completion;
         _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
         id<ATWindAdRequest> request = [NSClassFromString(@"WindAdRequest") request];
-        id<ATWindFullscreenVideoAd> sharedFullScreen = [NSClassFromString(@"WindFullscreenVideoAd") sharedInstance];
-        if (sharedFullScreen.delegate == nil) {
-        sharedFullScreen.delegate = [ATSigmobInterstitialDelegate sharedDelegate];
+        if (usesRV) {
+            id<ATWindRewardedVideoAd> sharedRewardedAd = [NSClassFromString(@"WindRewardedVideoAd") sharedInstance];
+            if (sharedRewardedAd.delegate == nil) { sharedRewardedAd.delegate = [ATSigmobInterstitialRewardedVideoDelegate sharedDelegate]; }
+            [sharedRewardedAd loadRequest:request withPlacementId:info[@"placement_id"]];
+        } else {
+            id<ATWindFullscreenVideoAd> sharedFullScreen = [NSClassFromString(@"WindFullscreenVideoAd") sharedInstance];
+            if (sharedFullScreen.delegate == nil) { sharedFullScreen.delegate = [ATSigmobInterstitialDelegate sharedDelegate]; }
+            [sharedFullScreen loadRequest:request withPlacementId:info[@"placement_id"]];
         }
-        [sharedFullScreen loadRequest:request withPlacementId:info[@"placement_id"]];
     } else {
         completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Sigmob"]}]);
     }

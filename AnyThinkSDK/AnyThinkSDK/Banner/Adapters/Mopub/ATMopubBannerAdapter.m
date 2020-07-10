@@ -62,6 +62,7 @@
                 weakSelf.adView = [[NSClassFromString(@"MPAdView") alloc] initWithAdUnitId:info[@"unitid"] size:CGSizeMake(unitGroupModel.adSize.width, unitGroupModel.adSize.height)];
                 weakSelf.adView.delegate = self->_customEvent;
                 weakSelf.adView.frame = CGRectMake(.0f, .0f, unitGroupModel.adSize.width, unitGroupModel.adSize.height);
+                if ([info[@"nw_rft"] integerValue] == 0) { [weakSelf.adView stopAutomaticallyRefreshingContents]; }
                 [weakSelf.adView loadAd];
             });
         };

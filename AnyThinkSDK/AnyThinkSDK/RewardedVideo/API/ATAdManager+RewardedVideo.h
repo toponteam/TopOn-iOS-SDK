@@ -15,6 +15,7 @@ extern NSString *const kATAdLoadingExtraKeywordKey;
 extern NSString *const kATAdLoadingExtraUserDataKeywordKey;
 extern NSString *const kATAdLoadingExtraUserIDKey;
 extern NSString *const kATAdLoadingExtraLocationKey;
+extern NSString *const kATAdLoadingExtraMediaExtraKey;
 
 extern NSString *const kATRewardedVideoCallbackExtraAdsourceIDKey;
 extern NSString *const kATRewardedVideoCallbackExtraNetworkIDKey;

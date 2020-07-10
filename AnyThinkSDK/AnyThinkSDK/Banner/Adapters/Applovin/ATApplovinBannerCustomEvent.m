@@ -70,7 +70,7 @@
     [ATLogger logMessage:@"ApplovinBanner::ad:willLeaveApplicationForAdView:" type:ATLogTypeExternal];
     [self trackClick];
     if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.priorityIndex),kATBannerDelegateExtraPrice:@(self.banner.unitGroup.price)}];
+        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
     }
 }
 
@@ -80,5 +80,11 @@
 
 - (void)ad:(id<ATALAd>)ad didFailToDisplayInAdView:(id<ATALAdView>)adView withError:(ATALAdViewDisplayErrorCode)code {
     [ATLogger logMessage:[NSString stringWithFormat:@"ApplovinBanner::ad:didFailToDisplayInAdView:withError:%d", (int)code] type:ATLogTypeExternal];
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"zone_id"] != nil ? self.banner.unitGroup.content[@"zone_id"] : @"";
+    return extra;
 }
 @end

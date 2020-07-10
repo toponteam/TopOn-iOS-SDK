@@ -21,7 +21,7 @@
 
 
 NSString *const kATNativeDelegateExtraNetworkIDKey = @"network_firm_id";
-NSString *const kATNativeDelegateExtraAdSourceIDKey = @"ad_source_id";
+NSString *const kATNativeDelegateExtraAdSourceIDKey = @"adsource_id";
 NSString *const kATNativeDelegateExtraIsHeaderBidding = @"adsource_isHeaderBidding";
 NSString *const kATNativeDelegateExtraPrice = @"adsource_price";
 NSString *const kATNativeDelegateExtraPriority = @"adsource_index";

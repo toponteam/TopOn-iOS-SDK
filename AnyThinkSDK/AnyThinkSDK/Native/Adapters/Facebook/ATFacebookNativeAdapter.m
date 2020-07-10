@@ -16,7 +16,8 @@
 const CGFloat kATFBAdOptionsViewWidth = 43.0f;
 const CGFloat kATFBAdOptionsViewHeight = 18.0f;
 @interface ATFacebookNativeAdapter()
-@property(nonatomic, readonly) NSMutableArray<id<ATFBNativeAd>>* nativeAds;
+@property(nonatomic, readonly) id<ATFBNativeBannerAd> nativeBannerAd;
+@property(nonatomic, readonly) id<ATFBNativeAd> nativeAd;
 @property(nonatomic, readonly) ATFacebookCustomEvent *customEvent;
 @end
 @implementation ATFacebookNativeAdapter
@@ -34,34 +35,26 @@ const CGFloat kATFBAdOptionsViewHeight = 18.0f;
                 [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameFacebook];
             }
         });
-        _nativeAds = [NSMutableArray<id<ATFBNativeAd>> array];
     }
     return self;
 }
 
 -(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
-    if (NSClassFromString(@"FBNativeAd") != nil) {
+    if (NSClassFromString(@"FBNativeAd") != nil && NSClassFromString(@"FBNativeBannerAd") != nil) {
         _customEvent = [ATFacebookCustomEvent new];
         _customEvent.unitID = info[@"unit_id"];
         _customEvent.requestCompletionBlock = completion;
-        _customEvent.requestNumber = [info[@"request_num"] longValue];
-        NSDictionary *extraInfo = info[kAdapterCustomInfoExtraKey];
-        _customEvent.requestExtra = extraInfo;
+        _customEvent.requestNumber = 1;
+        _customEvent.requestExtra = info[kAdapterCustomInfoExtraKey];
         dispatch_async(dispatch_get_main_queue(), ^{
-            for (NSInteger i = 0; i < [info[@"request_num"] integerValue]; i++) {
-                id<ATFBNativeAd> nativeAd = [[NSClassFromString(@"FBNativeAd") alloc] initWithPlacementID:info[@"unit_id"]];
-                if (nativeAd != nil) {
-                    nativeAd.delegate = self->_customEvent;
-                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)info[kAdapterCustomInfoUnitGroupModelKey];
-                    NSString *requestID = info[kAdapterCustomInfoRequestIDKey];
-                    if ([unitGroupModel bidTokenWithRequestID:requestID] != nil) {
-                        [nativeAd loadAdWithBidPayload:[unitGroupModel bidTokenWithRequestID:requestID]];
-                        [unitGroupModel setBidTokenUsedFlagForRequestID:requestID];
-                    } else {
-                        [nativeAd loadAd];
-                    }
-                    [self->_nativeAds addObject:nativeAd];
-                }
+            if ([info[@"unit_type"] integerValue] == 0) {
+                self->_nativeAd = [[NSClassFromString(@"FBNativeAd") alloc] initWithPlacementID:info[@"unit_id"]];
+                self->_nativeAd.delegate = self->_customEvent;
+                [self->_nativeAd loadAd];
+            } else {
+                self->_nativeBannerAd = [[NSClassFromString(@"FBNativeBannerAd") alloc] initWithPlacementID:info[@"unit_id"]];
+                self->_nativeBannerAd.delegate = self->_customEvent;
+                [self->_nativeBannerAd loadAd];
             }
         });
     }

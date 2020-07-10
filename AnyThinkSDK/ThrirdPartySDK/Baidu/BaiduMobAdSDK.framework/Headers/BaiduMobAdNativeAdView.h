@@ -26,7 +26,7 @@
 /**
  多图
  */
-@property (strong, nonatomic)  NSMutableArray *morePicsArray;
+@property (strong, nonatomic) NSMutableArray *morePicsArray;
 
 /**
  * 广告标示
@@ -69,6 +69,11 @@
 @property (nonatomic, weak) UIViewController *presentAdViewController;
 
 /**
+ *  广告数据对象
+*/
+@property (nonatomic, strong, readonly) BaiduMobAdNativeAdObject *object;
+
+/**
  常规大图信息流 MaterialType是NORMAL的初始化方法
  
  @param frame 信息流视图大小
@@ -79,7 +84,7 @@
  @param mainView 大图
  @return 信息流视图
  */
-- (id)initWithFrame:(CGRect)frame
+- (instancetype)initWithFrame:(CGRect)frame
           brandName:(UILabel *)brandLabel
               title:(UILabel *)titleLabel
                text:(UILabel *)textLabel
@@ -89,7 +94,7 @@
 /**
  * 多图信息流，MaterialType是NORMAL的初始化方法
  */
-- (id)initWithFrame:(CGRect)frame
+- (instancetype)initWithFrame:(CGRect)frame
           brandName:(UILabel *)brandLabel
               title:(UILabel *)titleLabel
                text:(UILabel *)textLabel
@@ -101,7 +106,14 @@
  * 信息流视频
  * 推荐使用SDK的BaiduMobAdNativeVideoView视频组件，也可自定义视频view传入
  */
-- (id)initWithFrame:(CGRect)frame
+- (instancetype)initWithFrame:(CGRect)frame
+          brandName:(UILabel *)brandLabel
+              title:(UILabel *)titleLabel
+               text:(UILabel *)textLabel
+               icon:(UIImageView *)iconView
+          videoView:(BaiduMobAdNativeVideoBaseView *)videoView;
+
+- (instancetype)initWithFrame:(CGRect)frame
           brandName:(UILabel *)brandLabel
               title:(UILabel *)titleLabel
                text:(UILabel *)textLabel
@@ -111,7 +123,7 @@
 /**
  * 信息流模板
  */
-- (id)initWithFrame:(CGRect)frame
+- (instancetype)initWithFrame:(CGRect)frame
             webview:(BaiduMobAdNativeWebView *) webView;
 
 /**

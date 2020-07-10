@@ -23,6 +23,7 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
 -(NSTimeInterval) splashTolerateTimeout;
 -(BOOL) usesServerDataConsentSet;
 -(NSTimeInterval) psIDInterval;
+-(NSTimeInterval) psIDIntervalForHotLaunch;
 -(ATDataConsentSet) serverDataConsentSet;
 -(ATDataConsentSet) commonTkDataConsentSet;
 -(NSUInteger) myOfferMaxResourceLength;
@@ -33,6 +34,7 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
  * If the SDK has been init-ed the first time, the data protected area list will be the embeded one(stored in the Info.plist of the SDK bundle under the key Data Protection Area); or it'll be the one that's returned by the server.
  */
 -(BOOL) inDataProtectedArea;
+-(void) getUserLocationWithCallback:(void(^)(ATUserLocation location))callback;
 @property(nonatomic, readonly) NSDictionary *currentSetting;
 @property(nonatomic, readonly) NSDictionary *defaultSetting;
 @property(nonatomic, readonly) ATTrackingSetting *trackingSetting;
@@ -54,8 +56,8 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
 @property(nonatomic, readonly) NSString *agentEventAddress;
 @property(nonatomic, readonly) NSInteger agentEventNumberThreadhold;
 @property(nonatomic, readonly) NSTimeInterval agentEventInterval;
-@property(nonatomic, readonly) NSArray<NSString*>* agentEventDropKeys;
-@property(nonatomic, readonly) NSArray<NSString*>* agentEventRTKeys;
+@property(nonatomic, readonly) NSDictionary<NSString*, NSArray<NSString*>*>* agentEventDropFormats;
+@property(nonatomic, readonly) NSDictionary<NSString*, NSArray<NSString*>*>* agentEventRTFormats;
 /*
  *for batch upload
  */
@@ -64,5 +66,5 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
 
 //TC
 @property(nonatomic, readonly) NSArray<NSString*>* tcHosts;
-@property(nonatomic, readonly) NSArray<NSNumber*>* tcTKSkipTypes;
+@property(nonatomic, readonly) NSDictionary<NSString*, NSArray<NSString*>*>* tcTKSkipFormats;
 @end

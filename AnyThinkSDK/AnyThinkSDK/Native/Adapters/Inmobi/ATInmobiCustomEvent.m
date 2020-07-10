@@ -27,32 +27,25 @@ static NSString *const kGestureRecognizerKey = @"gesture_recognizer";
 @end
 @implementation ATInmobiCustomEvent
 -(void)nativeDidFinishLoading:(id<ATIMNative>)native{
+    [ATLogger logMessage:@"InmobiNative::nativeDidFinishLoading" type:ATLogTypeExternal];
     NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:native, kAdAssetsCustomObjectKey, self.unitID, kNativeADAssetsUnitIDKey, nil];
-    if (native.adIcon != nil) {
-        assets[kNativeADAssetsIconImageKey] = native.adIcon;
-    }
-    if ([native.adTitle length] > 0) {
-        assets[kNativeADAssetsMainTitleKey] = native.adTitle;
-    }
-    if ([native.adDescription length] > 0) {
-        assets[kNativeADAssetsMainTextKey] = native.adDescription;
-    }
-    if ([native.adCtaText length] > 0) {
-        assets[kNativeADAssetsCTATextKey] = native.adCtaText;
-    }
-    if ([native.adRating length] > 0) {
-        assets[kNativeADAssetsRatingKey] = [NSNumber numberWithDouble:[native.adRating doubleValue]];
-    }
+    if (native.adIcon != nil) { assets[kNativeADAssetsIconImageKey] = native.adIcon; }
+    if ([native.adTitle length] > 0) { assets[kNativeADAssetsMainTitleKey] = native.adTitle; }
+    if ([native.adDescription length] > 0) { assets[kNativeADAssetsMainTextKey] = native.adDescription; }
+    if ([native.adCtaText length] > 0) { assets[kNativeADAssetsCTATextKey] = native.adCtaText; }
+    if ([native.adRating length] > 0) { assets[kNativeADAssetsRatingKey] = [NSNumber numberWithDouble:[native.adRating doubleValue]]; }
     
     [self handleAssets:assets];
 }
 
 -(void)native:(id<ATIMNative>)native didFailToLoadWithError:(NSError*)error {
+    [ATLogger logMessage:[NSString stringWithFormat:@"InmobiNative::native:didFailToLoadWithError:%@", error] type:ATLogTypeExternal];
     [ATLogger logError:[NSString stringWithFormat:@"Inmobi has failed to load offer, error: %@", error] type:ATLogTypeExternal];
     [self handleLoadingFailure:error];
 }
 
 - (void)native:(id<ATIMNative>)native didInteractWithParams:(NSDictionary *)params {
+    [ATLogger logMessage:[NSString stringWithFormat:@"InmobiNative::native:didInteractWithParams:%@", params] type:ATLogTypeExternal];
     [self handleClick];
     _interacted = YES;
     if (_clickHandled) { _clickHandled = NO; }
@@ -80,37 +73,39 @@ static NSString *const kGestureRecognizerKey = @"gesture_recognizer";
 }
 
 - (void)nativeAdImpressed:(id<ATIMNative>)native {
+    [ATLogger logMessage:@"InmobiNative::nativeAdImpressed" type:ATLogTypeExternal];
     //Impression will be tracked within the base ad view
 }
 
 - (void)nativeDidDismissScreen:(id<ATIMNative>)native {
-    
+    [ATLogger logMessage:@"InmobiNative::nativeDidDismissScreen" type:ATLogTypeExternal];
 }
 
 - (void)nativeDidFinishPlayingMedia:(id<ATIMNative>)native {
-//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-//    [[ATTracker sharedTracker] trackWithPlacementID:cache.placementModel.placementID unitGroupID:cache.unitGroup.unitGroupID requestID:cache.requestID network:cache.unitGroup.networkFirmID format:0 trackType:ATNativeADTrackTypeVideoPlayed resourceType:ATNativeADSourceTypeVideo progress:100 extra:nil];
+    [ATLogger logMessage:@"InmobiNative::nativeDidFinishPlayingMedia" type:ATLogTypeExternal];
     [self trackVideoEnd];
     [self.adView notifyVideoEnd];
 }
 
 - (void)nativeDidPresentScreen:(id<ATIMNative>)native {
+    [ATLogger logMessage:@"InmobiNative::nativeDidPresentScreen" type:ATLogTypeExternal];
     [self handleClick];
 }
 
 - (void)nativeWillDismissScreen:(id<ATIMNative>)native {
-    
+    [ATLogger logMessage:@"InmobiNative::nativeWillDismissScreen" type:ATLogTypeExternal];
 }
 
 - (void)nativeWillPresentScreen:(id<ATIMNative>)native {
-    
+    [ATLogger logMessage:@"InmobiNative::nativeWillPresentScreen" type:ATLogTypeExternal];
 }
 
 - (void)userDidSkipPlayingMediaFromNative:(id<ATIMNative>)native {
-    
+    [ATLogger logMessage:@"InmobiNative::userDidSkipPlayingMediaFromNative" type:ATLogTypeExternal];
 }
 
 - (void)userWillLeaveApplicationFromNative:(id<ATIMNative>)native {
+    [ATLogger logMessage:@"InmobiNative::userWillLeaveApplicationFromNative" type:ATLogTypeExternal];
     _clickHandled = YES;
     [self handleClick];
     if (_interacted) { _interacted = NO; }
@@ -125,5 +120,12 @@ static NSString *const kGestureRecognizerKey = @"gesture_recognizer";
         [self trackClick];
         [self.adView notifyNativeAdClick];
     }
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unit_id"];
+    return extra;
 }
 @end

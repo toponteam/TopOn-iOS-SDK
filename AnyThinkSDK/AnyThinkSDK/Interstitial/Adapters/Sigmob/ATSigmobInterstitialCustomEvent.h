@@ -9,5 +9,5 @@
 #import "ATInterstitialCustomEvent.h"
 
 @interface ATSigmobInterstitialCustomEvent : ATInterstitialCustomEvent
-
+@property(nonatomic, readonly) BOOL usesRewardedVideo;
 @end

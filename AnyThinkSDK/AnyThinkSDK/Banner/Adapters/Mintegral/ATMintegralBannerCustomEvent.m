@@ -10,6 +10,7 @@
 #import "Utilities.h"
 #import "ATBannerManager.h"
 #import "ATAgentEvent.h"
+#import "ATBannerView+Internal.h"
 
 @implementation ATMintegralBannerCustomEvent
 - (void)adViewLoadSuccess:(id<ATMTGBannerAdView>)adView {
@@ -33,7 +34,7 @@
     [ATLogger logMessage:@"MTGBanner::adViewDidClicked:" type:ATLogTypeExternal];
     [self trackClick];
     if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.priorityIndex),kATBannerDelegateExtraPrice:@(self.banner.unitGroup.price)}];
+        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
     }
 }
 
@@ -56,4 +57,18 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:kBannerDismissModalViewControllerNotification object:nil userInfo:userInfo];
 }
 
+- (void)adViewClosed:(id<ATMTGBannerAdView>)adView {
+    [ATLogger logMessage:@"MTGBanner::adViewClosed:" type:ATLogTypeExternal];
+    [self.bannerView loadNextWithoutRefresh];
+    if ([self.delegate respondsToSelector:@selector(bannerView:didTapCloseButtonWithPlacementID:extra:)]) {
+        [self.delegate bannerView:self.bannerView didTapCloseButtonWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
+    }
+    [self handleClose];
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"unitid"];
+    return extra;
+}
 @end

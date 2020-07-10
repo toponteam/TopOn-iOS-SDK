@@ -13,6 +13,9 @@ typedef NS_ENUM(NSInteger, ATMyOfferEndCardClickable) {
     ATMyOfferEndCardClickableBanner
 };
 @interface ATMyOfferSetting : ATModel
+-(instancetype) initWithDictionary:(NSDictionary *)dictionary placementID:(NSString*)placementID;
+
+@property(nonatomic, readonly) NSString *placementID;
 @property(nonatomic, readonly) NSInteger format;
 @property(nonatomic, readonly) BOOL videoAreaInteractionEnabled;
 @property(nonatomic, readonly) NSTimeInterval bannerAppearanceInterval;

@@ -1,0 +1,12 @@
+
+framework module IASDKVideo {
+    umbrella header "IASDKVideo.h"
+        export *
+        module * { export * }
+
+    link framework "CoreGraphics"
+    link framework "MediaPlayer"
+    link framework "AVFoundation"
+    link framework "CoreMedia"
+}
+

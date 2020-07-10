@@ -52,7 +52,6 @@ typedef NS_ENUM(NSInteger, ATKSAdInteractionType) {
 + (void)setUserInfoBlock:(void(^)(id<ATKSAdUserInfo>))userInfoBlock;
 + (void)setLoglevel:(ATKSAdSDKLogLevel)level;
 + (NSString *)appId;
-+ (NSString *)SDKDetailVersion;
 @end
 
 @protocol ATKSAdImage <NSObject>
@@ -163,4 +162,36 @@ typedef NS_ENUM(NSInteger, ATKSAdInteractionType) {
 @optional
 - (void)feedAdsManagerSuccessToLoad:(id<ATKSFeedAdsManager>)adsManager nativeAds:(NSArray<id<ATKSFeedAd>> *_Nullable)feedAdDataArray;
 - (void)feedAdsManager:(id<ATKSFeedAdsManager>)adsManager didFailWithError:(NSError *_Nullable)error;
+@end
+
+@protocol ATKSDrawAdDelegate;
+@protocol ATKSDrawAd <NSObject>
+@property (nonatomic, weak) id<ATKSDrawAdDelegate> delegate;
+- (void)registerContainer:(UIView *)containerView;
+- (void)unregisterView;
+
+@end
+
+@protocol ATKSDrawAdDelegate <NSObject>
+@optional
+- (void)drawAdViewWillShow:(id<ATKSDrawAd>)drawAd;
+- (void)drawAdDidClick:(id<ATKSDrawAd>)drawAd;
+- (void)drawAdDidShowOtherController:(id<ATKSDrawAd>)drawAd interactionType:(ATKSAdInteractionType)interactionType;
+- (void)drawAdDidCloseOtherController:(id<ATKSDrawAd>)drawAd interactionType:(ATKSAdInteractionType)interactionType;
+@end
+
+@protocol ATKSDrawAdsManagerDelegate;
+@protocol ATKSDrawAdsManager <NSObject>
+@property (nonatomic, strong, readonly) NSArray<id<ATKSDrawAd>> *data;
+- (instancetype)initWithPosId:(NSString *)posId;
+@property (nonatomic, weak, nullable) id<ATKSDrawAdsManagerDelegate> delegate;
+- (void)loadAdDataWithCount:(NSInteger)count;
+@end
+
+@protocol ATKSDrawAdsManagerDelegate <NSObject>
+
+@optional
+- (void)drawAdsManagerSuccessToLoad:(id<ATKSDrawAdsManager>)adsManager drawAds:(NSArray<id<ATKSDrawAd>> *_Nullable)drawAdDataArray;
+- (void)drawAdsManager:(id<ATKSDrawAdsManager>)adsManager didFailWithError:(NSError *_Nullable)error;
+
 @end

@@ -19,6 +19,7 @@
  Priority is calculate by the index of the unit group in the placement's unit group list; zero is the highest
  */
 @property(nonatomic, readonly) NSInteger priority;
+@property(nonatomic, readonly) NSInteger priorityLevel;//the order in witch this ad has been requested
 @property(nonatomic, readonly) NSString *requestID;
 
 @property(nonatomic, readonly) NSString *originalRequestID;

@@ -33,6 +33,7 @@
         _customEvent.interstitial = self;
         _customEvent.ad = self;
         _appID = assets[kATAdAssetsAppIDKey];
+        _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? ([ATAdCustomEvent calculateAdPriority:self] / _placementModel.maxConcurrentRequestCount) + 1 : 1;
     }
     return self;
 }

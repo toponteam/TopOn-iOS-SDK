@@ -15,6 +15,7 @@ extern NSString *const kATInterstitialExtraLocationEnabledFlagKey;
 extern NSString *const kATInterstitialExtraMuteStartPlayingFlagKey;
 extern NSString *const kATInterstitialExtraFallbackFullboardBackgroundColorKey;
 extern NSString *const kATInterstitialExtraAdSizeKey;//Supported by TT interstitial, defaults to 600 X 600
+extern NSString *const kATInterstitialExtraUsesRewardedVideo;
 
 extern NSString *const kATInterstitialExtraAdSize600_400;
 extern NSString *const kATInterstitialExtraAdSize600_600;

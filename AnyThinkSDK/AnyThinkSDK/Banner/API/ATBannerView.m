@@ -117,7 +117,7 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
         //Delegate
         if (refresh) {
             [[ATAdManager sharedManager] bannerReadyForPlacementID:banner.placementModel.placementID caller:ATAdManagerReadyAPICallerShow banner:nil];
-            if ([_delegate respondsToSelector:@selector(bannerView:didAutoRefreshWithPlacement:extra:)]) { [_delegate bannerView:self didAutoRefreshWithPlacement:_banner.placementModel.placementID extra:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.banner.customEvent.priorityIndex),kATBannerDelegateExtraPrice:@(self.banner.unitGroup.price)}]; }
+            if ([_delegate respondsToSelector:@selector(bannerView:didAutoRefreshWithPlacement:extra:)]) { [_delegate bannerView:self didAutoRefreshWithPlacement:_banner.placementModel.placementID extra:[_banner.customEvent delegateExtra]]; }
 
         }
         
@@ -169,7 +169,7 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
     ATBanner *banner = [[ATAdManager sharedManager] offerWithPlacementID:_banner.placementModel.placementID error:nil refresh:NO];
     banner.forRefresh = [noti.userInfo isKindOfClass:[NSDictionary class]] && [noti.userInfo[kAdLoadingExtraRefreshFlagKey] boolValue];
     if (banner != nil && !banner.forRefresh) {
-        if ([_delegate respondsToSelector:@selector(bannerView:didShowAdWithPlacementID:extra:)]) { [_delegate bannerView:self didShowAdWithPlacementID:banner.placementModel.placementID extra:@{kATBannerDelegateExtraNetworkIDKey:@(banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:banner.unitGroup.unitID != nil ? banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.banner.customEvent.priorityIndex),kATBannerDelegateExtraPrice:@(self.banner.unitGroup.price)}]; }
+        if ([_delegate respondsToSelector:@selector(bannerView:didShowAdWithPlacementID:extra:)]) { [_delegate bannerView:self didShowAdWithPlacementID:banner.placementModel.placementID extra:[_banner.customEvent delegateExtra]]; }
     }
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{ weakSelf.banner = banner; });
@@ -222,7 +222,7 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
             [self handleApplicationDidBecomeActiveNotification:nil];
             _removedFromWindow = NO;
         } else {
-            if ([_delegate respondsToSelector:@selector(bannerView:didShowAdWithPlacementID:extra:)]) { [_delegate bannerView:self didShowAdWithPlacementID:_banner.placementModel.placementID extra:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.banner.customEvent.priorityIndex),kATBannerDelegateExtraPrice:@(self.banner.unitGroup.price)}]; }
+            if ([_delegate respondsToSelector:@selector(bannerView:didShowAdWithPlacementID:extra:)]) { [_delegate bannerView:self didShowAdWithPlacementID:_banner.placementModel.placementID extra:[_banner.customEvent delegateExtra]]; }
 
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadSuccessNotification:) name:kATADLoadingOfferSuccessfullyLoadedNotification object:nil];
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadNotification:) name:kATADLoadingStartLoadNotification object:nil];
@@ -252,9 +252,10 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
     if (_banner != nil && ![self impressionFlagForRequestID:_banner.requestID]) {
         [self setImpressionFlagForRequestID:_banner.requestID];
         _banner.showTimes++;
+        self.banner.customEvent.sdkTime = [Utilities normalizedTimeStamp];
         [[ATCapsManager sharedManager] increaseCapWithPlacementID:_banner.placementModel.placementID unitGroupID:_banner.unitGroup.unitGroupID requestID:_banner.requestID];
         [[ATCapsManager sharedManager] setLastShowTimeWithPlacementID:_banner.placementModel.placementID unitGroupID:_banner.unitGroup.unitGroupID];
-        NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@(refresh), kATTrackerExtraRefreshFlagKey, @NO, kATTrackerExtraAutoloadFlagKey, @NO, kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:self.banner.unitGroup requestID:self.banner.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.banner.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.banner.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.banner.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+        NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@(refresh), kATTrackerExtraRefreshFlagKey, @NO, kATTrackerExtraAutoloadFlagKey, @NO, kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:self.banner.unitGroup requestID:self.banner.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.banner.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.banner.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.banner.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey,self.banner.customEvent.sdkTime,kATTrackerExtraAdShowSDKTimeKey, nil];
         [[ATTracker sharedTracker] trackWithPlacementID:self.banner.placementModel.placementID requestID:self.banner.requestID trackType:ATNativeADTrackTypeADShow extra:trackingExtra];
 
         [ATLogger logMessage:[NSString stringWithFormat:@"\nImpression with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:_banner event:ATGeneralAdAgentEventTypeImpression extra:refresh ? @{kAdLoadingExtraRefreshFlagKey:@1} : nil error:nil]] type:ATLogTypeTemporary];

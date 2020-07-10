@@ -25,9 +25,6 @@ NSString *const kRewardedVideoAssetsCustomEventKey = @"custom_event";
 
 @property(nonatomic, readonly) ATThreadSafeAccessor *eventStorageAccessor;
 @property(nonatomic, readonly) NSMutableDictionary *eventStorage;
-
-@property(nonatomic, readonly) ATThreadSafeAccessor *firstLoadFlagStorageAccessor;
-@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSNumber*> *firstLoadFlagStorage;
 @end
 
 static NSString *const kOffersKey = @"offers";
@@ -51,9 +48,6 @@ static NSString *const kRequestIDKey = @"request_id";
         
         _eventStorageAccessor = [ATThreadSafeAccessor new];
         _eventStorage = [NSMutableDictionary dictionary];
-        
-        _firstLoadFlagStorageAccessor = [ATThreadSafeAccessor new];
-        _firstLoadFlagStorage = [NSMutableDictionary<NSString*, NSNumber*> dictionary];
     }
     return self;
 }
@@ -95,7 +89,7 @@ static NSString *const kRequestIDKey = @"request_id";
 -(ATRewardedVideo*) rewardedVideoForPlacementID:(NSString*)placementID invalidateStatus:(BOOL)invalidateStatus extra:(NSDictionary*__autoreleasing*)extra {
     __weak typeof(self) weakSelf = self;
     return [_videoStorageAccessor readWithBlock:^id{
-        ATRewardedVideo *video = [ATAdStorageUtility adInStorage:weakSelf.videoStorage statusStorage:weakSelf.statusStorage forPlacementID:placementID extra:extra];
+        ATRewardedVideo *video = [ATAdStorageUtility adInStorage:weakSelf.videoStorage statusStorage:weakSelf.statusStorage forPlacementID:placementID caller:invalidateStatus ? ATAdManagerReadyAPICallerShow : ATAdManagerReadyAPICallerReady extra:extra];
         if (invalidateStatus) { [ATAdStorageUtility invalidateStatusForAd:video inStatusStorage:weakSelf.statusStorage]; }
         return video;
     }];
@@ -158,16 +152,5 @@ static NSString *const kRequestIDKey = @"request_id";
 -(id) customEventForKey:(NSString*)key {
     __weak typeof(self) weakSelf = self;
     return [_eventStorageAccessor readWithBlock:^id{ return weakSelf.eventStorage[key]; }];
-}
-
--(void) setFirstLoadFlagForNetwork:(NSString*)network {
-    __weak typeof(self) weakSelf = self;
-    if ([network isKindOfClass:[NSString class]] && [network length] > 0) [_firstLoadFlagStorageAccessor writeWithBlock:^{ weakSelf.firstLoadFlagStorage[network] = @YES; }];
-}
-
--(BOOL) firstLoadFlagForNetwork:(NSString*)network {
-    __weak typeof(self) weakSelf = self;
-    if ([network isKindOfClass:[NSString class]] && [network length] > 0) return [[_firstLoadFlagStorageAccessor readWithBlock:^id{ return weakSelf.firstLoadFlagStorage[network]; }] boolValue];
-    else return NO;
 }
 @end

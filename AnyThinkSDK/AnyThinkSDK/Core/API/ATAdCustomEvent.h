@@ -21,6 +21,7 @@ extern NSString *const kATAdAssetsAppIDKey;
 -(void) trackClick;
 -(ATNativeADSourceType) adSourceType;
 @property(nonatomic, weak) id<ATAd> ad;
+@property(nonatomic) NSNumber *sdkTime;
 @property(nonatomic, copy) void(^requestCompletionBlock)(NSArray<NSDictionary*> *assets, NSError *error);
 @property(nonatomic) NSInteger requestNumber;
 @property (nonatomic,copy) void (^customEventMetaDataDidLoadedBlock)(void);
@@ -31,6 +32,10 @@ extern NSString *const kATAdAssetsAppIDKey;
 @property(nonatomic, readonly) NSMutableArray<NSDictionary*>* assets;
 @property(nonatomic, readonly) NSDictionary *customInfo;
 @property(nonatomic) BOOL rewardGranted;
+
+-(void) saveShowAPIContext;
+@property(nonatomic, readonly) NSDate *showDate;
+@property(nonatomic, readonly) NSString *psIDOnShow;
 
 +(NSInteger) calculateAdPriority:(id<ATAd>)ad;
 @end

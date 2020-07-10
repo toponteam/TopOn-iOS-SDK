@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol ATIMSdk<NSObject>
 +(NSString *)getVersion;
-+(void)initWithAccountID:(NSString *)accountID;
++(void)initWithAccountID:(NSString *)accountID andCompletionHandler:(void (^)(NSError * )) completionBlock;
 +(void) updateGDPRConsent:(NSDictionary *)consentDictionary;
 @end
 
@@ -37,15 +37,6 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol IMBannerDelegate <NSObject>
--(void)bannerDidFinishLoading:(id<ATIMBanner>)banner;
--(void)banner:(id<ATIMBanner>)banner didFailToLoadWithError:(NSError*)error;
--(void)banner:(id<ATIMBanner>)banner didInteractWithParams:(NSDictionary*)params;
--(void)userWillLeaveApplicationFromBanner:(id<ATIMBanner>)banner;
--(void)bannerWillPresentScreen:(id<ATIMBanner>)banner;
--(void)bannerDidPresentScreen:(id<ATIMBanner>)banner;
--(void)bannerWillDismissScreen:(id<ATIMBanner>)banner;
--(void)bannerDidDismissScreen:(id<ATIMBanner>)banner;
--(void)banner:(id<ATIMBanner>)banner rewardActionCompletedWithRewards:(NSDictionary*)rewards;
 @end
 
 NS_ASSUME_NONNULL_END

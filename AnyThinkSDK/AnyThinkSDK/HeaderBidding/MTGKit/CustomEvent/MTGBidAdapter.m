@@ -8,6 +8,7 @@
 
 #import "MTGBidAdapter.h"
 #import <UIKit/UIKit.h>
+#import "Utilities.h"
 NSString * const MTGErrorDomain = @"com.anythink.headerbidding";
 
 @implementation MTGBidAdapter
@@ -16,7 +17,7 @@ NSString * const MTGErrorDomain = @"com.anythink.headerbidding";
     DLog(@"");
 }
 
--(void)getBidNetwork:(HBBidNetworkItem *)networkItem adFormat:(HBAdBidFormat)format responseCallback:(void (^)(HBAdBidResponse * _Nonnull))callback{
+-(void)getBidNetwork:(HBBidNetworkItem *)networkItem extra:(NSDictionary*)extra adFormat:(HBAdBidFormat)format responseCallback:(void (^)(HBAdBidResponse * _Nonnull))callback{
 
     id apiKeyObj = [networkItem.extraParams objectForKey:@"apiKey"];
     NSString *apiKey = [NSString stringWithFormat:@"%@",apiKeyObj];
@@ -28,9 +29,11 @@ NSString * const MTGErrorDomain = @"com.anythink.headerbidding";
         callback(response);
         return;
     }
+    
+    [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] setCustomInfo:[extra jsonString_anythink] type:2 unitId:networkItem.unitId];
     [[NSClassFromString(@"MTGSDK") sharedInstance] setAppID:networkItem.appId ApiKey:apiKey];
     if (format == HBAdBidFormatBanner) {
-        id<HBMTGBiddingBannerRequestParameter> bannerRequestPara= [[NSClassFromString(@"MTGBiddingBannerRequestParameter") alloc]initWithUnitId:networkItem.unitId basePrice:0 bannerSizeType:[MTGBidAdapter sizeToMTGBannerSizeType:networkItem.extraParams]];
+        id<HBMTGBiddingBannerRequestParameter> bannerRequestPara= [[NSClassFromString(@"MTGBiddingBannerRequestParameter") alloc]initWithPlacementId:networkItem.placementId unitId:networkItem.unitId basePrice:0 bannerSizeType:[MTGBidAdapter sizeToMTGBannerSizeType:networkItem.extraParams]];
         [NSClassFromString(@"MTGBiddingRequest") getBidWithRequestParameter:bannerRequestPara completionHandler:^(id<HBAdMTGBiddingResponse> _Nonnull bidResponse) {
             HBAdBidResponse *response = [self buildAdBidResponse:bidResponse networkItem:networkItem];
             callback(response);

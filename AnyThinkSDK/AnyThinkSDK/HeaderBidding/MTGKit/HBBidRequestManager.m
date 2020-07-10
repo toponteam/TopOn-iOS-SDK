@@ -41,7 +41,7 @@
 }
 
 #pragma mark  Public methods -
-- (void)getBidNetworks:(NSArray *)networkItems unitId:(NSString *)unitId adFormat:(HBAdBidFormat)format maxTimeoutMS:(NSInteger)maxTimeoutMS responseCallback:(void(^)(HBAuctionResult *auctionResponse,NSError *error))callback{
+- (void)getBidNetworks:(NSArray *)networkItems statisticsInfo:(NSDictionary*)statisticsInfo unitId:(NSString *)unitId adFormat:(HBAdBidFormat)format maxTimeoutMS:(NSInteger)maxTimeoutMS responseCallback:(void(^)(HBAuctionResult *auctionResponse,NSError *error))callback{
 
     if (!callback) {
         NSAssert(callback, @"Attention: the callback you passed is nil");
@@ -70,7 +70,7 @@
     self.timeoutLock = [[NSLock alloc] init];
     self.handleAuctionLock = [[NSLock alloc] init];
 
-    [self requestNetworkBids:networkItems requestTimeout:maxTimeoutMS];
+    [self requestNetworkBids:networkItems statisticsInfo:statisticsInfo requestTimeout:maxTimeoutMS];
     
     NSTimeInterval duration = maxTimeoutMS / 1000.f;
     self.timer = [NSTimer timerWithTimeInterval:duration  target:self selector:@selector(timerFireMethod:) userInfo:nil repeats:NO];
@@ -81,7 +81,7 @@
 
 #pragma mark Private methods -
 
-- (void)requestNetworkBids:(NSArray *)networkItems requestTimeout:(NSInteger)maxTimeoutMS{
+- (void)requestNetworkBids:(NSArray *)networkItems statisticsInfo:(NSDictionary*)statisticsInfo requestTimeout:(NSInteger)maxTimeoutMS{
     
     NSAssert(networkItems.count > 0, @"networkItems should not be nil");
     
@@ -103,7 +103,7 @@
             [self.adapterArray addObject:adapter];
             [self.adapterArrayLock unlock];
 
-            [adapter getBidNetwork:item adFormat:self.adFormat responseCallback:^(HBAdBidResponse * _Nonnull bidResponse) {
+            [adapter getBidNetwork:item extra:statisticsInfo[item.unitId] adFormat:self.adFormat responseCallback:^(HBAdBidResponse * _Nonnull bidResponse) {
                 __strong __typeof(weakSelf)strongSelf = weakSelf;
 
                 [bidResponse appendUnitId:strongSelf.unitId];

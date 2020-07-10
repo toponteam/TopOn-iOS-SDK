@@ -8,7 +8,19 @@
 
 #import <UIKit/UIKit.h>
 
-extern NSString const* kOnewayCustomEventKey;
+extern NSString *const kATOnewayRVReadyNotification;
+extern NSString *const kATOnewayRVShowNotification;
+extern NSString *const kATOnewayRVClickNotification;
+extern NSString *const kATOnewayRVFinishNotification;
+extern NSString *const kATOnewayRVCloseNotification;
+extern NSString *const kATOnewayRVErrorNotification;
+
+extern NSString *const kATOnewayRVNotificationUserInfoTagKey;
+extern NSString *const kATOnewayRVNotificationUserInfoMessageKey;
+extern NSString *const kATOnewayRVNotificationUserInfoErrorCodeKey;
+extern NSString *const kATOnewayRVNotificationUserInfoStateKey;
+extern NSString *const kATOnewayRVNotificationUserInfoSessionKey;
+
 @interface ATOnewayRewardedVideoAdapter : NSObject
 @end
 
@@ -20,11 +32,6 @@ extern NSString const* kOnewayCustomEventKey;
 @end
 
 @protocol oneWaySDKRewardedAdDelegate <NSObject>
-- (void)oneWaySDKRewardedAdReady;
-- (void)oneWaySDKRewardedAdDidShow:(NSString *)tag;
-- (void)oneWaySDKRewardedAdDidClose:(NSString *)tag withState:(NSNumber *)state;
-- (void)oneWaySDKRewardedAdDidClick:(NSString *)tag;
-- (void)oneWaySDKDidError:(NSInteger)error withMessage:(NSString *)message;
 @end
 
 @protocol OWRewardedAd<NSObject>

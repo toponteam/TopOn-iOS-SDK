@@ -20,9 +20,6 @@ NSString *const kInterstitialAssetsCustomEventKey = @"custom_event";
 @property(nonatomic, readonly) NSMutableDictionary *statusStorage;
 @property(nonatomic, readonly) NSMutableDictionary *interstitialStorage;
 @property(nonatomic, readonly) ATSerialThreadSafeAccessor *interstitialStorageAccessor;
-
-@property(nonatomic, readonly) ATThreadSafeAccessor *firstLoadFlagStorageAccessor;
-@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSNumber*> *firstLoadFlagStorage;
 @end
 @implementation ATInterstitialManager
 +(instancetype) sharedManager {
@@ -40,9 +37,6 @@ NSString *const kInterstitialAssetsCustomEventKey = @"custom_event";
         _statusStorage = [NSMutableDictionary new];
         _interstitialStorage = [NSMutableDictionary new];
         _interstitialStorageAccessor = [ATSerialThreadSafeAccessor new];
-        
-        _firstLoadFlagStorageAccessor = [ATThreadSafeAccessor new];
-        _firstLoadFlagStorage = [NSMutableDictionary<NSString*, NSNumber*> dictionary];
     }
     return self;
 }
@@ -90,7 +84,7 @@ static NSString *const requestIDKey = @"request_id";
 -(ATInterstitial*) interstitialForPlacementID:(NSString*)placementID invalidateStatus:(BOOL)invalidateStatus extra:(NSDictionary* __autoreleasing*)extra {
     __weak typeof(self) weakSelf = self;
     return [_interstitialStorageAccessor readWithBlock:^id{
-        ATInterstitial *interstitial = [ATAdStorageUtility adInStorage:weakSelf.interstitialStorage statusStorage:weakSelf.statusStorage forPlacementID:placementID extra:extra];
+        ATInterstitial *interstitial = [ATAdStorageUtility adInStorage:weakSelf.interstitialStorage statusStorage:weakSelf.statusStorage forPlacementID:placementID caller:invalidateStatus ? ATAdManagerReadyAPICallerShow : ATAdManagerReadyAPICallerReady extra:extra];
         if (invalidateStatus) { [ATAdStorageUtility invalidateStatusForAd:interstitial inStatusStorage:weakSelf.statusStorage]; }
         return interstitial;
     }];
@@ -113,15 +107,6 @@ static NSString *const requestIDKey = @"request_id";
 
 -(void) removeAdForPlacementID:(NSString*)placementID unitGroupID:(NSString*)unitGroupID {
     [_interstitialStorageAccessor writeWithBlock:^{ [ATAdStorageUtility removeAdForPlacementID:placementID unitGroupID:unitGroupID inStorage:_interstitialStorage]; }];
-}
-
--(void) setFirstLoadFlagForNetwork:(NSString*)network {
-    if ([network isKindOfClass:[NSString class]] && [network length] > 0) [_firstLoadFlagStorageAccessor writeWithBlock:^{ _firstLoadFlagStorage[network] = @YES; }];
-}
-
--(BOOL) firstLoadFlagForNetwork:(NSString*)network {
-    if ([network isKindOfClass:[NSString class]] && [network length] > 0) return [[_firstLoadFlagStorageAccessor readWithBlock:^id{ return _firstLoadFlagStorage[network]; }] boolValue];
-    else return NO;
 }
 
 -(ATInterstitial*) interstitialWithPlacementID:(NSString*)placementID unitGroupID:(NSString*)unitGroupID {

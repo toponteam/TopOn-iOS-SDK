@@ -20,7 +20,7 @@ typedef NS_ENUM(NSInteger, ATIMInterstitialAnimationType) {
 
 @protocol ATIMSdk<NSObject>
 +(NSString *)getVersion;
-+(void)initWithAccountID:(NSString *)accountID;
++(void)initWithAccountID:(NSString *)accountID andCompletionHandler:(void (^)(NSError * ))completionBlock;
 +(void) updateGDPRConsent:(NSDictionary *)consentDictionary;
 @end
 
@@ -40,18 +40,6 @@ typedef NS_ENUM(NSInteger, ATIMInterstitialAnimationType) {
 @end
 
 @protocol ATIMInterstitialDelegate<NSObject>
-@optional
--(void)interstitialDidReceiveAd:(id<ATIMInterstitial>)interstitial;
--(void)interstitialDidFinishLoading:(id<ATIMInterstitial>)interstitial;
--(void)interstitial:(id<ATIMInterstitial>)interstitial didFailToLoadWithError:(NSError*)error;
--(void)interstitialWillPresent:(id<ATIMInterstitial>)interstitial;
--(void)interstitialDidPresent:(id<ATIMInterstitial>)interstitial;
--(void)interstitial:(id<ATIMInterstitial>)interstitial didFailToPresentWithError:(NSError*)error;
--(void)interstitialWillDismiss:(id<ATIMInterstitial>)interstitial;
--(void)interstitialDidDismiss:(id<ATIMInterstitial>)interstitial;
--(void)interstitial:(id<ATIMInterstitial>)interstitial didInteractWithParams:(NSDictionary*)params;
--(void)interstitial:(id<ATIMInterstitial>)interstitial rewardActionCompletedWithRewards:(NSDictionary*)rewards;
--(void)userWillLeaveApplicationFromInterstitial:(id<ATIMInterstitial>)interstitial;
 @end
 
 NS_ASSUME_NONNULL_END

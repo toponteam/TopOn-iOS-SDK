@@ -15,6 +15,28 @@
 #import "ATPolicyViewController.h"
 #import "ATAgentEvent.h"
 #import <WebKit/WebKit.h>
+#import "ATPlacementSettingManager.h"
+#import "ATLifecycleManager.h"
+
+NSString *const kATADDelegateExtraECPMLevelKey = @"ecpm_level";
+NSString *const kATADDelegateExtraSegmentIDKey = @"segment_id";
+NSString *const kATADDelegateExtraScenarioIDKey = @"scenario_id";
+NSString *const kATADDelegateExtraChannelKey = @"channel";
+NSString *const kATADDelegateExtraSubChannelKey = @"sub_channel";
+NSString *const kATADDelegateExtraCustomRuleKey = @"custom_rule";
+NSString *const kATADDelegateExtraIDKey = @"id";
+NSString *const kATADDelegateExtraAdunitIDKey = @"adunit_id";
+NSString *const kATADDelegateExtraPublisherRevenueKey = @"publisher_revenue";
+NSString *const kATADDelegateExtraCurrencyKey = @"currency";
+NSString *const kATADDelegateExtraCountryKey = @"country";
+NSString *const kATADDelegateExtraFormatKey = @"adunit_format";
+NSString *const kATADDelegateExtraPrecisionKey = @"precision";
+NSString *const kATADDelegateExtraNetworkTypeKey = @"network_type";
+NSString *const kATADDelegateExtraNetworkPlacementIDKey = @"network_placement_id";
+NSString *const kATADDelegateExtraScenarioRewardNameKey = @"scenario_reward_name";
+NSString *const kATADDelegateExtraScenarioRewardNumberKey = @"scenario_reward_number";
+NSString *const kATADDelegateExtraPlacementRewardNameKey = @"placement_reward_name";
+NSString *const kATADDelegateExtraPlacementRewardNumberKey = @"placement_reward_number";
 
 NSString *const kNativeADAssetsAdvertiserKey = @"advertiser";
 NSString *const kNativeADAssetsMainTextKey = @"main_text";
@@ -47,6 +69,9 @@ NSInteger const ATADLoadingErrorCodeDataConsentForbidden = 1012;
 NSInteger const ATADLoadingErrorCodeThirdPartySDKNotImportedProperly = 1013;
 NSInteger const ATADLoadingErrorCodeInvalidInputEncountered = 1014;
 NSInteger const ATADLoadingErrorCodePlacementAdDeliverySwitchOff = 1015;
+NSInteger const ATADLoadingErrorCodePreviousLoadNotFinished = 1016;
+NSInteger const ATADLoadingErrorCodeNoUnitGroupsFoundInPlacement = 1017;
+NSInteger const ATADLoadingErrorCodeUnitGroupsFilteredOut = 1018;
 
 NSString *const ATSDKInitErrorDomain = @"com.anythink.AnyThinkSDKInitErrorDomain";
 NSInteger const ATSDKInitErrorCodeDataConsentNotSet = 2001;
@@ -91,6 +116,8 @@ NSString *const kNetworkNameSigmob = @"sigmob";
 NSString *const kNetworkNameMyOffer = @"myoffer";
 NSString *const kNetworkNameKS = @"KS";
 NSString *const kNetworkNameOgury = @"Ogury";
+NSString *const kNetworkNameStartApp = @"StartApp";
+NSString *const kNetworkNameFyber = @"Fyber";
 
 NSString *const kInmobiGDPRStringKey = @"gdpr";
 NSString *const kInmobiConsentStringKey = @"consent_string";
@@ -113,6 +140,15 @@ NSString *const kAdColonyGDPRConsentStringKey = @"consent_string";
 NSString *const kYeahmobiGDPRConsentValueKey = @"consent_value";
 NSString *const kYeahmobiGDPRConsentTypeKey = @"consent_type";
 
+NSString *const kATCustomDataAgeKey = @"age";//Integer
+NSString *const kATCustomDataGenderKey = @"gender";//Integer
+NSString *const kATCustomDataNumberOfIAPKey = @"iap_time";//Integer
+NSString *const kATCustomDataIAPAmountKey = @"iap_amount";//Double
+NSString *const kATCustomDataIAPCurrencyKey = @"iap_currency";//string
+NSString *const kATCustomDataChannelKey = @"channel";//string
+NSString *const kATCustomDataSubchannelKey = @"sub_channel";//string
+NSString *const kATCustomDataSegmentIDKey = @"segment_id";//int
+
 static NSString *kUserDefaultConsentInfoKey = @"com.anythink.dataConsentInfo";
 static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
 
@@ -129,11 +165,12 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
 
 @property(nonatomic, readonly) ATThreadSafeAccessor *networkInitFlagsAccessor;
 @property(nonatomic, readonly) NSMutableDictionary<NSString*, NSNumber*> *networkInitFlags;
-
+@property(nonatomic, readonly) ATThreadSafeAccessor *psIDAccessor;
 @property(nonatomic, readonly) NSString *psID_impl;
 @property(nonatomic, readonly) ATSerialThreadSafeAccessor *userAgentAccessor;
 @property(nonatomic) NSString *userAgent_impl;
 @property(nonatomic) WKWebView *webView;
+@property(atomic) NSDate *lastEnterBackgroundDate;
 @end
 
 @implementation ATAPI
@@ -148,7 +185,7 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
 }
 
 +(NSDictionary<NSNumber*, NSString*>*)networkNameMap {
-    return @{@1:kNetworkNameFacebook, @2:kNetworkNameAdmob, @3:kNetworkNameInmobi, @4:kNetworkNameFlurry, @5:kNetworkNameApplovin, @6:kNetworkNameMintegral, @7:kNetworkNameMopub, @8:kNetworkNameGDT, @9:kNetworkNameChartboost, @10:kNetworkNameTapjoy, @11:kNetworkNameIronSource, @12:kNetworkNameUnityAds, @13:kNetworkNameVungle, @14:kNetworkNameAdColony, @15:kNetworkNameTT, @17:kNetworkNameOneway, @18:kNetworkNameMobPower, @20:kNetworkNameYeahmobi, @21:kNetworkNameAppnext, @22:kNetworkNameBaidu, @23:kNetworkNameNend, @24:kNetworkNameMaio,@28:kNetworkNameKS, @29:kNetworkNameSigmob,@35:kNetworkNameMyOffer, @36:kNetworkNameOgury};
+    return @{@1:kNetworkNameFacebook, @2:kNetworkNameAdmob, @3:kNetworkNameInmobi, @4:kNetworkNameFlurry, @5:kNetworkNameApplovin, @6:kNetworkNameMintegral, @7:kNetworkNameMopub, @8:kNetworkNameGDT, @9:kNetworkNameChartboost, @10:kNetworkNameTapjoy, @11:kNetworkNameIronSource, @12:kNetworkNameUnityAds, @13:kNetworkNameVungle, @14:kNetworkNameAdColony, @15:kNetworkNameTT, @17:kNetworkNameOneway, @18:kNetworkNameMobPower, @20:kNetworkNameYeahmobi, @21:kNetworkNameAppnext, @22:kNetworkNameBaidu, @23:kNetworkNameNend, @24:kNetworkNameMaio, @25:kNetworkNameStartApp, @28:kNetworkNameKS, @29:kNetworkNameSigmob,@35:kNetworkNameMyOffer, @36:kNetworkNameOgury, @37:kNetworkNameFyber};
 }
 
 +(void) integrationChecking {
@@ -283,6 +320,12 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
                                                               },
                                                                                                    frameworksKey:@[@"Maio.framework"]
                                                               },
+                                                              @"StartApp":@{dependenciesKey:@{@"AnyThinkStartAppRewardedVideoAdapter":@[@"STAStartAppAd"],
+                                                                                                                     @"AnyThinkStartAppInterstitialAdapter":@[@"STAStartAppAd"]
+                                                              },
+                                                                                                   frameworksKey:@[@"StartApp.framework"],
+                                                                                                   resourceBundleKey:@"StartApp"
+                                                              },
                                                               @"KS":@{dependenciesKey:@{@"AnyThinkKSNativeAdapter":@[@"KSNativeAd", @"KSFeedAd"],
                                                                                         @"AnyThinkKSRewardedVideoAdapter":@[@"KSRewardedVideoAd"],
                                                                                                                      @"AnyThinkKSInterstitialAdapter":@[@"KSFullscreenVideoAd"]
@@ -306,6 +349,13 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
                                                                                                                      @"AnyThinkMyOfferInterstitialAdapter":@[@"ATMyOfferOfferManager"]
                                                               },
                                                                                                    frameworksKey:@[@"AnyThinkMyOffer.framework"]
+                                                              },
+                                                              @"Fyber":@{dependenciesKey:@{@"AnyThinkFyberRewardedVideoAdapter":@[@"IAAdRequest", @"IAVideoContentController", @"IAFullscreenUnitController", @"IAAdSpot"],
+                                                                                                                     @"AnyThinkFyberInterstitialAdapter":@[@"IAAdRequest", @"IAVideoContentController", @"IAFullscreenUnitController", @"IAAdSpot"],
+                                                                                           @"AnyThinkFyberBannerAdapter":@[@"IAAdRequest", @"IAViewUnitController", @"IAAdSpot"]
+                                                              },
+                                                                                                   frameworksKey:@[@"IASDKCore.framework", @"IASDKMRAID.framework", @"IASDKVideo.framework"],
+                                                                                                   resourceBundleKey:@"IASDKResources"
                                                               }
     };
     
@@ -407,7 +457,7 @@ static NSString *const UAInfoUAKey = @"ua";
     self = [super init];
     if (self != nil) {
         _networkVersionsAccessor = [ATThreadSafeAccessor new];
-        _networkVersionsInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"", kNetworkNameFacebook, @"", kNetworkNameInmobi, @"", kNetworkNameAdmob, @"", kNetworkNameFlurry, @"", kNetworkNameMintegral, @"", kNetworkNameApplovin, @"", kNetworkNameMopub, @"", kNetworkNameGDT, @"", kNetworkNameTapjoy, @"", kNetworkNameChartboost, @"", kNetworkNameIronSource, @"", kNetworkNameVungle, @"", kNetworkNameAdColony, @"", kNetworkNameUnityAds, @"", kNetworkNameTT, @"", kNetworkNameOneway, @"", kNetworkNameMobPower, @"", kNetworkNameAppnext, @"", kNetworkNameYeahmobi, @"", kNetworkNameBaidu, @"", kNetworkNameNend, @"", kNetworkNameMaio, @"", kNetworkNameKS,@"", kNetworkNameSigmob, @"",kNetworkNameOgury, @"",kNetworkNameMyOffer, nil];
+        _networkVersionsInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"", kNetworkNameFacebook, @"", kNetworkNameInmobi, @"", kNetworkNameAdmob, @"", kNetworkNameFlurry, @"", kNetworkNameMintegral, @"", kNetworkNameApplovin, @"", kNetworkNameMopub, @"", kNetworkNameGDT, @"", kNetworkNameTapjoy, @"", kNetworkNameChartboost, @"", kNetworkNameIronSource, @"", kNetworkNameVungle, @"", kNetworkNameAdColony, @"", kNetworkNameUnityAds, @"", kNetworkNameTT, @"", kNetworkNameOneway, @"", kNetworkNameMobPower, @"", kNetworkNameAppnext, @"", kNetworkNameYeahmobi, @"", kNetworkNameBaidu, @"", kNetworkNameNend, @"", kNetworkNameMaio, @"", kNetworkNameStartApp, @"", kNetworkNameKS,@"", kNetworkNameSigmob, @"",kNetworkNameOgury, @"",kNetworkNameMyOffer, @"", kNetworkNameFyber, nil];
         _dataConsentSet = [self retrieveDataConsentSet];
         _dataConsentSettingAccessor = [ATThreadSafeAccessor new];
         _networkInitFlags = [NSMutableDictionary<NSString*, NSNumber*> dictionary];
@@ -416,8 +466,22 @@ static NSString *const UAInfoUAKey = @"ua";
         _userAgentAccessor = [ATSerialThreadSafeAccessor new];
         _userAgent_impl = [[NSUserDefaults standardUserDefaults] objectForKey:UAInfoKey][UAInfoUAKey];
         _userAgent_impl = _userAgent_impl != nil ? _userAgent_impl : @"";
+        
+        _psIDAccessor = [ATThreadSafeAccessor new];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleApplicationWillResignActiveNotification:) name:UIApplicationWillResignActiveNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleApplicationDidBecomeActiveNotification:) name:UIApplicationDidBecomeActiveNotification object:nil];
     }
     return self;
+}
+
+-(void) handleApplicationDidBecomeActiveNotification:(NSNotification*)notification {
+    //The UIApplicationDidBecomeActiveNotification will be received on app launching, in which case the lastEnterBackgroundDate property == nil, which can be used to check if this handler is being called because of app launching.
+    if (self.lastEnterBackgroundDate != nil && [[NSDate date] timeIntervalSinceDate:self.lastEnterBackgroundDate] > [[ATAppSettingManager sharedManager] psIDIntervalForHotLaunch]) { [self loadPSID:YES]; }
+}
+
+-(void) handleApplicationWillResignActiveNotification:(NSNotification*)notification {
+    self.lastEnterBackgroundDate = [NSDate date];
 }
 
 -(NSString*) userAgent {
@@ -446,47 +510,59 @@ static NSString *const UAInfoUAKey = @"ua";
 
 static NSString *const psIDInfoDateKey = @"date";
 static NSString *const psIDInfoIDKey = @"id";
--(void) loadPSID {
-    void(^GenPSID)(NSDate *date) = ^void(NSDate *date){
+-(void) loadPSID:(BOOL)hotLaunch {
+    NSString*(^GenPSID)(NSDate *date) = ^NSString*(NSDate *date){
+        NSString *psID = @"";
+        
         uint32_t random = 0;
         NSTimeInterval timestamp = [date timeIntervalSince1970] * 1000.0f;
         BOOL randomIncluded = NO;
         if ([ATAppSettingManager sharedManager].ATID != nil) {
-            _psID_impl = [NSString stringWithFormat:@"%@%@%@", [ATAppSettingManager sharedManager].ATID, _appID, @(timestamp)].md5;
+            psID = [NSString stringWithFormat:@"%@%@%@", [ATAppSettingManager sharedManager].ATID, self->_appID, @(timestamp)].md5;
         } else {
             randomIncluded = YES;
             random = arc4random_uniform(10000000);
-            _psID_impl = [NSString stringWithFormat:@"%@%@%@%@%@", [Utilities advertisingIdentifier], [Utilities idfv], _appID, @(random), @(timestamp)].md5;
+            psID = [NSString stringWithFormat:@"%@%@%@%@%@", [Utilities advertisingIdentifier], [Utilities idfv], self->_appID, @(random), @(timestamp)].md5;
         }
         
-        NSDictionary *psIDInfo = @{psIDInfoDateKey:date, psIDInfoIDKey:_psID_impl};
-        [psIDInfo writeToFile:[ATAPI psIDStoragePath] atomically:YES];
-        NSMutableDictionary *extraInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:@1, kAgentEventExtraInfoGeneratedIDTypeKey, @((NSInteger)timestamp), kAgentEventExtraInfoIDGenerationTimestampKey, _psID_impl, kAgentEventExtraInfoPSIDKey, nil];
+        NSMutableDictionary *extraInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:@1, kAgentEventExtraInfoGeneratedIDTypeKey, @((NSInteger)timestamp), kAgentEventExtraInfoIDGenerationTimestampKey, psID, kAgentEventExtraInfoPSIDKey, nil];
         if (randomIncluded) { extraInfo[kAgentEventExtraInfoIDGenerationRandomNumberKey] = @(random); }
         [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyPSIDSessionIDGeneration placementID:nil unitGroupModel:nil extraInfo:extraInfo];
+        return psID;
     };
     
-    NSDictionary *psIDInfo = nil;
-    if ([NSDictionary respondsToSelector:@selector(dictionaryWithContentsOfURL:error:)]) {
-        psIDInfo = [NSDictionary dictionaryWithContentsOfURL:[NSURL fileURLWithPath:[ATAPI psIDStoragePath]] error:nil];
-    } else {
-        psIDInfo = [NSDictionary dictionaryWithContentsOfFile:[ATAPI psIDStoragePath]];
-    }
+    void(^UpdateAndSavePSID)(NSDate *date) = ^void(NSDate *date) {
+        self->_psID_impl = GenPSID(date);
+        NSDictionary *psIDInfo = @{psIDInfoDateKey:date, psIDInfoIDKey:self->_psID_impl};
+        [psIDInfo writeToFile:[ATAPI psIDStoragePath] atomically:YES];
+    };
     
     NSDate *date = [NSDate date];
-    if ([psIDInfo count] == 0) {
-        GenPSID(date);
+    if (hotLaunch) {
+        [_psIDAccessor writeWithBlock:^{
+            UpdateAndSavePSID(date);
+        }];
     } else {
-        NSDate *lastDate = psIDInfo[psIDInfoDateKey];
-        _psID_impl = psIDInfo[psIDInfoIDKey];
-        if ([date timeIntervalSinceDate:lastDate] >= [[ATAppSettingManager sharedManager] psIDInterval]) {
-            GenPSID(date);
+        NSDictionary *psIDInfo = nil;
+        if ([NSDictionary respondsToSelector:@selector(dictionaryWithContentsOfURL:error:)]) {
+            psIDInfo = [NSDictionary dictionaryWithContentsOfURL:[NSURL fileURLWithPath:[ATAPI psIDStoragePath]] error:nil];
+        } else {
+            psIDInfo = [NSDictionary dictionaryWithContentsOfFile:[ATAPI psIDStoragePath]];
+        }
+        if ([psIDInfo count] == 0) {
+            UpdateAndSavePSID(date);
+        } else {
+            NSDate *lastDate = psIDInfo[psIDInfoDateKey];
+            self->_psID_impl = psIDInfo[psIDInfoIDKey];
+            if ([date timeIntervalSinceDate:lastDate] >= [[ATAppSettingManager sharedManager] psIDInterval]) {
+                UpdateAndSavePSID(date);
+            }
         }
     }
 }
 
 -(NSString*)psID {
-    return _psID_impl;
+    return [_psIDAccessor readWithBlock:^id{ return self->_psID_impl; }];
 }
 
 +(NSString*)psIDStoragePath {
@@ -524,7 +600,7 @@ static NSString *const psIDInfoIDKey = @"id";
     _appID = appID;
     _appKey = appKey;
     void(^initSDK)(void) = ^{
-        if (_psID_impl == nil) { [self loadPSID]; }
+        if (_psID_impl == nil) { [self loadPSID:NO]; }
         [self applyAppSetting];
     };
     BOOL initSucceeded = YES;
@@ -542,7 +618,7 @@ static NSString *const psIDInfoIDKey = @"id";
         initSucceeded = YES;
         initSDK();
     }
-    
+    if (initSucceeded) { [[ATLifecycleManager sharedManager] saveSDKInitEvent]; }
     return initSucceeded;
 }
 
@@ -569,7 +645,31 @@ static NSString *const psIDInfoIDKey = @"id";
 }
 
 -(void) setCustomData:(NSDictionary*)customData {
-    if ([customData isKindOfClass:[NSDictionary class]]) { _customData = customData; }
+    if ([customData isKindOfClass:[NSDictionary class]]) {
+        _customData = customData;
+        //Sync channel&subchannel(if included) to self.channle&self.subchannel
+        if (_customData[kATCustomDataChannelKey] != nil) { _channel = _customData[kATCustomDataChannelKey]; }
+        if (_customData[kATCustomDataSubchannelKey] != nil) { _subchannel = _customData[kATCustomDataSubchannelKey]; }
+    }
+}
+
+-(void) setCustomData:(NSDictionary *)customData forPlacementID:(NSString*)placementID {
+    if ([customData isKindOfClass:[NSDictionary class]] && [placementID isKindOfClass:[NSString class]]) {
+        NSMutableDictionary *customDataToPass = [NSMutableDictionary dictionaryWithDictionary:customData];
+        [customDataToPass removeObjectForKey:kATCustomDataChannelKey];
+        [customDataToPass removeObjectForKey:kATCustomDataSubchannelKey];
+        [[ATPlacementSettingManager sharedManager] setCustomData:customDataToPass forPlacementID:placementID];
+    } else {
+        [ATLogger logError:[NSString stringWithFormat:@"Invalid input encountered:customData(%@) should be of type NSDictionary, placementID(%@) should be of type NSString", customData, placementID] type:ATLogTypeExternal];
+    }
+}
+
+-(NSDictionary*) customDataForPlacementID:(NSString*)placementID {
+    if ([placementID isKindOfClass:[NSString class]]) {
+        return [[ATPlacementSettingManager sharedManager] customDataForPlacementID:placementID];
+    } else {
+        return nil;
+    }
 }
 
 +(NSCharacterSet*) channelCharacterSet {
@@ -583,6 +683,12 @@ static NSString *const psIDInfoIDKey = @"id";
 -(void) setChannel:(NSString*)channel {
     if ([channel isKindOfClass:[NSString class]] && [channel length] <= 32 && [channel length] > 0 && [channel rangeOfCharacterFromSet:[[ATAPI channelCharacterSet] invertedSet]].location == NSNotFound) {
         _channel = channel;
+        
+        //Sync _channel to customData
+        NSMutableDictionary *customData = [NSMutableDictionary dictionary];
+        if ([_customData count] > 0) { [customData addEntriesFromDictionary:_customData]; }
+        customData[kATCustomDataChannelKey] = _channel;
+        _customData = customData;
     } else {
         [ATLogger logError:[NSString stringWithFormat:@"The passed channel is not valid:%@; it should be of length between [1, 32], containing only '_', [0-9], [a-z], [A-Z]", channel] type:ATLogTypeExternal];
     }
@@ -591,13 +697,23 @@ static NSString *const psIDInfoIDKey = @"id";
 -(void) setSubchannel:(NSString *)subchannel {
     if ([subchannel isKindOfClass:[NSString class]] && [subchannel length] <= 32 && [subchannel length] > 0 && [subchannel rangeOfCharacterFromSet:[[ATAPI channelCharacterSet] invertedSet]].location == NSNotFound) {
         _subchannel = subchannel;
+        
+        //Sync _subchannel to customData
+        NSMutableDictionary *customData = [NSMutableDictionary dictionary];
+        if ([_customData count] > 0) { [customData addEntriesFromDictionary:_customData]; }
+        customData[kATCustomDataSubchannelKey] = _subchannel;
+        _customData = customData;
     } else {
         [ATLogger logError:[NSString stringWithFormat:@"The passed channel is not valid:%@; it should be of length between [1, 32], containing only '_', [0-9], [a-z], [A-Z]", subchannel] type:ATLogTypeExternal];
     }
 }
 
+-(void) getUserLocationWithCallback:(void(^)(ATUserLocation location))callback {
+    [[ATAppSettingManager sharedManager] getUserLocationWithCallback:callback];
+}
+
 -(NSString*)version {
-    return @"UA_5.5.0";
+    return @"UA_5.5.9";
 }
 
 -(void) setDataConsentSet:(ATDataConsentSet)dataConsentSet consentString:(NSDictionary<NSString *,NSString *> *)consentString {
@@ -623,14 +739,19 @@ static NSString *const psIDInfoIDKey = @"id";
     return [_dataConsentSettingAccessor readWithBlock:^id{ return _consentStrings_impl; }];
 }
 
--(void) presentDataConsentDialogInViewController:(UIViewController*)viewController dismissalCallback:(void (^)(void))dismissCallback {
+-(void) presentDataConsentDialogInViewController:(UIViewController*)viewController loadingFailureCallback:(void(^)(NSError *error))loadingFailureCallback dismissalCallback:(void(^)(void))dismissCallback {
     ATPolicyViewController *tVC = [ATPolicyViewController new];
     NSString *URLStr = [[ATAppSettingManager sharedManager].currentSetting[kATAppSettingGDPRPolicyURLKey] length] > 0 ? [ATAppSettingManager sharedManager].currentSetting[kATAppSettingGDPRPolicyURLKey] : [ATAppSettingManager sharedManager].defaultSetting[kATAppSettingGDPRPolicyURLKey];
     tVC.policyPageURL = [NSURL URLWithString:URLStr];
     tVC.dismissalCallback = dismissCallback;
+    tVC.loadingFailureCallback = loadingFailureCallback;
     if (viewController == nil) viewController = [UIApplication sharedApplication].delegate.window.rootViewController;
     tVC.modalPresentationStyle = 0;
     [viewController presentViewController:tVC animated:YES completion:nil];
+}
+
+-(void) presentDataConsentDialogInViewController:(UIViewController*)viewController dismissalCallback:(void (^)(void))dismissCallback {
+    [self presentDataConsentDialogInViewController:viewController loadingFailureCallback:nil dismissalCallback:dismissCallback];
 }
 
 -(BOOL)inDataProtectionArea {
@@ -640,7 +761,7 @@ static NSString *const psIDInfoIDKey = @"id";
 #pragma mark - internal methods
 -(void) setNetworkVersions:(NSDictionary<NSString *,NSString *> *)networkVersions {
     [networkVersions enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
-        if ([@[kNetworkNameAdmob, kNetworkNameFacebook, kNetworkNameApplovin, kNetworkNameFlurry, kNetworkNameInmobi, kNetworkNameMintegral, kNetworkNameMopub, kNetworkNameGDT, kNetworkNameTapjoy, kNetworkNameChartboost, kNetworkNameIronSource, kNetworkNameVungle, kNetworkNameAdColony, kNetworkNameUnityAds, kNetworkNameTT, kNetworkNameOneway, kNetworkNameMobPower, kNetworkNameAppnext, kNetworkNameYeahmobi, kNetworkNameBaidu, kNetworkNameNend, kNetworkNameMaio,kNetworkNameKS,kNetworkNameOgury, kNetworkNameSigmob, kNetworkNameMyOffer] containsObject:key] && [obj isKindOfClass:[NSString class]])
+        if ([@[kNetworkNameAdmob, kNetworkNameFacebook, kNetworkNameApplovin, kNetworkNameFlurry, kNetworkNameInmobi, kNetworkNameMintegral, kNetworkNameMopub, kNetworkNameGDT, kNetworkNameTapjoy, kNetworkNameChartboost, kNetworkNameIronSource, kNetworkNameVungle, kNetworkNameAdColony, kNetworkNameUnityAds, kNetworkNameTT, kNetworkNameOneway, kNetworkNameMobPower, kNetworkNameAppnext, kNetworkNameYeahmobi, kNetworkNameBaidu, kNetworkNameNend, kNetworkNameMaio, kNetworkNameStartApp, kNetworkNameKS,kNetworkNameOgury, kNetworkNameSigmob, kNetworkNameMyOffer, kNetworkNameFyber] containsObject:key] && [obj isKindOfClass:[NSString class]])
             [[ATAPI sharedInstance] setVersion:obj forNetwork:key];
     }];
 }
@@ -655,7 +776,11 @@ static NSString *const psIDInfoIDKey = @"id";
 }
 
 -(NSString*)versionForNetworkFirmID:(NSInteger)networkFirmID {
-    return [_networkVersionsAccessor readWithBlock:^id{ return _networkVersionsInfo[[ATAPI networkNameMap][@(networkFirmID)]]; }];
+    __weak typeof(self) weakSelf = self;
+    return [_networkVersionsAccessor readWithBlock:^id{
+        NSString *version = weakSelf.networkVersionsInfo[[ATAPI networkNameMap][@(networkFirmID)]];
+        return version != nil ? version : @"";
+    }];
 }
 
 -(BOOL) initFlagForNetwork:(NSString*)networkName {

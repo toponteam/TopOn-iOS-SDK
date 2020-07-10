@@ -10,6 +10,7 @@
 #import "ATAdManagement.h"
 extern NSString *const kATSplashExtraContainerViewKey;
 extern NSString *const kATSplashExtraWindowKey;
+extern NSString *const kATSplashExtraWindowSceneKey;
 extern NSString *const kATSplashExtraLoadingStartDateKey;
 extern NSString *const kATSplashExtraBackgroundImageViewKey;
 @interface ATSplashManager : NSObject<ATAdManagement>

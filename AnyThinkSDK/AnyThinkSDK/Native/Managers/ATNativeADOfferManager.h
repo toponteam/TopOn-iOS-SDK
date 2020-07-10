@@ -17,4 +17,5 @@
 -(ATNativeADCache*)nativeAdWithPlacementID:(NSString*)placementID extra:(NSDictionary*__autoreleasing*)extra;
 -(ATNativeADCache*)nativeAdWithPlacementID:(NSString*)placementID invalidateStatus:(BOOL)invalidateStatus extra:(NSDictionary*__autoreleasing*)extra;
 -(BOOL) offerExhaustedInPlacementID:(NSString*)placementID unitGroupID:(NSString*)unitGroupID;
+-(void) removeCahceForPlacementID:(NSString*)placementID unitGroupModel:(ATUnitGroupModel*)unitGroupModel;
 @end

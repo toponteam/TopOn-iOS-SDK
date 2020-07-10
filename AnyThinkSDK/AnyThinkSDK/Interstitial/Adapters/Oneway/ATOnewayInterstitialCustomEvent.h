@@ -9,6 +9,5 @@
 #import "ATInterstitialCustomEvent.h"
 #import "ATOnewayInterstitialAdapter.h"
 @interface ATOnewayInterstitialCustomEvent : ATInterstitialCustomEvent<oneWaySDKInterstitialAdDelegate>
-- (void)oneWaySDKInterstitialAdReady;
-
+-(void) showWithTag:(NSString*)tag;
 @end

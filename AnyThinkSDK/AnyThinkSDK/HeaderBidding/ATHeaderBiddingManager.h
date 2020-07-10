@@ -24,14 +24,16 @@ typedef NS_ENUM(NSInteger, ATHBAdBidNetwork) {
     AnyThinkHBAdBidNetworkMintegral,// will support later
 };
 
+extern NSString *const kATHeaderBiddingBidRequestExtraStatisticsInfoKey;
 @protocol ATAdSource;
 @protocol ATHeaderBiddingAdSource;
 @interface ATHeaderBiddingManager : NSObject
 +(instancetype) sharedManager;
--(void) runHeaderBiddingWithForamt:(ATHBAdBidFormat)format unitID:(NSString*)unitID adSources:(NSArray<id<ATAdSource>>*)adsrouces headerBiddingAdSources:(NSArray<id<ATHeaderBiddingAdSource>>*)HBAdSources timeout:(NSTimeInterval)timeout completion:(void(^)(NSArray<id<ATAdSource>>*, NSDictionary*))completion;
+-(void) runHeaderBiddingWithForamt:(ATHBAdBidFormat)format unitID:(NSString*)unitID adSources:(NSArray<id<ATAdSource>>*)adsrouces headerBiddingAdSources:(NSArray<id<ATHeaderBiddingAdSource>>*)HBAdSources extra:(NSDictionary*)extra timeout:(NSTimeInterval)timeout completion:(void(^)(NSArray<id<ATAdSource>>*, NSDictionary*))completion;
 @end
 
 @protocol ATAdSource<NSObject>
+@property(nonatomic, readonly) NSString *unitID;
 @property(nonatomic, readonly) double price;
 @property(nonatomic, readonly) ATHBAdBidNetwork network;
 @property(nonatomic, readonly) BOOL headerBidding;
@@ -52,6 +54,7 @@ extern NSString *const kUnitGroupBidInfoBidTokenKey;
 @protocol ATHBBidNetworkItem<NSObject>
 + (instancetype)buildItemNetwork:(ATHBAdBidNetwork)network customEventClassName:(NSString *)className appId:(NSString *)appId unitId:(NSString *)unitId;
 @property (nonatomic,assign)  ATHBAdBidNetwork network;
+@property (nonatomic,  copy)  NSString *placementId;
 @property (nonatomic,  copy)  NSString *unitId;
 @property (nonatomic,strong)  NSDictionary *extraParams;
 @property (nonatomic,assign)  NSInteger maxTimeoutMS;
@@ -75,5 +78,5 @@ extern NSString *const kUnitGroupBidInfoBidTokenKey;
 @end
 
 @protocol ATHBAdsBidRequest<NSObject>
-+ (void)getBidNetworks:(NSArray<id<ATHBBidNetworkItem>>*)networkItems unitId:(NSString *)unitId adFormat:(ATHBAdBidFormat)format maxTimeoutMS:(NSInteger)maxTimeoutMS responseCallback:(void(^)(id<ATHBAuctionResult> auctionResponse, NSError *error))callback;
++ (void)getBidNetworks:(NSArray<id<ATHBBidNetworkItem>>*)networkItems statisticsInfo:(NSDictionary*)statisticsInfo unitId:(NSString *)unitId adFormat:(ATHBAdBidFormat)format maxTimeoutMS:(NSInteger)maxTimeoutMS responseCallback:(void(^)(id<ATHBAuctionResult> auctionResponse, NSError *error))callback;
 @end

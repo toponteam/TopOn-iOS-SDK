@@ -16,6 +16,7 @@
 #import "ATNativeADCustomEvent.h"
 #import "ATTracker.h"
 #import "ATNativeADView+Internal.h"
+#import "ATNativeADCache.h"
 @implementation ATFlurryCustomEvent
 - (void) adNativeDidFetchAd:(id<ATFlurryAdNative>)nativeAd {
     NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:nativeAd, kAdAssetsCustomObjectKey, self.unitID, kNativeADAssetsUnitIDKey, nil];
@@ -79,4 +80,11 @@
     [self trackClick];
     [self.adView notifyNativeAdClick];
 }
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"ad_space"];
+    return extra;
+}
+
 @end

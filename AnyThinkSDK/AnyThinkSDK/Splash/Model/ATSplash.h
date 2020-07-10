@@ -17,6 +17,7 @@
  Priority is calculate by the index of the unit group in the placement's unit group list; zero is the highest
  */
 @property(nonatomic, readonly) NSInteger priority;
+@property(nonatomic, readonly) NSInteger priorityLevel;
 @property(nonatomic, readonly) ATPlacementModel *placementModel;
 @property(nonatomic, readonly) NSString *requestID;
 @property(nonatomic, readonly) NSString *originalRequestID;

@@ -12,74 +12,90 @@
 @interface ATChartboostRewardedVideoCustomEvent()
 @end
 
+NSString *CacheErrorDesc_ATCHBRewarded(NSUInteger code) {
+    return @{
+        @0:@"CHBCacheErrorCodeInternal",
+        @1:@"CHBCacheErrorCodeInternetUnavailable",
+        @5:@"CHBCacheErrorCodeNetworkFailure",
+        @6:@"CHBCacheErrorCodeNoAdFound",
+        @7:@"CHBCacheErrorCodeSessionNotStarted",
+        @16:@"CHBCacheErrorCodeAssetDownloadFailure",
+        @35:@"CHBCacheErrorCodePublisherDisabled"
+    }[@(code)];
+}
+
+NSString *ShowErrorDesc_ATCHBRewarded(NSUInteger code) {
+    return @{
+        @0:@"CHBShowErrorCodeInternal",
+        @7:@"CHBShowErrorCodeSessionNotStarted",
+        @8:@"CHBShowErrorCodeAdAlreadyVisible",
+        @25:@"CHBShowErrorCodeInternetUnavailable",
+        @33:@"CHBShowErrorCodePresentationFailure",
+        @34:@"CHBShowErrorCodeNoCachedAd"
+    }[@(code)];
+}
+
+NSString *ClickErrorDesc_ATCHBRewarded(NSUInteger code) {
+    return @{
+        @0:@"CHBClickErrorCodeUriInvalid",
+        @1:@"CHBClickErrorCodeUriUnrecognized",
+        @2:@"CHBClickErrorCodeConfirmationGateFailure",
+        @3:@"CHBClickErrorCodeInternal"
+    }[@(code)];
+}
 @implementation ATChartboostRewardedVideoCustomEvent
--(instancetype) initWithUnitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo {
-    self = [super initWithUnitID:unitID customInfo:customInfo];
-    if (self != nil) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadedNotification:) name:kChartboostRewardedVideoLoadedNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadingFailureNotification:) name:kChartboostRewardedVideoLoadingFailedNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleImpressionNotification:) name:kChartboostRewardedVideoImpressionNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleClickNotification:) name:kChartboostRewardedVideoClickNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleVideoEndNotification:) name:kChartboostRewardedVideoVideoEndNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleCloseNotification:) name:kChartboostRewardedVideoCloseNotification object:nil];
-    }
-    return self;
-}
-
--(void) handleLoadedNotification:(NSNotification*)notification {
-    if ([self.unitID isEqualToString:notification.userInfo[kChartboostRewardedVideoNotificationUserInfoLocationKey]]) {
-        [self handleAssets:@{kRewardedVideoAssetsUnitIDKey:self.unitID, kAdAssetsCustomObjectKey:self.unitID, kRewardedVideoAssetsCustomEventKey:self}];
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:kChartboostRewardedVideoLoadedNotification object:nil];
+- (void)didCacheAd:(id)event error:(id<ATCHBError>)error {
+    [ATLogger logMessage:[NSString stringWithFormat:@"ChartboostRewardedVideo::didCacheAd:error:%@", error != nil ? CacheErrorDesc_ATCHBRewarded(error.code) : @""] type:ATLogTypeExternal];
+    if (error == nil) {
+        [self handleAssets:@{kRewardedVideoAssetsUnitIDKey:self.unitID, kAdAssetsCustomObjectKey:_rewardedVideoAd, kRewardedVideoAssetsCustomEventKey:self}];
+    } else {
+        [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.ChartboostRVLoading" code:error.code userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load rewarded video", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"Chartboost has failed to cache rv with code:%@", CacheErrorDesc_ATCHBRewarded(error.code)]}]];
     }
 }
 
--(void) handleLoadingFailureNotification:(NSNotification*)notification {
-    if ([self.unitID isEqualToString:notification.userInfo[kChartboostRewardedVideoNotificationUserInfoLocationKey]]) {
-        [self handleLoadingFailure:notification.userInfo[kChartboostRewardedVideoNotificationUserInfoErrorKey]];
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:kChartboostRewardedVideoLoadedNotification object:nil];
-    }
+- (void)willShowAd:(id)event { [ATLogger logMessage:@"ChartboostRewardedVideo::willShowAd:" type:ATLogTypeExternal]; }
+
+- (void)didShowAd:(id)event error:(id<ATCHBError>)error {
+    [ATLogger logMessage:[NSString stringWithFormat:@"ChartboostRewardedVideo::didShowAd:error:%@", error != nil ? ShowErrorDesc_ATCHBRewarded(error.code) : @""] type:ATLogTypeExternal];
+    [self trackShow];
+    [self trackVideoStart];
+    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) { [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
--(void) handleImpressionNotification:(NSNotification*)notification {
-    if ([self.unitID isEqualToString:notification.userInfo[kChartboostRewardedVideoNotificationUserInfoLocationKey]]) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:kChartboostRewardedVideoImpressionNotification object:nil];
-        [self trackShow];
-        [self trackVideoStart];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-            [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-        }
-    }
+- (BOOL)shouldConfirmClick:(id)event confirmationHandler:(void(^)(BOOL))confirmationHandler {
+    [ATLogger logMessage:@"ChartboostRewardedVideo::shouldConfirmClick:confirmationHandler:" type:ATLogTypeExternal];
+    return NO;
 }
 
--(void) handleClickNotification:(NSNotification*)notification {
-    if ([self.unitID isEqualToString:notification.userInfo[kChartboostRewardedVideoNotificationUserInfoLocationKey]]) {
+- (void)didClickAd:(id)event error:(id<ATCHBError>)error {
+    [ATLogger logMessage:[NSString stringWithFormat:@"ChartboostRewardedVideo::didClickAd:error:%@", error != nil ? ClickErrorDesc_ATCHBRewarded(error.code) : @""] type:ATLogTypeExternal];
+    if (error == nil) {
         [self trackClick];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) {
-            [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-        }
+        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) { [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
     }
 }
 
--(void) handleCloseNotification:(NSNotification*)notification {
-    if ([self.unitID isEqualToString:notification.userInfo[kChartboostRewardedVideoNotificationUserInfoLocationKey]]) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self];
-        [self handleClose];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-            [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-        }
-    }
+- (void)didFinishHandlingClick:(id)event error:(id<ATCHBError>)error { [ATLogger logMessage:[NSString stringWithFormat:@"ChartboostRewardedVideo::didFinishHandlingClick:error:%@", error != nil ? ClickErrorDesc_ATCHBRewarded(error.code) : @""] type:ATLogTypeExternal]; }
+
+- (void)didDismissAd:(id)event {
+    [ATLogger logMessage:@"ChartboostRewardedVideo::didDismissAd:" type:ATLogTypeExternal];
+    [self handleClose];
+    [self saveVideoCloseEventRewarded:self.rewardGranted];
+    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) { [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]]; }
 }
 
--(void) handleVideoEndNotification:(NSNotification*)notification {
-    if ([self.unitID isEqualToString:notification.userInfo[kChartboostRewardedVideoNotificationUserInfoLocationKey]]) {
-        self.rewardGranted = [notification.userInfo[kChartboostRewardedVideoNotificationUserInfoRewardedFlagKey] boolValue];
-        [self trackVideoEnd];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-            [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-        }
-        if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-            [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.unitGroup.price)}];
-        }
-    }
+- (void)didEarnReward:(id)event {
+    [ATLogger logMessage:@"ChartboostRewardedVideo::didEarnReward:" type:ATLogTypeExternal];
+    self.rewardGranted = YES;
+    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]) { [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
+    
+    [self trackVideoEnd];
+    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) { [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"location"];
+    return extra;
 }
 @end

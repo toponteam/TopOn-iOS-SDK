@@ -10,5 +10,5 @@
 #import "ATOnewayRewardedVideoAdapter.h"
 
 @interface ATOnewayRewardedVideoCustomEvent : ATRewardedVideoCustomEvent<oneWaySDKRewardedAdDelegate>
-- (void)oneWaySDKRewardedAdReady;
+-(void) showWithTag:(NSString*)tag;
 @end

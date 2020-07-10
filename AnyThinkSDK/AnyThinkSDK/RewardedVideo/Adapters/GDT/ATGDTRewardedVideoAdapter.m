@@ -41,6 +41,7 @@
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameGDT]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameGDT];
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"GDTSDKConfig") sdkVersion] forNetwork:kNetworkNameGDT];
+            [NSClassFromString(@"GDTSDKConfig") registerAppId:info[@"app_id"]];
         }
     }
     return self;
@@ -51,7 +52,7 @@
         _customEvent = [[ATGDTRewardedVideoCustomEvent alloc] initWithUnitID:info[@"unit_id"] customInfo:info];
         _customEvent.requestCompletionBlock = completion;
         _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
-        _rewardedVideoAd = [[NSClassFromString(@"GDTRewardVideoAd") alloc] initWithAppId:info[@"app_id"] placementId:info[@"unit_id"]];
+        _rewardedVideoAd = [[NSClassFromString(@"GDTRewardVideoAd") alloc] initWithPlacementId:info[@"unit_id"]];
         _rewardedVideoAd.delegate = _customEvent;
         [_rewardedVideoAd loadAd];
     } else {

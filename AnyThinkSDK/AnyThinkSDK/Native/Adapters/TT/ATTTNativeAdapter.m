@@ -75,6 +75,16 @@ BATroposalSize_DrawFullScreen//14
                 _nativeExpressAdMgr.adSize = size;
                 _nativeExpressAdMgr.delegate = _customEvent;
                 [_nativeExpressAdMgr loadAd:[info[@"request_num"] integerValue]];
+            } else if ([info[@"is_video"]integerValue] == 1) {
+                slot.imgSize = [NSClassFromString(@"BUSize") sizeBy:BUProposalSize_DrawFullScreen];
+                _nativeExpressAdMgr = [[NSClassFromString(@"BUNativeExpressAdManager") alloc]initWithSlot:slot adSize:size];
+                _nativeExpressAdMgr.adSize = size;
+                _nativeExpressAdMgr.delegate = _customEvent;
+                if ([info[@"request_num"] integerValue] > 3) {
+                    [_nativeExpressAdMgr loadAd:3];
+                }else {
+                    [_nativeExpressAdMgr loadAd:[info[@"request_num"] integerValue]];
+                }
             } else {
                 _adMgr = [NSClassFromString(@"BUNativeAdsManager") new];
                 _adMgr.delegate = _customEvent;
@@ -92,4 +102,5 @@ BATroposalSize_DrawFullScreen//14
         completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load native ad.", NSLocalizedFailureReasonErrorKey:@"This might be due to TT SDK not being imported or it's imported but a unsupported version is being used."}]);
     }
 }
+    
 @end

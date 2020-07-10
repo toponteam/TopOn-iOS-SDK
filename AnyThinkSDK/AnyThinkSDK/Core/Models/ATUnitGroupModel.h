@@ -21,12 +21,14 @@
 @property(nonatomic, readonly) NSInteger networkRequestNum;
 @property(nonatomic, readonly) NSTimeInterval networkDataTimeout; //  5.1.0 双回调数据超时
 @property(nonatomic, readonly) NSTimeInterval networkTimeout;
+@property(nonatomic, readonly) NSTimeInterval skipIntervalAfterLastLoadingFailure;
 @property(nonatomic, readonly) NSString *unitGroupID;
 @property(nonatomic, readonly) NSString *unitID;
 @property(nonatomic, readonly) NSDictionary *content;
 @property(nonatomic, readonly) NSTimeInterval showingInterval;//minimum interval between previous request & last impression
 @property(nonatomic, readonly) CGSize adSize;
 @property(nonatomic, readonly) double price;
+@property(nonatomic, readonly) NSInteger ecpmLevel;
 @property(nonatomic, readonly) NSTimeInterval headerBiddingRequestTimeout;
 @property(nonatomic, readwrite) double bidPrice;
 @property(nonatomic, readwrite) NSString *bidToken;
@@ -38,6 +40,7 @@
 @property(nonatomic, readonly) NSTimeInterval clickTkDelayMax;
 @property(nonatomic, readonly) BOOL postsNotificationOnShow;
 @property(nonatomic, readonly) BOOL postsNotificationOnClick;
+@property(nonatomic, readonly) NSString *precision;
 /*
  {
  request_id_1:{

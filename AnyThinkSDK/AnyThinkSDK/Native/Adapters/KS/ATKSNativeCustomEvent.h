@@ -9,10 +9,9 @@
 #import <Foundation/Foundation.h>
 #import "ATNativeADCustomEvent.h"
 #import "ATKSNativeAdapter.h"
-
 extern NSString *const kATKSNativeExpressAdManager;
 
-@interface ATKSNativeCustomEvent : ATNativeADCustomEvent <ATKSNativeAdDelegate,ATKSNativeAdsManagerDelegate,ATKSFeedAdDelegate,ATKSFeedAdsManagerDelegate>
+@interface ATKSNativeCustomEvent : ATNativeADCustomEvent <ATKSNativeAdDelegate,ATKSNativeAdsManagerDelegate,ATKSFeedAdDelegate,ATKSFeedAdsManagerDelegate,ATKSDrawAdsManagerDelegate,ATKSDrawAdDelegate>
 @property (nonatomic)BOOL videoSoundEnable;
 @property (nonatomic)BOOL isVideo;
 @end

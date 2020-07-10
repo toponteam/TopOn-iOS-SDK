@@ -7,8 +7,10 @@
 //
 #import <Foundation/Foundation.h>
 #import "BaiduMobAdCommonConfig.h"
+
 @class BaiduMobAdNative;
 @class BaiduMobAdNativeAdView;
+@class BaiduMobAdNativeAdObject;
 
 @protocol BaiduMobAdNativeAdDelegate <NSObject>
 
@@ -56,9 +58,14 @@
 - (void)nativeAdsFailLoad:(BaiduMobFailReason)reason nativeAd:(BaiduMobAdNative *)nativeAd;
 
 /**
+ *  广告曝光回调
+ */
+- (void)nativeAdExposure:(UIView *)nativeAdView nativeAdDataObject:(BaiduMobAdNativeAdObject *)object;
+
+/**
  *  广告点击
  */
-- (void)nativeAdClicked:(UIView *)nativeAdView;
+- (void)nativeAdClicked:(UIView *)nativeAdView nativeAdDataObject:(BaiduMobAdNativeAdObject *)object;
 
 /**
  *  广告详情页关闭
@@ -67,9 +74,11 @@
 
 #pragma mark - Deprecated
 
-- (void)nativeAdObjectsSuccessLoad:(NSArray *)nativeAds DEPRECATED_MSG_ATTRIBUTE("已废弃，请使用nativeAdObjectsSuccessLoad:nativeAd:");
+- (void)nativeAdObjectsSuccessLoad:(NSArray *)nativeAds BaiduMobAdDEPRECATED_MSG("已废弃，请使用nativeAdObjectsSuccessLoad:nativeAd:");
 
-- (void)nativeAdsFailLoad:(BaiduMobFailReason)reason DEPRECATED_MSG_ATTRIBUTE("已废弃，请使用nativeAdsFailLoad:nativeAd:");
+- (void)nativeAdsFailLoad:(BaiduMobFailReason)reason BaiduMobAdDEPRECATED_MSG("已废弃，请使用nativeAdsFailLoad:nativeAd:");
+
+- (void)nativeAdClicked:(UIView *)nativeAdView BaiduMobAdDEPRECATED_MSG("已废弃，请使用nativeAdClicked:nativeAdDataObject:");
 
 @end
 

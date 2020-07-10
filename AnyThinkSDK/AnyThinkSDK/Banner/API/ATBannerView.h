@@ -12,4 +12,5 @@
 @interface ATBannerView : UIView
 //to be move into a internal category
 @property(nonatomic, weak) id<ATBannerDelegate> delegate;
+@property(nonatomic, weak) UIViewController *presentingViewController;
 @end

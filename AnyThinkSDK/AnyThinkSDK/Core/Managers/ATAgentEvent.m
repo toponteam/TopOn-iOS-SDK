@@ -30,7 +30,6 @@ NSString *const kAgentEventExtraInfoPSIDKey = @"ps_id";
 NSString *const kAgentEventExtraInfoSessionIDKey = @"session_id";
 NSString *const kAgentEventExtraInfoRequestIDKey = @"request_id";
 NSString *const kAgentEventExtraInfoGroupIDKey = @"group_id";
-NSString *const kAgentEventExtraInfoFormatKey = @"ad_format";
 NSString *const kAgentEventExtraInfoLoadingEventTypeKey = @"loading_event_type";
 NSString *const kAgentEventExtraInfoSDKCallFlagKey = @"sdk_call_flag";
 NSString *const kAgentEventExtraInfoSDKNotCalledReasonKey = @"sdk_not_called_reason";
@@ -91,6 +90,16 @@ NSString *const kAgentEventExtraInfoGDPRThirdPartySDKLevelKey = @"third_party_sd
 NSString *const kAgentEventExtraInfoGDPRDevConsentKey = @"dev_consent";
 NSString *const kAgentEventExtraInfoServerGDPRIAValueKey = @"server_gdpr_ia_value";
 
+NSString *const kAgentEventExtraInfoLifecycleEventTypeKey = @"lifecycle_event_type";
+NSString *const kAgentEventExtraInfoActivateTimeKey = @"activate_time";
+NSString *const kAgentEventExtraInfoResignActiveTimeKey = @"resign_active_time";
+NSString *const kAgentEventExtraInfoLifecycleIntervalKey = @"lifecycle_interval";
+
+NSString *const kAgentEventExtraInfoFormatKey = @"ad_format";
+NSString *const kAgentEventExtraInfoShowTimestampKey = @"show_timestamp";
+NSString *const kAgentEventExtraInfoCloseTimestampKey = @"close_timestamp";
+NSString *const kAgentEventExtraInfoShowDurationKey = @"show_duration";
+
 NSString *const kATAgentEventKeyLoadFail = @"1004630";
 NSString *const kATAgentEventKeyRequestFail = @"1004631";
 NSString *const kATAgentEventKeyReady = @"1004632";
@@ -104,6 +113,8 @@ NSString *const kATAgentEventKeyMyOfferVideoDownload = @"1004638";
 NSString *const kATAgentEventKeyAdSourceStatusFillKey = @"1004639";
 NSString *const kATAgentEventKeyMetadataAndAdDataLoadingTimeKey = @"1004640";
 NSString *const kATAgentEventKeyGDPRLevelKey = @"1004641";
+NSString *const kATAgentEventKeyAdShowDurationKey = @"1004643";
+NSString *const kATAgentEventKeyAppLifecycleKey = @"1004644";
 
 @interface ATAgentEvent()
 @property(nonatomic, readonly) NSMutableArray<NSDictionary*>* ramData;
@@ -188,11 +199,29 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
         NSString *p2 = [[[ATAgentEvent parameter2] jsonString_anythink] stringByBase64Encoding_anythink];
         NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithObjectsAndKeys:p1, @"p", p2, @"p2", @"1.0", @"api_ver", nil];
         parameters[@"sign"] = [Utilities computeSignWithParameters:parameters];
+        
+        NSArray<NSString*>* testDeviceIDFAList = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"AnyThinkSDKTestDeviceIDFA"];
+        if ([testDeviceIDFAList isKindOfClass:[NSArray class]] && [testDeviceIDFAList containsObject:[Utilities advertisingIdentifier]]) {
+            NSMutableArray<NSDictionary*>* testFields = [NSMutableArray<NSDictionary*> array];
+            [data enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                NSMutableDictionary *entry = [NSMutableDictionary dictionary];
+                if ([obj[@"key"] isEqualToString:kATAgentEventKeyRequestFail]) {
+                    if (obj[@"msg"] != nil) { entry[@"nw_firm_id"] = obj[@"msg"]; }
+                    if (obj[@"msg4"] != nil) { entry[@"error_code"] = obj[@"msg4"]; }
+                    if (obj[@"msg5"] != nil) { entry[@"error_msg"] = obj[@"msg5"]; }
+                }
+                
+                if ([entry count] > 0) { [testFields addObject:entry]; }
+            }];
+            if ([testFields count] > 0) { parameters[@"test_fields"] = testFields; }
+        }
+        
         [[ATNetworkingManager sharedManager] sendHTTPRequestToAddress:[ATAppSettingManager sharedManager].trackingSetting.agentEventAddress HTTPMethod:ATNetworkingHTTPMethodPOST parameters:parameters completion:^(NSData * _Nonnull data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             if (completion != nil) {
                 __block NSDictionary *responseObject = nil;
                 //AT_SafelyRun is used to guard against exception that's beyond our precaution, which includes the nullability of responseData.
-                AT_SafelyRun(^{ responseObject = [NSJSONSerialization JSONObjectWithData:[[NSData alloc] initWithBase64EncodedData:data options:0] options:NSJSONReadingMutableContainers error:nil]; });
+                if (data != nil) { AT_SafelyRun(^{ responseObject = [NSJSONSerialization JSONObjectWithData:[[NSData alloc] initWithBase64EncodedData:data options:0] options:NSJSONReadingMutableContainers error:nil]; }); }
+                
                 completion(((NSHTTPURLResponse*)response).statusCode == 200 && ![responseObject isKindOfClass:[NSDictionary class]]);
             }
         }];
@@ -235,7 +264,7 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
 
 +(void) saveRequestAPIName:(NSString*)apiName requestDate:(NSNumber*)requestDate responseDate:(NSNumber*)responseDate extra:(NSDictionary*)extra {
     ATTrackingSetting *trackingSetting = [ATAppSettingManager sharedManager].trackingSetting;
-    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyNetworkRequestSuccess placementID:extra[kAgentEventExtraInfoPlacementIDKey] unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoAPINameKey:apiName != nil ? apiName : @"",
+    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyNetworkRequestSuccess placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoAPINameKey:apiName != nil ? apiName : @"",
                                                                                                                                               kAgentEventExtraInfoRequestTimestampKey:requestDate,
                                                                                                                                               kAgentEventExtraInfoResponseTimestampKey:responseDate,
                                                                                                                                               kAgentEventExtraInfoNetworkTimeKey:@([responseDate doubleValue] - [requestDate doubleValue]),                    kAgentEventExtraInfoTKHostKey:trackingSetting.trackerAddress != nil ? trackingSetting.trackerAddress : @""
@@ -244,9 +273,10 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
 
 -(void) saveEventWithKey:(NSString*)key placementID:(NSString*)placementID unitGroupModel:(nullable ATUnitGroupModel*)unitGroupModel extraInfo:(NSDictionary*)extraInfo {
     ATTrackingSetting *trackingSetting = [ATAppSettingManager sharedManager].trackingSetting;
-    if (key != nil && ![trackingSetting.agentEventDropKeys containsObject:key]) {
+    ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
+    if (key != nil && !((placementModel != nil && [trackingSetting.agentEventDropFormats[key] containsObject:@(placementModel.format).stringValue]) || (placementModel == nil && trackingSetting.agentEventDropFormats[key] != nil))) {
         NSDictionary *eventDict = [ATAgentEvent eventParametersWithKey:key forPlacementID:placementID unitGroupModel:unitGroupModel extraInfo:extraInfo];
-        [self appendEvent:eventDict usingTrackingSetting:trackingSetting diskData:![trackingSetting.agentEventRTKeys containsObject:key]];
+        [self appendEvent:eventDict usingTrackingSetting:trackingSetting diskData:!((placementModel != nil && [trackingSetting.agentEventRTFormats[key] containsObject:@(placementModel.format).stringValue]) || (placementModel == nil && trackingSetting.agentEventRTFormats[key] != nil))];
 //        NSLog(@"\n**************************Marvin_da_event**************************\n%@\n**************************da_event**************************\n", eventDict);
     }
 }
@@ -265,6 +295,7 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
     if ([extraInfo isKindOfClass:[NSDictionary class]] && extraInfo[kAgentEventExtraInfoRequestIDKey] != nil) { parameters[@"requestid"] = extraInfo[kAgentEventExtraInfoRequestIDKey]; }
     ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
     if (placementModel != nil) { parameters[@"groupid"] = @(placementModel.groupID); }
+    if (placementModel.trafficGroupID != nil) { parameters[@"traffic_group_id"] = placementModel.trafficGroupID; }
     if (extraInfo[kAgentEventExtraInfoPSIDKey] != nil) {
         parameters[@"psid"] = extraInfo[kAgentEventExtraInfoPSIDKey];
     } else {
@@ -362,6 +393,21 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
              kATAgentEventKeyGDPRLevelKey:@{kAgentEventExtraInfoGDPRThirdPartySDKLevelKey:@"msg",
                                             kAgentEventExtraInfoGDPRDevConsentKey:@"msg1",
                                             kAgentEventExtraInfoServerGDPRIAValueKey:@"msg2"
+             },
+             kATAgentEventKeyAppLifecycleKey:@{kAgentEventExtraInfoLifecycleEventTypeKey:@"msg",
+                                               kAgentEventExtraInfoActivateTimeKey:@"msg1",
+                                               kAgentEventExtraInfoResignActiveTimeKey:@"msg2",
+                                               kAgentEventExtraInfoLifecycleIntervalKey:@"msg3"
+             },
+             kATAgentEventKeyAdShowDurationKey:@{kAgentEventExtraInfoFormatKey:@"msg",
+                                                 kAgentEventExtraInfoShowTimestampKey:@"msg1",
+                                                 kAgentEventExtraInfoCloseTimestampKey:@"msg2",
+                                                 kAgentEventExtraInfoShowDurationKey:@"msg3",
+                                                 kAgentEventExtraInfoNetworkFirmIDKey:@"msg4",
+                                                 kAgentEventExtraInfoAdSourceIDKey:@"msg5",
+                                                 kAgentEventExtraInfoPriorityKey:@"msg6",
+                                                 kAgentEventExtraInfoMyOfferDefaultFlagKey:@"msg7",
+                                                 kAgentEventExtraInfoRewardFlagKey:@"msg8"
              }
              }[key];
 }

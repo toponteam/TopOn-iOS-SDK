@@ -18,6 +18,7 @@
 #import "ATLogger.h"
 #import "ATApplovinNativeAdapter.h"
 
+
 @implementation ATApplovinCustomEvent
 - (void)nativeAdService:(id<ATALNativeAdService>)service didLoadAds:(NSArray * /* of ALNativeAd */) ads {
     if ([ads count] > 0) {
@@ -100,5 +101,11 @@
 
 -(void) trackURL:(NSURL*)URL {
     [[[NSURLSession sharedSession] dataTaskWithURL:URL] resume];
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = @"";
+    return extra;
 }
 @end

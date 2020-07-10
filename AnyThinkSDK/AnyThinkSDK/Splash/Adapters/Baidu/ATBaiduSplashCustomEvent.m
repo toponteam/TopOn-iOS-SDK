@@ -34,24 +34,31 @@
 
 - (void)splashlFailPresentScreen:(id<ATBaiduMobAdSplash>)splash withError:(NSInteger) reason {
     [ATLogger logMessage:[NSString stringWithFormat:@"BaiduSplash::splashlFailPresentScreen:%ld", reason] type:ATLogTypeExternal];
+    [self.splashView removeFromSuperview];
     [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.BaiduSplash" code:reason userInfo:@{NSLocalizedDescriptionKey:@"ATSDK has failed to load splash.", NSLocalizedFailureReasonErrorKey:@"BaiduSDK has failed to load splash."}]];
 }
 
 - (void)splashDidClicked:(id<ATBaiduMobAdSplash>)splash {
     [ATLogger logMessage:@"BaiduSplash::splashDidClicked:" type:ATLogTypeExternal];
     [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:@{kATSplashDelegateExtraNetworkIDKey:@(self.ad.unitGroup.networkFirmID),kATSplashDelegateExtraAdSourceIDKey:self.ad.unitGroup.unitID != nil ? self.ad.unitGroup.unitID : @"",kATSplashDelegateExtraIsHeaderBidding:@(self.ad.unitGroup.headerBidding),kATSplashDelegateExtraPriority:@(self.priorityIndex),kATSplashDelegateExtraPrice:@(self.ad.unitGroup.price)}]; }
+    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)splashDidDismissScreen:(id<ATBaiduMobAdSplash>)splash {
     [ATLogger logMessage:@"BaiduSplash::splashDidDismissScreen:" type:ATLogTypeExternal];
     [_containerView removeFromSuperview];
-    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:@{kATSplashDelegateExtraNetworkIDKey:@(self.ad.unitGroup.networkFirmID),kATSplashDelegateExtraAdSourceIDKey:self.ad.unitGroup.unitID != nil ? self.ad.unitGroup.unitID : @"",kATSplashDelegateExtraIsHeaderBidding:@(self.ad.unitGroup.headerBidding),kATSplashDelegateExtraPriority:@(self.priorityIndex),kATSplashDelegateExtraPrice:@(self.ad.unitGroup.price)}];
+    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]];
     }
 
 }
 
 - (void)splashDidDismissLp:(id<ATBaiduMobAdSplash>)splash {
     [ATLogger logMessage:@"BaiduSplash::splashDidDismissLp:" type:ATLogTypeExternal];
+}
+
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"unit_id"];
+    return extra;
 }
 @end

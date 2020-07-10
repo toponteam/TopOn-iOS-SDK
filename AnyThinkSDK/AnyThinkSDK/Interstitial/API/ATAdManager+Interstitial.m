@@ -19,9 +19,9 @@
 #import "ATPlacementSettingManager.h"
 #import "ATAgentEvent.h"
 #import "ATCapsManager.h"
-
+#import "ATInterstitialCustomEvent.h"
 NSString *const kATInterstitialDelegateExtraNetworkIDKey = @"network_firm_id";
-NSString *const kATInterstitialDelegateExtraAdSourceIDKey = @"ad_source_id";
+NSString *const kATInterstitialDelegateExtraAdSourceIDKey = @"adsource_id";
 NSString *const kATInterstitialDelegateExtraIsHeaderBidding = @"adsource_isHeaderBidding";
 NSString *const kATInterstitialDelegateExtraPrice = @"adsource_price";
 NSString *const kATInterstitialDelegateExtraPriority = @"adsource_index";
@@ -33,6 +33,7 @@ NSString *const kATInterstitialExtraLocationEnabledFlagKey = @"location_enabled_
 NSString *const kATInterstitialExtraMuteStartPlayingFlagKey = @"mute_start_playing_flag";
 NSString *const kATInterstitialExtraFallbackFullboardBackgroundColorKey = @"fallback_fullboard_background_color";
 NSString *const kATInterstitialExtraAdSizeKey = @"ad_size";
+NSString *const kATInterstitialExtraUsesRewardedVideo = @"uses_rewarded_video_flag";
 
 NSString *const kATInterstitialExtraAdSize600_400 = @"600_400";
 NSString *const kATInterstitialExtraAdSize600_600 = @"600_600";
@@ -69,6 +70,7 @@ NSString *const kATInterstitialExtraAdSize600_900 = @"600_900";
         viewController.ad = interstitial;
         [interstitial.unitGroup.adapterClass showInterstitial:interstitial inViewController:viewController delegate:delegate];
         interstitial.showTimes++;
+        [interstitial.customEvent saveShowAPIContext];
         [[ATCapsManager sharedManager] setShowFlagForPlacementID:placementID requestID:interstitial.requestID];
         [[ATPlacementSettingManager sharedManager] setStatus:NO forPlacementID:placementID];
     } else {

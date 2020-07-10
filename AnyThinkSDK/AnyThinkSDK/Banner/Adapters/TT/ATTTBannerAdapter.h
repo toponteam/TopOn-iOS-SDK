@@ -52,6 +52,7 @@ typedef NS_ENUM(NSInteger, ATWMAdSlotPosition) {
 @protocol BUBannerAdViewDelegate;
 @protocol ATBUBannerAdView<NSObject>
 @property(nonatomic) CGRect frame;
+@property (nonatomic, assign, readonly) NSInteger interval;
 @property (nonatomic, weak, nullable) id<BUBannerAdViewDelegate> delegate;
 - (instancetype)initWithSlotID:(NSString *)slotID size:(id<ATBUSize>)adSize rootViewController:(UIViewController *)rootViewController;
 
@@ -73,6 +74,7 @@ typedef NS_ENUM(NSInteger, ATWMAdSlotPosition) {
 @protocol BUNativeExpressBannerViewDelegate;
 @protocol ATBUNativeExpressBannerView<NSObject>
 @property(nonatomic) CGRect frame;
+@property (nonatomic, assign, readonly) NSInteger interval;
 @property (nonatomic, weak, nullable) id<BUNativeExpressBannerViewDelegate> delegate;
 - (instancetype)initWithSlotID:(NSString *)slotID rootViewController:(UIViewController *)rootViewController imgSize:(id<ATBUSize>)expectSize adSize:(CGSize)adsize IsSupportDeepLink:(BOOL)isSupportDeepLink;
 - (instancetype)initWithSlotID:(NSString *)slotID

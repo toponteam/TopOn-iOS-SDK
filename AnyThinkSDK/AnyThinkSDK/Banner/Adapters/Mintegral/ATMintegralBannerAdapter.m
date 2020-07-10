@@ -27,32 +27,16 @@
     if (self != nil) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameMintegral];
+            [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"MTGSDK") sdkVersion] forNetwork:kNetworkNameMintegral];
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameMintegral]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameMintegral];
                 void(^blk)(void) = ^{
-                    if ([[ATAPI sharedInstance].networkConsentInfo containsObjectForKey:kNetworkNameMintegral]) {
-                        NSDictionary *consent = [ATAPI sharedInstance].networkConsentInfo[kNetworkNameMintegral];
-                        if ([consent isKindOfClass:[NSDictionary class]]) {
-                            [consent enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-                                [[NSClassFromString(@"MTGSDK") sharedInstance] setUserPrivateInfoType:[key integerValue] agree:[obj boolValue]];
-                            }];
-                        }
-                    } else {
-                        BOOL set = NO;
-                        BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
-                        if (set) {
-                            /*
-                             consentStatus: 1 Personalized, 0 Nonpersonalized
-                             */
-                            id<ATMTGSDK> mtgSDK = [NSClassFromString(@"MTGSDK") sharedInstance];
-                            mtgSDK.consentStatus = !limit;
-                        }
-                        
-                    }
+                    BOOL set = NO;
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    if (set) { ((id<ATMTGSDK>)[NSClassFromString(@"MTGSDK") sharedInstance]).consentStatus = !limit; }
                     [[NSClassFromString(@"MTGSDK") sharedInstance] setAppID:info[@"appid"] ApiKey:info[@"appkey"]];
                 };
-                if ([NSThread mainThread]) blk();
+                if ([NSThread currentThread].isMainThread) blk();
                 else dispatch_sync(dispatch_get_main_queue(), blk);
             }
         });
@@ -69,15 +53,20 @@
         ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)info[kAdapterCustomInfoUnitGroupModelKey];
         NSString *requestID = info[kAdapterCustomInfoRequestIDKey];
         dispatch_async(dispatch_get_main_queue(), ^{
-            self->_bannerView = [[NSClassFromString(@"MTGBannerAdView") alloc] initBannerAdViewWithBannerSizeType:[ATMintegralBannerAdapter sizeToMTGBannerSizeType:unitGroupModel.adSize] unitId:info[@"unitid"] rootViewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]]];
+            self->_bannerView = [[NSClassFromString(@"MTGBannerAdView") alloc] initBannerAdViewWithBannerSizeType:[ATMintegralBannerAdapter sizeToMTGBannerSizeType:unitGroupModel.adSize] placementId:info[@"placement_id"] unitId:info[@"unitid"] rootViewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]]];
             self->_bannerView.delegate = self->_customEvent;
-            if ([info[@"size"] isEqualToString:@"smart"]) {
-                self->_bannerView.frame = CGRectMake(0, 0, adSize.width, adSize.height);
-            }
+            self->_bannerView.autoRefreshTime = [info[@"nw_rft"] integerValue] / 1000;
+            if ([info[@"size"] isEqualToString:@"smart"]) { self->_bannerView.frame = CGRectMake(0, 0, adSize.width, adSize.height); }
             if ([unitGroupModel bidTokenWithRequestID:requestID] != nil) {
+                if (NSClassFromString(@"MTGAdCustomConfig") != nil && [NSClassFromString(@"MTGAdCustomConfig") respondsToSelector:@selector(sharedInstance)] && [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] respondsToSelector:@selector(setCustomInfo:type:unitId:)]) {
+                    [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] setCustomInfo:[info[kADapterCustomInfoStatisticsInfoKey] jsonString_anythink] type:1 unitId:info[@"unitid"]];
+                }
                 [self->_bannerView loadBannerAdWithBidToken:[unitGroupModel bidTokenWithRequestID:requestID]];
                 [unitGroupModel setBidTokenUsedFlagForRequestID:requestID];
             }else {
+                if (NSClassFromString(@"MTGAdCustomConfig") != nil && [NSClassFromString(@"MTGAdCustomConfig") respondsToSelector:@selector(sharedInstance)] && [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] respondsToSelector:@selector(setCustomInfo:type:unitId:)]) {
+                    [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] setCustomInfo:[info[kADapterCustomInfoStatisticsInfoKey] jsonString_anythink] type:0 unitId:info[@"unitid"]];
+                }
                 [self->_bannerView loadBannerAd];
             }
         });

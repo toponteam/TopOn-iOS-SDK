@@ -69,6 +69,8 @@ static NSString *const kSigmobPlacementID = @"b5d771f5a3458f";
 static NSString *const kKSPlacementID = @"b5d807a31aa7dd";
 static NSString *const kMyOfferPlacementID = @"b5db6c247dbb1e";
 static NSString *const kOguryPlacementID = @"b5dde2379dc6ce";
+static NSString *const kStartAppPlacementID = @"b5e7319f619931";
+static NSString *const kFyberPlacementID = @"b5e96db106d8f2";
 
 @implementation ATRewardedVideoVideoViewController
 -(instancetype) initWithPlacementName:(NSString*)name {
@@ -104,7 +106,9 @@ static NSString *const kOguryPlacementID = @"b5dde2379dc6ce";
                           kSigmobPlacement:kSigmobPlacementID,
                           kKSPlacement:kKSPlacementID,
                           kMyOfferPlacement:kMyOfferPlacementID,
-                          kOguryPlacement:kOguryPlacementID
+                          kOguryPlacement:kOguryPlacementID,
+                          kStartAppPlacement:kStartAppPlacementID,
+                          kFyberPlacement:kFyberPlacementID
                           };
     }
     return self;
@@ -170,7 +174,7 @@ static NSString *const kOguryPlacementID = @"b5dde2379dc6ce";
 //    _reload = YES;
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kATAdLoadingExtraUserIDKey:@"rv_test_user_id"} customData:nil delegate:self];
+    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kATAdLoadingExtraMediaExtraKey:@{@"media_key":@"media_val"}, kATAdLoadingExtraUserIDKey:@"rv_test_user_id"} customData:nil delegate:self];
 }
 
 -(void) showAD {
@@ -198,6 +202,8 @@ static NSString *const kOguryPlacementID = @"b5dde2379dc6ce";
 
 -(void) rewardedVideoDidStartPlayingForPlacementID:(NSString *)placementID extra:(NSDictionary *)extra {
     NSLog(@"ATRewardedVideoVideoViewController::rewardedVideoDidStartPlayingForPlacementID:%@ extra:%@", placementID, extra);
+    UIViewController *vc = self.presentedViewController;
+    vc = nil;
 }
 
 

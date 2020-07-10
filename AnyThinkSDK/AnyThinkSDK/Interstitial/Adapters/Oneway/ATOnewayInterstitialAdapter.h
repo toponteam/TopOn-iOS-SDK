@@ -11,6 +11,26 @@
 @interface ATOnewayInterstitialAdapter : NSObject
 @end
 
+extern NSString *const kATOnewayInterstitialReadyNotification;
+extern NSString *const kATOnewayInterstitialShowNotification;
+extern NSString *const kATOnewayInterstitialClickNotification;
+extern NSString *const kATOnewayInterstitialFinishNotification;
+extern NSString *const kATOnewayInterstitialCloseNotification;
+extern NSString *const kATOnewayInterstitialErrorNotification;
+
+extern NSString *const kATOnewayInterstitialImageReadyNotification;
+extern NSString *const kATOnewayInterstitialImageShowNotification;
+extern NSString *const kATOnewayInterstitialImageClickNotification;
+extern NSString *const kATOnewayInterstitialImageFinishNotification;
+extern NSString *const kATOnewayInterstitialImageCloseNotification;
+extern NSString *const kATOnewayInterstitialImageErrorNotification;
+
+extern NSString *const kATOnewayInterstitialNotificationUserInfoTagKey;
+extern NSString *const kATOnewayInterstitialNotificationUserInfoMessageKey;
+extern NSString *const kATOnewayInterstitialNotificationUserInfoErrorCodeKey;
+extern NSString *const kATOnewayInterstitialNotificationUserInfoStateKey;
+extern NSString *const kATOnewayInterstitialNotificationUserInfoSessionKey;
+
 @protocol OneWaySDK<NSObject>
 + (void)configure:(NSString *)publishId;
 + (void)debugLog:(BOOL)debugLog;
@@ -20,11 +40,9 @@
 
 #pragma mark - interstitial image
 @protocol oneWaySDKInterstitialAdDelegate <NSObject>
-- (void)oneWaySDKInterstitialAdReady;
-- (void)oneWaySDKInterstitialAdDidShow:(NSString *)tag;
-- (void)oneWaySDKInterstitialAdDidClose:(NSString *)tag withState:(NSNumber *)state;
-- (void)oneWaySDKInterstitialAdDidClick:(NSString *)tag;
-- (void)oneWaySDKDidError:(NSInteger)error withMessage:(NSString *)message;
+@end
+
+@protocol oneWaySDKInterstitialImageAdDelegate <NSObject>
 @end
 
 @protocol OWInterstitialAd<NSObject>

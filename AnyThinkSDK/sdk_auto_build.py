@@ -8,10 +8,10 @@ import os
 # 1、xcodebuild执行生成指定的target
 # 2、copy target到指定目录
 # 3、copy文档到指定目录
-# 4、打成zip包
+# 4、打成zip包 
 
 #configuration for iOS build setting
-AnyThink_VERSION = "5.5.0"
+AnyThink_VERSION = "5.5.9"
 CONFIGURATION = "Release"
 EXPORT_OPTIONS_PLIST = "exportOptions.plist"
 # 保存发布包的路径
@@ -71,6 +71,8 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkSigmobRewardedVideoAdapter'
                        , 'AnyThinkMyOfferRewardedVideoAdapter'
                        , 'AnyThinkOguryRewardedVideoAdapter'
+                       , 'AnyThinkStartAppRewardedVideoAdapter'
+                       , 'AnyThinkFyberRewardedVideoAdapter'
                        # Banner Adapters
                        , 'AnyThinkInmobiBannerAdapter'
                        , 'AnyThinkFlurryBannerAdapter'
@@ -85,6 +87,11 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkAppnextBannerAdapter'
                        , 'AnyThinkBaiduBannerAdapter'
                        , 'AnyThinkNendBannerAdapter'
+                       , 'AnyThinkFyberBannerAdapter'
+                       ,'AnyThinkStartAppBannerAdapter'
+                       ,'AnyThinkVungleBannerAdapter'
+                       ,'AnyThinkAdColonyBannerAdapter'
+                       ,'AnyThinkChartboostBannerAdapter'
                        # Interstitial Adapters
                        , 'AnyThinkAdColonyInterstitialAdapter'
                        , 'AnyThinkKSInterstitialAdapter'
@@ -111,11 +118,16 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkSigmobInterstitialAdapter'
                        , 'AnyThinkMyOfferInterstitialAdapter'
                        , 'AnyThinkOguryInterstitialAdapter'
+                       , 'AnyThinkStartAppInterstitialAdapter'
+                       , 'AnyThinkFyberInterstitialAdapter'
                        # Splash Adapters
                        , 'AnyThinkBaiduSplashAdapter'
                        , 'AnyThinkGDTSplashAdapter'
                        , 'AnyThinkTTSplashAdapter'
-                       , 'AnyThinkSigmobSplashAdapter']
+                       , 'AnyThinkSigmobSplashAdapter'
+                       ,'AnyThinkMintegralSplashAdapter'
+                       #TraminiSDK
+                       ,'TraminiSDK']
 #EXPORT_TARGETS_LIST = ['AnyThinkSDK']
 
 # CPU支持指令集架构

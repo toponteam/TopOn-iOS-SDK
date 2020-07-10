@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface HBBidRequestManager : NSObject
 
 
-- (void)getBidNetworks:(NSArray *)networkItems unitId:(NSString *)unitId adFormat:(HBAdBidFormat)format maxTimeoutMS:(NSInteger)maxTimeoutMS responseCallback:(void(^)(HBAuctionResult *auctionResponse,NSError *error))callback;
+- (void)getBidNetworks:(NSArray *)networkItems statisticsInfo:(NSDictionary*)statisticsInfo unitId:(NSString *)unitId adFormat:(HBAdBidFormat)format maxTimeoutMS:(NSInteger)maxTimeoutMS responseCallback:(void(^)(HBAuctionResult *auctionResponse,NSError *error))callback;
 
 
 

@@ -36,6 +36,8 @@ extern NSString *const kSigmobPlacement;
 extern NSString *const kKSPlacement;
 extern NSString *const kMyOfferPlacement;
 extern NSString *const kOguryPlacement;
+extern NSString *const kStartAppPlacement;
+extern NSString *const kFyberPlacement;
 
 @interface ATRewardedVideoVideoViewController : UIViewController
 -(instancetype) initWithPlacementName:(NSString*)name;

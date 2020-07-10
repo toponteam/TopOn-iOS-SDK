@@ -28,6 +28,7 @@
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameGDT]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameGDT];
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"GDTSDKConfig") sdkVersion] forNetwork:kNetworkNameGDT];
+            [NSClassFromString(@"GDTSDKConfig") registerAppId:info[@"app_id"]];
         }
     }
     return self;
@@ -44,15 +45,19 @@
             _customEvent.requestCompletionBlock = completion;
             _customEvent.delegate = self.delegateToBePassed;
             dispatch_async(dispatch_get_main_queue(), ^{
-                self->_splashAd = [[NSClassFromString(@"GDTSplashAd") alloc] initWithAppId:info[@"app_id"] placementId:info[@"unit_id"]];
+                self->_splashAd = [[NSClassFromString(@"GDTSplashAd") alloc] initWithPlacementId:info[@"unit_id"]];
                 self->_splashAd.delegate = self->_customEvent;
                 self->_splashAd.fetchDelay = remainingTime;
+                self->_customEvent.timeout = remainingTime;
+                self->_customEvent.loadStartDate = curDate;
                 NSDictionary *extra = info[kAdapterCustomInfoExtraKey];
-                self->_customEvent.backgroundImageView = extra[kATSplashExtraBackgroundImageViewKey];
                 if ([extra containsObjectForKey:kATSplashExtraBackgroundColorKey]) { self->_splashAd.backgroundColor = extra[kATSplashExtraBackgroundColorKey]; }
                 if ([extra containsObjectForKey:kATSplashExtraBackgroundImageKey]) { self->_splashAd.backgroundImage = extra[kATSplashExtraBackgroundImageKey]; }
                 if ([extra containsObjectForKey:kATSplashExtraSkipButtonCenterKey]) { self->_splashAd.skipButtonCenter = [extra[kATSplashExtraSkipButtonCenterKey] CGPointValue]; }
-                [self->_splashAd loadAdAndShowInWindow:extra[kATSplashExtraWindowKey] withBottomView:extra[kATSplashExtraContainerViewKey] skipView:extra[kATSplashExtraCustomSkipButtonKey]];
+                self->_customEvent.bottomView = extra[kATSplashExtraContainerViewKey];
+                self->_customEvent.window = extra[kATSplashExtraWindowKey];
+                self->_customEvent.skipView = extra[kATSplashExtraCustomSkipButtonKey];
+                [self->_splashAd loadAd];
             });
         } else {
             completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load splash.", NSLocalizedFailureReasonErrorKey:@"It took too long to load placement stragety."}]);

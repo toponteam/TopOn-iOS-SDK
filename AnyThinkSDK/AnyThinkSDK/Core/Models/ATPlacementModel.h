@@ -30,6 +30,7 @@ typedef NS_ENUM(NSInteger, ATAdFormat) {
     ATAdFormatSplash = 4
 };
 extern NSString *const kPlacementModelCacheDateKey;
+extern NSString *const kPlacementModelCustomDataKey;
 @interface ATPlacementModelExtra:ATModel
 @property(nonatomic, readonly) BOOL cachesPlacementSetting;
 @property(nonatomic, readonly) NSTimeInterval defaultAdSourceLoadingDelay;
@@ -41,7 +42,9 @@ extern NSString *const kPlacementModelCacheDateKey;
 @end
 
 @interface ATPlacementModel : ATModel
+-(instancetype) initWithDictionary:(NSDictionary *)dictionary associatedCustomData:(NSDictionary*)customData placementID:(NSString*)placementID;
 -(instancetype) initWithDictionary:(NSDictionary *)dictionary placementID:(NSString*)placementID;
+@property(nonatomic, readonly) NSDictionary *associatedCustomData;
 @property(nonatomic, readonly) BOOL cachesPlacementSetting;
 @property(nonatomic, readonly) NSInteger format;
 @property(nonatomic, readonly) NSString *placementID;
@@ -87,6 +90,8 @@ extern NSString *const kPlacementModelCacheDateKey;
 @property(nonatomic, readonly) NSInteger defaultNetworkFirmID;
 @property(nonatomic, readonly) NSTimeInterval defaultAdSourceLoadingDelay;
 
+
+
 /*
  */
 @property(nonatomic, readonly) NSTimeInterval updateTolerateInterval;
@@ -95,8 +100,11 @@ extern NSString *const kPlacementModelCacheDateKey;
 
 @property(nonatomic, readonly) NSArray<ATMyOfferOfferModel*>* offers;
 @property(nonatomic, readonly) ATMyOfferSetting *myOfferSetting;
-@property(nonatomic, readonly) BOOL usesDefaultMyOffer;
+@property(nonatomic, readonly) NSInteger usesDefaultMyOffer;
 @property(nonatomic, readonly) BOOL preloadMyOffer;
+//extra
+@property(nonatomic, readonly) NSDictionary *callback;
+
 
 -(Class) adManagerClass;
 @end

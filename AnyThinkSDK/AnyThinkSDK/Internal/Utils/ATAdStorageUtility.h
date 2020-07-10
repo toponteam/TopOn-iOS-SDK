@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "ATAd.h"
+#import "ATAdManager+Internal.h"
 typedef NS_ENUM(NSInteger, ATAdNotReadyReason) {
     ATAdNotReadyReasonStatusFalse = 0,
     ATAdNotReadyReasonStatusExpired = 1,
@@ -20,7 +21,7 @@ typedef NS_ENUM(NSInteger, ATAdNotReadyReason) {
 @interface ATAdStorageUtility : NSObject
 +(NSDictionary<NSString*, NSArray<id<ATAd>>*>*) saveAd:(id<ATAd>)ad toStorage:(NSMutableDictionary*)storage requestID:(NSString*)requestID;
 
-+(id<ATAd>) adInStorage:(NSMutableDictionary*)storage statusStorage:(NSMutableDictionary*)statusStorage forPlacementID:(NSString*)placementID extra:(NSDictionary* __autoreleasing*)extra;
++(id<ATAd>) adInStorage:(NSMutableDictionary*)storage statusStorage:(NSMutableDictionary*)statusStorage forPlacementID:(NSString*)placementID caller:(ATAdManagerReadyAPICaller)caller extra:(NSDictionary* __autoreleasing*)extra;
 
 +(void) clearPlacementContainingAd:(id<ATAd>)ad fromStorage:(NSMutableDictionary*)storage;
 
@@ -32,6 +33,7 @@ typedef NS_ENUM(NSInteger, ATAdNotReadyReason) {
 
 +(BOOL) validateCapsForUnitGroup:(ATUnitGroupModel*)unitGroup placementID:(NSString*)placementID;
 +(BOOL) validatePacingForUnitGroup:(ATUnitGroupModel*)unitGroup placementID:(NSString*)placementID;
++(void) removeAdForPlacementID:(NSString*)placementID unitGroupModel:(ATUnitGroupModel*)unitGroupModel inStorage:(NSMutableDictionary*)storage statusStorage:(NSMutableDictionary*)statusStorage;
 @end
 
 @interface ATAdStorageUtility(AdSourceStatus)

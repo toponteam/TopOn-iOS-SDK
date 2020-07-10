@@ -13,7 +13,10 @@
 
 - (void)oneWaySDKInterstitialImageAdDidShow:(NSString *)tag;
 
+- (void)oneWaySDKInterstitialImageAdDidFinish:(NSString *)tag withState:(NSNumber *)state session:(NSString *)session;
+
 - (void)oneWaySDKInterstitialImageAdDidClose:(NSString *)tag withState:(NSNumber *)state;
+
 
 - (void)oneWaySDKInterstitialImageAdDidClick:(NSString *)tag;
 

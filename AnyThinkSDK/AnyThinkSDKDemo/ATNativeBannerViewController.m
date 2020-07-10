@@ -9,11 +9,15 @@
 #import "ATNativeBannerViewController.h"
 #import "ViewController.h"
 @import AnyThinkNative;
+
+NSString *const kFacebookNativeBannerPlacement = @"Facebook(Native Banner)";
+
 static NSString *const kMPPlacementID = @"b5c2084d12aca4";
 static NSString *const kPlacement0ID = @"b5ad9ba61dcb39";
 static NSString *const kInmobiPlacementID = @"b5b0f553483724";
 static NSString *const kMintegralPlacementID = @"b5b0f555698607";
 static NSString *const kFacebookPlacementID = @"b5b0f551340ea9";
+static NSString *const kFacebookNativePlacementID = @"b5ee89fd60cddc";
 static NSString *const kAdMobPlacementID = @"b5b0f55228375a";
 static NSString *const kApplovinPlacementID = @"b5b0f554ec9c4e";
 static NSString *const kFlurryPlacementID = @"b5b0f554166ad1";
@@ -54,6 +58,7 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
                           kMintegralPlacement:kMintegralPlacementID,
                           kAllPlacementName:kAllPlacementID,
                           kInmobiPlacement:kInmobiPlacementID,
+                          kFacebookNativeBannerPlacement:kFacebookNativePlacementID,
                           kFacebookPlacement:kFacebookPlacementID,
                           kAdMobPlacement:kAdMobPlacementID,
                           kMopubPlacementName:kMopubPlacementID,
@@ -167,7 +172,7 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
 }
 
 -(void) didClickCloseButtonInNativeBannerAdView:(ATNativeBannerView*)bannerView placementID:(NSString*)placementID extra:(NSDictionary *)extra{
-    NSLog(@"ATNativeBannerViewController::didClickCloseButtonInNativeBannerAdView:%@ placementID:%@", bannerView, placementID);
+    NSLog(@"ATNativeBannerViewController::didClickCloseButtonInNativeBannerAdView:%@ placementID:%@ extra:%@", bannerView, placementID, extra);
 }
 
 -(void) didAutorefreshNativeBannerAdInView:(ATNativeBannerView*)bannerView placementID:(NSString*)placementID extra:(NSDictionary *)extra{

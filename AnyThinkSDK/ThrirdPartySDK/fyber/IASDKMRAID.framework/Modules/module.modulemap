@@ -1,0 +1,12 @@
+
+framework module IASDKMRAID {
+    umbrella header "IASDKMRAID.h"
+        export *
+        module * { export * }
+
+    link framework "CoreGraphics"
+    link framework "MediaPlayer"
+    link framework "AVFoundation"
+    link framework "CoreMedia"
+}
+

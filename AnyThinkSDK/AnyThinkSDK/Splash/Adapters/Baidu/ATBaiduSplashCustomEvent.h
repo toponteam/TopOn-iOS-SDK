@@ -13,4 +13,5 @@
 -(instancetype)initWithPublisherID:(NSString*)publisherID unitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo;
 @property(nonatomic) UIWindow *window;
 @property(nonatomic) UIView *containerView;
+@property(nonatomic, weak) UIView *splashView;
 @end

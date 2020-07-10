@@ -11,6 +11,7 @@
 #import "ATPlacementModel.h"
 #import "Utilities.h"
 #import "ATAdCustomEvent.h"
+#import "ATAdManagement.h"
 @interface ATNativeAd(Private)
 -(instancetype) initWithAssets:(NSDictionary*)assets;
 @end
@@ -28,10 +29,12 @@
         _cacheDate = [NSDate normalizaedDate];
         _expireDate = [[NSDate date] dateByAddingTimeInterval:_unitGroup.networkCacheTime / 1000.0f];
         _showTimes = 0;
+        _customEvent = assets[kAdAssetsCustomEventKey];
         _customObject = assets[kAdAssetsCustomObjectKey];
         _unitID = assets[kNativeADAssetsUnitIDKey];
         _appID = assets[kATAdAssetsAppIDKey];
         _priorityIndex = [ATAdCustomEvent calculateAdPriority:self];
+        _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? (_priorityIndex / _placementModel.maxConcurrentRequestCount) + 1 : 1;
     }
     return self;
 }

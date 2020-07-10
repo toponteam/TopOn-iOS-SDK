@@ -35,6 +35,7 @@
         _customEvent.ad = self;
         _customEvent.banner = self;
         _customObject = assets[kAdAssetsCustomObjectKey];
+        _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? ([ATAdCustomEvent calculateAdPriority:self] / _placementModel.maxConcurrentRequestCount) + 1 : 1;
     }
     return self;
 }

@@ -17,6 +17,7 @@
 #import "NSObject+ExtraInfo.h"
 #import "ATAPI+Internal.h"
 #import "ATNativeADCache.h"
+#import "ATNativeADOfferManager.h"
 
 @interface ATInmobiNativeADRenderer()
 /**
@@ -51,5 +52,8 @@
     customEvent.adView = self.ADView;
     
     self.currentNative.delegate = customEvent;
+    
+    ATNativeADCache *cache = (ATNativeADCache*)self.ADView.nativeAd;
+    [[ATNativeADOfferManager sharedManager] removeCahceForPlacementID:cache.placementModel.placementID unitGroupModel:cache.unitGroup];
 }
 @end

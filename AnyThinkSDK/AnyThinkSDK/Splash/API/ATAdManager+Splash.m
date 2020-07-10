@@ -9,7 +9,7 @@
 #import "ATAdManager+Splash.h"
 #import "ATSplashManager.h"
 NSString *const kATSplashDelegateExtraNetworkIDKey = @"network_firm_id";
-NSString *const kATSplashDelegateExtraAdSourceIDKey = @"ad_source_id";
+NSString *const kATSplashDelegateExtraAdSourceIDKey = @"adsource_id";
 NSString *const kATSplashDelegateExtraIsHeaderBidding = @"adsource_isHeaderBidding";
 NSString *const kATSplashDelegateExtraPrice = @"adsource_price";
 NSString *const kATSplashDelegateExtraPriority = @"adsource_index";
@@ -26,6 +26,10 @@ NSString *const kATSplashExtraCanClickFlagKey = @"can_click_flag";
 NSString *const kATSplashExtraBackgroundImageViewKey = @"background_image_view";
 @implementation ATAdManager (Splash)
 -(void) loadADWithPlacementID:(NSString*)placementID extra:(NSDictionary*)extra customData:(NSDictionary*)customData delegate:(id<ATAdLoadingDelegate>)delegate window:(UIWindow*)window containerView:(UIView*)containerView {
+    [self loadADWithPlacementID:placementID extra:extra customData:customData delegate:delegate window:window windowScene:nil containerView:containerView];
+}
+
+- (void)loadADWithPlacementID:(NSString *)placementID extra:(NSDictionary *)extra customData:(NSDictionary *)customData delegate:(id<ATSplashDelegate>)delegate window:(UIWindow *)window windowScene:(UIWindowScene *)windowScene containerView:(UIView *)containerView {
     NSMutableDictionary *modifiedExtra = [NSMutableDictionary dictionaryWithDictionary:extra];
     modifiedExtra[kATSplashExtraLoadingStartDateKey] = [NSDate date];
     if ([window isKindOfClass:[UIWindow class]]) {
@@ -39,6 +43,7 @@ NSString *const kATSplashExtraBackgroundImageViewKey = @"background_image_view";
             });
         }
     }
+    if ([windowScene isKindOfClass:[UIWindowScene class]]) { modifiedExtra[kATSplashExtraWindowSceneKey] = windowScene;}
     if ([containerView isKindOfClass:[UIView class]]) { modifiedExtra[kATSplashExtraContainerViewKey] = containerView; }
     [[ATAdManager sharedManager] loadADWithPlacementID:placementID extra:modifiedExtra customData:customData delegate:delegate];
 }

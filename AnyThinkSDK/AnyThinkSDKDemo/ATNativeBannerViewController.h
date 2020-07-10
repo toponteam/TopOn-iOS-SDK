@@ -11,6 +11,7 @@
 extern NSString *const kMPPlacement;
 extern NSString *const kInmobiPlacement;
 extern NSString *const kFacebookPlacement;
+extern NSString *const kFacebookNativeBannerPlacement;
 extern NSString *const kAdMobPlacement;
 extern NSString *const kApplovinPlacement;
 extern NSString *const kFlurryPlacement;

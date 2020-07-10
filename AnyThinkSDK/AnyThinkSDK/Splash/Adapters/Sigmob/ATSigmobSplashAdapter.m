@@ -53,6 +53,12 @@
             _splashAd = [[NSClassFromString(@"WindSplashAd") alloc] initWithPlacementId:info[@"placement_id"]];
             _splashAd.delegate = _customEvent;
             _splashAd.fetchDelay = remainingTime;
+            if (@available(iOS 13.0, *)) {
+                UIWindowScene *scene = extra[kATSplashExtraWindowSceneKey];
+                _splashAd.windowScene = scene;
+            } else {
+                // Fallback on earlier versions
+            }
             [_splashAd loadAdAndShowWithBottomView:extra[kATSplashExtraContainerViewKey]];
         } else {
             completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load splash.", NSLocalizedFailureReasonErrorKey:@"It took too long to load placement stragety."}]);

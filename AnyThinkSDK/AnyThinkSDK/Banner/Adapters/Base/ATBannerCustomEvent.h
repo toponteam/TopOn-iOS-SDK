@@ -14,6 +14,7 @@
 #import "ATBannerView.h"
 @interface ATBannerCustomEvent : ATAdCustomEvent
 -(void) trackClick;
+-(NSDictionary*)delegateExtra;
 -(instancetype) initWithUnitID:(NSString*)unitID customInfo:(NSDictionary*)customInfo;
 -(void) cleanup;
 @property(nonatomic, assign) id<ATBannerDelegate> delegate;

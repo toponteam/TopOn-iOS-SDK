@@ -9,6 +9,9 @@
 #import "ATGDTInterstitialCustomEvent.h"
 #import "Utilities.h"
 #import "ATInterstitialManager.h"
+@interface ATGDTInterstitialCustomEvent()
+@property(nonatomic, readonly) BOOL fullScreenVideoStarted;
+@end
 @implementation ATGDTInterstitialCustomEvent
 - (void)interstitialSuccessToLoadAd:(id<ATGDTMobInterstitial>)interstitial {
     [ATLogger logMessage:@"GDTInterstitial::interstitialSuccessToLoadAd" type:ATLogTypeExternal];
@@ -26,16 +29,12 @@
 
 - (void)interstitialDidPresentScreen:(id<ATGDTMobInterstitial>)interstitial {
     [ATLogger logMessage:@"GDTInterstitial::interstitialDidPresentScreen" type:ATLogTypeExternal];
-//    [self trackShow];
-//    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}]; }
 }
 
 - (void)interstitialDidDismissScreen:(id<ATGDTMobInterstitial>)interstitial {
     [ATLogger logMessage:@"GDTInterstitial::interstitialDidDismissScreen" type:ATLogTypeExternal];
     [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
-    }
+    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) { [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)interstitialApplicationWillEnterBackground:(id<ATGDTMobInterstitial>)interstitial {
@@ -49,9 +48,7 @@
 - (void)interstitialClicked:(id<ATGDTMobInterstitial>)interstitial {
     [ATLogger logMessage:@"GDTInterstitial::interstitialClicked" type:ATLogTypeExternal];
     [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-        [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
-    }
+    if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) { [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)interstitialAdWillPresentFullScreenModal:(id<ATGDTMobInterstitial>)interstitial {
@@ -71,76 +68,75 @@
 
 #pragma mark - interstitial 2.0
 - (void)unifiedInterstitialSuccessToLoadAd:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialSuccessToLoadAd:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialSuccessToLoadAd:" type:ATLogTypeExternal];
     [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:unifiedInterstitial, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
 }
 
 - (void)unifiedInterstitialFailToLoadAd:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial error:(NSError *)error {
-    [ATLogger logMessage:[NSString stringWithFormat:@"GDTInterstitial::unifiedInterstitialFailToLoadAd:error:%@", error] type:ATLogTypeExternal];
+    [ATLogger logMessage:[NSString stringWithFormat:@"GDTUnifiedInterstitial::unifiedInterstitialFailToLoadAd:error:%@", error] type:ATLogTypeExternal];
     [self handleLoadingFailure:error];
 }
 
 - (void)unifiedInterstitialWillPresentScreen:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialWillPresentScreen:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialWillPresentScreen:" type:ATLogTypeExternal];
 }
 
 - (void)unifiedInterstitialDidPresentScreen:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialDidPresentScreen:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialDidPresentScreen:" type:ATLogTypeExternal];
     [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}]; }
+    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)unifiedInterstitialDidDismissScreen:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialDidDismissScreen:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialDidDismissScreen:" type:ATLogTypeExternal];
     [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
-    }
+    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) { [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)unifiedInterstitialWillLeaveApplication:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialWillLeaveApplication:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialWillLeaveApplication:" type:ATLogTypeExternal];
 }
 
 - (void)unifiedInterstitialWillExposure:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialWillExposure:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialWillExposure:" type:ATLogTypeExternal];
 }
 
 - (void)unifiedInterstitialClicked:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialClicked:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialClicked:" type:ATLogTypeExternal];
     [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-        [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
-    }
+    if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) { [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
 }
 
 - (void)unifiedInterstitialAdWillPresentFullScreenModal:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialAdWillPresentFullScreenModal:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialAdWillPresentFullScreenModal:" type:ATLogTypeExternal];
 }
 
 - (void)unifiedInterstitialAdDidPresentFullScreenModal:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialAdDidPresentFullScreenModal:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialAdDidPresentFullScreenModal:" type:ATLogTypeExternal];
 }
 
 - (void)unifiedInterstitialAdWillDismissFullScreenModal:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialAdWillDismissFullScreenModal:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialAdWillDismissFullScreenModal:" type:ATLogTypeExternal];
 }
 
 - (void)unifiedInterstitialAdDidDismissFullScreenModal:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialAdDidDismissFullScreenModal:" type:ATLogTypeExternal];
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialAdDidDismissFullScreenModal:" type:ATLogTypeExternal];
 }
-//视频详情页状态
+
 - (void)unifiedInterstitialAd:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial playerStatusChanged:(ATGDTMediaPlayerStatus)status {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialAd:playerStatusChanged" type:ATLogTypeExternal];
+    [ATLogger logMessage:[NSString stringWithFormat:@"GDTUnifiedInterstitial::unifiedInterstitialAd:playerStatusChanged:%@", @{@(GDTMediaPlayerStatusInitial):@"GDTMediaPlayerStatusInitial", @(GDTMediaPlayerStatusLoading):@"GDTMediaPlayerStatusLoading", @(GDTMediaPlayerStatusStarted):@"GDTMediaPlayerStatusStarted", @(GDTMediaPlayerStatusPaused):@"GDTMediaPlayerStatusPaused", @(GDTMediaPlayerStatusStoped):@"GDTMediaPlayerStatusStoped", @(GDTMediaPlayerStatusError):@"GDTMediaPlayerStatusError", }[@(status)]] type:ATLogTypeExternal];
     switch (status) {
         case GDTMediaPlayerStatusStarted:
-            [self trackVideoStart];
-            if ([self.delegate respondsToSelector:@selector(interstitialDidStartPlayingVideoForPlacementID:extra:)]) { [self.delegate interstitialDidStartPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}]; }
+            if (!_fullScreenVideoStarted) {
+                _fullScreenVideoStarted = YES;
+                [self trackVideoStart];
+                if ([self.delegate respondsToSelector:@selector(interstitialDidStartPlayingVideoForPlacementID:extra:)]) { [self.delegate interstitialDidStartPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+            }
             break;
         case GDTMediaPlayerStatusStoped:
             [self trackVideoEnd];
             if ([self.delegate respondsToSelector:@selector(interstitialDidEndPlayingVideoForPlacementID:extra:)]) {
-                [self.delegate interstitialDidEndPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.unitGroup.price)}];
+                [self.delegate interstitialDidEndPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
             }
             break;
         default:
@@ -149,23 +145,23 @@
 }
 
 - (void)unifiedInterstitialAdViewWillPresentVideoVC:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialAdViewWillPresentVideoVC:" type:ATLogTypeExternal];
-
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialAdViewWillPresentVideoVC:" type:ATLogTypeExternal];
 }
 
 - (void)unifiedInterstitialAdViewDidPresentVideoVC:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialAdViewDidPresentVideoVC:" type:ATLogTypeExternal];
-
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialAdViewDidPresentVideoVC:" type:ATLogTypeExternal];
 }
 
 - (void)unifiedInterstitialAdViewWillDismissVideoVC:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialAdViewWillDismissVideoVC:" type:ATLogTypeExternal];
-
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialAdViewWillDismissVideoVC:" type:ATLogTypeExternal];
 }
 
 - (void)unifiedInterstitialAdViewDidDismissVideoVC:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
-    [ATLogger logMessage:@"GDTInterstitial::unifiedInterstitialAdViewDidDismissVideoVC:" type:ATLogTypeExternal];
-
+    [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialAdViewDidDismissVideoVC:" type:ATLogTypeExternal];
 }
-
+-(NSDictionary*)delegateExtra {
+    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"unit_id"];
+    return extra;
+}
 @end

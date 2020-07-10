@@ -17,6 +17,7 @@
 #import "ATAdManager+Internal.h"
 #import "ATAppSettingManager.h"
 #import "ATAgentEvent.h"
+#import "ATCapsManager.h"
 
 NSString *const ATTrackerExtraShownNetworkPriorityInfoKey = @"priority_info";
 NSString *const kATTrackerExtraAutoloadFlagKey = @"auto_load";
@@ -45,6 +46,7 @@ NSString *const kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey = @"loaded_by_
 NSString *const kATTrackerExtraCustomObjectKey = @"custom_object";
 NSString *const kATTrackerExtraAdObjectKey = @"ad_object";
 NSString *const kATTrackerExtraAdShowSceneKey = @"ad_show_scene";
+NSString *const kATTrackerExtraAdShowSDKTimeKey = @"sdk_time";
 
 static NSString *const kBase64Table1 = @"dMWnhbeyKr0J+IvLNOx3BFkEuml92/5fjSqGT7R8pZVciPHAstC4UXa6QDw1gozY";
 static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyNgb9P1OIKmCEuq8sw/XMeBAT2F";
@@ -116,7 +118,8 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
 
 -(void) trackWithPlacementID:(NSString*)placementID requestID:(NSString*)requestID trackType:(ATNativeADTrackType)trackType extra:(NSDictionary*)extra {
     NSDictionary *dataElement = [ATTracker dataElementWithPlacementID:placementID requestID:requestID trackType:trackType extra:[extra isKindOfClass:[NSDictionary class]] ? [NSDictionary dictionaryWithDictionary:extra] : nil];
-    if (![[ATAppSettingManager sharedManager].trackingSetting.tcTKSkipTypes containsObject:@(trackType)]) {
+    ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
+    if ((placementModel != nil && ![[ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(trackType).stringValue] containsObject:@(placementModel.format).stringValue]) || (placementModel == nil && [ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(trackType).stringValue] != nil)) {
         [self appendDataElement:dataElement];
 //        NSLog(@"\n**************************Marvin_tk_element**************************\n%@\n**************************tk_element**************************\n", dataElement);
     }
@@ -130,13 +133,18 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
 
 -(void) trackClickWithAd:(nonnull id<ATAd>)ad extra:(nullable NSDictionary*)extra {
     NSDictionary *dataElement = [ATTracker dataElementWithPlacementID:ad.placementModel.placementID requestID:ad.requestID trackType:ATNativeADTrackTypeADClicked extra:extra];
-    if (!(ad.unitGroup.clickTkDelayMin == -1 && ad.unitGroup.clickTkDelayMax == -1)) {
-        NSTimeInterval delayTime = (ad.unitGroup.clickTkDelayMin + arc4random_uniform(ad.unitGroup.clickTkDelayMax - ad.unitGroup.clickTkDelayMin)) / 1000.0f;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayTime * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [ATTracker sendData:@[dataElement] address:ad.unitGroup.clickTkAddress retryIfTimeout:YES];
-//                    NSLog(@"\n**************************Marvin_tk_element**************************\n%@\n**************************tk_element**************************\n", dataElement);
-        });
-    }
+    ATPlacementModel *placementModel = ad.placementModel;
+        if ((placementModel != nil && ![[ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(ATNativeADTrackTypeADClicked).stringValue] containsObject:@(placementModel.format).stringValue]) || (placementModel == nil && [ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(ATNativeADTrackTypeADClicked).stringValue] != nil)) {
+            if (!(ad.unitGroup.clickTkDelayMin == -1 && ad.unitGroup.clickTkDelayMax == -1)) {
+                    NSTimeInterval delayTime = (ad.unitGroup.clickTkDelayMin + arc4random_uniform(ad.unitGroup.clickTkDelayMax - ad.unitGroup.clickTkDelayMin)) / 1000.0f;
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayTime * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                        [ATTracker sendData:@[dataElement] address:ad.unitGroup.clickTkAddress retryIfTimeout:YES];
+            //                    NSLog(@"\n**************************Marvin_tk_element**************************\n%@\n**************************tk_element**************************\n", dataElement);
+                    });
+                }
+        }
+    
+    
     
     NSString *notificationName = [ATAppSettingManager sharedManager].clickNotificationName;
     if (ad.unitGroup.postsNotificationOnClick && notificationName != nil) { [[NSNotificationCenter defaultCenter] postNotificationName:notificationName object:ad.customObject userInfo:@{@"data":dataElement, @"common":[ATTracker commonParameters], @"nw_id":@(ad.unitGroup.networkFirmID), @"format":@(ad.placementModel.format)}]; }
@@ -168,12 +176,23 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
     NSString *commonStr = [[[ATTracker commonParameters] jsonString_anythink] stringByBase64Encoding_anythink];
     NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithDictionary:@{@"common":commonStr, @"data":dataStr, @"api_ver":@"1.0"}];
     parameters[@"sign"] = [Utilities computeSignWithParameters:parameters];
+    
+    NSArray<NSString*>* testDeviceIDFAList = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"AnyThinkSDKTestDeviceIDFA"];
+    if ([testDeviceIDFAList isKindOfClass:[NSArray class]] && [testDeviceIDFAList containsObject:[Utilities advertisingIdentifier]]) {
+        NSMutableArray<NSDictionary*>* testFields = [NSMutableArray<NSDictionary*> array];
+        [data enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            NSMutableDictionary *entry = [NSMutableDictionary dictionary];
+            if (obj[@"type"] != nil) { entry[@"type"] = obj[@"type"]; }
+            if (obj[@"nw_firm_id"] != nil) { entry[@"nw_firm_id"] = obj[@"nw_firm_id"]; }
+            [testFields addObject:entry];
+        }];
+        parameters[@"test_fields"] = testFields;
+    }
+    
     NSString *trackAddress = address != nil ? address:[ATAppSettingManager sharedManager].trackingSetting.trackerAddress;
     
     [[ATNetworkingManager sharedManager] sendHTTPRequestToAddress:trackAddress HTTPMethod:ATNetworkingHTTPMethodPOST parameters:parameters completion:^(NSData * _Nonnull responseData, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        NSString *responseStr = [NSString stringWithData:[responseData base64EncodedDataWithOptions:0] usingEncoding:NSUTF8StringEncoding];
-        [ATLogger logMessage:[NSString stringWithFormat:@"request para:%@\n, result:%@", parameters, responseStr] type:ATLogTypeInternal];
-        if ((error.code == NSURLErrorNetworkConnectionLost || error.code == NSURLErrorNotConnectedToInternet) && retry) {
+        if ((error.code == NSURLErrorNetworkConnectionLost || error.code == NSURLErrorNotConnectedToInternet || error.code == 53) && retry) {
             [[ATTracker sharedTracker] saveFailedData:data];
         }
         if (((NSHTTPURLResponse*)response).statusCode != 200) {
@@ -181,6 +200,10 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
             [ATTracker saveAPIError:error withData:data];
         }
     }];
+}
+
++(void) sendData:(NSArray<NSDictionary*>*)data retryIfTimeout:(BOOL)retry {
+    [ATTracker sendData:data address:[ATAppSettingManager sharedManager].trackingSetting.trackerAddress retryIfTimeout:retry];
 }
 
 -(void) saveFailedData:(NSArray<NSDictionary*>*)data {
@@ -192,24 +215,6 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
             [weakSelf.diskData addObject:dataToSave];
         }];
         [weakSelf.diskData writeToFile:[ATTracker failedDataPath] atomically:YES];
-    }];
-}
-
-+(void) sendData:(NSArray<NSDictionary*>*)data retryIfTimeout:(BOOL)retry {
-    NSString *dataStr = [[data jsonString_anythink] stringByBase64Encoding_anythink];
-    NSString *commonStr = [[[ATTracker commonParameters] jsonString_anythink] stringByBase64Encoding_anythink];
-    NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithDictionary:@{@"common":commonStr, @"data":dataStr, @"api_ver":@"1.0"}];
-    parameters[@"sign"] = [Utilities computeSignWithParameters:parameters];
-    [[ATNetworkingManager sharedManager] sendHTTPRequestToAddress:[ATAppSettingManager sharedManager].trackingSetting.trackerAddress HTTPMethod:ATNetworkingHTTPMethodPOST parameters:parameters completion:^(NSData * _Nonnull responseData, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        NSString *responseStr = [NSString stringWithData:[responseData base64EncodedDataWithOptions:0] usingEncoding:NSUTF8StringEncoding];
-        [ATLogger logMessage:[NSString stringWithFormat:@"request para:%@\n, result:%@", parameters, responseStr] type:ATLogTypeInternal];
-        if ((error.code == NSURLErrorNetworkConnectionLost || error.code == NSURLErrorNotConnectedToInternet || error.code == 53) && retry) {
-            [[ATTracker sharedTracker] saveFailedData:data];
-        }
-        if (((NSHTTPURLResponse*)response).statusCode != 200) {
-            error = error != nil ? error : [NSError errorWithDomain:@"com.anythink.TKAPI" code:((NSHTTPURLResponse*)response).statusCode userInfo:@{NSLocalizedDescriptionKey:@"Request has failed", NSLocalizedFailureReasonErrorKey:@"TK server has failed to response correctly."}];
-            [ATTracker saveAPIError:error withData:data];
-        }
     }];
 }
 
@@ -225,8 +230,14 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
 }
 
 +(NSDictionary*)dataElementWithPlacementID:(NSString*)placementID requestID:(NSString*)requestID trackType:(ATNativeADTrackType)trackType extra:(NSDictionary*)extra {
-    NSMutableDictionary *element = [NSMutableDictionary dictionaryWithObjectsAndKeys:placementID != nil ? placementID : @"", @"pl_id", requestID != nil ? requestID : @"", @"req_id", @(trackType), @"type", [Utilities normalizedTimeStamp], @"sdk_time", nil];
+    NSMutableDictionary *element = [NSMutableDictionary dictionaryWithObjectsAndKeys:placementID != nil ? placementID : @"", @"pl_id", requestID != nil ? requestID : @"", @"req_id", @(trackType), @"type", nil];
+    if (extra[kATTrackerExtraAdShowSDKTimeKey] != nil) {
+        element[kATTrackerExtraAdShowSDKTimeKey] = extra[kATTrackerExtraAdShowSDKTimeKey];
+    } else {
+        element[kATTrackerExtraAdShowSDKTimeKey] = [Utilities normalizedTimeStamp];
+    }
     ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
+
     if (placementModel != nil) {
         element[@"format"] = @(placementModel.format);
         element[@"gro_id"] = @(placementModel.groupID);
@@ -265,6 +276,14 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
     //scene
     if (extra[kATTrackerExtraAdShowSceneKey] != nil) { element[@"scenario"] = extra[kATTrackerExtraAdShowSceneKey]; }
     
+    //add statistics for show&impression
+    if (trackType == ATNativeADTrackTypeADShow || trackType == ATNativeAdTrackTypeShowAPICall || trackType == ATNativeADTrackTypeADClicked) {
+        [element addEntriesFromDictionary:@{@"ads":@([[ATCapsManager sharedManager] capByDayWithAdFormat:placementModel.format] + (trackType == ATNativeAdTrackTypeShowAPICall ? 1 : 0)),
+                                            @"ahs":@([[ATCapsManager sharedManager] capByHourWithAdFormat:placementModel.format] + (trackType == ATNativeAdTrackTypeShowAPICall ? 1 : 0)),
+                                            @"pds":@([[ATCapsManager sharedManager] capByDayWithPlacementID:placementModel.placementID] + (trackType == ATNativeAdTrackTypeShowAPICall ? 1 : 0)),
+                                            @"phs":@([[ATCapsManager sharedManager] capByHourWithPlacementID:placementModel.placementID] + (trackType == ATNativeAdTrackTypeShowAPICall ? 1 : 0)),
+        }];
+    }
     return element;
 }
 

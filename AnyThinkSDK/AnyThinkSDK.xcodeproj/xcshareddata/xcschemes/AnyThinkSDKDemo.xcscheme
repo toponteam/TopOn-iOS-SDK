@@ -78,6 +78,36 @@
                ReferencedContainer = "container:AnyThinkSDK.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "8D1C16F02422217F00639FCF"
+               BuildableName = "AnyThinkStartAppRewardedVideoAdapterTests.xctest"
+               BlueprintName = "AnyThinkStartAppRewardedVideoAdapterTests"
+               ReferencedContainer = "container:AnyThinkSDK.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "8D1C1712242221A400639FCF"
+               BuildableName = "AnyThinkStartAppInterstitialAdapterTests.xctest"
+               BlueprintName = "AnyThinkStartAppInterstitialAdapterTests"
+               ReferencedContainer = "container:AnyThinkSDK.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "8DE32519243F0A2300D72844"
+               BuildableName = "AnyThinkFyberBannerAdapterTests.xctest"
+               BlueprintName = "AnyThinkFyberBannerAdapterTests"
+               ReferencedContainer = "container:AnyThinkSDK.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

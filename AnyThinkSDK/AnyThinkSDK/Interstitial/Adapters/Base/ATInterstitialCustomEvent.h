@@ -13,6 +13,7 @@
 @interface ATInterstitialCustomEvent : ATAdCustomEvent
 -(void) trackVideoStart;
 -(void) trackVideoEnd;
+-(NSDictionary*)delegateExtra;
 -(ATNativeADSourceType) adSourceType;
 -(instancetype) initWithUnitID:(NSString*)unitID customInfo:(NSDictionary*)customInfo;
 @property(nonatomic, weak) id<ATInterstitialDelegate> delegate;

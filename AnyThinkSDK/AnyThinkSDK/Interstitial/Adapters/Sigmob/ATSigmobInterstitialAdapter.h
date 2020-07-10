@@ -31,8 +31,8 @@ extern NSString *const kATSigmobInterstitialNotificationUserInfoRewardedFlag;
 @end
 
 @protocol ATWindAds<NSObject>
-+ (void) startWithOptions:(nullable id<ATWindAdOptions>)options;
-+ (NSString * _Nonnull)sdkVersion;
++ (void) startWithOptions:(id<ATWindAdOptions>)options;
++ (NSString *)sdkVersion;
 @end
 
 @protocol WindFullscreenVideoAdDelegate <NSObject>
@@ -60,4 +60,16 @@ extern NSString *const kATSigmobInterstitialNotificationUserInfoRewardedFlag;
 - (BOOL)isReady:(NSString *)placementId;
 - (void)loadRequest:(id<ATWindAdRequest>)request withPlacementId:(NSString *)placementId;
 - (BOOL)playAd:(UIViewController *)controller withPlacementId:(NSString *)placementId options:(NSDictionary *)options error:( NSError **)error;
+@end
+
+#pragma mark - rv
+@protocol WindRewardedVideoAdDelegate<NSObject>
+@end
+
+@protocol ATWindRewardedVideoAd<NSObject>
+@property (nonatomic,weak) id<WindRewardedVideoAdDelegate> delegate;
++ (instancetype)sharedInstance;
+- (BOOL)isReady:(NSString *)placementId;
+- (void)loadRequest:(id<ATWindAdRequest>)request withPlacementId:(NSString *)placementId;
+- (BOOL)playAd:(UIViewController *)controller withPlacementId:(NSString *)placementId options:(NSDictionary *)options error:( NSError *__autoreleasing*)error;
 @end

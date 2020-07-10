@@ -18,12 +18,14 @@
 #import "Utilities.h"
 #import "ATGeneralAdAgentEvent.h"
 #import "ATCapsManager.h"
+#import "ATRewardedVideoCustomEvent.h"
 NSString *const kATAdLoadingExtraKeywordKey = @"keyword";
 NSString *const kATAdLoadingExtraUserDataKeywordKey = @"user_data_keyword";
 NSString *const kATAdLoadingExtraUserIDKey = @"userID";
 NSString *const kATAdLoadingExtraLocationKey = @"location";
+NSString *const kATAdLoadingExtraMediaExtraKey = @"media_ext";
 
-NSString *const kATRewardedVideoCallbackExtraAdsourceIDKey = @"ad_source_id";
+NSString *const kATRewardedVideoCallbackExtraAdsourceIDKey = @"adsource_id";
 NSString *const kATRewardedVideoCallbackExtraNetworkIDKey = @"network_firm_id";
 NSString *const kATRewardedVideoCallbackExtraIsHeaderBidding = @"adsource_isHeaderBidding";
 NSString *const kATRewardedVideoCallbackExtraPrice = @"adsource_price";
@@ -61,6 +63,7 @@ NSString *const kATRewardedVideoCallbackExtraPriority = @"adsource_index";
         viewController.ad = rewardedVideo;
         [rewardedVideo.unitGroup.adapterClass showRewardedVideo:rewardedVideo inViewController:viewController delegate:delegate];
         rewardedVideo.showTimes++;
+        [rewardedVideo.customEvent saveShowAPIContext];
         [[ATCapsManager sharedManager] setShowFlagForPlacementID:placementID requestID:rewardedVideo.requestID];
         [[ATPlacementSettingManager sharedManager] setStatus:NO forPlacementID:rewardedVideo.placementModel.placementID];
     } else {

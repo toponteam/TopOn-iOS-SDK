@@ -10,6 +10,7 @@
 #import "Utilities.h"
 #import "ATThreadSafeAccessor.h"
 #import "ATPlacementModel.h"
+#import "ATPlacementSettingManager.h"
 @interface ATCapsManager()
 /**
  Store the caps by which the offers has been shown; must be acceed under the control of the accessor to make it thread-safe.
@@ -237,6 +238,20 @@ static NSString *const kLastRequestIDKey = @"last_request_id";
             return @0;
         }
     }] integerValue];
+}
+
+-(NSInteger) capByDayWithAdFormat:(ATAdFormat)format {
+    __block NSInteger caps = 0;
+    NSArray<NSString*>* placementIDs = [[ATPlacementSettingManager sharedManager] placementIDsForAdFormat:format];
+    [placementIDs enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { caps += [self capByDayWithPlacementID:obj]; }];
+    return caps;
+}
+
+-(NSInteger) capByHourWithAdFormat:(ATAdFormat)format {
+    __block NSInteger caps = 0;
+    NSArray<NSString*>* placementIDs = [[ATPlacementSettingManager sharedManager] placementIDsForAdFormat:format];
+    [placementIDs enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { caps += [self capByHourWithPlacementID:obj]; }];
+    return caps;
 }
 #pragma mark - show time storage
 /**

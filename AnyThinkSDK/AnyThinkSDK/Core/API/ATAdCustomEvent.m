@@ -78,13 +78,14 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
 
 -(void) trackShow {
     if (self.ad != nil) {
+        self.sdkTime = [Utilities normalizedTimeStamp];
         [[ATLoadingScheduler sharedScheduler] cancelScheduleLoadingWithPlacementModel:self.ad.placementModel unitGroup:self.ad.unitGroup requestID:self.ad.requestID];
         [ATLogger logMessage:[NSString stringWithFormat:@"\nImpression with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:self.ad event:ATGeneralAdAgentEventTypeImpression extra:self.customInfo[kAdapterCustomInfoExtraKey] error:nil]] type:ATLogTypeTemporary];
         [[ATCapsManager sharedManager] increaseCapWithPlacementID:self.ad.placementModel.placementID unitGroupID:self.ad.unitGroup.unitGroupID requestID:self.ad.requestID];
         [[ATCapsManager sharedManager] setLastShowTimeWithPlacementID:self.ad.placementModel.placementID unitGroupID:self.ad.unitGroup.unitGroupID];
         
         NSDictionary *loadExtra = [self.customInfo[kAdapterCustomInfoExtraKey] isKindOfClass:[NSDictionary class]] ? self.customInfo[kAdapterCustomInfoExtraKey] : nil;
-        NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:self.ad.unitGroup requestID:self.ad.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.ad.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.ad.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.ad.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+        NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:self.ad.unitGroup requestID:self.ad.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.ad.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.ad.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.ad.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, self.sdkTime,kATTrackerExtraAdShowSDKTimeKey,nil];
         [[ATTracker sharedTracker] trackWithPlacementID:self.ad.placementModel.placementID requestID:self.ad.requestID trackType:ATNativeADTrackTypeADShow extra:trackingExtra];
     }
 }
@@ -122,5 +123,10 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
 
 -(void) handleClose {
     [ATLogger logMessage:[NSString stringWithFormat:@"\nClose with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:self.ad event:ATGeneralAdAgentEventTypeClose extra:nil error:nil]] type:ATLogTypeTemporary];
+}
+
+-(void) saveShowAPIContext {
+    _showDate = [NSDate date];
+    _psIDOnShow = [ATAPI sharedInstance].psID;
 }
 @end

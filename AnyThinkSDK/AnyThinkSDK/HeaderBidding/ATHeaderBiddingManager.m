@@ -89,7 +89,7 @@ BOOL CheckNetworkSupport(ATHBAdBidNetwork network) {
     return support;
 }
 
--(void) runHeaderBiddingWithForamt:(ATHBAdBidFormat)format unitID:(NSString*)unitID adSources:(NSArray<id<ATAdSource>>*)adSources headerBiddingAdSources:(NSArray<id<ATHeaderBiddingAdSource>>*)HBAdSources timeout:(NSTimeInterval)timeout completion:(void(^)(NSArray<id<ATAdSource>>*, NSDictionary*))completion {
+-(void) runHeaderBiddingWithForamt:(ATHBAdBidFormat)format unitID:(NSString*)unitID adSources:(NSArray<id<ATAdSource>>*)adSources headerBiddingAdSources:(NSArray<id<ATHeaderBiddingAdSource>>*)HBAdSources extra:(NSDictionary*)extra timeout:(NSTimeInterval)timeout completion:(void(^)(NSArray<id<ATAdSource>>*, NSDictionary*))completion {
     if (NSClassFromString(@"HBBidNetworkItem") != nil && NSClassFromString(@"HBAdsBidRequest") != nil) {
         //Used for get bid tokens/prices
         NSMutableArray<id<ATHBBidNetworkItem>> *netwrokItems = [NSMutableArray<id<ATHBBidNetworkItem>> array];
@@ -98,15 +98,20 @@ BOOL CheckNetworkSupport(ATHBAdBidNetwork network) {
         //Used to save all biding adsource, network_unitId keyed
         NSMutableDictionary<NSString*, id<ATHeaderBiddingAdSource>>*networkItemAdSourceMap = [NSMutableDictionary<NSString*, id<ATHeaderBiddingAdSource>> dictionary];
         NSMutableDictionary<NSNumber*, NSError*>* detailErrors = [NSMutableDictionary<NSNumber*, NSError*> dictionary];
+        NSMutableDictionary<NSString*, NSDictionary*>* networkItemsStatisticsInfo = [NSMutableDictionary<NSString*, NSDictionary*> dictionary];
+        
+        NSDictionary<NSString*, NSDictionary*>* adsourceStatisticsInfo = extra[kATHeaderBiddingBidRequestExtraStatisticsInfoKey];
         [HBAdSources enumerateObjectsUsingBlock:^(id<ATHeaderBiddingAdSource>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             if (CheckNetworkSupport(obj.network) && CustomEventClassName(obj.network) != nil) {
                 id<ATHBBidNetworkItem> networkItem = [NSClassFromString(@"HBBidNetworkItem") buildItemNetwork:obj.network customEventClassName:CustomEventClassName(obj.network) appId:obj.adSrouceInfo[kATHeaderBiddingAdSourceInfoAppIDKey] unitId:obj.adSrouceInfo[kATHeaderBiddingAdSourceInfoUnitIDKey]];
                 networkItem.extraParams = obj.adSrouceInfo;
                 networkItem.maxTimeoutMS = obj.headerBiddingRequestTimeout;
                 networkItem.platformId = obj.adSrouceInfo[kATHeaderBiddingAdSourceInfoAppIDKey];
+                networkItem.placementId = obj.adSrouceInfo[@"placement_id"];
 //                networkItem.testMode = YES;//to do
                 [netwrokItems addObject:networkItem];
                 networkItemAdSourceMap[NetworkItemHBAdSourceMapKey(networkItem)] = obj;
+                if ([adsourceStatisticsInfo[obj.unitID] isKindOfClass:[NSDictionary class]]) { networkItemsStatisticsInfo[networkItem.unitId] = adsourceStatisticsInfo[obj.unitID]; }
             } else {
                 detailErrors[@(((NSObject*)obj).hash)] = [NSError errorWithDomain:@"com.anythink.HeaderBiddingRequest" code:ATHBErrorNetworkNotSupported userInfo:@{NSLocalizedDescriptionKey:@"Header bidding request failed", NSLocalizedFailureReasonErrorKey:@"This network does not support header bidding"}];
                 [unsupportedAdSources addObject:obj];
@@ -114,7 +119,7 @@ BOOL CheckNetworkSupport(ATHBAdBidNetwork network) {
         }];
         
         if ([netwrokItems count] > 0) {
-            [NSClassFromString(@"HBAdsBidRequest") getBidNetworks:netwrokItems unitId:unitID adFormat:format maxTimeoutMS:timeout responseCallback:^(id<ATHBAuctionResult> result, NSError *error) {
+            [NSClassFromString(@"HBAdsBidRequest") getBidNetworks:netwrokItems statisticsInfo:networkItemsStatisticsInfo unitId:unitID adFormat:format maxTimeoutMS:timeout responseCallback:^(id<ATHBAuctionResult> result, NSError *error) {
                 if (result != nil) {
                     void (^ConfigBidResponse)(id<ATHeaderBiddingAdSource> HBAdSource, id<ATHBAdBidResponse> HBResponse) = ^(id<ATHeaderBiddingAdSource> HBAdSource, id<ATHBAdBidResponse> HBResponse) {
                         if ([HBAdSource respondsToSelector:@selector(bidPrice)] && [HBAdSource respondsToSelector:@selector(bidToken)] && [HBResponse respondsToSelector:@selector(price)] && [HBResponse respondsToSelector:@selector(payLoad)]) {

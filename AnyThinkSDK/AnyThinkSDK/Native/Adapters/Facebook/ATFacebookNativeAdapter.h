@@ -59,30 +59,30 @@ typedef NS_ENUM(NSInteger, ATFBAdFormatType) {
 @end
 
 @protocol ATFBImage<NSObject>
-- (void)loadImageAsyncWithBlock:(nullable void (^)(UIImage * __nullable image))block;
+- (void)loadImageAsyncWithBlock:(void (^)(UIImage * image))block;
 @end
 
 @protocol ATFBNativeAd<NSObject>
 - (instancetype)initWithPlacementID:(NSString *)placementID;
 - (void)loadAd;
 - (void)loadAdWithBidPayload:(NSString *)bidPayload;
-- (void)registerViewForInteraction:(UIView *)view mediaView:(id<ATFBMediaView>)mediaView iconView:(id<ATFBMediaView>)iconView viewController:(nullable UIViewController *)viewController clickableViews:(nullable NSArray<UIView *> *)clickableViews;
-@property (nonatomic, weak, nullable) id<FBNativeAdDelegate> delegate;
+- (void)registerViewForInteraction:(UIView *)view mediaView:(id<ATFBMediaView>)mediaView iconView:(id<ATFBMediaView>)iconView viewController:(UIViewController *)viewController clickableViews:(NSArray<UIView *> *)clickableViews;
+@property (nonatomic, weak) id<FBNativeAdDelegate> delegate;
 @property (nonatomic, copy, readonly) NSString *placementID;
-@property (nonatomic, copy, readonly, nullable) NSString *headline;
-@property (nonatomic, copy, readonly, nullable) NSString *linkDescription;
-@property (nonatomic, copy, readonly, nullable) NSString *advertiserName;
-@property (nonatomic, copy, readonly, nullable) NSString *socialContext;
-@property (nonatomic, copy, readonly, nullable) NSString *callToAction;
-@property (nonatomic, copy, readonly, nullable) NSString *rawBodyText;
-@property (nonatomic, copy, readonly, nullable) NSString *bodyText;
-@property (nonatomic, copy, readonly, nullable) NSString *sponsoredTranslation;
-@property (nonatomic, copy, readonly, nullable) NSString *adTranslation;
-@property (nonatomic, copy, readonly, nullable) NSString *promotedTranslation;
-@property (nonatomic, strong, readonly, nullable) id<ATFBImage> adChoicesIcon;
+@property (nonatomic, copy, readonly) NSString *headline;
+@property (nonatomic, copy, readonly) NSString *linkDescription;
+@property (nonatomic, copy, readonly) NSString *advertiserName;
+@property (nonatomic, copy, readonly) NSString *socialContext;
+@property (nonatomic, copy, readonly) NSString *callToAction;
+@property (nonatomic, copy, readonly) NSString *rawBodyText;
+@property (nonatomic, copy, readonly) NSString *bodyText;
+@property (nonatomic, copy, readonly) NSString *sponsoredTranslation;
+@property (nonatomic, copy, readonly) NSString *adTranslation;
+@property (nonatomic, copy, readonly) NSString *promotedTranslation;
+@property (nonatomic, strong, readonly) id<ATFBImage> adChoicesIcon;
 @property (nonatomic, assign, readonly) CGFloat aspectRatio;
-@property (nonatomic, copy, readonly, nullable) NSURL *adChoicesLinkURL;
-@property (nonatomic, copy, readonly, nullable) NSString *adChoicesText;
+@property (nonatomic, copy, readonly) NSURL *adChoicesLinkURL;
+@property (nonatomic, copy, readonly) NSString *adChoicesText;
 @property (nonatomic, assign, readonly) ATFBAdFormatType adFormatType;
 @property (nonatomic, getter=isAdValid, readonly) BOOL adValid;
 @property (nonatomic, getter=isRegistered, readonly) BOOL registered;
@@ -96,8 +96,26 @@ extern const CGFloat kATFBAdOptionsViewWidth;
 extern const CGFloat kATFBAdOptionsViewHeight;
 @protocol ATFBAdOptionsView<NSObject>
 - (instancetype)initWithFrame:(CGRect)frame;
-@property (nonatomic, weak, readwrite, nullable) id<ATFBNativeAd> nativeAd;
-@property (nonatomic, strong, nullable) UIColor *foregroundColor;
+@property (nonatomic, weak, readwrite) id<ATFBNativeAd> nativeAd;
+@property (nonatomic, strong) UIColor *foregroundColor;
 @property (nonatomic, assign) BOOL useSingleIcon;
 @property(nonatomic) UIViewAutoresizing autoresizingMask;
+@end
+
+@protocol FBNativeBannerAdDelegate <NSObject>
+@end
+
+@protocol ATFBNativeBannerAd<NSObject>
+@property (nonatomic, weak) id<FBNativeBannerAdDelegate> delegate;
+- (instancetype)initWithPlacementID:(NSString *)placementID;
+- (void)loadAd;;
+@end
+
+@protocol ATFBNativeBannerAdView<NSObject>
+/**
+ type: 1 100, 2 120, 5 50
+ no need for enum definition since the type's from the server
+ */
++ (instancetype)nativeBannerAdViewWithNativeBannerAd:(id<ATFBNativeBannerAd>)nativeBannerAd withType:(NSInteger)type;
+@property(nonatomic) CGRect            frame;
 @end

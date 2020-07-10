@@ -10,4 +10,5 @@
 #import "ATAdmobRewardedVideoAdapter.h"
 
 @interface ATAdmobRewardedVideoCustomEvent : ATRewardedVideoCustomEvent<GADRewardedAdDelegate>
++(NSString*) errorMessageWithError:(NSError*)error;
 @end

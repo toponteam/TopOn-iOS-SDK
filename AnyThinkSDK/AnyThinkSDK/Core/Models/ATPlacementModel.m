@@ -9,15 +9,23 @@
 #import "ATPlacementModel.h"
 
 NSString *const kPlacementModelCacheDateKey = @"placement_cache_date";
+NSString *const kPlacementModelCustomDataKey = @"custom_data";
 @interface ATPlacementModel()
 @property (nonatomic, readonly) dispatch_queue_t unit_group_by_request_id_access_queue;
 @property(nonatomic, readonly) NSMutableDictionary<NSString*, NSArray<ATUnitGroupModel*>*>* unitGroupsByRequestID;
 @end
 @implementation ATPlacementModel
--(instancetype) initWithDictionary:(NSDictionary *)dictionary placementID:(NSString*)placementID {
+-(instancetype) initWithDictionary:(NSDictionary *)dictionary associatedCustomData:(NSDictionary*)customData placementID:(NSString*)placementID {
     self = [super initWithDictionary:dictionary];
     if (self != nil) {
         _placementID = placementID;
+        if ([customData isKindOfClass:[NSDictionary class]]) {
+            _associatedCustomData = [NSDictionary dictionaryWithDictionary:customData];
+        } else {
+            if ([dictionary[kPlacementModelCustomDataKey] isKindOfClass:[NSDictionary class]]) {
+                _associatedCustomData = [NSDictionary dictionaryWithDictionary:dictionary[kPlacementModelCustomDataKey]];
+            }
+        }
         _format = [dictionary[@"format"] integerValue];
         _adDeliverySwitch = [dictionary[@"ad_delivery_sw"] boolValue];
         _groupID = [dictionary[@"gro_id"] integerValue];
@@ -36,7 +44,7 @@ NSString *const kPlacementModelCacheDateKey = @"placement_cache_date";
         _statusValidDuration = [dictionary[@"l_s_t"] doubleValue];
         _asid = dictionary[@"asid"];
         _trafficGroupID = dictionary[@"t_g_id"];
-        _usesDefaultMyOffer = [dictionary[@"u_n_f_sw"] boolValue];
+        _usesDefaultMyOffer = [dictionary[@"u_n_f_sw"] integerValue];
         _autoloadingEnabled = [dictionary[@"ra"] boolValue];
         if ([dictionary[@"tp_ps"] isKindOfClass:[NSDictionary class]]) {
             NSMutableDictionary *tppsDict = [NSMutableDictionary dictionaryWithDictionary:dictionary[@"tp_ps"]];
@@ -70,7 +78,7 @@ NSString *const kPlacementModelCacheDateKey = @"placement_cache_date";
         _unit_group_by_request_id_access_queue = dispatch_queue_create("com.anythink.unitGroupsByRequestIDAccessingQueue", DISPATCH_QUEUE_SERIAL);
         
         _preloadMyOffer = [dictionary[@"p_m_o"] boolValue];
-        _myOfferSetting = [[ATMyOfferSetting alloc] initWithDictionary:dictionary[@"m_o_s"]];
+        _myOfferSetting = [[ATMyOfferSetting alloc] initWithDictionary:dictionary[@"m_o_s"] placementID:_placementID];
         NSMutableArray<ATMyOfferOfferModel*>* offers = [NSMutableArray<ATMyOfferOfferModel*> array];
         NSArray<NSDictionary*>* offerDicts = dictionary[@"m_o"];
         NSDictionary *placeHolders = dictionary[@"m_o_ks"];
@@ -79,8 +87,14 @@ NSString *const kPlacementModelCacheDateKey = @"placement_cache_date";
             if (offerModel != nil) { [offers addObject:offerModel]; }
         }];
         _offers = offers;
+        _callback = dictionary[@"callback"];
+
     }
     return self;
+}
+
+-(instancetype) initWithDictionary:(NSDictionary *)dictionary placementID:(NSString*)placementID {
+    return [self initWithDictionary:dictionary associatedCustomData:nil placementID:placementID];
 }
 
 -(NSArray<ATUnitGroupModel*>*)unitGroupsForRequestID:(NSString*)requestID {

@@ -18,6 +18,7 @@
 #import "ATSplashDelegate.h"
 NSString *const kATSplashExtraContainerViewKey = @"container_view";
 NSString *const kATSplashExtraWindowKey = @"window";
+NSString *const kATSplashExtraWindowSceneKey = @"windowScene";
 NSString *const kATSplashExtraLoadingStartDateKey = @"loading_start_date";
 @interface ATSplashManager()
 @property(nonatomic, readonly) ATSerialThreadSafeAccessor *storageAccessor;

@@ -77,6 +77,7 @@ static NSString *const kUnitIDKey = @"unit_id";
             if (error == nil) {
                 [weakSelf.customEvent handleAssets:@{kRewardedVideoAssetsUnitIDKey:info[@"unit_id"], kRewardedVideoAssetsCustomEventKey:weakSelf.customEvent, kAdAssetsCustomObjectKey:weakSelf.rewardedAd}];
             } else {
+                [ATLogger logMessage:[NSString stringWithFormat:@"AdmobRewardedVideo::requestFailedWithError:%@(code:%@)", error, [ATAdmobRewardedVideoCustomEvent errorMessageWithError:error]] type:ATLogTypeExternal];
                 [weakSelf.customEvent handleLoadingFailure:error];
             }
         }];

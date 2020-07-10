@@ -77,6 +77,6 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (BOOL)isConfigured;
 
-
++ (void)checkBootup:(UIImage *)bgImage;
 @end
 NS_ASSUME_NONNULL_END

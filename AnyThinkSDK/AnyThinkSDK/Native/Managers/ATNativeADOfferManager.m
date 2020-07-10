@@ -89,7 +89,7 @@
 -(ATNativeADCache*)nativeAdWithPlacementID:(NSString*)placementID invalidateStatus:(BOOL)invalidateStatus extra:(NSDictionary*__autoreleasing*)extra {
     __weak typeof(self) weakSelf = self;
     return [_offerCacheAccessor readWithBlock:^id{
-        ATNativeADCache *cache = [ATAdStorageUtility adInStorage:weakSelf.offers statusStorage:weakSelf.statusStorage forPlacementID:placementID extra:extra];
+        ATNativeADCache *cache = [ATAdStorageUtility adInStorage:weakSelf.offers statusStorage:weakSelf.statusStorage forPlacementID:placementID caller:invalidateStatus ? ATAdManagerReadyAPICallerShow : ATAdManagerReadyAPICallerReady extra:extra];
         if (invalidateStatus) { [ATAdStorageUtility invalidateStatusForAd:cache inStatusStorage:weakSelf.statusStorage]; }
         return cache;
         
@@ -116,5 +116,9 @@
 -(void) clearCache {
     __weak typeof(self) weakSelf = self;
     [_offerCacheAccessor writeWithBlock:^{ [weakSelf.offers removeAllObjects]; }];
+}
+
+-(void) removeCahceForPlacementID:(NSString*)placementID unitGroupModel:(ATUnitGroupModel*)unitGroupModel {
+    [_offerCacheAccessor writeWithBlock:^{ [ATAdStorageUtility removeAdForPlacementID:placementID unitGroupModel:unitGroupModel inStorage:_offers statusStorage:_statusStorage]; }];
 }
 @end

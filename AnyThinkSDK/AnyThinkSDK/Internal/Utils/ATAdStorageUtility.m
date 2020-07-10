@@ -19,7 +19,6 @@
 #import "ATAdAdapter.h"
 #import "Utilities.h"
 #import "ATLoadingScheduler.h"
-#import "ATAdManager+Internal.h"
 #import "ATAdCustomEvent.h"
 
 NSString *const kAdStorageExtraNotReadyReasonKey = @"reason";
@@ -89,6 +88,11 @@ static NSString *const kRequestIDKey = @"request_id";
     [ATLogger logMessage:[NSString stringWithFormat:@"ATAdStorageUtility::Before clearAd: %@", storage] type:ATLogTypeInternal];
     [storage[placementID][kOffersKey] removeObjectForKey:unitGroupID];
     [ATLogger logMessage:[NSString stringWithFormat:@"ATAdStorageUtility::After clearAd: %@", storage] type:ATLogTypeInternal];
+}
+
++(void) removeAdForPlacementID:(NSString*)placementID unitGroupModel:(ATUnitGroupModel*)unitGroupModel inStorage:(NSMutableDictionary*)storage statusStorage:(NSMutableDictionary*)statusStorage {
+    [storage[placementID][kOffersKey] removeObjectForKey:unitGroupModel.unitGroupID];
+    [statusStorage[placementID] removeObjectForKey:unitGroupModel.unitID];
 }
 
 /*
@@ -164,6 +168,13 @@ static NSString *const kStatusStorageOfferKey = @"offer";
     if (placementEntry != nil) {
         NSMutableArray *adSourceEntry = placementEntry[ad.unitGroup.unitID];
         if (adSourceEntry != nil) {
+            NSMutableArray *entriesToBeRemove = [NSMutableArray array];
+            [adSourceEntry enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                NSDictionary *entry = obj;
+                id<ATAd> entryAd = entry[kStatusStorageOfferKey];
+                if (entryAd.showTimes >= 1) { [entriesToBeRemove addObject:entry]; }
+            }];
+            [adSourceEntry removeObjectsInArray:entriesToBeRemove];
             [adSourceEntry addObject:newEntry];
         } else {
             adSourceEntry = [NSMutableArray arrayWithObject:newEntry];
@@ -198,7 +209,7 @@ static NSString *const kStatusStorageOfferKey = @"offer";
     return discardedAds;
 }
 
-+(id<ATAd>) adInStorage:(NSMutableDictionary*)storage statusStorage:(NSMutableDictionary*)statusStorage forPlacementID:(NSString*)placementID extra:(NSDictionary* __autoreleasing*)extra {
++(id<ATAd>) adInStorage:(NSMutableDictionary*)storage statusStorage:(NSMutableDictionary*)statusStorage forPlacementID:(NSString*)placementID caller:(ATAdManagerReadyAPICaller)caller extra:(NSDictionary* __autoreleasing*)extra {
     __block id<ATAd> ad = nil;
     ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
     __block NSInteger firstExpiredPriority = [placementModel.unitGroups count];
@@ -341,7 +352,7 @@ static NSString *const kStatusStorageOfferKey = @"offer";
         firstExpiredPriority = *stop ? [unitGroups count] : firstExpiredPriority;
         [unitGroupInfos addObject:unitGroupInfo];
     }];
-    if (placementModel.usesDefaultMyOffer) {
+    if ((caller == ATAdManagerReadyAPICallerReady && placementModel.usesDefaultMyOffer == 1) || (caller == ATAdManagerReadyAPICallerShow && placementModel.usesDefaultMyOffer != 0)) {
         if (ad == nil && ([myOfferAds count] > 0 && [myOfferModels count] > 0 && [myOfferUnitGroupInfos count] > 0)) {//
             ATMyOfferOfferModel *offerModel = [[NSClassFromString(@"ATMyOfferOfferManager") sharedManager] defaultOfferInOfferModels:myOfferModels];
             id<ATAd> myOfferAd = myOfferAds[offerModel.offerID];

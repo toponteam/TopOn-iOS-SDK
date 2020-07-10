@@ -45,7 +45,7 @@ static NSString *const kKSVideoClassName = @"KSRewardedVideoAd";
         dispatch_once(&onceToken, ^{
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameKS]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameKS];
-                [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"KSAdSDKManager") SDKDetailVersion] forNetwork:kNetworkNameKS];
+                [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"KSAdSDKManager") SDKVersion] forNetwork:kNetworkNameKS];
                 [NSClassFromString(@"KSAdSDKManager") setAppId:info[@"app_id"]];
             }
         });

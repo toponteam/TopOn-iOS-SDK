@@ -14,8 +14,6 @@ extern NSString *const kInterstitialAssetsCustomEventKey;
 @class ATInterstitial;
 @interface ATInterstitialManager : NSObject<ATAdManagement>
 +(instancetype)sharedManager;
--(void) setFirstLoadFlagForNetwork:(NSString*)network;
--(BOOL) firstLoadFlagForNetwork:(NSString*)network;
 -(ATInterstitial*) interstitialWithPlacementID:(NSString*)placementID unitGroupID:(NSString*)unitGroupID;
 -(ATInterstitial*) interstitialForPlacementID:(NSString*)placementID extra:(NSDictionary* __autoreleasing*)extra;
 -(ATInterstitial*) interstitialForPlacementID:(NSString*)placementID invalidateStatus:(BOOL)invalidateStatus extra:(NSDictionary* __autoreleasing*)extra;

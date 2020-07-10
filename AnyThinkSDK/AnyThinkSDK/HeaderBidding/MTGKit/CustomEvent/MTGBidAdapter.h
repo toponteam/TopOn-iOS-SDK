@@ -52,8 +52,9 @@ typedef NS_ENUM(NSInteger,HBMTGBannerSizeType) {
 @protocol HBMTGBiddingRequestParameter <NSObject>
 @property(nonatomic,copy,readonly)NSString *unitId;
 @property(nonatomic,readonly)NSNumber *basePrice;
-- (instancetype)initWithUnitId:(nonnull NSString *) unitId
-                     basePrice:(nullable NSNumber *)basePrice;
+- (instancetype)initWithPlacementId:(nullable NSString *)placementId
+   unitId:(nonnull NSString *) unitId
+basePrice:(nullable NSNumber *)basePrice;
 @end
 @protocol HBAdMTGBiddingRequest<NSObject>
 +(void)getBidWithUnitId:(nonnull NSString *)unitId basePrice:(nullable NSNumber *)basePrice completionHandler:(void(^)(id<HBAdMTGBiddingResponse> bidResponse))completionHandler;
@@ -61,9 +62,15 @@ typedef NS_ENUM(NSInteger,HBMTGBannerSizeType) {
 +(void)getBidWithRequestParameter:(nonnull __kindof id<HBMTGBiddingRequestParameter>)requestParameter completionHandler:(void(^)(id<HBAdMTGBiddingResponse> bidResponse))completionHandler;
 @end
 
-@protocol HBMTGBiddingBannerRequestParameter <NSObject>
-- (instancetype)initWithUnitId:(nonnull NSString *) unitId
-                     basePrice:(nullable NSNumber *)basePrice
-                bannerSizeType:(HBMTGBannerSizeType)bannerSizeType;
+@protocol HBMTGBiddingBannerRequestParameter <HBMTGBiddingRequestParameter>
+- (instancetype)initWithPlacementId:(nullable NSString *)placementId
+        unitId:(nonnull NSString *) unitId
+     basePrice:(nullable NSNumber *)basePrice
+bannerSizeType:(HBMTGBannerSizeType)bannerSizeType;
+@end
+
+@protocol HBMTGAdCustomConfig<NSObject>
++(instancetype)sharedInstance;
+-(void)setCustomInfo:(NSString*)customInfo type:(NSInteger)type unitId:(NSString*)unitID;
 @end
 NS_ASSUME_NONNULL_END

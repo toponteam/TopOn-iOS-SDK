@@ -24,6 +24,9 @@
 -(NSInteger) capByDayWithPlacementID:(NSString*)placementID;
 -(NSInteger) capByHourWithPlacementID:(NSString*)placementID;
 
+-(NSInteger) capByDayWithAdFormat:(ATAdFormat)format;
+-(NSInteger) capByHourWithAdFormat:(ATAdFormat)format;
+
 /**
  
  */

@@ -15,4 +15,5 @@
 @property(nonatomic, assign) id<ATSplashDelegate> delegate;
 @property(nonatomic, readonly) NSString *unitID;
 @property(nonatomic, assign) NSInteger priorityIndex;
+-(NSDictionary*)delegateExtra;
 @end

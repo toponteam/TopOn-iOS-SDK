@@ -70,10 +70,16 @@
             logoView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleLeftMargin;
             [self.ADView addSubview:(UIView*)logoView];
             
-            id<ATGDTUnifiedNativeAdView> unifiedAdView = [[NSClassFromString(@"GDTUnifiedNativeAdView") alloc] initWithFrame:self.ADView.bounds];
+            id<ATGDTUnifiedNativeAdView> unifiedAdView = [[NSClassFromString(@"GDTUnifiedNativeAdView") alloc] initWithFrame:self.configuration.mediaViewFrame];
             unifiedAdView.delegate = (ATGDTNativeCustomEvent*)offer.assets[kGDTNativeAssetsCustomEventKey];
             unifiedAdView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            [self.ADView insertSubview:(UIView*)unifiedAdView atIndex:0];
+            
+            if (((id<ATGDTUnifiedNativeAdDataObject>)offer.customObject).isVideoAd) {
+                [self.ADView addSubview:(UIView*)unifiedAdView];
+            } else {
+                [self.ADView insertSubview:(UIView*)unifiedAdView atIndex:0];
+            }
+            
             unifiedAdView.viewController = self.configuration.rootViewController;
             [unifiedAdView registerDataObject:(id<ATGDTUnifiedNativeAdDataObject>)offer.customObject clickableViews:[self.ADView clickableViews]];
             self.ADView.mediaView.frame = self.configuration.mediaViewFrame;

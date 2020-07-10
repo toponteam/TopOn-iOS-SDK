@@ -57,8 +57,9 @@ static NSString *const kSlotIDKey = @"slot_id";
         _customEvent.requestCompletionBlock = completion;
         _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
         id<ATBURewardedVideoModel> model = [[NSClassFromString(@"BURewardedVideoModel") alloc] init];
-        if ([[[ATAdManager sharedManager] extraInfoForPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]] containsObjectForKey:kATAdLoadingExtraUserIDKey]) model.userId = [[ATAdManager sharedManager] extraInfoForPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]][kATAdLoadingExtraUserIDKey];
-        
+        NSDictionary *extra = info[kAdapterCustomInfoExtraKey];
+        if (extra[kATAdLoadingExtraUserIDKey] != nil) { model.userId = extra[kATAdLoadingExtraUserIDKey]; }
+        if (extra[kATAdLoadingExtraMediaExtraKey] != nil) { model.extra = extra[kATAdLoadingExtraMediaExtraKey]; }
         if ([info[@"personalized_template"]integerValue] == 1) {
             _expressRvAd = [[NSClassFromString(@"BUNativeExpressRewardedVideoAd") alloc] initWithSlotID:info[kSlotIDKey] rewardedVideoModel:model];
             _expressRvAd.rewardedVideoModel = model;

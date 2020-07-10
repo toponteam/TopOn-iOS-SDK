@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic,  copy)  NSString *customEventClassName;
 @property (nonatomic,  copy)  NSString *appId;
+@property (nonatomic,  copy)  NSString *placementId;
 @property (nonatomic,  copy)  NSString *unitId;
 @property (nonatomic,  copy)  NSString *platformId;
 @property (nonatomic,strong)  NSDictionary *extraParams;

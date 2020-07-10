@@ -10,7 +10,8 @@
 #import "ATChartboostInterstitialAdapter.h"
 NS_ASSUME_NONNULL_BEGIN
 
-@interface ATChartboostInterstitialCustomEvent : ATInterstitialCustomEvent
+@interface ATChartboostInterstitialCustomEvent : ATInterstitialCustomEvent<CHBInterstitialDelegate>
+@property(nonatomic, weak) id<ATCHBInterstitial> interstitialAd;
 @end
 
 NS_ASSUME_NONNULL_END
