@@ -7,3 +7,4 @@ GoogleMobileAds filter=lfs diff=lfs merge=lfs -text
 InMobiSDK filter=lfs diff=lfs merge=lfs -text
 WindSDK filter=lfs diff=lfs merge=lfs -text
 AnyThinkSDK/ThrirdPartySDK/BUAdSDK.framework/Versions/A/BUAdSDK filter=lfs diff=lfs merge=lfs -text
+libGDTMobSDK.a filter=lfs diff=lfs merge=lfs -text
