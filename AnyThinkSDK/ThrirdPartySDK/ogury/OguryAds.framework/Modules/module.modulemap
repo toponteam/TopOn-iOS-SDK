@@ -1,6 +1,0 @@
-framework module OguryAds {
-  umbrella header "OguryAds.h"
-
-  export *
-  module * { export * }
-}

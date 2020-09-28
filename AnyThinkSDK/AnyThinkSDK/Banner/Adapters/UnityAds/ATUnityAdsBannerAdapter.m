@@ -65,7 +65,7 @@ NSString *const kATUnityAdsBannerNotificationUserInfoViewKey = @"view";
 @property(nonatomic, readonly) ATUnityAdsBannerCustomEvent *customEvent;
 @end
 @implementation ATUnityAdsBannerAdapter
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameUnityAds]) {
@@ -76,7 +76,8 @@ NSString *const kATUnityAdsBannerNotificationUserInfoViewKey = @"view";
                 [playerMetaData set:@"gdpr.consent" value:[ATAPI sharedInstance].networkConsentInfo[kNetworkNameUnityAds]];
             } else {
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) { [playerMetaData set:@"gdpr.consent" value:@(!limit)]; }
                 
             }
@@ -94,19 +95,19 @@ NSString *const kATUnityAdsBannerNotificationUserInfoViewKey = @"view";
     
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"UnityAdsBanner") != nil && NSClassFromString(@"UnityMonetization") != nil && NSClassFromString(@"UnityAds") != nil) {
-        _customEvent = [[ATUnityAdsBannerCustomEvent alloc] initWithUnitID:info[@"placement_id"] customInfo:info];
+        _customEvent = [[ATUnityAdsBannerCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         [NSClassFromString(@"UnityAdsBanner") setBannerPosition:6];
         [NSClassFromString(@"UnityAdsBanner") setDelegate:[ATUnityAdsBannerDelegate sharedDelegate]];
         if ([NSClassFromString(@"UnityAds") isInitialized]) {
             [NSClassFromString(@"UnityAdsBanner") loadBanner:_customEvent.unitID];
         } else {
-            [NSClassFromString(@"UnityMonetization") initialize:info[@"game_id"] delegate:self];
+            [NSClassFromString(@"UnityMonetization") initialize:serverInfo[@"game_id"] delegate:self];
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load banner ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"UnityAds"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"UnityAds"]}]);
     }
 }
 @end

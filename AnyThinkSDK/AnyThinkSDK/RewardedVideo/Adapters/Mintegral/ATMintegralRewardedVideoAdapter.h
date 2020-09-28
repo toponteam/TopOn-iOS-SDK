@@ -19,6 +19,10 @@ typedef NS_ENUM(NSInteger, ATRVMTGUserPrivateType) {
 @property (nonatomic,copy) void (^metaDataDidLoadedBlock)(void);
 @end
 
+@protocol ATMTGBiddingSDK<NSObject>
++ (NSString *)buyerUID;
+@end
+
 @protocol ATRVMTGSDK<NSObject>
 + (nonnull instancetype)sharedInstance;
 +(NSString *)sdkVersion;
@@ -81,4 +85,25 @@ viewController:(nonnull UIViewController*)viewController;
 @protocol ATRVMTGAdCustomConfig<NSObject>
 +(instancetype)sharedInstance;
 -(void)setCustomInfo:(NSString*)customInfo type:(NSInteger)type unitId:(NSString*)unitID;
+@end
+
+@protocol ATMTGBiddingResponse<NSObject>
+@property (nonatomic,strong,readonly) NSError *error;
+@property (nonatomic,assign,readonly) BOOL success;
+@property (nonatomic,assign,readonly) double price;
+@property (nonatomic,copy,readonly) NSString *currency;
+@property (nonatomic,copy,readonly) NSString *bidToken;
+-(void)notifyWin;
+-(void)notifyLoss:(NSInteger)reasonCode;
+@end
+
+@protocol ATMTGBiddingRequestParameter <NSObject>
+@property(nonatomic,copy,readonly)NSString *unitId;
+@property(nonatomic,readonly)NSNumber *basePrice;
+- (instancetype)initWithPlacementId:(nullable NSString *)placementId
+   unitId:(nonnull NSString *) unitId
+basePrice:(nullable NSNumber *)basePrice;
+@end
+@protocol ATMTGBiddingRequest<NSObject>
++(void)getBidWithRequestParameter:(__kindof id<ATMTGBiddingRequestParameter>)requestParameter completionHandler:(void(^)(id<ATMTGBiddingResponse> bidResponse))completionHandler;
 @end

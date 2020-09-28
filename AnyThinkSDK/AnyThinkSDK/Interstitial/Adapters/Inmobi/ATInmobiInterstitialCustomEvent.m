@@ -24,20 +24,20 @@
 
 -(void)interstitialDidFinishLoading:(id<ATIMInterstitial>)interstitial {
     [ATLogger logMessage:@"InmobiInterstitial::interstitialDidFinishLoading:" type:ATLogTypeExternal];
-    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:interstitial}];
+//    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:interstitial}];
+    [self trackInterstitialAdLoaded:interstitial adExtra:nil];
 }
 
 -(void)interstitial:(id<ATIMInterstitial>)interstitial didFailToReceiveWithError:(NSError*)error { [ATLogger logError:[NSString stringWithFormat:@"InmobiInterstitial::interstitial:didFailToReceiveWithError:%@", error] type:ATLogTypeExternal]; }
 
 -(void)interstitial:(id<ATIMInterstitial>)interstitial didFailToLoadWithError:(NSError*)error {
     [ATLogger logError:[NSString stringWithFormat:@"InmobiInterstitial::interstitial:didFailToLoadWithError:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackInterstitialAdLoadFailed:error];
 }
 
 -(void)interstitialWillPresent:(id<ATIMInterstitial>)interstitial {
     [ATLogger logMessage:@"InmobiInterstitial::interstitialWillPresent:" type:ATLogTypeExternal];
-    [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackInterstitialAdShow];
 }
 
 -(void)interstitialDidPresent:(id<ATIMInterstitial>)interstitial {
@@ -46,9 +46,7 @@
 
 -(void)interstitial:(id<ATIMInterstitial>)interstitial didFailToPresentWithError:(NSError*)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"InmobiInterstitial::interstitialDidFailToPresentWithError:%@", error] type:ATLogTypeExternal];
-    if ([self.delegate respondsToSelector:@selector(interstitialFailedToShowForPlacementID:error:extra:)]) {
-        [self.delegate interstitialFailedToShowForPlacementID:self.interstitial.placementModel.placementID error:error extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdShowFailed:error];
 }
 
 -(void)interstitialWillDismiss:(id<ATIMInterstitial>)interstitial {
@@ -57,10 +55,7 @@
 
 -(void)interstitialDidDismiss:(id<ATIMInterstitial>)interstitial {
     [ATLogger logMessage:@"InmobiInterstitial::interstitialDidDismiss:" type:ATLogTypeExternal];
-    [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdClose];
 }
 
 -(void)interstitial:(id<ATIMInterstitial>)interstitial rewardActionCompletedWithRewards:(NSDictionary*)rewards {
@@ -83,16 +78,17 @@
 
 -(void) handleClick {
     if (!_interacted || !_clickHandled) {
-        [self trackClick];
-        if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-            [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-        }
+        [self trackInterstitialAdClick];
     }
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"unit_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unit_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

@@ -8,13 +8,16 @@
 
 #import <Foundation/Foundation.h>
 #import "ATPlacementModel.h"
+extern NSString *const kATPlacementManagerPlacementUpdateNotification;
+extern NSString *const kATPlacementManagerPlacementUpdateNotificationUserInfoPlacementModelKey;
+
 @class ATUnitGroupModel;
 @interface ATPlacementSettingManager : NSObject
 +(instancetype) sharedManager;
 -(ATPlacementModel*) placementSettingWithPlacementID:(NSString*)placementID;
 -(void) addNewPlacementSetting:(ATPlacementModel*)placementModel;
 -(void) clearAllPlacementSettings;
--(void) requestPlacementSettingWithPlacementID:(NSString*)placementID customData:(NSDictionary*)customData completion:(void(^)(ATPlacementModel *placementModel, NSError *error))completion;
+-(void) requestPlacementSettingWithPlacementID:(NSString*)placementID customData:(NSDictionary*)customData extra:(NSDictionary*)extra completion:(void(^)(ATPlacementModel *placementModel, NSError *error))completion;
 -(NSArray<NSString*>*) placementIDsForAdFormat:(ATAdFormat)format;
 -(void) addCappedMyOfferID:(NSString*)offerID;
 -(void) removeCappedMyOfferID:(NSString*)offerID;
@@ -41,4 +44,5 @@
 -(NSString*)latestRequestIDForPlacementID:(NSString*)placementID;
 -(void) setLatestRequestID:(NSString*)requestID forPlacementID:(NSString*)placementID;
 -(NSString*)sessionIDForPlacementID:(NSString*)placementID;
++(NSMutableArray *)excludeMyOfferID;
 @end

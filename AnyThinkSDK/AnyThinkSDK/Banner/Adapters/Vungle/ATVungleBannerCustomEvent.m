@@ -18,9 +18,10 @@ static NSString *const kVungleNotificationUserInfoPlacementIDKey = @"placement_i
 static NSString *const kVungleNotificationUserInfoErrorKey = @"error";
 static NSString *const kVungleNotificationUserInfoVideoCompletedFlagKey = @"video_completed";
 static NSString *const kVungleNotificationUserInfoClickFlagKey = @"clicked";
+
 @implementation ATVungleBannerCustomEvent
--(instancetype) initWithUnitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo {
-    self = [super initWithUnitID:unitID customInfo:customInfo];
+-(instancetype) initWithUnitID:(NSString *)unitID serverInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo  {
+    self = [super initWithInfo:serverInfo localInfo:localInfo];
     if (self != nil) {
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadNotification:) name:kVungleLoadNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleCloseNotification:) name:kVungleCloseNotification object:nil];
@@ -31,7 +32,8 @@ static NSString *const kVungleNotificationUserInfoClickFlagKey = @"clicked";
 -(void) handleLoadNotification:(NSNotification*)notification {
     if ([notification.userInfo[kVungleNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID]) {
         [[NSNotificationCenter defaultCenter] removeObserver:self name:kVungleLoadNotification object:nil];
-        [self handleAssets:@{kBannerAssetsCustomEventKey:self}];
+//        [self handleAssets:@{kBannerAssetsCustomEventKey:self}];
+        [self trackBannerAdLoaded:nil adExtra:@{kBannerAssetsCustomEventKey:self}];
     }
 }
 
@@ -39,9 +41,12 @@ static NSString *const kVungleNotificationUserInfoClickFlagKey = @"clicked";
     if ([notification.userInfo[kVungleNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID]) {
         [[NSNotificationCenter defaultCenter] removeObserver:self name:kVungleCloseNotification object:nil];
         if ([notification.userInfo[kVungleNotificationUserInfoClickFlagKey] boolValue]) {
-            [self trackClick];
-            if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID:extra:)]) { [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]]; }
+            [self trackBannerAdClick];
         }
     }
+}
+
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"placement_id"];
 }
 @end

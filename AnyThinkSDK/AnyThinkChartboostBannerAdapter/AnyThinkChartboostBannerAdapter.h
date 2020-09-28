@@ -2,7 +2,7 @@
 //  AnyThinkChartboostBannerAdapter.h
 //  AnyThinkChartboostBannerAdapter
 //
-//  Created by Martin Lau on 2020/6/11.
+//  Created by Topon on 6/19/20.
 //  Copyright © 2020 AnyThink. All rights reserved.
 //
 

@@ -37,48 +37,48 @@
     }
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameTT]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameTT];
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"BUAdSDKManager") SDKVersion] forNetwork:kNetworkNameTT];
-            [NSClassFromString(@"BUAdSDKManager") setAppID:info[@"app_id"]];
+            [NSClassFromString(@"BUAdSDKManager") setAppID:serverInfo[@"app_id"]];
         }
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"BUFullscreenVideoAd") != nil && NSClassFromString(@"BUInterstitialAd") != nil && NSClassFromString(@"BUNativeExpressInterstitialAd") != nil) {
-        _customEvent = [[ATTTInterstitialCustomEvent alloc] initWithUnitID:info[@"slot_id"] customInfo:info];
+        _customEvent = [[ATTTInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        NSDictionary *extraInfo = info[kAdapterCustomInfoExtraKey];
+        NSDictionary *extraInfo = localInfo;
         CGSize adSize = [extraInfo[kATInterstitialExtraAdSizeKey] respondsToSelector:@selector(CGSizeValue)] ? [extraInfo[kATInterstitialExtraAdSizeKey] CGSizeValue] : CGSizeMake(300.0f, 300.0f);
-        if ([info[@"layout_type"] integerValue] == 1) {
-            _expressInterstitial = [[NSClassFromString(@"BUNativeExpressInterstitialAd")alloc] initWithSlotID:info[@"slot_id"] adSize:adSize];
+        if ([serverInfo[@"layout_type"] integerValue] == 1) {
+            _expressInterstitial = [[NSClassFromString(@"BUNativeExpressInterstitialAd")alloc] initWithSlotID:serverInfo[@"slot_id"] adSize:adSize];
             _expressInterstitial.delegate = _customEvent;
             [_expressInterstitial loadAdData];
         } else {
-            if ([info[@"is_video"] boolValue]) {
+            if ([serverInfo[@"is_video"] boolValue]) {
                 _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
-                if ([info[@"personalized_template"]integerValue] == 1) {
-                    _expressFullScreenVideo = [[NSClassFromString(@"BUNativeExpressFullscreenVideoAd") alloc] initWithSlotID:info[@"slot_id"]];
+                if ([serverInfo[@"personalized_template"]integerValue] == 1) {
+                    _expressFullScreenVideo = [[NSClassFromString(@"BUNativeExpressFullscreenVideoAd") alloc] initWithSlotID:serverInfo[@"slot_id"]];
                     _expressFullScreenVideo.delegate = _customEvent;
                     [_expressFullScreenVideo loadAdData];
                 } else {
-                    _fullscreenVideo = [[NSClassFromString(@"BUFullscreenVideoAd") alloc] initWithSlotID:info[@"slot_id"]];
+                    _fullscreenVideo = [[NSClassFromString(@"BUFullscreenVideoAd") alloc] initWithSlotID:serverInfo[@"slot_id"]];
                     _fullscreenVideo.delegate = _customEvent;
                     [_fullscreenVideo loadAdData];
                 }
             } else {
-                _interstitial = [[NSClassFromString(@"BUInterstitialAd") alloc] initWithSlotID:info[@"slot_id"] size:[NSClassFromString(@"BUSize") sizeBy:[info[@"media_size"] integerValue]]];
+                _interstitial = [[NSClassFromString(@"BUInterstitialAd") alloc] initWithSlotID:serverInfo[@"slot_id"] size:[NSClassFromString(@"BUSize") sizeBy:[serverInfo[@"media_size"] integerValue]]];
                 _interstitial.delegate = _customEvent;
                 [_interstitial loadAdData];
             }
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"TT"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"TT"]}]);
     }
 }
 

@@ -14,56 +14,49 @@
 @implementation ATApplovinInterstitialCustomEvent
 - (void)adService:(id<ATALAdService>)adService didLoadAd:(id<ATALAd>)ad {
     [ATLogger logMessage:@"ApplovinInterstitial::adService:didLoadAd:" type:ATLogTypeExternal];
-    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:ad, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
+//    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:ad, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
+    [self trackInterstitialAdLoaded:ad adExtra:nil];
 }
 
 - (void)adService:(id<ATALAdService>)adService didFailToLoadAdWithError:(int)code {
     [ATLogger logMessage:[NSString stringWithFormat:@"ApplovinInterstitial::adService:didFailToLoadAdWithError:%d", code] type:ATLogTypeExternal];
-    [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.ApplovinInterstitial" code:code userInfo:@{NSLocalizedDescriptionKey:@"ATSDK has failed to load interstitial.", NSLocalizedFailureReasonErrorKey:@"Applovin has failed to load interstitial."}]];
+    [self trackInterstitialAdLoadFailed:[NSError errorWithDomain:@"com.anythink.ApplovinInterstitial" code:code userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:@"Applovin has failed to load interstitial."}]];
 }
 
 - (void)ad:(id<ATALAd>)ad wasDisplayedIn:(UIView *)view {
     [ATLogger logMessage:@"ApplovinInterstitial::ad:wasDisplayedIn:" type:ATLogTypeExternal];
-    [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackInterstitialAdShow];
 }
 
 - (void)ad:(id<ATALAd>)ad wasHiddenIn:(UIView *)view {
     [ATLogger logMessage:@"ApplovinInterstitial::ad:wasHiddenIn:" type:ATLogTypeExternal];
-    [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdClose];
     //detatch al interstitial
     objc_setAssociatedObject(self, "al_interstitial_ad", nil, OBJC_ASSOCIATION_RETAIN);
 }
 
 - (void)ad:(id<ATALAd>)ad wasClickedIn:(UIView *)view {
     [ATLogger logMessage:@"ApplovinInterstitial::ad:wasClickedIn:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-        [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdClick];
 }
 
 - (void)videoPlaybackBeganInAd:(id<ATALAd>)ad {
     [ATLogger logMessage:@"ApplovinInterstitial::videoPlaybackBeganInAd:" type:ATLogTypeExternal];
-    [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidStartPlayingVideoForPlacementID:extra:)]) {
-        [self.delegate interstitialDidStartPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdVideoStart];
 }
 
 - (void)videoPlaybackEndedInAd:(id<ATALAd>)ad atPlaybackPercent:(NSNumber *)percentPlayed fullyWatched:(BOOL)wasFullyWatched {
     [ATLogger logMessage:@"ApplovinInterstitial::videoPlaybackEndedInAd:atPlaybackPercent:fullyWatched" type:ATLogTypeExternal];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidEndPlayingVideoForPlacementID:extra:)]) {
-        [self.delegate interstitialDidEndPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdVideoEnd];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"zone_id"] != nil ? self.interstitial.unitGroup.content[@"zone_id"] : @"";
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"zone_id"] != nil ? self.serverInfo[@"zone_id"] : @"";
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"zone_id"] != nil ? self.interstitial.unitGroup.content[@"zone_id"] : @"";
+//    return extra;
+//}
 @end

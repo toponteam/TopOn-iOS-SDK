@@ -17,6 +17,7 @@
 #import "ATAdManagement.h"
 #import "ATAdCustomEvent.h"
 #import "ATNativeADCache.h"
+
 NSString *const kATTTNativeExpressAdManager = @"native_express_tt_admanager";
 
 @implementation ATTTNativeCustomEvent
@@ -35,19 +36,22 @@ NSString *const kATTTNativeExpressAdManager = @"native_express_tt_admanager";
         if ([obj.data.source length] > 0) { asset[kNativeADAssetsAdvertiserKey] = obj.data.source; }
         
         if ([obj.data.imageAry count] > 0) {
-            asset[kNativeADAssetsImageURLKey] = obj.data.imageAry[0].imageURL;
+            if ([obj.data.imageAry[0].imageURL length] > 0) {
+                asset[kNativeADAssetsImageURLKey] = obj.data.imageAry[0].imageURL;
+                dispatch_group_enter(image_download_group);
+                [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.data.imageAry[0].imageURL] completion:^(UIImage *image, NSError *error) {
+                    if ([image isKindOfClass:[UIImage class]]) { asset[kNativeADAssetsMainImageKey] = image; }
+                    dispatch_group_leave(image_download_group);
+                }];
+            }
+        }
+        if ([obj.data.icon.imageURL length] > 0) {
             dispatch_group_enter(image_download_group);
-            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.data.imageAry[0].imageURL] completion:^(UIImage *image, NSError *error) {
-                if ([image isKindOfClass:[UIImage class]]) { asset[kNativeADAssetsMainImageKey] = image; }
+            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.data.icon.imageURL] completion:^(UIImage *image, NSError *error) {
+                if ([image isKindOfClass:[UIImage class]]) { asset[kNativeADAssetsIconImageKey] = image; }
                 dispatch_group_leave(image_download_group);
             }];
         }
-        
-        dispatch_group_enter(image_download_group);
-        [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.data.icon.imageURL] completion:^(UIImage *image, NSError *error) {
-            if ([image isKindOfClass:[UIImage class]]) { asset[kNativeADAssetsIconImageKey] = image; }
-            dispatch_group_leave(image_download_group);
-        }];
         [assets addObject:asset];
     }];
     dispatch_group_notify(image_download_group, dispatch_get_main_queue(), ^{
@@ -74,18 +78,22 @@ NSString *const kATTTNativeExpressAdManager = @"native_express_tt_admanager";
         if ([nativeAd.data.source length] > 0) { asset[kNativeADAssetsAdvertiserKey] = nativeAd.data.source; }
         
         if ([nativeAd.data.imageAry count] > 0) {
-            asset[kNativeADAssetsImageURLKey] = nativeAd.data.imageAry[0].imageURL;
+            if ([nativeAd.data.imageAry[0].imageURL length] > 0) {
+                asset[kNativeADAssetsImageURLKey] = nativeAd.data.imageAry[0].imageURL;
+                dispatch_group_enter(image_download_group);
+                [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:nativeAd.data.imageAry[0].imageURL] completion:^(UIImage *image, NSError *error) {
+                    if ([image isKindOfClass:[UIImage class]]) { asset[kNativeADAssetsMainImageKey] = image; }
+                    dispatch_group_leave(image_download_group);
+                }];
+            }
+        }
+        if ([nativeAd.data.icon.imageURL length] > 0) {
             dispatch_group_enter(image_download_group);
-            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:nativeAd.data.imageAry[0].imageURL] completion:^(UIImage *image, NSError *error) {
-                if ([image isKindOfClass:[UIImage class]]) { asset[kNativeADAssetsMainImageKey] = image; }
+            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:nativeAd.data.icon.imageURL] completion:^(UIImage *image, NSError *error) {
+                if ([image isKindOfClass:[UIImage class]]) { asset[kNativeADAssetsIconImageKey] = image; }
                 dispatch_group_leave(image_download_group);
             }];
         }
-        dispatch_group_enter(image_download_group);
-        [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:nativeAd.data.icon.imageURL] completion:^(UIImage *image, NSError *error) {
-            if ([image isKindOfClass:[UIImage class]]) { asset[kNativeADAssetsIconImageKey] = image; }
-            dispatch_group_leave(image_download_group);
-        }];
         dispatch_group_notify(image_download_group, dispatch_get_main_queue(), ^{
             self.requestCompletionBlock(@[asset], nil);
         });
@@ -103,13 +111,12 @@ NSString *const kATTTNativeExpressAdManager = @"native_express_tt_admanager";
 
 - (void)nativeAdDidClick:(id<ATBUNativeAd>)nativeAd withView:(UIView *_Nullable)view {
     [ATLogger logMessage:@"TTNative::nativeAdDidClick:withView:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 - (void)nativeAd:(id<ATBUNativeAd>)nativeAd dislikeWithReason:(NSArray*)filterWords {
     [ATLogger logMessage:@"TTNative::nativeAd:dislikeWithReason:" type:ATLogTypeExternal];
-    [self.adView notifyCloseButtonTapped];
+    [self trackNativeAdClosed];
 }
 
 -(ATNativeADSourceType) sourceType {
@@ -127,8 +134,8 @@ NSString *const kATTTNativeExpressAdManager = @"native_express_tt_admanager";
 
 - (void)playerDidPlayFinish:(id<ATBUVideoAdView>)videoAdView {
     [ATLogger logMessage:@"TTNative::playerDidPlayFinish:" type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    [self.adView notifyVideoEnd];
+    [self trackNativeAdVideoEnd];
+    
 }
 
 #pragma mark - nativeExpress
@@ -176,19 +183,17 @@ NSString *const kATTTNativeExpressAdManager = @"native_express_tt_admanager";
 
 - (void)nativeExpressAdViewDidClick:(id<ATBUNativeExpressAdView>)nativeExpressAdView {
     [ATLogger logMessage:@"TTNativeExpress::nativeExpressAdViewDidClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 - (void)nativeExpressAdViewPlayerDidPlayFinish:(id<ATBUNativeExpressAdView>)nativeExpressAdView error:(NSError *)error {
     [ATLogger logMessage:@"TTNative::playerDidPlayFinish:" type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    [self.adView notifyVideoEnd];
+    [self trackNativeAdVideoEnd];
 }
 
 - (void)nativeExpressAdView:(id<ATBUNativeExpressAdView>)nativeExpressAdView dislikeWithReason:(NSArray<id<ATBUDislikeWords>> *)filterWords {
     [ATLogger logMessage:@"TTNativeExpress::nativeExpressAdView:dislikeWithReason:" type:ATLogTypeExternal];
-    [self.adView notifyCloseButtonTapped];
+    [self trackNativeAdClosed];
 
 }
 
@@ -200,10 +205,15 @@ NSString *const kATTTNativeExpressAdManager = @"native_express_tt_admanager";
     NSLog(@"TT Native customEvent dealloc");
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"slot_id"];
-    return extra;
+    return cache.unitGroup.content[@"slot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"slot_id"];
+//    return extra;
+//}
 @end

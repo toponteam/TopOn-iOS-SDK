@@ -8,6 +8,6 @@
 
 #import "ATRewardedVideoCustomEvent.h"
 #import "ATUnityAdsRewardedVideoAdapter.h"
-@interface ATUnityAdsRewardedVideoCustomEvent : ATRewardedVideoCustomEvent<UnityMonetizationDelegate, UMONShowAdDelegate>
+@interface ATUnityAdsRewardedVideoCustomEvent : ATRewardedVideoCustomEvent
 
 @end

@@ -12,7 +12,6 @@
 #import "ATAPI+Internal.h"
 #import "NSObject+ExtraInfo.h"
 #import "ATAdAdapter.h"
-#import "ATAdLoader+HeaderBidding.h"
 const CGFloat kATFBAdOptionsViewWidth = 43.0f;
 const CGFloat kATFBAdOptionsViewHeight = 18.0f;
 @interface ATFacebookNativeAdapter()
@@ -25,7 +24,7 @@ const CGFloat kATFBAdOptionsViewHeight = 18.0f;
     return [ATFacebookNativeADRenderer class];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -39,20 +38,20 @@ const CGFloat kATFBAdOptionsViewHeight = 18.0f;
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
     if (NSClassFromString(@"FBNativeAd") != nil && NSClassFromString(@"FBNativeBannerAd") != nil) {
         _customEvent = [ATFacebookCustomEvent new];
-        _customEvent.unitID = info[@"unit_id"];
+        _customEvent.unitID = serverInfo[@"unit_id"];
         _customEvent.requestCompletionBlock = completion;
         _customEvent.requestNumber = 1;
-        _customEvent.requestExtra = info[kAdapterCustomInfoExtraKey];
+        _customEvent.requestExtra = localInfo;
         dispatch_async(dispatch_get_main_queue(), ^{
-            if ([info[@"unit_type"] integerValue] == 0) {
-                self->_nativeAd = [[NSClassFromString(@"FBNativeAd") alloc] initWithPlacementID:info[@"unit_id"]];
+            if ([serverInfo[@"unit_type"] integerValue] == 0) {
+                self->_nativeAd = [[NSClassFromString(@"FBNativeAd") alloc] initWithPlacementID:serverInfo[@"unit_id"]];
                 self->_nativeAd.delegate = self->_customEvent;
                 [self->_nativeAd loadAd];
             } else {
-                self->_nativeBannerAd = [[NSClassFromString(@"FBNativeBannerAd") alloc] initWithPlacementID:info[@"unit_id"]];
+                self->_nativeBannerAd = [[NSClassFromString(@"FBNativeBannerAd") alloc] initWithPlacementID:serverInfo[@"unit_id"]];
                 self->_nativeBannerAd.delegate = self->_customEvent;
                 [self->_nativeBannerAd loadAd];
             }

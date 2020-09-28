@@ -8,6 +8,6 @@
 
 #import "ATBannerCustomEvent.h"
 #import "ATGDTBannerAdapter.h"
-@interface ATGDTBannerCustomEvent : ATBannerCustomEvent<ATGDTMobBannerViewDelegate, GDTUnifiedBannerViewDelegate>
-@property(nonatomic, weak) id<ATGDTMobBannerView> gdtBannerView;
+@interface ATGDTBannerCustomEvent : ATBannerCustomEvent<GDTUnifiedBannerViewDelegate>
+
 @end

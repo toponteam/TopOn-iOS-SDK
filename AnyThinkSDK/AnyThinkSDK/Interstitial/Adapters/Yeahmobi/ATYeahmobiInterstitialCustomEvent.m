@@ -9,15 +9,16 @@
 #import "ATYeahmobiInterstitialCustomEvent.h"
 #import "Utilities.h"
 #import "ATInterstitialManager.h"
+
 @implementation ATYeahmobiInterstitialCustomEvent
 -(void) handleShow {
-    [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackInterstitialAdShow];
 }
 
 - (void)CTAdViewDidRecieveInterstitialAd {
     [ATLogger logMessage:@"YeahmobiInterstitial::CTAdViewDidRecieveInterstitialAd" type:ATLogTypeExternal];
-    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:[self.unitID length] > 0 ? self.unitID : @""}];
+//    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:[self.unitID length] > 0 ? self.unitID : @""}];
+    [self trackInterstitialAdLoaded:[self.unitID length] > 0 ? self.unitID : @"" adExtra:nil];
 }
 
 - (void)CTAdViewDidRecieveInterstitialAdForSlot:(NSString *)slot {
@@ -26,23 +27,17 @@
 
 - (void)CTAdView:(id<ATCTADMRAIDView>)adView didFailToReceiveAdWithError:(NSError*)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"YeahmobiInterstitial::CTAdView:didFailToReceiveAdWithError:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackInterstitialAdLoadFailed:error];
 }
 
 - (void)CTAdViewCloseButtonPressed:(id<ATCTADMRAIDView>)adView {
     [ATLogger logMessage:@"YeahmobiInterstitial::CTAdViewCloseButtonPressed:" type:ATLogTypeExternal];
-    [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdClose];
 }
 
 - (BOOL)CTAdView:(id<ATCTADMRAIDView>)adView shouldOpenURL:(NSURL*)url {
     [ATLogger logMessage:[NSString stringWithFormat:@"YeahmobiInterstitial::CTAdView:shouldOpenURL:%@", url] type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-        [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdClick];
     return YES;
 }
 
@@ -71,9 +66,13 @@
     return YES;
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"slot_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"slot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"slot_id"];
+//    return extra;
+//}
 @end

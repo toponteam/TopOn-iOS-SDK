@@ -18,7 +18,7 @@ NSString *const kHeaderBiddingPlacement = @"Header Bidding";
 NSString *const kStartAppPlacement = @"StartApp";
 NSString *const kStartAppVideoPlacement = @"StartApp(Video)";
 NSString *const kFyberPlacement = @"Fyber";
-NSString *const kSigmobRVIntPlacement = @"Sigmob(RV)";
+NSString *const kSigmobRVIntPlacement = @"Sibmob(RV)";
 
 static NSString *const kGDTPlacementID = @"b5bacad8ea3036";
 static NSString *const kTTPlacementID = @"b5bacad7373b89";
@@ -56,6 +56,8 @@ static NSString *const kOguryPlacementID = @"b5dde238f2d2ce";
 static NSString *const kStartAppPlacementID = @"b5e731a0acabdf";
 static NSString *const kStartAppVideoPlacementID = @"b5e732a9577182";
 static NSString *const kFyberPlacementID = @"b5e96db2198474";
+static NSString *const kGAMPlacementID = @"b5f2389ab6ee63";
+
 
 @interface ATInterstitialViewController ()<ATInterstitialDelegate>
 @property(nonatomic, readonly) NSString *name;
@@ -101,14 +103,15 @@ static NSString *const kFyberPlacementID = @"b5e96db2198474";
                           kNendInterstitialVideoPlacement:kNendVideoPlacementID,
                           kNendFullScreenInterstitialPlacement:kNendFullScreenPlacementID,
                           kMaioPlacement:kMaioPlacementID,
-                          kSigmobRVIntPlacement:kSigmobIntRVPlacementID,
                           kSigmobPlacement:kSigmobPlacementID,
+                          kSigmobRVIntPlacement:kSigmobIntRVPlacementID,
                           kKSPlacement:kKSPlacementID,
                           kMyOfferPlacement:kMyOfferPlacementID,
                           kOguryPlacement:kOguryPlacementID,
                           kStartAppPlacement:kStartAppPlacementID,
                           kStartAppVideoPlacement:kStartAppVideoPlacementID,
-                          kFyberPlacement:kFyberPlacementID
+                          kFyberPlacement:kFyberPlacementID,
+                          kGAMPlacement:kGAMPlacementID
                           };
     }
     return self;
@@ -177,7 +180,7 @@ static NSString *const kFyberPlacementID = @"b5e96db2198474";
     NSLog(@"Begin loading interstitial ad");
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:[_name isEqualToString:kSigmobRVIntPlacement] ? @{kATInterstitialExtraUsesRewardedVideo:@YES} : nil delegate:self];
+    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:[_name isEqualToString:kSigmobRVIntPlacement] ? @{kATInterstitialExtraUsesRewardedVideo:@YES, kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} : @{kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} delegate:self];
 }
 
 -(void) showAD {

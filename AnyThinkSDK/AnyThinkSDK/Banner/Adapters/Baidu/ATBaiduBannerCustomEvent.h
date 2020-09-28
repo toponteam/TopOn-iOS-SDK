@@ -9,5 +9,5 @@
 #import "ATBannerCustomEvent.h"
 #import "ATBaiduBannerAdapter.h"
 @interface ATBaiduBannerCustomEvent : ATBannerCustomEvent<BaiduMobAdViewDelegate>
--(instancetype) initWithUnitID:(NSString*)unitID customInfo:(NSDictionary*)customInfo bannerView:(id)bannerView;
+-(instancetype) initWithUnitID:(NSString*)unitID serverInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo bannerView:(id)bannerView;
 @end

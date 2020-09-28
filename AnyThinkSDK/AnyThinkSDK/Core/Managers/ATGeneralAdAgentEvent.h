@@ -21,7 +21,7 @@ extern NSString *const kATAPIShow;
 @end
 
 @interface ATPlacementholderAd:NSObject<ATAd>
-+(instancetype)placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup;
++(instancetype)placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall;
 @property(nonatomic, readonly) NSInteger showTimes;
 /**
  Priority is calculate by the index of the unit group in the placement's unit group list; zero is the highest
@@ -36,5 +36,7 @@ extern NSString *const kATAPIShow;
  */
 @property(nonatomic, readonly) id customObject;
 @property(nonatomic, readonly) NSString *unitID;
+@property(nonatomic, readonly) double price;
+@property(nonatomic, readonly, weak) ATWaterfall *finalWaterfall;
 @end
 NS_ASSUME_NONNULL_END

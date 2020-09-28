@@ -7,13 +7,14 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AnyThinkSDK/AnyThinkSDK.h>
 #import "ATNativeAd.h"
-#import "ATAd.h"
+//#import "ATAd.h"
 #import "ATNativeADCustomEvent.h"
 @class ATUnitGroupModel;
 @class ATPlacementModel;
 @interface ATNativeADCache : ATNativeAd<ATAd>
--(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup;
+-(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall;
 @property(nonatomic) NSInteger showTimes;
 /**
  Priority is calculate by the index of the unit group in the placement's unit group list; zero is the highest
@@ -43,4 +44,8 @@
 @property(nonatomic, readonly) NSString *iconURLString;
 @property(nonatomic, readonly) NSString *imageURLString;
 @property(nonatomic, readonly) NSString *appID;
+@property(nonatomic) BOOL defaultPlayIfRequired;
+@property(nonatomic, readonly) double price;
+@property(nonatomic, readonly, weak) ATWaterfall *finalWaterfall;
+@property(nonatomic, readonly) NSInteger autoReqType;
 @end

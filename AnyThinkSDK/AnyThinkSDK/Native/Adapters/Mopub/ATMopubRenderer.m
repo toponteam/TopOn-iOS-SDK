@@ -84,8 +84,7 @@
 }
 
 - (void)nativeAdTapped {
-    [self.ADView.customEvent trackClick];
-    [self.ADView notifyNativeAdClick];
+    [self.ADView.customEvent trackNativeAdClick];
 }
 @end
 

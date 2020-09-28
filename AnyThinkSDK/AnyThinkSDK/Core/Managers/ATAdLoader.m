@@ -23,10 +23,14 @@
 #import "ATGeneralAdAgentEvent.h"
 #import "ATLoadingScheduler.h"
 #import "ATAdStorageUtility.h"
-#import "ATAdLoader+HeaderBidding.h"
 #import "ATAdCustomEvent.h"
 #import "ATAppSettingManager.h"
 #import "ATAdManager.h"
+#import "ATBidInfoManager.h"
+#import "ATWaterfallManager.h"
+#import "ATBidInfo.h"
+#import "ATAdLoader+S2SHeaderBidding.h"
+
 NSString *const kADapterCustomInfoStatisticsInfoKey = @"statistics_info";
 NSString *const kAdapterCustomInfoPlacementModelKey = @"tracking_info_placement_model";
 NSString *const kAdapterCustomInfoUnitGroupModelKey = @"tracking_info_unit_group_model";
@@ -36,49 +40,21 @@ NSString *const kAdLoadingExtraRefreshFlagKey = @"refresh";
 NSString *const kAdapterCustomInfoExtraKey = @"extra";
 
 static NSString *const kATMyOfferOfferManagerClassName = @"ATMyOfferOfferManager";
-@interface ATPlacementModel(OfferLoading)
-
-/**
- * Calculate the active unit groups.
- */
-@property(nonatomic, readonly) NSArray<ATUnitGroupModel*>* activeUnitGroups;
-@end
-@implementation ATPlacementModel(OfferLoading)
--(NSArray<ATUnitGroupModel*>*)activeUnitGroups {
-    NSMutableArray<ATUnitGroupModel*>* activeUnitGroups = [NSMutableArray<ATUnitGroupModel*> array];
-    [self.unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if ([obj unitGroupValid:self.placementID]) { [activeUnitGroups addObject:obj]; }
-    }];
-    return activeUnitGroups;
-}
-@end
-
 @interface ATAdLoader()
-/**
- * To keep the adapters around until offers are successfully loaded.
- */
-@property(nonatomic, readonly) ATThreadSafeAccessor *adaptersAccessors;
-@property(nonatomic, readonly) NSMutableDictionary *adapters;
-
-@property(nonatomic, readonly) ATThreadSafeAccessor *requestIDStorageAccessor;
-@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSString*>* requestIDStorage;
-
-@property(nonatomic, readonly) ATThreadSafeAccessor *delegateCallFlagsAccessor;
-@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSString*>* delegateCallFlags;
-
-@property(nonatomic, readonly) ATThreadSafeAccessor *loadDateStorageAccessor;
-@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSDate*>* loadDateStorage;
-/*
- *Used to ensure that load success tracking has been sent once&only once for every requestID
- */
-@property(nonatomic, readonly) ATThreadSafeAccessor *agentEventFlagsAccessor;
-@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSNumber*>* agentEventFlags;
-
-@property(nonatomic, readonly) ATThreadSafeAccessor *currentUnitGroupIndexAccessors;
-@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSDictionary<NSString*, NSNumber*>*>* currentUnitGroupIndexStorage;
-
 @property(nonatomic, readonly) ATThreadSafeAccessor *failedRequestRecordsAccessor;
 @property(nonatomic, readonly) NSMutableDictionary<NSString*, NSDate*> *failedRequestRecords;
+@property(nonatomic, readonly) ATThreadSafeAccessor *failedBidRecordsAccessor;
+@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSDate*> *failedBidRecords;
+/**
+ {
+     placement_id: {
+         date:2020-06-18 15:25:00
+         da_sent_flag:@YES
+     }
+ }
+ */
+@property(nonatomic, readonly) ATSerialThreadSafeAccessor *loadFailureDateStorageAccessor;
+@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSDictionary*> *loadFailureDateStorage;
 @end
 static NSString *const kInactiveUnitGroupInfoUnitGroupKey = @"unit_group";
 static NSString *const kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey = @"load_using_ad_source_status_flag";
@@ -95,30 +71,46 @@ static NSString *const kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey =
 -(instancetype) init {
     self = [super init];
     if (self != nil) {
-        _adaptersAccessors = [ATThreadSafeAccessor new];
-        _adapters = [NSMutableDictionary dictionary];
-        
-        _requestIDStorageAccessor = [ATThreadSafeAccessor new];
-        _requestIDStorage = [NSMutableDictionary<NSString*, NSString*> new];
-        
-        _delegateCallFlags = [NSMutableDictionary<NSString*, NSString*> dictionary];
-        _delegateCallFlagsAccessor = [ATThreadSafeAccessor new];
-        
-        _agentEventFlags = [NSMutableDictionary<NSString*, NSNumber*> dictionary];
-        _agentEventFlagsAccessor = [ATThreadSafeAccessor new];
-        
-        _currentUnitGroupIndexStorage = [NSMutableDictionary<NSString*, NSDictionary<NSString*, NSNumber*>*> new];
-        _currentUnitGroupIndexAccessors = [ATThreadSafeAccessor new];
-        
-        _loadDateStorage = [NSMutableDictionary<NSString *, NSDate*> new];
-        _loadDateStorageAccessor = [ATThreadSafeAccessor new];
-        
         _failedRequestRecords = [NSMutableDictionary<NSString*, NSDate*> dictionary];
         _failedRequestRecordsAccessor = [ATThreadSafeAccessor new];
+        
+        _failedBidRecords = [NSMutableDictionary<NSString*, NSDate*> dictionary];
+        _failedBidRecordsAccessor = [ATThreadSafeAccessor new];
+        
+        _loadFailureDateStorageAccessor = [ATSerialThreadSafeAccessor new];
+        _loadFailureDateStorage = [NSMutableDictionary<NSString*, NSDictionary*> dictionary];
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleScheduledLoadNotification:) name:kATScheduledLoadFiredNotification object:nil];
     }
     return self;
+}
+
+static NSString *kLoadFailureDateStorageDateKey = @"date";
+static NSString *kLoadFailureDateStorageAgentEventFlagKey = @"da_flag";
+-(void) updateLoadFailureDateForPlacementID:(NSString*)placementID {
+    __weak typeof(self) weakSelf = self;
+    [_loadFailureDateStorageAccessor writeWithBlock:^{ weakSelf.loadFailureDateStorage[placementID] = @{kLoadFailureDateStorageDateKey:[NSDate date], kLoadFailureDateStorageAgentEventFlagKey:@NO}; }];
+}
+
+-(void) clearLoadFailureDateForPlacementID:(NSString*)placementID {
+    __weak typeof(self) weakSelf = self;
+    [_loadFailureDateStorageAccessor writeWithBlock:^{ [weakSelf.loadFailureDateStorage removeObjectForKey:placementID]; }];
+}
+
+-(BOOL) loadFailureDateExpiredForPlacementModel:(ATPlacementModel*)placementModel shouldSendDA:(BOOL*)shouldSendDA {
+    __weak typeof(self) weakSelf = self;
+    return [[_loadFailureDateStorageAccessor readWithBlock:^id{
+        BOOL result = YES;
+        NSDictionary *entry = weakSelf.loadFailureDateStorage[placementModel.placementID];
+        if (entry != nil) {
+            result = [[NSDate date] timeIntervalSinceDate:entry[kLoadFailureDateStorageDateKey]] > placementModel.loadFailureInterval;
+            if (shouldSendDA != NULL) {
+                *shouldSendDA = ![entry[kLoadFailureDateStorageAgentEventFlagKey] boolValue];
+                weakSelf.loadFailureDateStorage[placementModel.placementID] = @{kLoadFailureDateStorageDateKey:entry[kLoadFailureDateStorageDateKey], kLoadFailureDateStorageAgentEventFlagKey:@YES};
+            }
+        }
+        return @(result);
+    }] boolValue];
 }
 
 -(void) updateRequestFailureForPlacemetModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel {
@@ -132,52 +124,27 @@ static NSString *const kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey =
     return lastFailureDate == nil || [[NSDate date] timeIntervalSinceDate:lastFailureDate] > unitGroupModel.skipIntervalAfterLastLoadingFailure;
 }
 
--(void) setDelegateCallFlagForPlacementID:(NSString*)placementID requestID:(NSString*)requestID {
-    [_delegateCallFlagsAccessor writeWithBlock:^{ _delegateCallFlags[placementID] = requestID; }];
+-(void) updateS2SBidRequestFailureForPlacemetModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel {
+    __weak typeof(self) weakSelf = self;
+    [_failedBidRecordsAccessor writeWithBlock:^{ weakSelf.failedBidRecords[[NSString stringWithFormat:@"%@_%@", placementModel.placementID, unitGroupModel.unitID]] = [NSDate date]; }];
 }
 
--(void) clearDelegateCallFlagForPlacementID:(NSString*)placementID {
-    [_delegateCallFlagsAccessor writeWithBlock:^{ [_delegateCallFlags removeObjectForKey:placementID]; }];
-}
-
-/*
- {
-     placement_id:{
-         request_id:request_id,
-         current_ad_source:current_ad_source
-     }
- }
- */
--(void) setCurrentUnitGroupIndex:(NSInteger)index forPlacementID:(NSString*)placementID requestID:(NSString*)requestID {
-    [ATLogger logMessage:[NSString stringWithFormat:@"ATAdLoader::setting index:%ld placementID:%@ requestID:%@", index, placementID, requestID] type:ATLogTypeInternal];
-    if (placementID != nil && requestID != nil) { [_currentUnitGroupIndexAccessors writeWithBlock:^{ _currentUnitGroupIndexStorage[placementID] = @{requestID:@(index)}; }]; }
-}
-
--(NSInteger)currentUnitGroupIndexForPlacementID:(NSString*)placementID requestID:(NSString*)requestID {
-    return [[_currentUnitGroupIndexAccessors readWithBlock:^id{ return _currentUnitGroupIndexStorage[placementID][requestID]; }] integerValue];
+-(BOOL) shouldSendS2SBidRequestAfterLastFailureForPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel {
+    __weak typeof(self) weakSelf = self;
+    NSDate *lastFailureDate = [_failedBidRecordsAccessor readWithBlock:^id{ return weakSelf.failedBidRecords[[NSString stringWithFormat:@"%@_%@", placementModel.placementID, unitGroupModel.unitID]]; }];
+    return lastFailureDate == nil || [[NSDate date] timeIntervalSinceDate:lastFailureDate] > unitGroupModel.skipIntervalAfterLastBiddingFailure;
 }
 
 -(void) handleScheduledLoadNotification:(NSNotification*)notification {
     [ATLogger logMessage:@"ATAdLoader::handleScheduledLoadNotification:" type:ATLogTypeInternal];
-    NSString *requestID = notification.userInfo[kATScheduledLoadFiredNotificationUserInfoRequestID];
-    ATPlacementModel *placementModel = notification.userInfo[kATScheduledLoadFiredNotificationUserInfoPlacementModel];
     ATUnitGroupModel *unitGroupModel = notification.userInfo[kATScheduledLoadFiredNotificationUserInfoUnitGroupModel];
-    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithObject:@YES forKey:kAdLoadingExtraAutoloadFlagKey];
-    if (notification.userInfo[kATScheduledLoadFiredNotificationUserInfoExtra] != nil) { [extra addEntriesFromDictionary:notification.userInfo[kATScheduledLoadFiredNotificationUserInfoExtra]]; }
-    
-    if (unitGroupModel.headerBidding) {
-        [self sendHeaderBiddingRequestWithPlacementModel:placementModel nonHeaderBiddingUnitGroups:nil headerBiddingUnitGroups:@[unitGroupModel] completion:^(NSArray<ATUnitGroupModel *> *sortedUnitGroups, NSDictionary *extraInfo) {
-            if ([sortedUnitGroups count] > 0) {
-                [unitGroupModel updateBidInfoForRequestID:requestID];
-                [self loadOfferWithRequestID:requestID placementModel:placementModel unitGroupModel:unitGroupModel extra:extra delegate:nil success:^(id<ATAdLoadingDelegate> delegate, NSArray<NSDictionary *> *assets) {
-                    
-                } failure:^(id<ATAdLoadingDelegate>delegate, NSError *error) {
-                    //
-                }];
-            }//do not load when bidding request failed.
-        }];
-    } else {
-        [self loadOfferWithRequestID:requestID placementModel:placementModel unitGroupModel:unitGroupModel extra:extra delegate:nil success:^(id<ATAdLoadingDelegate> delegate, NSArray<NSDictionary *> *assets) {
+    if (!unitGroupModel.headerBidding) {
+        NSString *requestID = notification.userInfo[kATScheduledLoadFiredNotificationUserInfoRequestID];
+        ATPlacementModel *placementModel = notification.userInfo[kATScheduledLoadFiredNotificationUserInfoPlacementModel];
+        NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithObject:@YES forKey:kAdLoadingExtraAutoloadFlagKey];
+        if (notification.userInfo[kATScheduledLoadFiredNotificationUserInfoExtra] != nil) { [extra addEntriesFromDictionary:notification.userInfo[kATScheduledLoadFiredNotificationUserInfoExtra]]; }
+        //Pass nil for finalWaterfall parameter to use the last one
+        [self loadOfferWithRequestID:requestID placementModel:placementModel unitGroupModel:unitGroupModel finalWaterfall:nil startDate:[NSDate date] extra:extra delegate:nil success:^(id<ATAdLoadingDelegate> delegate, NSArray<NSDictionary *> *assets) {
             
         } failure:^(id<ATAdLoadingDelegate>delegate, NSError *error) {
             //
@@ -189,85 +156,92 @@ static NSString *const kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey =
     NSString *requestID = [Utilities generateRequestID];
     [[ATPlacementSettingManager sharedManager] setLatestRequestID:requestID forPlacementID:placementID];
     if (![[ATPlacementSettingManager sharedManager] statusForPlacementID:placementID error:nil]) {
-        if ([self loadingAdForPlacementID:placementID]) {
-            [ATLogger logError:[NSString stringWithFormat:@"ATAdLoader::Ad for placementID:%@ is being loaded, please do not load again before the previous request's been finished", placementID] type:ATLogTypeExternal];
-            NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodePreviousLoadNotFinished userInfo:@{NSLocalizedDescriptionKey:@"ATSDK has failed to load ad", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"The previous load for the placementID %@ has not returned.", placementID]}];
-            [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:requestID trackType:ATNativeAdTrackTypeLoad extra:@{kATTrackerExtraSDKCalledFlagKey:@0,
-                                                                                                                   kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]),                       kATTrackerExtraSDKNotCalledReasonKey:@3
-                                                                                                                                          }];
-            [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
-                if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { [delegate didFailToLoadADWithPlacementID:placementID error:error]; }
-        } else {
-            [self setRequestID:requestID forPlacementID:placementID];
-            void (^StartLoadWithPlacementModel)(ATPlacementModel *placementModel) = ^(ATPlacementModel *placementModel) {
-                [[ATAdManager sharedManager] setExtraInfo:extra forPlacementID:placementID requestID:requestID];
-                if (placementModel.adDeliverySwitch) {
-                    [[ATAdLoader sharedLoader] startLoadingOffersWithRequestID:requestID placementModel:placementModel extra:extra delegate:delegate];
+        BOOL shouldSendLoadFailureIntervalDA = NO;
+        ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
+        if (placementModel == nil || [self loadFailureDateExpiredForPlacementModel:placementModel shouldSendDA:&shouldSendLoadFailureIntervalDA]) {
+            if ([[ATCapsManager sharedManager] validateLoadCapsForPlacementID:placementID cap:placementModel.loadCap duration:placementModel.loadCapDuration]) {
+                if ([[ATWaterfallManager sharedManager] loadingAdForPlacementID:placementID]) {
+                    [ATLogger logError:[NSString stringWithFormat:@"ATAdLoader::Ad for placementID:%@ is being loaded, please do not load again before the previous request's been finished", placementID] type:ATLogTypeExternal];
+                    [self updateLoadFailureDateForPlacementID:placementID];
+                    NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodePreviousLoadNotFinished userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"The previous load for the placementID %@ has not returned.", placementID]}];
+                    [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:requestID trackType:ATNativeAdTrackTypeLoad extra:@{kATTrackerExtraSDKCalledFlagKey:@0, kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraSDKNotCalledReasonKey:@3}];
+                    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@(error.code), kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
+                    if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { [delegate didFailToLoadADWithPlacementID:placementID error:error]; }
                 } else {
-                    [self clearRequestIDForPlacementID:placementID];
-                    if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { [delegate didFailToLoadADWithPlacementID:placementID error:[NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodePlacementAdDeliverySwitchOff userInfo:@{NSLocalizedDescriptionKey:@"Ad loading has failed.", NSLocalizedFailureReasonErrorKey:@"Ad delivery switch has be turned off in placement setting."}]]; }
-                }
-            };
-            ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
-            NSDictionary *curCustomData = [[ATPlacementSettingManager sharedManager] calculateCustomDataForPlacementID:placementID];
-            if (placementModel != nil) {//Placement setting exists
-                if ([[NSDate date] timeIntervalSinceDate:placementModel.cacheDate] >= placementModel.cacheValidDuration || [ATPlacementSettingManager myOfferExhaustedInPlacementModel:placementModel] || ![placementModel.associatedCustomData isEqualToDictionary:curCustomData]) {//placement expired or my offers exhausted
-                    __block BOOL placementReqSuc = NO;
-                    __block BOOL placeemntReqTimeout = NO;
-                    //request new placement model
-                    [[ATPlacementSettingManager sharedManager] requestPlacementSettingWithPlacementID:placementID customData:curCustomData completion:^(ATPlacementModel *newPlacementModel, NSError *error) {
-                        if (error == nil) {
-                            [[ATPlacementSettingManager sharedManager] addNewPlacementSetting:newPlacementModel];
-                            placementReqSuc = YES;
-                            if (!placeemntReqTimeout) { StartLoadWithPlacementModel(newPlacementModel); }
+                    void (^StartLoadWithPlacementModel)(ATPlacementModel *placementModel) = ^(ATPlacementModel *placementModel) {
+                        [[ATAdManager sharedManager] setExtraInfo:extra forPlacementID:placementID requestID:requestID];
+                        if (placementModel.adDeliverySwitch) {
+                            [[ATAdLoader sharedLoader] startLoadingOffersWithRequestID:requestID placementModel:placementModel extra:extra delegate:delegate];
+                        } else {
+                            [self updateLoadFailureDateForPlacementID:placementID];
+                            if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { [delegate didFailToLoadADWithPlacementID:placementID error:[NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodePlacementAdDeliverySwitchOff userInfo:@{NSLocalizedDescriptionKey:@"Ad loading has failed.", NSLocalizedFailureReasonErrorKey:@"Ad delivery switch has be turned off in placement setting."}]]; }
                         }
-                    }];
-                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(placementModel.updateTolerateInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                        placeemntReqTimeout = YES;
-                        if (!placementReqSuc) { StartLoadWithPlacementModel(placementModel); }//placement request failed
-                    });
-                } else {//placement valid, start load
-                    StartLoadWithPlacementModel(placementModel);
-                }
-            } else {
-                //placementID has to be added
-                __weak typeof(delegate) weakDelegate = delegate;
-                [[ATAdManager sharedManager] addNewPlacementID:placementID];
-                [[ATPlacementSettingManager sharedManager] requestPlacementSettingWithPlacementID:placementID customData:curCustomData completion:^(ATPlacementModel *placementModel, NSError *error) {
-                    if (error == nil) {
-                        [[ATPlacementSettingManager sharedManager] addNewPlacementSetting:placementModel];
-                        
-                        //Kick off MyOffer loading...
-                        if (placementModel.preloadMyOffer) { [ATAdLoader loadMyOfferOffersInPlacementModel:placementModel requestID:requestID offerIndex:0]; };
-                        
-                        StartLoadWithPlacementModel(placementModel);
+                    };
+                    ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
+                    NSDictionary *curCustomData = [[ATPlacementSettingManager sharedManager] calculateCustomDataForPlacementID:placementID];
+                    if (placementModel != nil) {//Placement setting exists
+                        if ([[NSDate date] timeIntervalSinceDate:placementModel.cacheDate] >= placementModel.cacheValidDuration || [ATPlacementSettingManager myOfferExhaustedInPlacementModel:placementModel] || ![placementModel.associatedCustomData isEqualToDictionary:curCustomData]) {//placement expired or my offers exhausted
+                            __block BOOL placementReqSuc = NO;
+                            __block BOOL placeemntReqTimeout = NO;
+                            //request new placement model
+                            [[ATPlacementSettingManager sharedManager] requestPlacementSettingWithPlacementID:placementID customData:curCustomData extra:extra completion:^(ATPlacementModel *newPlacementModel, NSError *error) {
+                                if (error == nil) {
+                                    [[ATPlacementSettingManager sharedManager] addNewPlacementSetting:newPlacementModel];
+                                    placementReqSuc = YES;
+                                    if (!placeemntReqTimeout) { StartLoadWithPlacementModel(newPlacementModel); }
+                                }
+                            }];
+                            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(placementModel.updateTolerateInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                                placeemntReqTimeout = YES;
+                                if (!placementReqSuc) { StartLoadWithPlacementModel(placementModel); }//placement request failed
+                            });
+                        } else {//placement valid, start load
+                            StartLoadWithPlacementModel(placementModel);
+                        }
                     } else {
-                        [self clearRequestIDForPlacementID:placementID];
-                        if ([weakDelegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) {
-                            [weakDelegate didFailToLoadADWithPlacementID:placementID error:error];
-                        }
-                    }
-                }];
-            }//End of outter else
+                        //placementID has to be added
+                        __weak typeof(delegate) weakDelegate = delegate;
+                        [[ATAdManager sharedManager] addNewPlacementID:placementID];
+                        [[ATPlacementSettingManager sharedManager] requestPlacementSettingWithPlacementID:placementID customData:curCustomData extra:extra completion:^(ATPlacementModel *placementModel, NSError *error) {
+                            if (error == nil) {
+                                [[ATPlacementSettingManager sharedManager] addNewPlacementSetting:placementModel];
+                                
+                                //Kick off MyOffer loading...
+                                if (placementModel.preloadMyOffer) { [ATAdLoader loadMyOfferOffersInPlacementModel:placementModel requestID:requestID offerIndex:0]; };
+                                
+                                StartLoadWithPlacementModel(placementModel);
+                            } else {
+                                [self updateLoadFailureDateForPlacementID:placementID];
+                                if ([weakDelegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { [weakDelegate didFailToLoadADWithPlacementID:placementID error:error]; }
+                            }
+                        }];
+                    }//End of outter else
+                }
+            } else {//load caps
+                [self updateLoadFailureDateForPlacementID:placementID];
+                NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeLoadCapsExceeded userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"The placementID %@ load too many times within the specified time period", placementID]}];
+                [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:requestID trackType:ATNativeAdTrackTypeLoad extra:@{kATTrackerExtraSDKCalledFlagKey:@0, kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraSDKNotCalledReasonKey:@8}];
+                [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@(error.code), kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
+                if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { [delegate didFailToLoadADWithPlacementID:placementID error:error]; }
+            }
+        } else {//load failure interval
+            //ATADLoadingErrorCodeFailureTooFrequent
+            NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeFailureTooFrequent userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"The placementID %@ load too frequently within the specified times period after the previous load failure", placementID]}];
+            if (shouldSendLoadFailureIntervalDA) {
+                [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:requestID trackType:ATNativeAdTrackTypeLoad extra:@{kATTrackerExtraSDKCalledFlagKey:@0, kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraSDKNotCalledReasonKey:@7}];
+                [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@(error.code), kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
+            }
+            if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { [delegate didFailToLoadADWithPlacementID:placementID error:error]; }
         }
     } else {//Status being true, notify successful load directory
-        [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:requestID trackType:ATNativeAdTrackTypeLoad extra:@{kATTrackerExtraSDKCalledFlagKey:@0,
-                                                                                                                                      kATTrackerExtraSDKNotCalledReasonKey:@4,
-                                                                                                                                      kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue])
-                                                                                                                                      }];
+        [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:requestID trackType:ATNativeAdTrackTypeLoad extra:@{kATTrackerExtraSDKCalledFlagKey:@0, kATTrackerExtraSDKNotCalledReasonKey:@4, kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue])}];
         
         [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:requestID trackType:ATNativeAdTrackTypeLoadResult extra:@{kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraLoadTimeKey:@.0f}];
-            if ([delegate respondsToSelector:@selector(didFinishLoadingADWithPlacementID:)]) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [delegate didFinishLoadingADWithPlacementID:placementID];
-                });
-            }
+            if ([delegate respondsToSelector:@selector(didFinishLoadingADWithPlacementID:)]) { dispatch_async(dispatch_get_main_queue(), ^{ [delegate didFinishLoadingADWithPlacementID:placementID]; }); }
         if ([[ATAdManager sharedManager] psIDExpired]) {
             [[ATAdManager sharedManager] clearPSID];
             NSDictionary *curCustomData = [[ATPlacementSettingManager sharedManager] calculateCustomDataForPlacementID:placementID];
-            [[ATPlacementSettingManager sharedManager] requestPlacementSettingWithPlacementID:placementID customData:curCustomData completion:^(ATPlacementModel *placementModel, NSError *error) {
-                if (error == nil) [[ATPlacementSettingManager sharedManager] addNewPlacementSetting:placementModel];
-            }];
+            [[ATPlacementSettingManager sharedManager] requestPlacementSettingWithPlacementID:placementID customData:curCustomData extra:extra completion:^(ATPlacementModel *placementModel, NSError *error) { if (error == nil) [[ATPlacementSettingManager sharedManager] addNewPlacementSetting:placementModel]; }];
         }
     }
 }
@@ -275,256 +249,462 @@ static NSString *const kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey =
 //To seerially load my offers; switch to be added
 +(void) loadMyOfferOffersInPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID offerIndex:(NSInteger)index {
     NSArray<ATMyOfferOfferModel*> *offerModels = placementModel.offers;
-    if (index < [offerModels count]) {
-        [[NSClassFromString(kATMyOfferOfferManagerClassName) sharedManager] loadOfferWithOfferModel:offerModels[index] setting:placementModel.myOfferSetting extra:nil completion:^(NSError *error) {
-            [self loadMyOfferOffersInPlacementModel:placementModel requestID:requestID offerIndex:index + 1];
+    if (index < [offerModels count]) { [[NSClassFromString(kATMyOfferOfferManagerClassName) sharedManager] loadOfferWithOfferModel:offerModels[index] setting:placementModel.myOfferSetting extra:nil completion:^(NSError *error) { [self loadMyOfferOffersInPlacementModel:placementModel requestID:requestID offerIndex:index + 1]; }]; }
+}
+
+-(void) updateStatusAndNotifySuccessToDelegate:(id<ATAdLoadingDelegate>)delegate placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID loadStartDate:(NSDate*)loadStartDate extra:(NSDictionary*)extra {
+    [self clearLoadFailureDateForPlacementID:placementModel.placementID];
+    NSMutableDictionary *tkExtra = [NSMutableDictionary dictionaryWithDictionary:@{kATTrackerExtraLoadTimeKey:@(loadStartDate != nil ? [@([[NSDate date]timeIntervalSinceDate:loadStartDate] * 1000) integerValue] : 0)}];
+    if ([extra[kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey] boolValue]) { tkExtra[kATTrackerExtraSDKNotCalledReasonKey] = @5; }
+    [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeLoadResult extra:tkExtra];
+    
+    [[ATBidInfoManager sharedManager] saveRequestID:requestID forPlacementID:placementModel.placementID];
+    ATPlacementModel *newPlacementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementModel.placementID];
+    if ([placementModel.asid isEqualToString:newPlacementModel.asid]) { [[ATPlacementSettingManager sharedManager] setStatus:YES forPlacementID:placementModel.placementID]; }
+    if (![[ATAdManager sharedManager] adBeingShownForPlacementID:placementModel.placementID] && [delegate respondsToSelector:@selector(didFinishLoadingADWithPlacementID:)]) { dispatch_async(dispatch_get_main_queue(), ^{ [delegate didFinishLoadingADWithPlacementID:placementModel.placementID]; }); }
+}
+
+-(void) notifyFailureWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID extra:(NSDictionary*)extra error:(NSError*)error delegate:(id<ATAdLoadingDelegate>)delegate {
+    [self updateLoadFailureDateForPlacementID:placementModel.placementID];
+    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@(error.code), kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:placementModel, kATADLoadingNotificationUserInfoPlacementKey, error, kATADLoadingNotificationUserInfoErrorKey, extra[kAdLoadingExtraRefreshFlagKey], kAdLoadingExtraRefreshFlagKey, nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingFailedToLoadNotification object:self userInfo:userInfo];
+    if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { dispatch_async(dispatch_get_main_queue(), ^{ [delegate didFailToLoadADWithPlacementID:placementModel.placementID error:error]; }); }
+}
+
+-(void) configureDefaultAdSourceLoadIfNeededWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(placementModel.extra.defaultAdSourceLoadingDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+            ATUnitGroupModel *loadingUG = [waterfall firstPendingNonHBUnitGroupWithNetworkFirmID:placementModel.extra.defaultNetworkFirmID];
+            if (loadingUG != nil) {
+                NSMutableDictionary *extraPara = extra != nil ? [NSMutableDictionary dictionaryWithDictionary:extra] : [NSMutableDictionary dictionary];
+                extraPara[kAdLoadingExtraDefaultLoadKey] = @YES;
+                [waterfall requestUnitGroup:loadingUG];
+                [self loadOfferWithRequestID:requestID placementModel:placementModel unitGroupModel:loadingUG finalWaterfall:finalWaterfall startDate:loadStartDate extra:extraPara delegate:delegate success:^(id<ATAdLoadingDelegate> delegate, NSArray<NSDictionary *> *assets) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithDictionary:extra];
+                        userInfo[kATADLoadingNotificationUserInfoRequestIDKey] = requestID;
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingOfferSuccessfullyLoadedNotification object:self userInfo:userInfo];
+                        [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                            if (!finished) {
+                                [waterfall finishUnitGroup:loadingUG withType:ATUnitGroupFinishTypeFinished];
+                                [waterfallWrapper finish];
+                                [waterfallWrapper fill];
+                                [self updateStatusAndNotifySuccessToDelegate:delegate placementModel:placementModel requestID:requestID loadStartDate:loadStartDate extra:nil];
+                            }
+                        }];
+                       
+                    });
+                } failure:^(id<ATAdLoadingDelegate> delegate, NSError * error) {
+                    //just do nothing
+                    [waterfall finishUnitGroup:loadingUG withType:error.code == ATADLoadingErrorCodeADOfferLoadingTimeout ? ATUnitGroupFinishTypeTimeout : ATUnitGroupFinishTypeFailed];
+                }];
+            }
+        }];
+    });
+}
+
+-(void) configureOfferLoadingTimeoutWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(placementModel.offerLoadingTimeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+            if (!finished) {
+                NSError *error = [NSError errorWithDomain:ATSDKAdLoadingErrorMsg code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"No ad return after placement loading timeout"}];
+                [waterfall enumerateTimeoutUnitGroupWithBlock:^(ATUnitGroupModel *unitGroup) {
+                    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyRequestFail placementID:placementModel.placementID unitGroupModel:unitGroup extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoNetworkFirmIDKey:@(unitGroup.networkFirmID), kAgentEventExtraInfoUnitGroupUnitIDKey:[NSString stringWithFormat:@"%@", unitGroup.unitID], kAgentEventExtraInfoPriorityKey:@([finalWaterfall.unitGroups indexOfObject:unitGroup]), kAgentEventExtraInfoRequestFailReasonKey:@1, kAgentEventExtraInfoRequestFailErrorCodeKey:@(error.code), kAgentEventExtraInfoRequestFailErrorMsgKey:[NSString stringWithFormat:@"%@", error], kAgentEventExtraInfoRequestHeaderBiddingFlagKey:@(unitGroup.headerBidding ? 1 : 0), kAgentEventExtraInfoRequestPriceKey:@([ATBidInfoManager priceForUnitGroup:unitGroup placementID:placementModel.placementID requestID:requestID]), kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
+                }];
+                [headerBiddingWaterfall enumerateTimeoutUnitGroupWithBlock:^(ATUnitGroupModel *unitGroup) {
+                    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyRequestFail placementID:placementModel.placementID unitGroupModel:unitGroup extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoNetworkFirmIDKey:@(unitGroup.networkFirmID), kAgentEventExtraInfoUnitGroupUnitIDKey:[NSString stringWithFormat:@"%@", unitGroup.unitID], kAgentEventExtraInfoPriorityKey:@([finalWaterfall.unitGroups indexOfObject:unitGroup]), kAgentEventExtraInfoRequestFailReasonKey:@1, kAgentEventExtraInfoRequestFailErrorCodeKey:@(error.code), kAgentEventExtraInfoRequestFailErrorMsgKey:[NSString stringWithFormat:@"%@", error], kAgentEventExtraInfoRequestHeaderBiddingFlagKey:@(unitGroup.headerBidding ? 1 : 0), kAgentEventExtraInfoRequestPriceKey:@([ATBidInfoManager priceForUnitGroup:unitGroup placementID:placementModel.placementID requestID:requestID]), kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
+                }];
+                
+                [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@(error.code), kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
+                
+                NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:placementModel, kATADLoadingNotificationUserInfoPlacementKey, error, kATADLoadingNotificationUserInfoErrorKey, extra[kAdLoadingExtraRefreshFlagKey], kAdLoadingExtraRefreshFlagKey, nil];
+                [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingFailedToLoadNotification object:self userInfo:userInfo];
+                LogHeaderBiddingLog(@"Offer loading timeout handler trigured, will notify failure");
+                [self notifyFailureWithPlacementModel:placementModel requestID:requestID extra:extra error:error delegate:delegate];
+                [waterfallWrapper finish];
+            }
+        }];
+    });
+}
+
++(void) sendDAForBidResponseProcessingWithPlacementID:(NSString*)placementID unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID requestTime:(NSTimeInterval)requestTime loadingStatus:(NSInteger)loadingStatus bidPrice:(double)bidPrice markingPrice:(double)markingPrice processResult:(NSInteger)processResult {
+    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyBidInfoProcessingKey placementID:placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoNetworkFirmIDKey:@(unitGroup.networkFirmID), kAgentEventExtraInfoAdSourceIDKey:unitGroup.unitID, kAgentEventExtraInfoBidInfoProcessingPriceKey:@(bidPrice), kAgentEventExtraInfoBidInfoBidRequestTimeKey:@((NSInteger)(requestTime * 1000.0f)), kAgentEventExtraInfoBidInfoLoadingStatusKey:@(loadingStatus), kAgentEventExtraInfoBidInfoMarkingPriceKey:@(markingPrice), kAgentEventExtraInfoBidInfoProcessResultKey:@(processResult)}];
+}
+
+void LogHeaderBiddingLog(NSString* log) { /*NSLog(@"S2SHeaderBidding::%@", log);*/ }
+-(void) startLoadingHeaderBiddingWithRequestID:(NSString*)requestID headerBiddingUnitGroups:(NSArray<ATUnitGroupModel*>*)headerBiddingUnitGroups offerCachedHBUnitGroups:(NSArray<ATUnitGroupModel*>*)offerCachedHBUGs unitGroupsWithHistoryBidInfo:(NSArray<ATUnitGroupModel*>*)unitGroupsWithHistoryBidInfo inactiveUGInfo:(NSArray<NSDictionary*>*)inactiveUGInfo inactiveHBUGInfo:(NSArray<NSDictionary*>*)inactiveHBUGInfo placementModel:(ATPlacementModel*)placementModel extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
+    __block NSUInteger numberOfFinishedBidRequest = 0;
+    __block BOOL bidSortTKSent = NO;
+    NSDate *startDate = [NSDate date];
+    NSMutableDictionary<NSString*, NSError*>* failedBidReqInfo = [NSMutableDictionary<NSString*, NSError*> dictionary];
+    [headerBiddingUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSMutableDictionary *info = [NSMutableDictionary dictionaryWithDictionary:obj.content != nil ? obj.content : @{}];
+        info[kADapterCustomInfoStatisticsInfoKey] = [ATAdLoader statisticsInfoWithPlacementModel:placementModel unitGroupModel:obj finalWaterfall:nil requestID:requestID bidRequest:YES];
+        [obj.adapterClass bidRequestWithPlacementModel:placementModel unitGroupModel:obj info:info completion:^(ATBidInfo *bidInfo, NSError *error) {
+            numberOfFinishedBidRequest++;
+            ATPlacementModel *newPlacementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementModel.placementID];
+            NSMutableArray<NSString*>* newHBUnitIDs = [NSMutableArray<NSString*> array];
+            [newPlacementModel.headerBiddingUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { [newHBUnitIDs addObject:obj.unitID]; }] ;
+            if ([newHBUnitIDs containsObject:obj.unitID]) {
+                if (error == nil) {
+                    LogHeaderBiddingLog([NSString stringWithFormat:@"Bidding rqeust success, price:%lf", bidInfo.price]);
+                    [[ATBidInfoManager sharedManager] saveBidInfo:bidInfo forRequestID:requestID];
+                    [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                        //Factored out to be called later
+                        void(^StartHBWaterfallIfNeeded)(NSTimeInterval requestTime, ATPlacementModel *placementModel, NSUInteger numberOfFinishedRequest, ATWaterfall *headerBiddingWaterfall, NSString *requestID, NSDictionary *extra, id<ATAdLoadingDelegate> delegate) = ^(NSTimeInterval requestTime, ATPlacementModel *placementModel, NSUInteger numberOfFinishedRequest, ATWaterfall *headerBiddingWaterfall, NSString *requestID, NSDictionary *extra, id<ATAdLoadingDelegate> delegate){
+                            LogHeaderBiddingLog(@"StartHBWaterfallIfNeeded()");
+                            if (requestTime < placementModel.headerBiddingRequestTolerateInterval) {
+                                LogHeaderBiddingLog(@"requestTime < tolerate interval");
+                                if ([headerBiddingUnitGroups count] == numberOfFinishedBidRequest) {
+                                    LogHeaderBiddingLog(@"hbUGs.count == finishedNumber");
+                                    [self continueLoadingHeaderBiddingWaterfall:headerBiddingWaterfall finalWaterfall:finalWaterfall placementModel:placementModel requestID:requestID startDate:loadStartDate extra:extra delegate:delegate];
+                                }
+                            } else {
+                                LogHeaderBiddingLog(@"requestTime > tolerate interval");
+                                if ([headerBiddingWaterfall canContinueLoading:YES]) {
+                                    LogHeaderBiddingLog(@"hbwaterfall not loading, will start");
+                                    [self continueLoadingHeaderBiddingWaterfall:headerBiddingWaterfall finalWaterfall:finalWaterfall placementModel:placementModel requestID:requestID startDate:loadStartDate extra:extra delegate:delegate];
+                                }
+                            }
+                        };
+                        
+                        NSTimeInterval requestTime = [[NSDate date] timeIntervalSinceDate:startDate];
+                        if (requestTime > placementModel.headerBiddingRequestTimeout) {//Save the bid info for next load
+                            LogHeaderBiddingLog(@"requestTime > placementModel.headerBiddingRequestTimeout");
+                            [ATAdLoader sendDAForBidResponseProcessingWithPlacementID:placementModel.placementID unitGroup:obj requestID:requestID requestTime:requestTime loadingStatus:finished ? (waterfallWrapper.isFilled ? 2 : 3) : 1 bidPrice:bidInfo.price markingPrice:bidInfo.price processResult:3];
+                        } else {//Use the returned bid info
+                            LogHeaderBiddingLog(@"requestTime <= placementModel.headerBiddingRequestTimeout");
+                            if (waterfallWrapper.filled) {
+                                ATUnitGroupModel *maxFinishedUG = [waterfallWrapper filledUnitGroupWithMaximumPrice];
+                                double markingPrice = [ATBidInfoManager priceForUnitGroup:maxFinishedUG placementID:placementModel.placementID requestID:requestID];
+                                if (bidInfo.price > markingPrice) {
+                                    LogHeaderBiddingLog(@"finished, response.price > maxPrice, add hbwaterfall, will start will if needed");
+                                    [headerBiddingWaterfall addUnitGroup:obj];
+                                    [finalWaterfall insertUnitGroup:obj price:bidInfo.price];
+                                    StartHBWaterfallIfNeeded(requestTime, placementModel, numberOfFinishedBidRequest, headerBiddingWaterfall, requestID, extra, delegate);
+                                    [ATAdLoader sendDAForBidResponseProcessingWithPlacementID:placementModel.placementID unitGroup:obj requestID:requestID requestTime:requestTime loadingStatus:2 bidPrice:bidInfo.price markingPrice:markingPrice processResult:1];
+                                } else {
+                                    LogHeaderBiddingLog(@"finished, response.price < maxPrice");
+                                    [ATAdLoader sendDAForBidResponseProcessingWithPlacementID:placementModel.placementID unitGroup:obj requestID:requestID requestTime:requestTime loadingStatus:2 bidPrice:bidInfo.price markingPrice:markingPrice processResult:3];
+                                }
+                            } else {
+                                [finalWaterfall insertUnitGroup:obj price:bidInfo.price];
+                                ATUnitGroupModel *minUG = [waterfall unitGroupWithMinimumPrice];
+                                double markingPrice = [ATBidInfoManager priceForUnitGroup:minUG placementID:placementModel.placementID requestID:requestID];
+                                if (bidInfo.price > markingPrice) {
+                                    LogHeaderBiddingLog(@"response price > minUG, will be added to hb_waterfall");
+                                    [headerBiddingWaterfall addUnitGroup:obj];
+                                    StartHBWaterfallIfNeeded(requestTime, placementModel, numberOfFinishedBidRequest, headerBiddingWaterfall, requestID, extra, delegate);
+                                    [ATAdLoader sendDAForBidResponseProcessingWithPlacementID:placementModel.placementID unitGroup:obj requestID:requestID requestTime:requestTime loadingStatus:1 bidPrice:bidInfo.price markingPrice:markingPrice processResult:1];
+                                } else {
+                                    LogHeaderBiddingLog(@"response price < minUG, add to waterfall");
+                                    [waterfall addUnitGroup:obj];
+                                    if ([waterfall canContinueLoading:YES]) {
+                                        LogHeaderBiddingLog(@"waterfall not loading, will start");
+                                        [self continueLoadingWaterfall:waterfall finalWaterfall:finalWaterfall placementModel:placementModel requestID:requestID startDate:loadStartDate extra:extra delegate:delegate];
+                                    }
+                                    [ATAdLoader sendDAForBidResponseProcessingWithPlacementID:placementModel.placementID unitGroup:obj requestID:requestID requestTime:requestTime loadingStatus:1 bidPrice:bidInfo.price markingPrice:markingPrice processResult:2];
+                                }
+                            }
+                        }
+                    }];//End of waterfall access
+                } else {//Error occurd while bidding
+                    LogHeaderBiddingLog([NSString stringWithFormat:@"Bid request failed for adsource:%@, error:%@", obj.unitID, error]);
+                    failedBidReqInfo[obj.unitID] = error ? error : [NSError errorWithDomain:@"com.anythink.HBFailure" code:1 userInfo:@{NSLocalizedDescriptionKey:@"Bid request has failed", NSLocalizedFailureReasonErrorKey:@"ATSDK has failed to get bid info"}];
+                }
+            }
+            if (numberOfFinishedBidRequest == [headerBiddingUnitGroups count]) {
+                LogHeaderBiddingLog(@"All bid requests sent");
+                [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                    if (!bidSortTKSent) {
+                        [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeBidSort extra:@{kATTrackerExtraHeaderBiddingInfoKey:[ATAdLoader bidSortTKExtraWithPlacementID:placementModel.placementID requestID:requestID bidStartDate:startDate inactiveHBUnitGroupInfo:inactiveHBUGInfo inactiveUGInfo:inactiveUGInfo failedHBUGInfo:failedBidReqInfo sortedUGs:finalWaterfall.unitGroups offerCachedUnitGroups:offerCachedHBUGs unitGroupsWithHistoryBidInfo:unitGroupsWithHistoryBidInfo]}];
+                        bidSortTKSent = YES;
+                    }
+                    if (!finished) {
+                        LogHeaderBiddingLog(@"Not finish, will check waterfall&headerBiddingWaterfall status");
+                        if ((![waterfall canContinueLoading:YES] && waterfall.numberOfTimeoutRequests == 0) && (![headerBiddingWaterfall canContinueLoading:YES] && headerBiddingWaterfall.numberOfTimeoutRequests == 0)) {
+                            LogHeaderBiddingLog(@"Waterfall&headerBiddingWaterfall not loading & cannot continue&no timeout, will finish&notify failure");
+                            [waterfallWrapper finish];
+                            [self notifyFailureWithPlacementModel:placementModel requestID:requestID extra:extra error:[NSError errorWithDomain:ATSDKAdLoadingErrorMsg code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"All requests have failed"}] delegate:delegate];
+                        }
+                    }
+                }];
+            }
+        }];
+    }];
+    
+    //Start hb_waterfall load if needed
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(placementModel.headerBiddingRequestTolerateInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+            if ([headerBiddingWaterfall canContinueLoading:YES]) { [self continueLoadingHeaderBiddingWaterfall:headerBiddingWaterfall finalWaterfall:finalWaterfall placementModel:placementModel requestID:requestID startDate:loadStartDate extra:extra delegate:delegate]; }
+        }];
+    });
+    
+    //Send tk11 if needed
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(placementModel.headerBiddingRequestTimeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+            if (numberOfFinishedBidRequest < [headerBiddingUnitGroups count]) {
+                [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeBidSort extra:@{kATTrackerExtraHeaderBiddingInfoKey:[ATAdLoader bidSortTKExtraWithPlacementID:placementModel.placementID requestID:requestID bidStartDate:startDate inactiveHBUnitGroupInfo:inactiveHBUGInfo inactiveUGInfo:inactiveUGInfo failedHBUGInfo:failedBidReqInfo sortedUGs:finalWaterfall.unitGroups offerCachedUnitGroups:offerCachedHBUGs unitGroupsWithHistoryBidInfo:unitGroupsWithHistoryBidInfo]}];
+                bidSortTKSent = YES;
+            }
+        }];
+    });
+}
+
+-(void) startLoadingS2SHeaderBiddingWithRequestID:(NSString*)requestID headerBiddingUnitGroups:(NSArray<ATUnitGroupModel*>*)headerBiddingUnitGroups offerCachedHBUnitGroups:(NSArray<ATUnitGroupModel*>*)offerCachedHBUGs unitGroupsWithHistoryBidInfo:(NSArray<ATUnitGroupModel*>*)unitGroupsWithHistoryBidInfo inactiveUGInfo:(NSArray<NSDictionary*>*)inactiveUGInfo inactiveHBUGInfo:(NSArray<NSDictionary*>*)inactiveHBUGInfo placementModel:(ATPlacementModel*)placementModel extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
+    NSDate *bidStartDate = [NSDate date];
+    __block BOOL bidSortTKSent = NO;
+    [ATAdLoader sendS2SBidRequestWithPlacementModel:placementModel headerBiddingUnitGroups:headerBiddingUnitGroups requestID:requestID completion:^(NSDictionary<NSString*, ATBidInfo*>*bidInfos, NSDictionary<NSString*, NSError*>*errors) {
+        NSTimeInterval bidTime = [[NSDate date] timeIntervalSinceDate:bidStartDate];
+        NSMutableDictionary<NSString*, ATUnitGroupModel*>* ugMap = [NSMutableDictionary<NSString*, ATUnitGroupModel*> dictionary];
+        [headerBiddingUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { ugMap[obj.unitID] = obj; }];
+        
+        [errors enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSError * _Nonnull obj, BOOL * _Nonnull stop) { [self updateS2SBidRequestFailureForPlacemetModel:placementModel unitGroupModel:ugMap[key]]; }];
+        
+        if ([bidInfos count] > 0) {
+            [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                NSInteger loadingStatus = waterfallWrapper.filled ? 2 : 1;
+                 NSMutableArray<NSDictionary*>* processingResultList = [NSMutableArray<NSDictionary*> array];
+                LogHeaderBiddingLog([NSString stringWithFormat:@"Bid req finised, filled:%@", @(waterfallWrapper.filled)]);
+                if (bidTime > placementModel.headerBiddingRequestTimeout) {
+                    LogHeaderBiddingLog(@"But timeout");
+                    if (finished && !waterfallWrapper.filled) { loadingStatus = 3; }
+                    [bidInfos enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, ATBidInfo * _Nonnull obj, BOOL * _Nonnull stop) {
+                        [[ATBidInfoManager sharedManager] saveBidInfo:obj forRequestID:requestID];
+                        [processingResultList addObject:@{@"unit_id":key, @"nw_firm_id":@(obj.networkFirmID), @"bidprice":@(obj.price), @"result":@3}];
+                    }];
+                } else {
+                    LogHeaderBiddingLog(@"Will start inserting");
+                    //processing result can't be 3 here since loading DID NOT return before placementModel.headerBiddingRequestTimeout as long as S2S HB request has been kicked off.
+                    double maxMarkingPrice = [ATBidInfoManager priceForUnitGroup:[waterfallWrapper filledUnitGroupWithMaximumPrice] placementID:placementModel.placementID requestID:requestID];
+                    double minMarkingPrice = [ATBidInfoManager priceForUnitGroup:[waterfall unitGroupWithMinimumPrice] placementID:placementModel.placementID requestID:requestID];
+                    
+                    [bidInfos enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, ATBidInfo * _Nonnull bidInfo, BOOL * _Nonnull stop) {
+                        [[ATBidInfoManager sharedManager] saveBidInfo:bidInfo forRequestID:requestID];
+                        NSMutableDictionary *processingResult = [NSMutableDictionary dictionaryWithObjectsAndKeys:key, @"unit_id", @(bidInfo.networkFirmID), @"nw_firm_id", @(bidInfo.price), @"bidprice", nil];
+                        [processingResultList addObject:processingResult];
+                        NSString *processingResultKey = @"result";
+                        NSString *ctypeKey = @"ctype";
+                        if (waterfallWrapper.filled) {
+                            LogHeaderBiddingLog([NSString stringWithFormat:@"Bid price:%lf, max making price:%lf", bidInfo.price, maxMarkingPrice]);
+                            processingResult[ctypeKey] = @(maxMarkingPrice);
+                            if (bidInfo.price > maxMarkingPrice) {
+                                LogHeaderBiddingLog(@"Insert into hb waterfall");
+                                [finalWaterfall insertUnitGroup:ugMap[key] price:bidInfo.price];
+                                [headerBiddingWaterfall addUnitGroup:ugMap[key]];
+                                processingResult[processingResultKey] = @(1);
+                            } else {
+                                LogHeaderBiddingLog(@"Save for next time");
+                                processingResult[processingResultKey] = @(3);
+                            }
+                        } else {
+                            LogHeaderBiddingLog([NSString stringWithFormat:@"Bid price:%lf, min making price:%lf", bidInfo.price, minMarkingPrice]);
+                            processingResult[ctypeKey] = @(minMarkingPrice);
+                            if (bidInfo.price > minMarkingPrice) {
+                                LogHeaderBiddingLog(@"Insert into hb waterfall");
+                                [finalWaterfall insertUnitGroup:ugMap[key] price:bidInfo.price];
+                                [headerBiddingWaterfall addUnitGroup:ugMap[key]];
+                                processingResult[processingResultKey] = @(1);
+                            } else {
+                                LogHeaderBiddingLog(@"Insert into waterfall");
+                                [finalWaterfall insertUnitGroup:ugMap[key] price:bidInfo.price];
+                                [waterfall addUnitGroup:ugMap[key]];
+                                processingResult[processingResultKey] = @(2);
+                            }
+                        }
+                    }];
+                    
+                    //resume waterfall loading
+                    if ([waterfall canContinueLoading:YES]) {
+                        LogHeaderBiddingLog(@"waterfall not loading, will start");
+                        [self continueLoadingWaterfall:waterfall finalWaterfall:finalWaterfall placementModel:placementModel requestID:requestID startDate:loadStartDate extra:extra delegate:delegate];
+                    }
+                    
+                    //resume hb waterfall loading
+                    if ([headerBiddingWaterfall canContinueLoading:YES]) {
+                        LogHeaderBiddingLog(@"hbwaterfall not loading, will start");
+                        [self continueLoadingHeaderBiddingWaterfall:headerBiddingWaterfall finalWaterfall:finalWaterfall placementModel:placementModel requestID:requestID startDate:loadStartDate extra:extra delegate:delegate];
+                    }
+                }
+                
+                //Send processing result da
+                [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyBidInfoProcessingKey placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoBidInfoBatProcessResultKey:@{@"bid_time":@((NSInteger)(bidTime * 1000)), @"load_status":@(loadingStatus), @"result_list":processingResultList}}];
+                
+                //Send tk11
+                if (!bidSortTKSent) {
+                    [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeBidSort extra:@{kATTrackerExtraHeaderBiddingInfoKey:[ATAdLoader bidSortTKExtraWithPlacementID:placementModel.placementID requestID:requestID bidStartDate:bidStartDate inactiveHBUnitGroupInfo:inactiveHBUGInfo inactiveUGInfo:inactiveUGInfo failedHBUGInfo:errors sortedUGs:finalWaterfall.unitGroups offerCachedUnitGroups:offerCachedHBUGs unitGroupsWithHistoryBidInfo:unitGroupsWithHistoryBidInfo]}];
+                    bidSortTKSent = YES;
+                }
+            }];
+        } else {//Bid request failed
+            [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                waterfallWrapper.headerBiddingFailed = YES;
+                if (!finished && (![waterfall canContinueLoading:YES] && waterfall.numberOfTimeoutRequests == 0)) {
+                    LogHeaderBiddingLog(@"Not finish, will check waterfall&headerBiddingWaterfall status");
+                    [waterfallWrapper finish];
+                    [self notifyFailureWithPlacementModel:placementModel requestID:requestID extra:extra error:[NSError errorWithDomain:ATSDKAdLoadingErrorMsg code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"Bid request have failed"}] delegate:delegate];
+                }
+            }];
+        }
+    }];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(placementModel.headerBiddingRequestTimeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+            if (!bidSortTKSent) {
+                [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeBidSort extra:@{kATTrackerExtraHeaderBiddingInfoKey:[ATAdLoader bidSortTKExtraWithPlacementID:placementModel.placementID requestID:requestID bidStartDate:bidStartDate inactiveHBUnitGroupInfo:inactiveHBUGInfo inactiveUGInfo:inactiveUGInfo failedHBUGInfo:nil sortedUGs:finalWaterfall.unitGroups offerCachedUnitGroups:offerCachedHBUGs unitGroupsWithHistoryBidInfo:unitGroupsWithHistoryBidInfo]}];
+                bidSortTKSent = YES;
+            }
+        }];
+    });
+}
+
+//Thread safe is taken care of by the caller.
+-(void) continueLoadingWaterfall:(ATWaterfall*)waterfall finalWaterfall:(ATWaterfall*)finalWaterfall placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID startDate:(NSDate*)loadStartDate extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
+    if (placementModel.maxConcurrentRequestCount == 1) {
+        [self seriallyLoadOfferWithWaterfall:waterfall finalWaterfall:finalWaterfall requestID:requestID placementModel:placementModel startDate:loadStartDate extra:extra delegate:delegate];
+    } else {
+        [self concurrentlyLoadOfferWithWaterfall:waterfall finalWaterfall:finalWaterfall numberOfUnitGroups:1 requestID:requestID placementModel:placementModel startDate:loadStartDate extra:extra delegate:delegate];
+    }
+}
+
+//Thread safe is taken care of by the caller.
+-(void) continueLoadingHeaderBiddingWaterfall:(ATWaterfall*)headerBiddingWaterfall finalWaterfall:(ATWaterfall*)finalWaterfall placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID startDate:(NSDate*)loadStartDate extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
+    ATUnitGroupModel *loadingUG = [headerBiddingWaterfall unitGroupWithMaximumPrice];
+    if (loadingUG != nil) {
+        [headerBiddingWaterfall requestUnitGroup:loadingUG];
+        LogHeaderBiddingLog(@"HB load start");
+        [self loadOfferWithRequestID:requestID placementModel:placementModel unitGroupModel:loadingUG finalWaterfall:finalWaterfall startDate:loadStartDate extra:extra delegate:delegate success:^(id<ATAdLoadingDelegate> delegate, NSArray<NSDictionary *> *assets) {
+            [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                LogHeaderBiddingLog(@"HB load success");
+                waterfallWrapper.numberOfCachedOffers++;
+                [[ATBidInfoManager sharedManager] saveRequestID:requestID forPlacementID:placementModel.placementID];
+                if (!finished) {
+                    LogHeaderBiddingLog(@"Not finished, will notify success");
+                    [self updateStatusAndNotifySuccessToDelegate:delegate placementModel:placementModel requestID:requestID loadStartDate:loadStartDate extra:extra];
+                    [waterfallWrapper finish];
+                    [waterfallWrapper fill];
+                }
+                [headerBiddingWaterfall finishUnitGroup:loadingUG withType:ATUnitGroupFinishTypeFinished];
+                if ([headerBiddingWaterfall canContinueLoading:YES]) {
+                    LogHeaderBiddingLog(@"Can continue hb loading, will continue");
+                    [self continueLoadingHeaderBiddingWaterfall:headerBiddingWaterfall finalWaterfall:finalWaterfall placementModel:placementModel requestID:requestID startDate:loadStartDate extra:extra delegate:delegate];
+                }
+            }];
+        } failure:^(id<ATAdLoadingDelegate> delegate, NSError *error) {
+            LogHeaderBiddingLog([NSString stringWithFormat:@"HB load %@", error.code == ATADLoadingErrorCodeADOfferLoadingTimeout ? @"timeout" : @"failed"]);
+            [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                [headerBiddingWaterfall finishUnitGroup:loadingUG withType:error.code == ATADLoadingErrorCodeADOfferLoadingTimeout ? ATUnitGroupFinishTypeTimeout : ATUnitGroupFinishTypeFailed];
+                if ([headerBiddingWaterfall canContinueLoading:YES]) {
+                    LogHeaderBiddingLog(@"Can continue, will continue hb loading");
+                    [self continueLoadingHeaderBiddingWaterfall:headerBiddingWaterfall finalWaterfall:finalWaterfall placementModel:placementModel requestID:requestID startDate:loadStartDate extra:extra delegate:delegate];
+                } else {
+                    LogHeaderBiddingLog(@"Cannot continue, will check waterfall loading status");
+                    if (!finished) {
+                        if (!waterfall.isLoading && ![waterfall canContinueLoading:NO]) {
+                            [self notifyFailureWithPlacementModel:placementModel requestID:requestID extra:extra error:error delegate:delegate];
+                            [waterfallWrapper finish];
+                        }
+                    }
+                }
+            }];
         }];
     }
 }
 
-static NSString *const kRequestIDKey = @"request_id";
-/**
- * The structure of the delegate flags dict is as follows:
- * {
- *      placement_1:request_id,
- *      placement_2:request_id
- * }
- */
--(void) updateStatusAndNotifySuccessIfNeededToDelegate:(id<ATAdLoadingDelegate>)delegate placementID:(NSString*)placementID requestID:(NSString*)requestID extra:(NSDictionary*)extra {
-    __weak typeof(delegate) weakDelegate = delegate;
-    __weak typeof(self) weakSelf = self;
-    [weakSelf.agentEventFlagsAccessor writeWithBlock:^{
-        if (![weakSelf.agentEventFlags[requestID] boolValue]) {
-            weakSelf.agentEventFlags[requestID] = @YES;
-            NSDate *loadStartDate = [[ATAdLoader sharedLoader] loadDateForRequestID:requestID];
-            NSMutableDictionary *tkExtra = [NSMutableDictionary dictionaryWithDictionary:@{kATTrackerExtraLoadTimeKey:@(loadStartDate != nil ? [@([[NSDate date]timeIntervalSinceDate:loadStartDate] * 1000) integerValue] : 0)}];
-            if ([extra[kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey] boolValue]) { tkExtra[kATTrackerExtraSDKNotCalledReasonKey] = @5; }
-            [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:requestID trackType:ATNativeAdTrackTypeLoadResult extra:tkExtra];
++(BOOL) shouldStartLoadForPlacementModel:(ATPlacementModel*)placementModel error:(NSError**)error {
+    BOOL shouldLoad = NO;
+    NSString *errorReasonDesc = @"";
+    NSInteger errorCode = 0;
+    if ([ATCapsManager validateCapsForPlacementModel:placementModel]) {
+        if ([ATCapsManager validatePacingForPlacementModel:placementModel]) {
+            shouldLoad = YES;
+        } else {//Pacing within limit
+            errorReasonDesc = @"Placement pacing within limit.";
+            errorCode = 2;
         }
-    }];
-    
-    [_delegateCallFlagsAccessor writeWithBlock:^{
-        if ([requestID isEqualToString:_delegateCallFlags[placementID]]) {
-            [self clearRequestIDForPlacementID:placementID];
-            [[ATPlacementSettingManager sharedManager] setStatus:YES forPlacementID:placementID];
-            if (![[ATAdManager sharedManager] adBeingShownForPlacementID:placementID] && [weakDelegate respondsToSelector:@selector(didFinishLoadingADWithPlacementID:)]) { dispatch_async(dispatch_get_main_queue(), ^{ [weakDelegate didFinishLoadingADWithPlacementID:placementID]; }); }
-            [_delegateCallFlags removeObjectForKey:placementID];
-        }
-    }];
-}
-
-/*
- *request id storage is used as loading flag to allow/disallow loading for a placement
- */
--(void) setRequestID:(NSString*)requestID forPlacementID:(NSString*)placementID {
-    [_requestIDStorageAccessor writeWithBlock:^{ _requestIDStorage[placementID] = requestID; }];
-}
-
--(void) clearRequestIDForPlacementID:(NSString*)placementID {
-    [_requestIDStorageAccessor writeWithBlock:^{ [_requestIDStorage removeObjectForKey:placementID]; }];
-}
-
--(BOOL) loadingAdForPlacementID:(NSString*)placementID {
-    return [[_requestIDStorageAccessor readWithBlock:^id{ return @(_requestIDStorage[placementID] != nil); }] boolValue];
-}
-
-/*
- * load date storage
- */
--(void) setLoadDateforRequestID:(NSString*)requestID{
-    if (requestID != nil) { [_loadDateStorageAccessor writeWithBlock:^{ _loadDateStorage[requestID] = [NSDate date]; }]; }
-}
--(NSDate *)loadDateForRequestID:(NSString*)requestID{
-    return [_loadDateStorageAccessor readWithBlock:^id{ return _loadDateStorage[requestID]; }];
-}
--(void)clearLoadDateForRequestID:(NSString*)requestID{
-    [_loadDateStorageAccessor writeWithBlock:^{ [_loadDateStorage removeObjectForKey:requestID]; }];
-}
-
--(void) configureDefaultAdSourceLoadIfNeededWithPlacementModel:(ATPlacementModel*)placementModel activeUnitGroups:(NSArray<ATUnitGroupModel*>*)activeUnitGroups requestID:(NSString*)requestID extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
-    NSUInteger defaultAdSourceIndex = [[activeUnitGroups mutableArrayValueForKey:NSStringFromSelector(@selector(networkFirmID))] indexOfObject:@(placementModel.extra.defaultNetworkFirmID)];
-    if (defaultAdSourceIndex != NSNotFound && defaultAdSourceIndex > MIN(placementModel.maxConcurrentRequestCount - 1, [activeUnitGroups count] - 1)) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(placementModel.extra.defaultAdSourceLoadingDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            if ([[ATAdManager sharedManager] adReadyForPlacementID:placementModel.placementID]) {
-                [ATLogger logMessage:@"Ad's been ready for placement, default load's not needed" type:ATLogTypeInternal];
-            } else {
-                if (defaultAdSourceIndex > [self currentUnitGroupIndexForPlacementID:placementModel.placementID requestID:requestID]) {
-                    [ATLogger logMessage:@"ATAdLoader::Will dispatch default ad source load." type:ATLogTypeInternal];
-                    NSMutableDictionary *extraPara = extra != nil ? [NSMutableDictionary dictionaryWithDictionary:extra] : [NSMutableDictionary dictionary];
-                    extraPara[kAdLoadingExtraDefaultLoadKey] = @YES;
-                    [self loadOfferWithRequestID:requestID placementModel:placementModel unitGroupModel:activeUnitGroups[defaultAdSourceIndex] extra:extraPara delegate:delegate success:^(id<ATAdLoadingDelegate> delegate, NSArray<NSDictionary *> *assets) {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [ATLogger logMessage:@"ATAdLoader::Default ad source load has succeeded; will notify delegate if needed" type:ATLogTypeInternal];
-                            NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithDictionary:extra];
-                            userInfo[kATADLoadingNotificationUserInfoRequestIDKey] = requestID;
-                            [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingOfferSuccessfullyLoadedNotification object:self userInfo:userInfo];
-                            [self updateStatusAndNotifySuccessIfNeededToDelegate:delegate placementID:placementModel.placementID requestID:requestID extra:nil];
-                        });
-                    } failure:^(id<ATAdLoadingDelegate> delegate, NSError * error) {
-                        //just do nothing
-                    }];
-                } else {
-                    [ATLogger logMessage:@"ATAdLoader::Default adsource load has begun." type:ATLogTypeInternal];
-                }
-            }
-        });
-    } else {
-        [ATLogger logMessage:@"Default ad source not configured or contained in first round loading" type:ATLogTypeInternal];
+    } else {//Caps exceeded
+        errorReasonDesc = @"Placement cap exeeds limit.";
+        errorCode = 1;
     }
+    if (!shouldLoad && error != nil) { *error = [NSError errorWithDomain:ATSDKAdLoadingErrorMsg code:errorCode userInfo:@{NSLocalizedDescriptionKey:@"Ad load for the placement should not be started", NSLocalizedFailureReasonErrorKey:errorReasonDesc}]; }
+    return shouldLoad;
 }
 
 static NSString *const kATHeaderBiddingResponseListFailedListKey = @"header_bidding_failed_request";
 -(void) startLoadingOffersWithRequestID:(NSString*)requestID placementModel:(ATPlacementModel*)placementModel extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
     __weak typeof(delegate) weakDelegate = delegate;
-    if ([placementModel.unitGroups count] + [placementModel.headerBiddingUnitGroups count] > 0) {
-        NSMutableDictionary *startLoadNotiUserInfo = [NSMutableDictionary dictionaryWithObject:placementModel forKey:kATADLoadingNotificationUserInfoPlacementKey];
-        if (extra != nil) { startLoadNotiUserInfo[kATADLoadingNotificationUserInfoExtraKey] = extra; }
-        [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingStartLoadNotification object:nil userInfo:startLoadNotiUserInfo];
-        
-        void(^StartLoading)(NSArray<ATUnitGroupModel*>* activeUnitGroups) = ^(NSArray<ATUnitGroupModel*>* activeUnitGroups) {
-            BOOL shouldLoad = NO;
-            NSString *errorReasonDesc = @"";
-            NSMutableDictionary *trackingExtraInfo = [NSMutableDictionary dictionary];
-            if ([ATCapsManager validateCapsForPlacementModel:placementModel]) {
-                if ([ATCapsManager validatePacingForPlacementModel:placementModel]) {
-                    shouldLoad = YES;
-                    trackingExtraInfo[kATTrackerExtraSDKCalledFlagKey] = @1;
-                } else {//Pacing within limit
-                    errorReasonDesc = @"Placement pacing within limit.";
-                    
-                    trackingExtraInfo[kATTrackerExtraSDKCalledFlagKey] = @0;
-                    trackingExtraInfo[kATTrackerExtraSDKNotCalledReasonKey] = @2;
-                }
-            } else {//Caps exceeded
-                errorReasonDesc = @"Placement cap exeeds limit.";
-                
-                trackingExtraInfo[kATTrackerExtraSDKCalledFlagKey] = @0;
-                trackingExtraInfo[kATTrackerExtraSDKNotCalledReasonKey] = @1;
-            }
-            if ([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]) { trackingExtraInfo[kATTrackerExtraAutoloadOnCloseFlagKey] = @YES; }
-            [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeLoad extra:trackingExtraInfo];
+    
+    NSError *placementValidateError = nil;
+    BOOL capsAndPacingValid = [ATAdLoader shouldStartLoadForPlacementModel:placementModel error:&placementValidateError];
+    NSMutableDictionary *trackingExtraInfo = [NSMutableDictionary dictionaryWithObject:@(capsAndPacingValid ? 1 : 0) forKey:kATTrackerExtraSDKCalledFlagKey];
+    if (!capsAndPacingValid) { trackingExtraInfo[kATTrackerExtraSDKNotCalledReasonKey] = @(placementValidateError.code); }
+    
+    if ([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]) { trackingExtraInfo[kATTrackerExtraAutoloadOnCloseFlagKey] = @YES; }
+    [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeLoad extra:trackingExtraInfo];
+    
+    if (capsAndPacingValid) {
+        if ([placementModel.unitGroups count] + [placementModel.S2SHeaderBiddingUnitGroups count] > 0) {
+            NSMutableDictionary *startLoadNotiUserInfo = [NSMutableDictionary dictionaryWithObject:placementModel forKey:kATADLoadingNotificationUserInfoPlacementKey];
+            if (extra != nil) { startLoadNotiUserInfo[kATADLoadingNotificationUserInfoExtraKey] = extra; }
+            [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingStartLoadNotification object:nil userInfo:startLoadNotiUserInfo];
             
-            if (shouldLoad) {
-                [[ATAdLoader sharedLoader] setDelegateCallFlagForPlacementID:placementModel.placementID requestID:requestID];
-                [[ATAdLoader sharedLoader] setLoadDateforRequestID:requestID];
-                if (placementModel.maxConcurrentRequestCount == 1) {
-                    //Serial request
-                    [[ATAdLoader sharedLoader] seriallyLoadOfferWithRequestID:requestID placementModel:placementModel activeUnitGroups:activeUnitGroups extra:extra delegate:delegate index:0];
-                } else {
-                    //Parallel request
-                    [[ATAdLoader sharedLoader] concurrentlyLoadOfferWithRequestID:requestID placementModel:placementModel activeUnitGroups:activeUnitGroups extra:extra delegate:delegate round:0];
+            void(^SendAgentEvent)(NSArray*infos) = ^(NSArray *infos) {
+                if ([infos count] > 0) {
+                    NSArray *inActiveInfos = [NSArray arrayWithArray:infos];
+                    [inActiveInfos enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyRequestFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoNetworkFirmIDKey:obj[kATTrackerExtraNetworkFirmIDKey] != nil ? obj[kATTrackerExtraNetworkFirmIDKey] : @(0), kAgentEventExtraInfoUnitGroupUnitIDKey:obj[kATTrackerExtraUnitIDKey] != nil ? obj[kATTrackerExtraUnitIDKey] : @"", kAgentEventExtraInfoPriorityKey:obj[kAgentEventExtraInfoPriorityKey] != nil ? obj[kAgentEventExtraInfoPriorityKey] : @0, kAgentEventExtraInfoRequestFailReasonKey:@([obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] integerValue]), kAgentEventExtraInfoRequestHeaderBiddingFlagKey:@([obj[kAgentEventExtraInfoRequestHeaderBiddingFlagKey] boolValue] ? 1 : 0), kAgentEventExtraInfoRequestPriceKey:@([obj[kAgentEventExtraInfoRequestPriceKey] doubleValue]), kAgentEventExtraInfoRequestFailReasonKey:@([obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] integerValue]), kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}]; }];
                 }
+            };
+            
+            NSArray *inActiveInfos = nil;
+            NSMutableArray<ATUnitGroupModel*>* activeUnitGroups = [ATAdLoader activeUnitGroupsInPlacementModel:placementModel unitGroups:placementModel.unitGroups inactiveUnitGroupInfos:&inActiveInfos requestID:requestID];
+            
+            NSArray *hbInactiveInfos = nil;
+            NSMutableArray<ATUnitGroupModel*>* activeHBUnitGroups = [ATAdLoader activeUnitGroupsInPlacementModel:placementModel unitGroups:placementModel.S2SHeaderBiddingUnitGroups inactiveUnitGroupInfos:&hbInactiveInfos requestID:requestID];
+            
+            NSArray<ATUnitGroupModel*>* offerCachedHBUnitGroups = [ATAdLoader offerCachedActiveUnitGroupsInPlacementModel:placementModel hbUnitGroups:activeHBUnitGroups];
+            [activeHBUnitGroups removeObjectsInArray:offerCachedHBUnitGroups];//remove hblist
+            [activeUnitGroups addObjectsFromArray:offerCachedHBUnitGroups];//add normal
+            [[ATBidInfoManager sharedManager] renewBidInfoForPlacementID:placementModel.placementID fromRequestID:[[ATBidInfoManager sharedManager] requestForPlacementID:placementModel.placementID] toRequestID:requestID unitGroups:offerCachedHBUnitGroups];
+            
+            NSArray<ATUnitGroupModel*>* hbUGsWithHistoryBidInfo = [[ATBidInfoManager sharedManager] unitGroupWithHistoryBidInfoAvailableForPlacementID:placementModel.placementID unitGroups:activeHBUnitGroups newRequestID:requestID];
+            [activeHBUnitGroups removeObjectsInArray:hbUGsWithHistoryBidInfo];
+            [activeUnitGroups addObjectsFromArray:hbUGsWithHistoryBidInfo];
+            
+            //Handle agent event
+            NSMutableArray *mutableInactiveInfos = [NSMutableArray arrayWithArray:inActiveInfos];
+            if ([hbInactiveInfos count] > 0) { [mutableInactiveInfos addObjectsFromArray:hbInactiveInfos]; }
+            SendAgentEvent(mutableInactiveInfos);
+            
+            if ([activeUnitGroups count] + [activeHBUnitGroups count] > 0) {
+                [[ATCapsManager sharedManager] increaseCapWithPlacementID:placementModel.placementID duration:placementModel.loadCapDuration];
                 
-                //Configure default adsource load
-                [self configureDefaultAdSourceLoadIfNeededWithPlacementModel:placementModel activeUnitGroups:activeUnitGroups requestID:requestID extra:extra delegate:delegate];
+                NSArray<ATUnitGroupModel*>* rankedAndShuffledUnitGroups = [ATAdLoader rankAndShuffleUnitGroups:activeUnitGroups placementModel:placementModel requestID:requestID];
                 
-                //Configure placement timeout
-                [ATLogger logMessage:[NSString stringWithFormat:@"ATAdLoader::Loading has been kicked off, will dispatch long timeout handler with offer_loading_timeout:%.1f", placementModel.offerLoadingTimeout / 1000.0f] type:ATLogTypeInternal];
-                __weak typeof(self) weakSelf = self;
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(placementModel.offerLoadingTimeout / 1000.0f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    [ATLogger logMessage:@"ATAdLoader::Dispatched long timeout handler fired(长超时结束，处理Adsource 埋点)" type:ATLogTypeInternal];
-                    [_adaptersAccessors writeWithBlock:^{
-                        NSMutableArray<NSString*>* keysForPendingGroups = [NSMutableArray<NSString*> array];
-                        NSMutableArray<ATUnitGroupModel*>* pendingGroups = [NSMutableArray<ATUnitGroupModel*> array];
-                        [placementModel.unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull unitGroup, NSUInteger idx, BOOL * _Nonnull stop) {
-                            NSString *adapterKey = [weakSelf adapterKeyWithRequestID:requestID placementModel:placementModel unitGroupModel:unitGroup];
-                            if (weakSelf.adapters[adapterKey] != nil) {
-                                [pendingGroups addObject:unitGroup];
-                                [keysForPendingGroups addObject:adapterKey];
-                                NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AT SDK has failed to load ad.", NSLocalizedFailureReasonErrorKey:@"Third party SDK has not returned after long timeout."}];
-                                NSDate *failedDate = [[ATAdLoader sharedLoader]loadDateForRequestID:requestID];
-                                [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyRequestFail placementID:placementModel.placementID unitGroupModel:unitGroup extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoNetworkFirmIDKey:@(unitGroup.networkFirmID), kAgentEventExtraInfoUnitGroupUnitIDKey:[NSString stringWithFormat:@"%@", unitGroup.unitID], kAgentEventExtraInfoPriorityKey:@(idx), kAgentEventExtraInfoRequestFailReasonKey:@1, kAgentEventExtraInfoRequestFailErrorCodeKey:@(error.code), kAgentEventExtraInfoRequestFailErrorMsgKey:[NSString stringWithFormat:@"%@", error], kAgentEventExtraInfoRequestHeaderBiddingFlagKey:@(unitGroup.headerBidding ? 1 : 0), kAgentEventExtraInfoRequestPriceKey:@(unitGroup.headerBidding ? [unitGroup bidPriceWithRequestID:requestID] : unitGroup.price),
-                                                                                                                                                            kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)
-                                                                                                                                                                                             }];
-                            }
-                        }];
-                        if ([keysForPendingGroups count] > 0) {
-                            [ATLogger logMessage:[NSString stringWithFormat:@"ATAdLoader::Short timeout unit group found, will handle agent event & tracking for unitGroups:%@", pendingGroups] type:ATLogTypeInternal];
-                            NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AD offer loading has failed.",NSLocalizedFailureReasonErrorKey:@"Third party SDK has not returned after long timeout."}];
-                            [weakSelf.delegateCallFlagsAccessor writeWithBlock:^{
-                                [ATLogger logMessage:@"ATAdLoader::examine delegate call falgs" type:ATLogTypeInternal];
-                                if ([requestID isEqualToString:weakSelf.delegateCallFlags[placementModel.placementID]]) {
-                                    [ATLogger logMessage:@"ATAdLoader::Will call delegate" type:ATLogTypeInternal];
-                                    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
-                                    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:placementModel, kATADLoadingNotificationUserInfoPlacementKey, error, kATADLoadingNotificationUserInfoErrorKey, extra[kAdLoadingExtraRefreshFlagKey], kAdLoadingExtraRefreshFlagKey, nil];
-                                    [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingFailedToLoadNotification object:self userInfo:userInfo];
-                                    if ([weakDelegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { dispatch_async(dispatch_get_main_queue(), ^{ [weakDelegate didFailToLoadADWithPlacementID:placementModel.placementID error:error]; }); }
-                                    [weakSelf.delegateCallFlags removeObjectForKey:placementModel.placementID];
-                                } else {
-                                    [ATLogger logMessage:@"ATAdLoader::No need to call delegate" type:ATLogTypeInternal];
-                                }
-                            }];
-                            [weakSelf.adapters removeObjectsForKeys:keysForPendingGroups];
+                //tk15
+                if ([rankedAndShuffledUnitGroups count] > 0) { [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeADTrackTypeRankAndShuffle extra:@{kATTrackerExtraHeaderBiddingInfoKey:[ATAdLoader rankAndShuffleTKExtraWithPlacementID:placementModel.placementID rankAndShullfedUnitGroups:rankedAndShuffledUnitGroups offerCachedUnitGroups:offerCachedHBUnitGroups unitGroupsWithHistoryBidInfo:hbUGsWithHistoryBidInfo bidRequestDate:[NSDate date] requestID:requestID], kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue])}]; }
+                
+                ATWaterfall *waterfall = [[ATWaterfall alloc] initWithUnitGroups:rankedAndShuffledUnitGroups placementID:placementModel.placementID requestID:requestID];
+                [[ATWaterfallManager sharedManager] attachWaterfall:waterfall completion:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                    waterfallWrapper.headerBiddingFired = [activeHBUnitGroups count] > 0;
+                    //Configure default adsource load
+                    if ([waterfall canContinueLoading:YES]) {
+                        LogHeaderBiddingLog(@"Configure default load & start loading");
+                        [self configureDefaultAdSourceLoadIfNeededWithPlacementModel:placementModel requestID:requestID extra:extra delegate:delegate];
+                        
+                        if (placementModel.maxConcurrentRequestCount == 1) {
+                            [self seriallyLoadOfferWithWaterfall:waterfall finalWaterfall:finalWaterfall requestID:requestID placementModel:placementModel startDate:loadStartDate extra:extra delegate:delegate];
                         } else {
-                            [ATLogger logMessage:@"ATAdLoader::No timeout unit group found, all succeeded/failed without timeouting" type:ATLogTypeInternal];
-                        }
-                    }];
-                });
-            } else {
-                [ATLogger logMessage:[NSString stringWithFormat:@"ATAdLoader::Placement:%@ will not load because of pacing/cap limit", placementModel.placementID] type:ATLogTypeInternal];
-                NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AD offer loading has failed.",NSLocalizedFailureReasonErrorKey:errorReasonDesc}];
-                [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
-                NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:placementModel, kATADLoadingNotificationUserInfoPlacementKey, error, kATADLoadingNotificationUserInfoErrorKey, extra[kAdLoadingExtraRefreshFlagKey], kAdLoadingExtraRefreshFlagKey,  nil];
-                [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingFailedToLoadNotification object:self userInfo:userInfo];
-                if ([weakDelegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { dispatch_async(dispatch_get_main_queue(), ^{ [weakDelegate didFailToLoadADWithPlacementID:placementModel.placementID error:error]; }); }
-                [self clearRequestIDForPlacementID:placementModel.placementID];
-            }
-        };
-        void(^SendAgentEvent)(NSArray*infos) = ^(NSArray *infos) {
-            if ([infos count] > 0) {
-                NSArray *inActiveInfos = [NSArray arrayWithArray:infos];
-                [inActiveInfos enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                    NSDate *failedDate = [[ATAdLoader sharedLoader]loadDateForRequestID:requestID];
-                    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyRequestFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoNetworkFirmIDKey:obj[kATTrackerExtraNetworkFirmIDKey] != nil ? obj[kATTrackerExtraNetworkFirmIDKey] : @(0), kAgentEventExtraInfoUnitGroupUnitIDKey:obj[kATTrackerExtraUnitIDKey] != nil ? obj[kATTrackerExtraUnitIDKey] : @"", kAgentEventExtraInfoPriorityKey:obj[kAgentEventExtraInfoPriorityKey] != nil ? obj[kAgentEventExtraInfoPriorityKey] : @0, kAgentEventExtraInfoRequestFailReasonKey:@([obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] integerValue]), kAgentEventExtraInfoRequestHeaderBiddingFlagKey:@([obj[kAgentEventExtraInfoRequestHeaderBiddingFlagKey] boolValue] ? 1 : 0), kAgentEventExtraInfoRequestPriceKey:@([obj[kAgentEventExtraInfoRequestPriceKey] doubleValue]), kAgentEventExtraInfoRequestFailReasonKey:@([obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] integerValue]),
-                                                                                                                                                                           kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)
-                                                                                                                                                                           }];
-                }];
-            }
-        };
-        
-        NSArray *inActiveInfos = nil;
-        NSMutableArray<ATUnitGroupModel*>* activeUnitGroups = [ATAdLoader activeUnitGroupsInPlacementModel:placementModel unitGroups:placementModel.unitGroups inactiveUnitGroupInfos:&inActiveInfos requestID:requestID];
-        NSArray *hbInactiveInfos = nil;
-        NSMutableArray<ATUnitGroupModel*>* activeHBUnitGroups = [ATAdLoader activeUnitGroupsInPlacementModel:placementModel unitGroups:placementModel.headerBiddingUnitGroups inactiveUnitGroupInfos:&hbInactiveInfos requestID:requestID];
-        NSArray<ATUnitGroupModel*>* offerCachedHBUnitGroups = [ATAdLoader offerCachedActiveUnitGroupsInPlacementModel:placementModel hbUnitGroups:activeHBUnitGroups];
-        [activeHBUnitGroups removeObjectsInArray:offerCachedHBUnitGroups];//remove hblist
-        [activeUnitGroups addObjectsFromArray:offerCachedHBUnitGroups];//add nomarl
-        
-        if ([activeUnitGroups count] + [activeHBUnitGroups count] > 0) {
-            if ([activeHBUnitGroups count] > 0) {//HeaderBidding
-                NSArray<NSDictionary*>* inactiveBidResponseListTKInfo = [ATAdLoader bidResponseListWithInactiveUnitGroupInfos:hbInactiveInfos unitGroupInfos:inActiveInfos];
-                NSMutableArray<NSDictionary*>* failedHBRequestInfos = [NSMutableArray<NSDictionary*> array];
-                if ([inactiveBidResponseListTKInfo count] > 0) { [failedHBRequestInfos addObjectsFromArray:inactiveBidResponseListTKInfo]; }
-                
-                NSNumber* bidRequestTime = [Utilities normalizedTimeStamp];
-                [self runHeaderBiddingWithPlacementModel:placementModel requestID:requestID completion:^(NSDictionary *context) {
-                    NSArray *inActiveInfos = nil;
-                    NSArray<ATUnitGroupModel*>* sortedUnitGroups = [ATAdLoader activeUnitGroupsInPlacementModel:placementModel unitGroups:[placementModel unitGroupsForRequestID:requestID] inactiveUnitGroupInfos:&inActiveInfos requestID:requestID];
-                    if ([sortedUnitGroups count] > 0) {
-                        StartLoading(sortedUnitGroups);
-                    } else {
-                        [self clearRequestIDForPlacementID:placementModel.placementID];
-                        NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AD offer loading has failed.",NSLocalizedFailureReasonErrorKey:@"HeaderBidding request has failed."}];
-                        NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:placementModel, kATADLoadingNotificationUserInfoPlacementKey, error, kATADLoadingNotificationUserInfoErrorKey, extra[kAdLoadingExtraRefreshFlagKey], kAdLoadingExtraRefreshFlagKey,  nil];
-                        [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingFailedToLoadNotification object:self userInfo:userInfo];
-                        if ([weakDelegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) {
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                [weakDelegate didFailToLoadADWithPlacementID:placementModel.placementID error:error];
-                            });
+                            [self concurrentlyLoadOfferWithWaterfall:waterfall finalWaterfall:finalWaterfall numberOfUnitGroups:MIN(placementModel.maxConcurrentRequestCount, [waterfall.unitGroups count]) requestID:requestID placementModel:placementModel startDate:loadStartDate extra:extra delegate:delegate];
                         }
                     }
-                    SendAgentEvent(inActiveInfos);
-                    NSArray<NSDictionary*> *hbResResponseListTKInfo = [ATAdLoader bidResponseListWithBidResponseExtraInfo:context headerBiddingUnitGroups:activeHBUnitGroups];
-                    if ([hbResResponseListTKInfo count] > 0) { [failedHBRequestInfos addObjectsFromArray:hbResResponseListTKInfo]; }
-                    [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeBidSort extra:@{kATTrackerExtraHeaderBiddingInfoKey:[ATAdLoader dynamicWaterfallTrackingExtraWithPlacementModel:placementModel unitGroups:sortedUnitGroups offerCachedUnitGroups:offerCachedHBUnitGroups unitGroupsUsingLatestBidInfo:context[kATHeaderBiddingExtraInfoUnitGroupsUsingLatestBidInfoKey] bidRequestTime:bidRequestTime bidResponseTime:[Utilities normalizedTimeStamp] requestID:requestID extraInfo:@{kATHeaderBiddingResponseListFailedListKey:failedHBRequestInfos}],kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue])}];
-                    [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeADTrackTypeRankAndShuffle extra:@{kATTrackerExtraHeaderBiddingInfoKey:[ATAdLoader dynamicWaterfallTrackingExtraWithPlacementModel:placementModel unitGroups:sortedUnitGroups offerCachedUnitGroups:nil unitGroupsUsingLatestBidInfo:nil bidRequestTime:nil bidResponseTime:nil requestID:requestID extraInfo:nil],kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue])}];
+                    
+                    LogHeaderBiddingLog(@"Configure offer loading timeout");
+                    //Configure placement timeout
+                    [self configureOfferLoadingTimeoutWithPlacementModel:placementModel requestID:requestID extra:extra delegate:delegate];
                 }];
-            } else {//No Header Bidding UnitGroups
-                NSArray<ATUnitGroupModel*>* rankedAndShuffledUnitGroups = [ATAdLoader rankAndShuffleUnitGroups:activeUnitGroups];
-                [placementModel updateUnitGroups:rankedAndShuffledUnitGroups forRequestID:requestID];
-                //Send tk15
-                [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeADTrackTypeRankAndShuffle extra:@{kATTrackerExtraHeaderBiddingInfoKey:[ATAdLoader dynamicWaterfallTrackingExtraWithPlacementModel:placementModel unitGroups:rankedAndShuffledUnitGroups offerCachedUnitGroups:nil unitGroupsUsingLatestBidInfo:nil bidRequestTime:nil bidResponseTime:nil requestID:requestID extraInfo:nil],kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue])}];
-                StartLoading(rankedAndShuffledUnitGroups);
+                
+                if ([activeHBUnitGroups count] > 0) { [self startLoadingS2SHeaderBiddingWithRequestID:requestID headerBiddingUnitGroups:activeHBUnitGroups offerCachedHBUnitGroups:offerCachedHBUnitGroups unitGroupsWithHistoryBidInfo:hbUGsWithHistoryBidInfo inactiveUGInfo:inActiveInfos inactiveHBUGInfo:hbInactiveInfos placementModel:placementModel extra:extra delegate:delegate]; }
+            } else {//No active unit groups
                 if ([hbInactiveInfos count] > 0) {
                     NSMutableArray *inactiveInfos = [NSMutableArray arrayWithArray:inActiveInfos];
                     [inactiveInfos addObjectsFromArray:hbInactiveInfos];
@@ -532,179 +712,203 @@ static NSString *const kATHeaderBiddingResponseListFailedListKey = @"header_bidd
                 } else {
                     SendAgentEvent(inActiveInfos);
                 }
+                
+                [self updateLoadFailureDateForPlacementID:placementModel.placementID];
+                
+                NSError *error = [NSError errorWithDomain:@"com.anythink.ATAdLoading" code:ATADLoadingErrorCodeUnitGroupsFilteredOut userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"Ad sources are filtered, no ad source is currently available."}];
+                [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeLoad extra:@{kATTrackerExtraSDKCalledFlagKey:@0, kATTrackerExtraSDKNotCalledReasonKey:@6}];
+                [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@(error.code)}];
+                if ([weakDelegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { dispatch_async(dispatch_get_main_queue(), ^{ [weakDelegate didFailToLoadADWithPlacementID:placementModel.placementID error:error]; }); }
             }
-        } else {//No active unit groups
-            if ([hbInactiveInfos count] > 0) {
-                NSMutableArray *inactiveInfos = [NSMutableArray arrayWithArray:inActiveInfos];
-                [inactiveInfos addObjectsFromArray:hbInactiveInfos];
-                SendAgentEvent(inactiveInfos);
-            } else {
-                SendAgentEvent(inActiveInfos);
-            }
+        } else {//No adsource(ug_list or hb_list) configured in the placement
+            [self updateLoadFailureDateForPlacementID:placementModel.placementID];
             
-            NSError *error = [NSError errorWithDomain:@"com.anythink.ATAdLoading" code:ATADLoadingErrorCodeUnitGroupsFilteredOut userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load ad", NSLocalizedFailureReasonErrorKey:@"Ad sources are filtered, no ad source is currently available."}];
-            [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeLoad extra:@{kATTrackerExtraSDKCalledFlagKey:@0,
-                                                                                                                                                     kATTrackerExtraSDKNotCalledReasonKey:@6}];
-            [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error]}];
-            [self clearRequestIDForPlacementID:placementModel.placementID];
-            if ([weakDelegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) {
-                dispatch_async(dispatch_get_main_queue(), ^{ [weakDelegate didFailToLoadADWithPlacementID:placementModel.placementID error:error]; });
-            }
+            NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeNoUnitGroupsFoundInPlacement userInfo:@{NSLocalizedDescriptionKey:@"AD offer loading has failed.",NSLocalizedFailureReasonErrorKey:@"The placement strategy does not contain any ad sources, please check the mediation configuration in TopOn."}];
+            NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:placementModel, kATADLoadingNotificationUserInfoPlacementKey, error, kATADLoadingNotificationUserInfoErrorKey, extra[kAdLoadingExtraRefreshFlagKey], kAdLoadingExtraRefreshFlagKey,  nil];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingFailedToLoadNotification object:self userInfo:userInfo];
+            if ([weakDelegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { dispatch_async(dispatch_get_main_queue(), ^{ [weakDelegate didFailToLoadADWithPlacementID:placementModel.placementID error:error]; }); }
         }
-    } else {
-        [self clearRequestIDForPlacementID:placementModel.placementID];
-        //TO DO: error description has to be revisid
-        NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeNoUnitGroupsFoundInPlacement userInfo:@{NSLocalizedDescriptionKey:@"AD offer loading has failed.",NSLocalizedFailureReasonErrorKey:@"The placement strategy does not contain any unit group."}];
+    } else {//Placement cap&pacing validation vailed
+        [self updateLoadFailureDateForPlacementID:placementModel.placementID];
+        
+        NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AD offer loading has failed.",NSLocalizedFailureReasonErrorKey:placementValidateError.userInfo[NSLocalizedFailureReasonErrorKey] != nil ? placementValidateError.userInfo[NSLocalizedFailureReasonErrorKey] : @"Placement cap/pacing validation failed"}];
+        [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@(error.code), kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
+        
         NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:placementModel, kATADLoadingNotificationUserInfoPlacementKey, error, kATADLoadingNotificationUserInfoErrorKey, extra[kAdLoadingExtraRefreshFlagKey], kAdLoadingExtraRefreshFlagKey,  nil];
         [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingFailedToLoadNotification object:self userInfo:userInfo];
-        if ([weakDelegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [weakDelegate didFailToLoadADWithPlacementID:placementModel.placementID error:error];
-            });
-        }
+        
+        if ([weakDelegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { dispatch_async(dispatch_get_main_queue(), ^{ [weakDelegate didFailToLoadADWithPlacementID:placementModel.placementID error:error]; }); }
     }
 }
 
--(void) seriallyLoadOfferWithRequestID:(NSString*)requestID placementModel:(ATPlacementModel*)placementModel activeUnitGroups:(NSArray<ATUnitGroupModel*>*)activeUnitGroups extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate index:(NSInteger)index {
-    __weak typeof(self) weakSelf = self;
-    __weak typeof(delegate) weakDelegate = delegate;
-    __block NSInteger numberOfTimeoutRequest = 0;
-    [[ATAdLoader sharedLoader] setCurrentUnitGroupIndex:index forPlacementID:placementModel.placementID requestID:requestID];
-    id<ATAdManagement> adManager = [placementModel.adManagerClass sharedManager];
-    NSArray<NSDictionary*>* adSourceStatusInpectionExtraInfo = nil;
-    if ([adManager respondsToSelector:@selector(inspectAdSourceStatusWithPlacementModel:activeUnitGroups:unitGroup:requestID:extraInfo:)] && [adManager inspectAdSourceStatusWithPlacementModel:placementModel activeUnitGroups:activeUnitGroups unitGroup:activeUnitGroups[index] requestID:requestID extraInfo:&adSourceStatusInpectionExtraInfo]) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.1f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingOfferSuccessfullyLoadedNotification object:self userInfo:extra];
-        });
-        [self updateStatusAndNotifySuccessIfNeededToDelegate:delegate placementID:placementModel.placementID requestID:requestID extra:@{kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey:@YES}];
-        [adSourceStatusInpectionExtraInfo enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyAdSourceStatusFillKey placementID:placementModel.placementID unitGroupModel:nil extraInfo:obj];
-        }];
-    } else {
-        [self loadOfferWithRequestID:requestID placementModel:placementModel unitGroupModel:activeUnitGroups[index] extra:extra delegate:weakDelegate success:^(id<ATAdLoadingDelegate> delegate, NSArray<NSDictionary*> *assets) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.1f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingOfferSuccessfullyLoadedNotification object:self userInfo:extra];
-            });
-            [self updateStatusAndNotifySuccessIfNeededToDelegate:delegate placementID:placementModel.placementID requestID:requestID extra:nil];
-        } failure:^(id<ATAdLoadingDelegate> delegate, NSError *error) {
-            if (error.code == ATADLoadingErrorCodeADOfferLoadingTimeout) { numberOfTimeoutRequest++; }
-            if (index + 1 < [activeUnitGroups count]) {
-                [_delegateCallFlagsAccessor readWithBlock:^id{
-                    if ([_delegateCallFlags[placementModel.placementID] isEqualToString:requestID]) { [weakSelf seriallyLoadOfferWithRequestID:requestID placementModel:placementModel activeUnitGroups:activeUnitGroups extra:extra delegate:delegate index:index + 1]; }
-                    return nil;
-                }];
-            } else {
-                if (numberOfTimeoutRequest == 0) {
-                    [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error != nil ? error : [NSError errorWithDomain:@"com.anythink.OfferLoading" code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load ad", NSLocalizedFailureReasonErrorKey:@"All offer loading(s) failed."}]], kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
-                    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObject:placementModel forKey:kATADLoadingNotificationUserInfoPlacementKey];
-                    userInfo[kAdLoadingExtraRefreshFlagKey] = extra[kAdLoadingExtraRefreshFlagKey];
-                    if (error != nil) { userInfo[kATADLoadingNotificationUserInfoErrorKey] = error; }
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingFailedToLoadNotification object:self userInfo:userInfo];
-                    //else if there's no more unit groups, call the failure callback on the loading delegate.
-                    
-                    if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            [delegate didFailToLoadADWithPlacementID:placementModel.placementID error:error];
-                        });
-                    }
-                    [[ATAdLoader sharedLoader] clearDelegateCallFlagForPlacementID:placementModel.placementID];
+//Thread safe is taken care of by the caller.
+-(void) seriallyLoadOfferWithWaterfall:(ATWaterfall*)loadingWaterfall finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID placementModel:(ATPlacementModel*)placementModel startDate:loadStartDate extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
+    ATUnitGroupModel *loadingUG = [loadingWaterfall unitGroupWithMaximumPrice];
+    if (loadingUG != nil) {
+        [loadingWaterfall requestUnitGroup:loadingUG];
+        __weak typeof(delegate) weakDelegate = delegate;
+        id<ATAdManagement> adManager = [placementModel.adManagerClass sharedManager];
+        NSArray<NSDictionary*>* adSourceStatusInpectionExtraInfo = nil;
+        if ([adManager respondsToSelector:@selector(inspectAdSourceStatusWithPlacementModel:unitGroup:finalWaterfall:requestID:extraInfo:)] && [adManager inspectAdSourceStatusWithPlacementModel:placementModel unitGroup:loadingUG finalWaterfall:finalWaterfall requestID:requestID extraInfo:&adSourceStatusInpectionExtraInfo]) {
+            //Send da
+            [adSourceStatusInpectionExtraInfo enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyAdSourceStatusFillKey placementID:placementModel.placementID unitGroupModel:nil extraInfo:obj]; }];
+            
+            [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.1f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingOfferSuccessfullyLoadedNotification object:self userInfo:extra]; });
+                waterfallWrapper.numberOfCachedOffers += [adSourceStatusInpectionExtraInfo count];
+                if (!finished) {
+                    [waterfallWrapper finish];
+                    [waterfallWrapper fill];
+                    [self updateStatusAndNotifySuccessToDelegate:delegate placementModel:placementModel requestID:requestID loadStartDate:loadStartDate extra:@{kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey:@YES}];
                 }
-                [self clearRequestIDForPlacementID:placementModel.placementID];
-            }//End of else
-        }];
+                [loadingWaterfall finishUnitGroup:loadingUG withType:ATUnitGroupFinishTypeFinished];
+            }];
+        } else {
+            [self loadOfferWithRequestID:requestID placementModel:placementModel unitGroupModel:loadingUG finalWaterfall:finalWaterfall startDate:loadStartDate extra:extra delegate:weakDelegate success:^(id<ATAdLoadingDelegate> delegate, NSArray<NSDictionary*> *assets) {
+                LogHeaderBiddingLog(@"Serially load success");
+                [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.1f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingOfferSuccessfullyLoadedNotification object:self userInfo:extra]; });
+                    
+                    [loadingWaterfall finishUnitGroup:loadingUG withType:ATUnitGroupFinishTypeFinished];
+                    if (!finished) {
+                        LogHeaderBiddingLog(@"Not finished, will finish&notify success");
+                        [waterfallWrapper finish];
+                        [waterfallWrapper fill];
+                        [self updateStatusAndNotifySuccessToDelegate:delegate placementModel:placementModel requestID:requestID loadStartDate:loadStartDate extra:nil];
+                    }
+                }];
+            } failure:^(id<ATAdLoadingDelegate> delegate, NSError *error) {
+                LogHeaderBiddingLog([NSString stringWithFormat:@"Serially load %@", error.code == ATADLoadingErrorCodeADOfferLoadingTimeout ? @"timeout" : @"failed"]);
+                [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                    [loadingWaterfall finishUnitGroup:loadingUG withType:error.code == ATADLoadingErrorCodeADOfferLoadingTimeout ? ATUnitGroupFinishTypeTimeout : ATUnitGroupFinishTypeFailed];
+                    if (!finished) {
+                        LogHeaderBiddingLog(@"Not finished, will check can continue");
+                        if ([waterfall canContinueLoading:NO]) {
+                            LogHeaderBiddingLog(@"Will continue");
+                            [self seriallyLoadOfferWithWaterfall:waterfall finalWaterfall:finalWaterfall requestID:requestID placementModel:placementModel startDate:loadStartDate extra:extra delegate:delegate];
+                        } else {
+                            LogHeaderBiddingLog(@"Can't continue");
+                            if (!finished) {
+                                LogHeaderBiddingLog(@"Not finish, will checkout start date");
+                                if (!waterfallWrapper.headerBiddingFired || waterfallWrapper.headerBiddingFailed || [[NSDate date] timeIntervalSinceDate:loadStartDate] > placementModel.headerBiddingRequestTimeout) {
+                                    LogHeaderBiddingLog(@"Takes more than headerBiddingRequestTimeout, will check number of timeout requests");
+                                    if (waterfall.numberOfTimeoutRequests == 0) {
+                                        LogHeaderBiddingLog(@"No timeouts, will check headerBiddingWaterfall status");
+                                        if (headerBiddingWaterfall)
+                                        [waterfallWrapper finish];
+                                        [self notifyFailureWithPlacementModel:placementModel requestID:requestID extra:extra error:error delegate:delegate];
+                                    }
+                                }//headerBiddingRequestTimeout
+                            }
+                        }//End of [waterfall canContinueLoading]
+                    }
+                }];
+            }];
+        }//end of else of no
     }
 }
 
--(void) concurrentlyLoadOfferWithRequestID:(NSString*)requestID placementModel:(ATPlacementModel*)placementModel activeUnitGroups:(NSArray<ATUnitGroupModel*>*)activeUnitGroups extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate round:(NSInteger)round {
-    [ATLogger logMessage:[NSString stringWithFormat:@"ATAdLoader::Round:%ld of concurrent load", round] type:ATLogTypeInternal];
-    __weak typeof(self) weakSelf = self;
-    NSInteger concurrentCount = placementModel.maxConcurrentRequestCount;
-    if (round * concurrentCount < [activeUnitGroups count]) {
-        /**
-         * The number of the requests that have failed to load the ad.
-         */
-        __block NSInteger failedLoadNumber = 0;
-        __block NSInteger numberOfTimeoutRequest = 0;
-        NSMutableDictionary *adSourceStatusRecords = [NSMutableDictionary dictionary];
-        [[ATAdLoader sharedLoader] setCurrentUnitGroupIndex:MIN(round * concurrentCount + concurrentCount, [activeUnitGroups count]) - 1 forPlacementID:placementModel.placementID requestID:requestID];
-        for (NSInteger i = round * concurrentCount; i < MIN(round * concurrentCount + concurrentCount, [activeUnitGroups count]); i++) {
-            id<ATAdManagement> adManager = [placementModel.adManagerClass sharedManager];
-            NSArray<NSDictionary*>* adSourceStatusInpectionExtraInfo = nil;
-            if ([adSourceStatusRecords count] == 0 && [adManager respondsToSelector:@selector(inspectAdSourceStatusWithPlacementModel:activeUnitGroups:unitGroup:requestID:extraInfo:)] && [adManager inspectAdSourceStatusWithPlacementModel:placementModel activeUnitGroups:activeUnitGroups unitGroup:activeUnitGroups[i] requestID:requestID extraInfo:&adSourceStatusInpectionExtraInfo]) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithDictionary:extra];
-                    userInfo[kATADLoadingNotificationUserInfoRequestIDKey] = requestID;
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingOfferSuccessfullyLoadedNotification object:self userInfo:userInfo];
-                    [self updateStatusAndNotifySuccessIfNeededToDelegate:delegate placementID:placementModel.placementID requestID:requestID extra:@{kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey:@YES}];
-                });
+-(void) concurrentlyLoadOfferWithWaterfall:(ATWaterfall*)loadingWaterfall finalWaterfall:(ATWaterfall*)finalWaterfall numberOfUnitGroups:(NSInteger)numberOfUnitGroups requestID:(NSString*)requestID placementModel:(ATPlacementModel*)placementModel startDate:(NSDate*)loadStartDate extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
+    id<ATAdManagement> adManager = [placementModel.adManagerClass sharedManager];
+    NSArray<NSDictionary*>* adSourceStatusInpectionExtraInfo = nil;//to do
+    NSMutableArray<NSString*>* unitIDRecords = [NSMutableArray<NSString*> array];
+    for (NSInteger i = 0; i < numberOfUnitGroups; i++) {
+        ATUnitGroupModel *loadingUG = [loadingWaterfall unitGroupWithMaximumPrice];
+        if (loadingUG != nil) {
+            LogHeaderBiddingLog([NSString stringWithFormat:@"Concurrently load adsource %ld", i]);
+            if ([unitIDRecords count] == 0 && [adManager respondsToSelector:@selector(inspectAdSourceStatusWithPlacementModel:unitGroup:finalWaterfall:requestID:extraInfo:)] && [adManager inspectAdSourceStatusWithPlacementModel:placementModel unitGroup:loadingUG finalWaterfall:finalWaterfall requestID:requestID extraInfo:&adSourceStatusInpectionExtraInfo]) {
+                //Send da
                 [adSourceStatusInpectionExtraInfo enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                    adSourceStatusRecords[obj[kAgentEventExtraInfoPriorityKey]] = @YES;
                     [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyAdSourceStatusFillKey placementID:placementModel.placementID unitGroupModel:nil extraInfo:obj];
+                    if (obj[kAgentEventExtraInfoAdSourceIDKey] != nil) {
+                        [unitIDRecords addObject:obj[kAgentEventExtraInfoAdSourceIDKey]];
+                        [loadingWaterfall requestUnitGroup:[loadingWaterfall unitGroupWithUnitID:obj[kAgentEventExtraInfoAdSourceIDKey]]];
+                    }
+                }];
+                
+                [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.1f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingOfferSuccessfullyLoadedNotification object:self userInfo:extra]; });
+                    waterfallWrapper.numberOfCachedOffers += [adSourceStatusInpectionExtraInfo count];
+                    if (!finished) {
+                        [waterfallWrapper finish];
+                        [waterfallWrapper fill];
+                        [self updateStatusAndNotifySuccessToDelegate:delegate placementModel:placementModel requestID:requestID loadStartDate:loadStartDate extra:@{kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey:@YES}];
+                    }
+                    [adSourceStatusInpectionExtraInfo enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { [loadingWaterfall finishUnitGroup:[loadingWaterfall unitGroupWithUnitID:obj[kAgentEventExtraInfoAdSourceIDKey]] withType:ATUnitGroupFinishTypeFinished]; }];
                 }];
             } else {
-                if (![adSourceStatusRecords[@(i)] boolValue]) {
-                    [self loadOfferWithRequestID:requestID placementModel:placementModel unitGroupModel:activeUnitGroups[i] extra:extra delegate:delegate success:^(id<ATAdLoadingDelegate> delegate, NSArray<NSDictionary*> *assets) {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithDictionary:extra];
-                            userInfo[kATADLoadingNotificationUserInfoRequestIDKey] = requestID;
-                            [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingOfferSuccessfullyLoadedNotification object:self userInfo:userInfo];
-                            [self updateStatusAndNotifySuccessIfNeededToDelegate:delegate placementID:placementModel.placementID requestID:requestID extra:@{kLoaderInternalInfoKeyLoadingUsingAdSourceStatusFlagKey:@YES}];
-                        });
+                if (![unitIDRecords containsObject:loadingUG.unitID]) {
+                    [loadingWaterfall requestUnitGroup:loadingUG];
+                    [self loadOfferWithRequestID:requestID placementModel:placementModel unitGroupModel:loadingUG finalWaterfall:finalWaterfall startDate:loadStartDate extra:extra delegate:delegate success:^(id<ATAdLoadingDelegate> delegate, NSArray<NSDictionary*> *assets) {
+                        [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.1f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingOfferSuccessfullyLoadedNotification object:self userInfo:extra]; });
+                            LogHeaderBiddingLog([NSString stringWithFormat:@"Concurrently load adsource %ld successfully", i]);
+                            waterfallWrapper.numberOfCachedOffers++;
+                            if (!finished) {
+                                LogHeaderBiddingLog(@"Not finished yet, will finish & notify success");
+                                [waterfallWrapper finish];
+                                [waterfallWrapper fill];
+                                [self updateStatusAndNotifySuccessToDelegate:delegate placementModel:placementModel requestID:requestID loadStartDate:loadStartDate extra:nil];
+                            }
+                            [loadingWaterfall finishUnitGroup:loadingUG withType:ATUnitGroupFinishTypeFinished];
+                        }];
                     } failure:^(id<ATAdLoadingDelegate> delegate, NSError *error) {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            if (error.code == ATADLoadingErrorCodeADOfferLoadingTimeout) { numberOfTimeoutRequest++; }
-                            //Failed to load offer
-                            failedLoadNumber++;
-                            if (failedLoadNumber == MIN(concurrentCount, [activeUnitGroups count] - round * concurrentCount)) {
-                                if ((1 + round) * concurrentCount < [activeUnitGroups count]) {
-                                    [_delegateCallFlagsAccessor readWithBlock:^id{
-                                        if ([_delegateCallFlags[placementModel.placementID] isEqualToString:requestID]) { [weakSelf concurrentlyLoadOfferWithRequestID:requestID placementModel:placementModel activeUnitGroups:activeUnitGroups extra:extra delegate:delegate round:round + 1]; }
-                                        return nil;
-                                    }];
-                                } else {//All request has timeouted/failed
-                                    if (numberOfTimeoutRequest == 0) {
-                                        [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyLoadFail placementID:placementModel.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error != nil ? error : [NSError errorWithDomain:@"com.anythink.OfferLoading" code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load ad", NSLocalizedFailureReasonErrorKey:@"All offer loading(s) failed."}]], kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0)}];
-                                        NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObject:placementModel forKey:kATADLoadingNotificationUserInfoPlacementKey];
-                                        userInfo[kAdLoadingExtraRefreshFlagKey] = extra[kAdLoadingExtraRefreshFlagKey];
-                                        if (error != nil) { userInfo[kATADLoadingNotificationUserInfoErrorKey] = error; }
-                                        [[NSNotificationCenter defaultCenter] postNotificationName:kATADLoadingFailedToLoadNotification object:self userInfo:userInfo];
-                                        if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) {
-                                            [delegate didFailToLoadADWithPlacementID:placementModel.placementID error:error];
-                                        }
-                                        [[ATAdLoader sharedLoader] clearDelegateCallFlagForPlacementID:placementModel.placementID];
+                        [[ATWaterfallManager sharedManager] accessWaterfallForPlacementID:placementModel.placementID requestID:requestID withBlock:^(ATWaterfallWrapper *waterfallWrapper, ATWaterfall *waterfall, ATWaterfall *headerBiddingWaterfall, ATWaterfall *finalWaterfall, BOOL finished, NSDate *loadStartDate) {
+                            [loadingWaterfall finishUnitGroup:loadingUG withType:error.code == ATADLoadingErrorCodeADOfferLoadingTimeout ? ATUnitGroupFinishTypeTimeout : ATUnitGroupFinishTypeFailed];
+                            LogHeaderBiddingLog([NSString stringWithFormat:@"Concurrently load %ld %@", i, error.code == ATADLoadingErrorCodeADOfferLoadingTimeout ? @"timeout" : @"failed"]);
+                            LogHeaderBiddingLog([NSString stringWithFormat:@"Cached offers:%ld, expected number:%ld", waterfallWrapper.numberOfCachedOffers, placementModel.expectedNumberOfOffers]);
+                            if (waterfallWrapper.numberOfCachedOffers < placementModel.expectedNumberOfOffers) {
+                                LogHeaderBiddingLog(@"Not finished, check can continue");
+                                if ([waterfall canContinueLoading:NO]) {
+                                    LogHeaderBiddingLog(@"Can load next");
+                                    NSMutableDictionary *loadingExtra = [NSMutableDictionary dictionary];
+                                    if (extra != nil) { [loadingExtra addEntriesFromDictionary:extra]; }
+                                    if (waterfallWrapper.filled) { loadingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
+                                    [self concurrentlyLoadOfferWithWaterfall:waterfall finalWaterfall:finalWaterfall numberOfUnitGroups:1 requestID:requestID placementModel:placementModel startDate:loadStartDate extra:loadingExtra delegate:delegate];
+                                } else {
+                                    LogHeaderBiddingLog(@"Can't load next");
+                                    if (!finished) {
+                                        LogHeaderBiddingLog(@"Not finished");
+                                        if (!waterfallWrapper.headerBiddingFired || waterfallWrapper.headerBiddingFailed || [[NSDate date] timeIntervalSinceDate:loadStartDate] > placementModel.headerBiddingRequestTimeout) {
+                                            LogHeaderBiddingLog(@"HB timeout");
+                                            if (waterfall.numberOfTimeoutRequests == 0) {
+                                                LogHeaderBiddingLog(@"No timeout adsouce");
+                                                [waterfallWrapper finish];
+                                                [self notifyFailureWithPlacementModel:placementModel requestID:requestID extra:extra error:error delegate:delegate];
+                                            }
+                                        }//headerBiddingRequestTimeout
                                     }
-                                    [self clearRequestIDForPlacementID:placementModel.placementID];
-                                }
-                            }//End of failedLoadNumber
-                        });
+                                }//End of [waterfall canContinueLoading]
+                            }
+                        }];
                     }];
-                }//End of ad source inspect records
+                }
             }
-        }//End of for
+        }//End of loadingUG nil comp
     }
 }
 
 static NSString *const kAutoloadExtraInfoKey = @"extra_info";
--(void) loadOfferWithRequestID:(NSString*)requestID placementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroup extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate success:(void(^)(id<ATAdLoadingDelegate>delegate, NSArray<NSDictionary*> *assets))successHandler failure:(void(^)(id<ATAdLoadingDelegate>, NSError*))failureHandler {
+-(void) loadOfferWithRequestID:(NSString*)requestID placementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall startDate:(NSDate*)loadStartDate extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate success:(void(^)(id<ATAdLoadingDelegate>delegate, NSArray<NSDictionary*> *assets))successHandler failure:(void(^)(id<ATAdLoadingDelegate>, NSError*))failureHandler {
     __weak typeof(delegate) weakDelegate = delegate;
     if (unitGroup.adapterClass != nil) {
         NSMutableDictionary *adapterInfo = [NSMutableDictionary dictionaryWithDictionary:unitGroup.content];
-        adapterInfo[kADapterCustomInfoStatisticsInfoKey] = [ATAdLoader statisticsInfoWithPlacementModel:placementModel unitGroupModel:unitGroup requestID:requestID bidRequest:NO];
+        adapterInfo[kADapterCustomInfoStatisticsInfoKey] = [ATAdLoader statisticsInfoWithPlacementModel:placementModel unitGroupModel:unitGroup finalWaterfall:finalWaterfall requestID:requestID bidRequest:NO];
         adapterInfo[@"request_num"] = @(unitGroup.networkRequestNum);
         adapterInfo[kAdapterCustomInfoRequestIDKey] = requestID;
         adapterInfo[kAdapterCustomInfoPlacementModelKey] = placementModel;
         adapterInfo[kAdapterCustomInfoUnitGroupModelKey] = unitGroup;
-        if ([extra isKindOfClass:[NSDictionary class]]) { adapterInfo[kAdapterCustomInfoExtraKey] = extra; }
-        __block id<ATNativeAdapter> adapter = [[unitGroup.adapterClass alloc] initWithNetworkCustomInfo:adapterInfo];
+//        if ([extra isKindOfClass:[NSDictionary class]]) { adapterInfo[kAdapterCustomInfoExtraKey] = extra; }
+        //init network sdk with custom info& local info
+        __block id<ATNativeAdapter> adapter = [[unitGroup.adapterClass alloc] initWithNetworkCustomInfo:adapterInfo localInfo:extra];
         ((NSObject*)adapter).delegateToBePassed = weakDelegate;
-        [self setAdapter:adapter forKey:[self adapterKeyWithRequestID:requestID placementModel:placementModel unitGroupModel:unitGroup]];
         dispatch_queue_t loading_completion_queue = dispatch_queue_create("completionQueue.com.anythink", DISPATCH_QUEUE_SERIAL);
         __block BOOL requestFinished = NO;//Failed or Succeeded, the request is regarded as having finished.
         __block BOOL requestTimeout = NO;
         
-        id<ATAd> phAd = [ATPlacementholderAd placeholderAdWithPlacementModel:placementModel requestID:requestID unitGroup:unitGroup];
+        id<ATAd> phAd = [ATPlacementholderAd placeholderAdWithPlacementModel:placementModel requestID:requestID unitGroup:unitGroup finalWaterfall:finalWaterfall];
         [ATLogger logMessage:[NSString stringWithFormat:@"\nRequest offer with network info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:phAd event:ATGeneralAdAgentEventTypeRequest extra:extra error:nil]] type:ATLogTypeTemporary];
-        NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithDictionary:@{kATTrackerExtraHeaderBiddingInfoKey:[ATTracker headerBiddingTrackingExtraWithUnitGroup:unitGroup requestID:requestID], kATTrackerExtraUnitIDKey:unitGroup.unitID, kATTrackerExtraNetworkFirmIDKey:@(unitGroup.networkFirmID), kATTrackerExtraRefreshFlagKey:@([extra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey:@([extra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey:@([extra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue])}];
+        NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithDictionary:@{kATTrackerExtraHeaderBiddingInfoKey:[ATTracker headerBiddingTrackingExtraWithAd:phAd requestID:requestID], kATTrackerExtraUnitIDKey:unitGroup.unitID, kATTrackerExtraNetworkFirmIDKey:@(unitGroup.networkFirmID), kATTrackerExtraRefreshFlagKey:@([extra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey:@([extra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey:@([extra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraRequestExpectedOfferNumberFlagKey:@([extra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue])}];
         [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeADTrackTypeADRequest extra:trackingExtra];
         NSDate *requestStartDate = [NSDate date];
         __block NSTimeInterval dataDidLoadedTime;
@@ -718,58 +922,46 @@ static NSString *const kAutoloadExtraInfoKey = @"extra_info";
         //Kick off the request
         __weak typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_main_queue(), ^{
-            [adapter loadADWithInfo:adapterInfo completion:^(NSArray<NSDictionary*> *assets, NSError *error) {
-                [weakSelf.adaptersAccessors writeWithBlock:^{
-                    NSString *adapterKey = [weakSelf adapterKeyWithRequestID:requestID placementModel:placementModel unitGroupModel:unitGroup];
-                    if (weakSelf.adapters[adapterKey] != nil) {
-                        [ATLogger logMessage:[NSString stringWithFormat:@"\nRequest offer with network info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:phAd event:error != nil ? ATGeneralAdAgentEventTypeRequestFailure : ATGeneralAdAgentEventTypeRequestSuccess extra:extra error:error]] type:ATLogTypeTemporary];
-                        if ([assets count] > 0 && error == nil) {
-                            if (unitGroup.networkDataTimeout != -1 && ismetaDataDidLoaded) {
-                                NSArray<ATUnitGroupModel*>* activeUnitGroups = [placementModel unitGroupsForRequestID:requestID];
-                                activeUnitGroups = [activeUnitGroups count] > 0 ? activeUnitGroups : placementModel.unitGroups;
-                                [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyMetadataAndAdDataLoadingTimeKey placementID:placementModel.placementID unitGroupModel:unitGroup extraInfo:@{
-                                                                       kAgentEventExtraInfoNetworkFirmIDKey:@(unitGroup.networkFirmID),
-                                                                       kAgentEventExtraInfoUnitGroupUnitIDKey:[NSString stringWithFormat:@"%@", unitGroup.unitID],
-                                                                       kAgentEventExtraInfoPriorityKey:@([activeUnitGroups indexOfObject:unitGroup]),
-                                                                       kAgentEventExtraInfoMetadataLoadingTimeKey:@([@(dataDidLoadedTime * 1000) integerValue]),
-                                                                       kAgentEventExtraInfoAdDataLoadingTimeKey:@([@([[NSDate date] timeIntervalSinceDate:requestStartDate] * 1000.0f) integerValue])
-                                                                   }];
-                            }
-                            [weakSelf.agentEventFlagsAccessor writeWithBlock:^{
-                                if (![weakSelf.agentEventFlags[requestID] boolValue]) {
-                                    weakSelf.agentEventFlags[requestID] = @YES;
-                                    NSDate *loadStartDate = [[ATAdLoader sharedLoader] loadDateForRequestID:requestID];
-                                    [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeLoadResult extra:@{kATTrackerExtraAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraLoadTimeKey:@(loadStartDate != nil ? [@([[NSDate date]timeIntervalSinceDate:loadStartDate] * 1000) integerValue] : 0)}];
-                                }
-                            }];
-                        }
-                        dispatch_async(loading_completion_queue, ^{
-                            requestFinished = YES;
-                            
-                            trackingExtra[kATTrackerExtraFilledWithinNetworkTimeoutFlagKey] = @(requestTimeout ? 1 : 0);
-                            NSArray<ATUnitGroupModel*>* activeUnitGroups = [placementModel unitGroupsForRequestID:requestID];
-                            activeUnitGroups = [activeUnitGroups count] > 0 ? activeUnitGroups : placementModel.unitGroups;
-                            NSInteger unitGroupPri = [activeUnitGroups indexOfObject:unitGroup];
-                            if (error == nil) {
-                                NSInteger shownPri = [[[placementModel adManagerClass] sharedManager] highestPriorityOfShownAdInPlacementID:placementModel.placementID requestID:requestID];
-                                trackingExtra[kATTrackerExtraFillTimeKey] = @([@([[NSDate date] timeIntervalSinceDate:requestStartDate] * 1000.0f) integerValue]);
-                                trackingExtra[kATTrackerExtraFillRequestFlagKey] = @(shownPri == NSNotFound ? 0 : shownPri < unitGroupPri ? 1 : 2);
-                                
-                                if (assets[0][kAdAssetsCustomObjectKey] != nil) { trackingExtra[kATTrackerExtraCustomObjectKey] = assets[0][kAdAssetsCustomObjectKey]; }
-                                [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeADTrackTypeADRecalledSuccessfully extra:trackingExtra];
-                                [weakSelf handleAssets:assets placementModel:placementModel unitGroupModel:unitGroup requestID:requestID extra:extra];
-                                if (successHandler != nil) successHandler(weakDelegate, assets);
-                            } else {
-                                [self updateRequestFailureForPlacemetModel:placementModel unitGroupModel:unitGroup];
-                                [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyRequestFail placementID:placementModel.placementID unitGroupModel:unitGroup extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoNetworkFirmIDKey:@(unitGroup.networkFirmID), kAgentEventExtraInfoUnitGroupUnitIDKey:[NSString stringWithFormat:@"%@", unitGroup.unitID], kAgentEventExtraInfoPriorityKey:@(unitGroupPri), kAgentEventExtraInfoRequestFailReasonKey:@0, kAgentEventExtraInfoRequestFailErrorCodeKey:@(error.code), kAgentEventExtraInfoRequestFailErrorMsgKey:[NSString stringWithFormat:@"%@", error], kAgentEventExtraInfoRequestHeaderBiddingFlagKey:@(unitGroup.headerBidding ? 1 : 0), kAgentEventExtraInfoRequestPriceKey:@(unitGroup.headerBidding ? [unitGroup bidPriceWithRequestID:requestID] : unitGroup.price),kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0),
-                                                                                                                                                                                     kAgentEventExtraInfoRequestFailTimeKey:@([@([[NSDate date] timeIntervalSinceDate:requestStartDate] * 1000.0f) integerValue])
-                                }];
-                                if (failureHandler != nil) failureHandler(weakDelegate, error);
-                            }
-                            [weakSelf.adapters removeObjectForKey:adapterKey];
-                        });//End dispatch_async
+            [adapter loadADWithInfo:adapterInfo localInfo:extra completion:^(NSArray<NSDictionary*> *assets, NSError *error) {
+                [ATLogger logMessage:[NSString stringWithFormat:@"\nRequest offer with network info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:phAd event:error != nil ? ATGeneralAdAgentEventTypeRequestFailure : ATGeneralAdAgentEventTypeRequestSuccess extra:extra error:error]] type:ATLogTypeTemporary];
+                if ([assets count] > 0 && error == nil) {
+                    if (unitGroup.networkDataTimeout != -1 && ismetaDataDidLoaded) {
+                        NSArray<ATUnitGroupModel*>* activeUnitGroups = finalWaterfall.unitGroups;
+                        [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyMetadataAndAdDataLoadingTimeKey placementID:placementModel.placementID unitGroupModel:unitGroup extraInfo:@{
+                                                               kAgentEventExtraInfoNetworkFirmIDKey:@(unitGroup.networkFirmID),
+                                                               kAgentEventExtraInfoUnitGroupUnitIDKey:[NSString stringWithFormat:@"%@", unitGroup.unitID],
+                                                               kAgentEventExtraInfoPriorityKey:@([activeUnitGroups indexOfObject:unitGroup]),
+                                                               kAgentEventExtraInfoMetadataLoadingTimeKey:@([@(dataDidLoadedTime * 1000) integerValue]),
+                                                               kAgentEventExtraInfoAdDataLoadingTimeKey:@([@([[NSDate date] timeIntervalSinceDate:requestStartDate] * 1000.0f) integerValue])
+                                                           }];
                     }
-                }];
+                }
+                dispatch_async(loading_completion_queue, ^{
+                    requestFinished = YES;
+                    
+                    trackingExtra[kATTrackerExtraFilledWithinNetworkTimeoutFlagKey] = @(requestTimeout ? 1 : 0);
+                    NSArray<ATUnitGroupModel*>* activeUnitGroups = finalWaterfall.unitGroups;
+                    activeUnitGroups = [activeUnitGroups count] > 0 ? activeUnitGroups : placementModel.unitGroups;
+                    NSInteger unitGroupPri = [activeUnitGroups indexOfObject:unitGroup];
+                    if (error == nil) {
+                        NSInteger shownPri = [[[placementModel adManagerClass] sharedManager] highestPriorityOfShownAdInPlacementID:placementModel.placementID requestID:requestID];
+                        trackingExtra[kATTrackerExtraFillTimeKey] = @([@([[NSDate date] timeIntervalSinceDate:requestStartDate] * 1000.0f) integerValue]);
+                        trackingExtra[kATTrackerExtraFillRequestFlagKey] = @(shownPri == NSNotFound ? 0 : shownPri < unitGroupPri ? 1 : 2);
+                        
+                        if (assets[0][kAdAssetsCustomObjectKey] != nil) { trackingExtra[kATTrackerExtraCustomObjectKey] = assets[0][kAdAssetsCustomObjectKey]; }
+                        [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeADTrackTypeADRecalledSuccessfully extra:trackingExtra];
+                        [weakSelf handleAssets:assets placementModel:placementModel unitGroupModel:unitGroup finalWaterfall:finalWaterfall requestID:requestID extra:extra];
+                        if (successHandler != nil) successHandler(weakDelegate, assets);
+                        adapter = nil;
+                    } else {
+                        [self updateRequestFailureForPlacemetModel:placementModel unitGroupModel:unitGroup];
+                        
+                        [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyRequestFail placementID:placementModel.placementID unitGroupModel:unitGroup extraInfo:@{kAgentEventExtraInfoRequestIDKey:requestID, kAgentEventExtraInfoNetworkFirmIDKey:@(unitGroup.networkFirmID), kAgentEventExtraInfoUnitGroupUnitIDKey:[NSString stringWithFormat:@"%@", unitGroup.unitID], kAgentEventExtraInfoPriorityKey:@(unitGroupPri), kAgentEventExtraInfoRequestFailReasonKey:@0, kAgentEventExtraInfoRequestFailErrorCodeKey:@(error.code), kAgentEventExtraInfoRequestFailErrorMsgKey:[NSString stringWithFormat:@"%@", error], kAgentEventExtraInfoRequestHeaderBiddingFlagKey:@(unitGroup.headerBidding ? 1 : 0), kAgentEventExtraInfoRequestPriceKey:@([ATBidInfoManager priceForUnitGroup:unitGroup placementID:placementModel.placementID requestID:requestID]),kAgentEventExtraInfoAutoloadOnCloseFlagKey:@([extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0), kAgentEventExtraInfoRequestFailTimeKey:@([@([[NSDate date] timeIntervalSinceDate:requestStartDate] * 1000.0f) integerValue]) }];
+                        
+                        if (failureHandler != nil) failureHandler(weakDelegate, error);
+                        adapter = nil;
+                    }
+                });//End dispatch_async
             }];
         });
         //dataload timeout handler
@@ -779,7 +971,7 @@ static NSString *const kAutoloadExtraInfoKey = @"extra_info";
                     requestTimeout = YES;
                     if (placementModel.format != 4) {
                         if (!requestFinished) {
-                            NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AT SDK has failed to load ad.", NSLocalizedFailureReasonErrorKey:@"Third party SDK load data timeouts."}];
+                            NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"Third party SDK load data timeouts."}];
                             [ATLogger logMessage:[NSString stringWithFormat:@"\nRequest offer with network info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:phAd event:ATGeneralAdAgentEventTypeRequestFailure extra:extra error:error]] type:ATLogTypeTemporary];
                         }
                         if (!requestFinished && failureHandler != nil) {
@@ -794,7 +986,7 @@ static NSString *const kAutoloadExtraInfoKey = @"extra_info";
             requestTimeout = YES;
             if (placementModel.format != 4) {
                 if (!requestFinished) {
-                    NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AT SDK has failed to load ad.", NSLocalizedFailureReasonErrorKey:@"Third party SDK load timeouts."}];
+                    NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"Third party SDK load timeouts."}];
                     [ATLogger logMessage:[NSString stringWithFormat:@"\nRequest offer with network info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:phAd event:ATGeneralAdAgentEventTypeRequestFailure extra:extra error:error]] type:ATLogTypeTemporary];
                 }
                 if (!requestFinished && failureHandler != nil) {
@@ -803,65 +995,26 @@ static NSString *const kAutoloadExtraInfoKey = @"extra_info";
             }
         });
     } else {
-        failureHandler(weakDelegate, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeAdapterClassNotFound userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"Adapter(%@) initialization failed", unitGroup.adapterClassString],NSLocalizedFailureReasonErrorKey:@"The adapter has not been implemented or there are some spelling mistakes in the adapter name in the placement settings."}]);
+        failureHandler(weakDelegate, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeAdapterClassNotFound userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"Adapter(%@) initialization failed", unitGroup.adapterClassString],NSLocalizedFailureReasonErrorKey:@"The adapter not found"}]);
     }
 }
 
--(void) handleAssets:(NSArray<NSDictionary*>*)assets placementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel requestID:(NSString*)requestID extra:(NSDictionary*)extra {
+-(void) handleAssets:(NSArray<NSDictionary*>*)assets placementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID extra:(NSDictionary*)extra {
     [[ATLoadingScheduler sharedScheduler] scheduleLoadingWithPlacementModel:placementModel unitGroup:unitGroupModel requestID:requestID extra:extra];
     [assets enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [[placementModel.adManagerClass sharedManager] addAdWithADAssets:obj withPlacementSetting:placementModel unitGroup:unitGroupModel requestID:requestID];
+        NSMutableDictionary *asset = [NSMutableDictionary dictionaryWithDictionary:obj];
+        if ([extra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { asset[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
+        [[placementModel.adManagerClass sharedManager] addAdWithADAssets:asset withPlacementSetting:placementModel unitGroup:unitGroupModel finalWaterfall:finalWaterfall requestID:requestID];
     }];
 }
 
-#pragma mark - adapter storage
-/**
- * The structure of the adapters storage is as follows:
- * {
- *       key: adapter
- * }
- * key = md5(request_id + placement_id + unit_group_id).
- */
--(NSString*)adapterKeyWithRequestID:(NSString*)requestID placementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel {
-    return [NSString stringWithFormat:@"%@%@%@", requestID, placementModel.placementID, unitGroupModel.unitGroupID].md5;
-}
-
--(NSArray<NSString*>*) adapterKeysWithRequestID:(NSString*)requestID placementModel:(ATPlacementModel*)placementModel unitGroupModels:(NSArray<ATUnitGroupModel*>*)unitGroupModels {
-    NSMutableArray<NSString*>* keys = [NSMutableArray<NSString*> array];
-    [unitGroupModels enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [keys addObject:[self adapterKeyWithRequestID:requestID placementModel:placementModel unitGroupModel:obj]];
-    }];
-    return keys;
-}
-
--(void) setAdapter:(id)adapter forKey:(NSString*)key {
-    if (adapter != nil && key != nil) [_adaptersAccessors writeWithBlock:^{ _adapters[key] = adapter; }];
-}
-
--(void) removeAdapterForKey:(NSString*)key {
-    if (key != nil) [_adaptersAccessors writeWithBlock:^{ [_adapters removeObjectForKey:key]; }];
-}
-
--(void) removeAdaptersForKeys:(NSArray<NSString*>*)keys {
-    [_adaptersAccessors writeWithBlock:^{ [_adapters removeObjectsForKeys:keys]; }];
-}
-
--(void) enumerateUnitGroupsWithRequestID:(NSString*)requestID placementModel:(ATPlacementModel*)placementModel block:(void(^)(ATUnitGroupModel *unitGroup))block {
-    [_adaptersAccessors readWithBlock:^id{
-        [placementModel.unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if (_adapters[[self adapterKeyWithRequestID:requestID placementModel:placementModel unitGroupModel:obj]] != nil) { block(obj); }
-        }];
-        return nil;
-    }];
-}
-
-+(NSDictionary*)statisticsInfoWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel requestID:(NSString*)requestID bidRequest:(BOOL)bidRequest {
++(NSDictionary*)statisticsInfoWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID bidRequest:(BOOL)bidRequest {
     return @{@"ads":@([[ATCapsManager sharedManager] capByDayWithAdFormat:placementModel.format]),
              @"ahs":@([[ATCapsManager sharedManager] capByHourWithAdFormat:placementModel.format]),
              @"pds":@([[ATCapsManager sharedManager] capByDayWithPlacementID:placementModel.placementID]),
              @"phs":@([[ATCapsManager sharedManager] capByHourWithPlacementID:placementModel.placementID]),
              @"tpl":placementModel.placementID != nil ? placementModel.placementID : @"",
-             @"ap":@(bidRequest ? 0 : [[placementModel unitGroupsForRequestID:requestID] indexOfObject:unitGroupModel] / placementModel.maxConcurrentRequestCount + 1),
+             @"ap":@(bidRequest ? 0 : [finalWaterfall.unitGroups indexOfObject:unitGroupModel] + 1),
              @"rid":requestID != nil ? requestID : @"",
              @"sr":@"tp"
     };
@@ -874,81 +1027,78 @@ static NSString *kHeaderBiddingResponseListBidResultKey = @"bidresult";
 static NSString *kHeaderBiddingResponseListBidPriceKey = @"bidprice";
 static NSString *kHeaderBiddingResponseListErrorCodeKey = @"errorcode";
 static NSString *kHeaderBiddingResponseListErrorMessageKey = @"errormsg";
-+(NSArray<NSDictionary*>*) bidResponseListWithInactiveUnitGroupInfos:(NSArray<NSDictionary*>*)hbGroupInfos unitGroupInfos:(NSArray<NSDictionary*>*)groupInfos {
++(NSDictionary*) bidSortTKExtraWithPlacementID:(NSString*)placementID requestID:(NSString*)requestID bidStartDate:(NSDate*)bidStartDate inactiveHBUnitGroupInfo:(NSArray<NSDictionary*>*)inactiveHBUGInfo inactiveUGInfo:(NSArray<NSDictionary*>*)inactiveUGInfo failedHBUGInfo:(NSDictionary<NSString*, NSError*>*)failedHBUGInfo sortedUGs:(NSArray<ATUnitGroupModel*>*)sortedUGs offerCachedUnitGroups:(NSArray<ATUnitGroupModel*>*)offerCachedUGs unitGroupsWithHistoryBidInfo:(NSArray<ATUnitGroupModel*>*)unitGroupsWithHistoryBidInfo {
     NSMutableArray<NSDictionary*>* list = [NSMutableArray<NSDictionary*> array];
-    if ([hbGroupInfos count] > 0) {
-        [hbGroupInfos enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if ([obj isKindOfClass:[NSDictionary class]]) {
-                [list addObject:@{kHeaderBiddingResponseListSortPriorityKey:@-1,
-                                  kHeaderBiddingResponseListSortTypeKey:@-1,
-                                  kHeaderBiddingResponseListAdSourceIDKey:obj[kATTrackerExtraUnitIDKey] != nil ? obj[kATTrackerExtraUnitIDKey] : @"",
-                                  kHeaderBiddingResponseListBidResultKey:@0,
-                                  kHeaderBiddingResponseListBidPriceKey:@0,
-                                  kHeaderBiddingResponseListErrorCodeKey:obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] != nil ? obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] : @0,
-                                  kHeaderBiddingResponseListErrorMessageKey:[NSString stringWithFormat:@"%@ within limit", @{@0:@"Cap/pacing", @2:@"Cap", @3:@"Pacing"}[@([obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] integerValue])]]
-                                  }];
-            }
+    NSMutableDictionary *extraInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:@((NSInteger)([bidStartDate timeIntervalSince1970] * 1000.0f)), @"bidrequesttime", @((NSInteger)([[NSDate date] timeIntervalSince1970] * 1000.0f)), @"bidresponsetime", list, @"bidresponselist", nil];
+    //inactive ugs
+    [inactiveUGInfo enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [list addObject:@{kHeaderBiddingResponseListSortPriorityKey:@-1,
+                          kHeaderBiddingResponseListSortTypeKey:@-1,
+                          kHeaderBiddingResponseListAdSourceIDKey:obj[kATTrackerExtraUnitIDKey] != nil ? obj[kATTrackerExtraUnitIDKey] : @"",
+                          kHeaderBiddingResponseListBidResultKey:@0,
+                          kHeaderBiddingResponseListBidPriceKey:@0,
+                          kHeaderBiddingResponseListErrorCodeKey:obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] != nil ? obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] : @0,
+                          kHeaderBiddingResponseListErrorMessageKey:[NSString stringWithFormat:@"%@ within limit", @{@0:@"Cap/pacing", @2:@"Cap", @3:@"Pacing"}[@([obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] integerValue])]]
         }];
-    }
-    if ([groupInfos count] > 0) {
-        [groupInfos enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if ([obj isKindOfClass:[NSDictionary class]]) {
-                [list addObject:@{kHeaderBiddingResponseListSortPriorityKey:@-1,
-                                  kHeaderBiddingResponseListSortTypeKey:@-1,
-                                  kHeaderBiddingResponseListAdSourceIDKey:obj[kATTrackerExtraUnitIDKey] != nil ? obj[kATTrackerExtraUnitIDKey] : @"",
-                                  kHeaderBiddingResponseListBidResultKey:@0,
-                                  kHeaderBiddingResponseListBidPriceKey:@0,
-                                  kHeaderBiddingResponseListErrorCodeKey:obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] != nil ? obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] : @0,
-                                  kHeaderBiddingResponseListErrorMessageKey:[NSString stringWithFormat:@"%@ within limit", @{@0:@"Cap/pacing", @2:@"Cap", @3:@"Pacing"}[@([obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] integerValue])]]
-                                  }];
-            }
+    }];
+    
+    //inactive hb_ugs
+    [inactiveHBUGInfo enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [list addObject:@{kHeaderBiddingResponseListSortPriorityKey:@-1,
+                          kHeaderBiddingResponseListSortTypeKey:@-1,
+                          kHeaderBiddingResponseListAdSourceIDKey:obj[kATTrackerExtraUnitIDKey] != nil ? obj[kATTrackerExtraUnitIDKey] : @"",
+                          kHeaderBiddingResponseListBidResultKey:@0,
+                          kHeaderBiddingResponseListBidPriceKey:obj[kAgentEventExtraInfoRequestPriceKey] != nil ? obj[kAgentEventExtraInfoRequestPriceKey] : @0,
+                          kHeaderBiddingResponseListErrorCodeKey:obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] != nil ? obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] : @0,
+                          kHeaderBiddingResponseListErrorMessageKey:[NSString stringWithFormat:@"%@", @{@0:@"Cap/pacing within limit", @2:@"Cap within limit", @3:@"Pacing within limit", @4:@"Bid time interval within limit", @6:@"HB not supported for this network"}[@([obj[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] integerValue])]]
         }];
-    }
-    return list;
+    }];
+    
+    //failed hb request
+    [failedHBUGInfo enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSError * _Nonnull obj, BOOL * _Nonnull stop) {
+        [list addObject:@{kHeaderBiddingResponseListSortPriorityKey:@-1,
+                          kHeaderBiddingResponseListSortTypeKey:@-1,
+                          kHeaderBiddingResponseListAdSourceIDKey:key,
+                          kHeaderBiddingResponseListBidResultKey:@0,
+                          kHeaderBiddingResponseListBidPriceKey:@0,
+                          kHeaderBiddingResponseListErrorCodeKey:@(obj.code),
+                          kHeaderBiddingResponseListErrorMessageKey:[NSString stringWithFormat:@"%@", obj]
+        }];
+    }];
+    
+    //sorted ugs
+    [sortedUGs enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [list addObject:@{kHeaderBiddingResponseListSortPriorityKey:@(idx),
+                          kHeaderBiddingResponseListSortTypeKey:@(obj.headerBidding ? ([offerCachedUGs containsObject:obj] ? 3 : ([unitGroupsWithHistoryBidInfo containsObject:obj] ? 2 : 0)) : 1),
+                          kHeaderBiddingResponseListAdSourceIDKey:obj.unitID != nil ? obj.unitID : @"",
+                          kHeaderBiddingResponseListBidResultKey:@(obj.headerBidding ? 1 : 0),
+                          kHeaderBiddingResponseListBidPriceKey:@([ATBidInfoManager priceForUnitGroup:obj placementID:placementID requestID:requestID])
+        }];
+    }];
+    
+    return extraInfo;
 }
 
-+(NSArray<NSDictionary*>*) bidResponseListWithBidResponseExtraInfo:(NSDictionary*)extraInfo headerBiddingUnitGroups:(NSArray<ATUnitGroupModel*>*)unitGroups {
++(NSDictionary*) rankAndShuffleTKExtraWithPlacementID:(NSString*)placementID rankAndShullfedUnitGroups:(NSArray<ATUnitGroupModel*>*)rankAndShullfedUnitGroups offerCachedUnitGroups:(NSArray<ATUnitGroupModel*>*)offerCachedUnitGroups unitGroupsWithHistoryBidInfo:(NSArray<ATUnitGroupModel*>*) unitGroupsWithHistoryBidInfo bidRequestDate:(NSDate*)bidRequestDate requestID:(NSString*)requestID {
     NSMutableArray<NSDictionary*>* list = [NSMutableArray<NSDictionary*> array];
-    if ([extraInfo count] > 0) {
-        NSMutableDictionary<NSNumber*, ATUnitGroupModel*>* unitGroupMap = [NSMutableDictionary<NSNumber*, ATUnitGroupModel*> dictionary];
-        [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { unitGroupMap[@([obj hash])] = obj; }];
-        if ([extraInfo[kATHeaderBiddingExtraInfoDetailErrorKey] isKindOfClass:[NSDictionary class]]) {
-            NSDictionary<NSNumber*, NSError*> *detailErrors = extraInfo[kATHeaderBiddingExtraInfoDetailErrorKey];//{@([unitGroup hash]):error}
-            [detailErrors enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, NSError * _Nonnull obj, BOOL * _Nonnull stop) {
-                ATUnitGroupModel *unitGroupModel = unitGroupMap[key];
-                if ([obj isKindOfClass:[NSError class]]) {
-                    [list addObject:@{kHeaderBiddingResponseListSortPriorityKey:@-1,
-                                      kHeaderBiddingResponseListSortTypeKey:@-1,
-                                      kHeaderBiddingResponseListAdSourceIDKey:unitGroupModel.unitID != nil ? unitGroupModel.unitID : @"",
-                                      kHeaderBiddingResponseListBidResultKey:@0,
-                                      kHeaderBiddingResponseListBidPriceKey:@0,
-                                      kHeaderBiddingResponseListErrorCodeKey:@(obj.code),
-                                      kHeaderBiddingResponseListErrorMessageKey:[NSString stringWithFormat:@"%@", obj]
-                                      }];
-                }
-            }];
-        } else if ([extraInfo[kATHeaderBiddingExtraInfoTotalErrorKey] isKindOfClass:[NSError class]]) {
-            NSError *totalError = extraInfo[kATHeaderBiddingExtraInfoTotalErrorKey];
-            [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                [list addObject:@{kHeaderBiddingResponseListSortPriorityKey:@-1,
-                                  kHeaderBiddingResponseListSortTypeKey:@-1,
-                                  kHeaderBiddingResponseListAdSourceIDKey:obj.unitID != nil ? obj.unitID : @"",
-                                  kHeaderBiddingResponseListBidResultKey:@0,
-                                  kHeaderBiddingResponseListBidPriceKey:@0,
-                                  kHeaderBiddingResponseListErrorCodeKey:@(totalError.code),
-                                  kHeaderBiddingResponseListErrorMessageKey:[NSString stringWithFormat:@"%@", extraInfo[kATHeaderBiddingExtraInfoTotalErrorKey]]
-                                  }];
-            }];
-        }
-    }
-    return list;
+    NSMutableDictionary *extraInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([bidRequestDate timeIntervalSince1970] * 1000.0f), @"bidrequesttime", @([[NSDate date] timeIntervalSince1970] * 1000.0f), @"bidresponsetime", list, @"bidresponselist", nil];
+    
+    //rankAndShullfedUnitGroups
+    [rankAndShullfedUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [list addObject:@{kHeaderBiddingResponseListSortPriorityKey:@(idx),
+                          kHeaderBiddingResponseListSortTypeKey:@(obj.headerBidding ? ([offerCachedUnitGroups containsObject:obj] ? 3 : ([unitGroupsWithHistoryBidInfo containsObject:obj] ? 2 : 0)) : 1),
+                          kHeaderBiddingResponseListAdSourceIDKey:obj.unitID != nil ? obj.unitID : @"",
+                          kHeaderBiddingResponseListBidResultKey:@(obj.headerBidding ? 1 : 0),
+                          kHeaderBiddingResponseListBidPriceKey:@([ATBidInfoManager priceForUnitGroup:obj placementID:placementID requestID:requestID])
+        }];
+    }];
+
+    return extraInfo;
 }
 
 +(NSMutableArray<ATUnitGroupModel*>*) offerCachedActiveUnitGroupsInPlacementModel:(ATPlacementModel*)placementModel hbUnitGroups:(NSArray<ATUnitGroupModel*>*)hbUnitGroups {
     NSMutableArray<ATUnitGroupModel*>* unitGroups = [NSMutableArray<ATUnitGroupModel*> array];
-    [hbUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if ([[placementModel.adManagerClass sharedManager] adSourceStatusInPlacementModel:placementModel unitGroup:obj]) { [unitGroups addObject:obj]; }
-    }];
+    [hbUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { if ([[placementModel.adManagerClass sharedManager] adSourceStatusInPlacementModel:placementModel unitGroup:obj]) { [unitGroups addObject:obj]; } }];
     return unitGroups;
 }
 
@@ -958,17 +1108,25 @@ static NSString *kHeaderBiddingResponseListErrorMessageKey = @"errormsg";
     [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         NSMutableDictionary *reason = [NSMutableDictionary dictionaryWithDictionary:[ATAgentEvent generalAdAgentInfoWithPlacementModel:placementModel unitGroupModel:obj requestID:requestID]];
         reason[kAgentEventExtraInfoRequestHeaderBiddingFlagKey] = @(obj.headerBidding ? 1 : 0);
-        reason[kAgentEventExtraInfoRequestPriceKey] = @(obj.headerBidding ? [obj bidPriceWithRequestID:requestID] : obj.price);
+        reason[kAgentEventExtraInfoRequestPriceKey] = @([ATBidInfoManager priceForUnitGroup:obj placementID:placementModel.placementID requestID:requestID]);
         reason[kAgentEventExtraInfoPriorityKey] = @(idx);
         reason[kInactiveUnitGroupInfoUnitGroupKey] = obj;
         reason[kATTrackerExtraUnitIDKey] = obj.unitID != nil ? obj.unitID : @"";
         reason[kATTrackerExtraNetworkFirmIDKey] = @(obj.networkFirmID);
         if ([ATAdStorageUtility validateCapsForUnitGroup:obj placementID:placementModel.placementID]) {
             if ([ATAdStorageUtility validatePacingForUnitGroup:obj placementID:placementModel.placementID]) {
-                if ([[ATAdLoader sharedLoader] shouldSendRequestAfterLastFailureForPlacementModel:placementModel unitGroupModel:obj]) {
-                    [activeUnitGroups addObject:obj];
+                if (obj.headerBidding ? [[ATAdLoader sharedLoader] shouldSendS2SBidRequestAfterLastFailureForPlacementModel:placementModel unitGroupModel:obj] : [[ATAdLoader sharedLoader] shouldSendRequestAfterLastFailureForPlacementModel:placementModel unitGroupModel:obj]) {
+                    if (obj.headerBidding) {
+                        if ([obj.adapterClass respondsToSelector:@selector(bidRequestWithPlacementModel:unitGroupModel:info:completion:)]) {
+                            [activeUnitGroups addObject:obj];
+                        } else {
+                            reason[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] = @6;//header bidding not supported
+                        }
+                    } else {
+                        [activeUnitGroups addObject:obj];
+                    }
                 } else {
-                    reason[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] = @4;//loading failure interval
+                    reason[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] = @4;//loading/bidding failure interval
                 }
             } else {
                 reason[kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey] = @3;//pacing
@@ -982,71 +1140,17 @@ static NSString *kHeaderBiddingResponseListErrorMessageKey = @"errormsg";
     return activeUnitGroups;
 }
 
-+(NSDictionary*)dynamicWaterfallTrackingExtraWithPlacementModel:(ATPlacementModel*)placementModel unitGroups:(NSArray<ATUnitGroupModel*>*)unitGroups offerCachedUnitGroups:(NSArray<ATUnitGroupModel*>*)offerCachedUnitGroups unitGroupsUsingLatestBidInfo:(NSArray<ATUnitGroupModel*>*)unitGroupsUsingLatestBidInfo bidRequestTime:(NSNumber*)requestTime bidResponseTime:(NSNumber*)responseTime requestID:(NSString*)requestID extraInfo:(NSDictionary*)extraInfo {
-    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionary];
-    if (requestTime != nil) { trackingExtra[@"bidrequesttime"] = @([requestTime doubleValue]); }
-    if (responseTime != nil) { trackingExtra[@"bidresponsetime"] = @([responseTime doubleValue]); }
-    NSMutableArray<NSDictionary*>* biddingEntries = [NSMutableArray<NSDictionary*> array];
-    NSArray<ATUnitGroupModel*>* sortedAdSources = [placementModel unitGroupsForRequestID:requestID];
-    [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (obj.headerBidding) {
-            NSString *bidInfo = [obj bidTokenWithRequestID:requestID];
-            if (bidInfo != nil) {
-                [biddingEntries addObject:@{kHeaderBiddingResponseListSortPriorityKey:@([sortedAdSources indexOfObject:obj]),
-                                            kHeaderBiddingResponseListSortTypeKey:@([unitGroupsUsingLatestBidInfo containsObject:obj] ? 2 : 0),
-                                            kHeaderBiddingResponseListBidResultKey:@1,
-                                            kHeaderBiddingResponseListBidPriceKey:@([obj bidPriceWithRequestID:requestID]),
-                                            kHeaderBiddingResponseListAdSourceIDKey:obj.unitID != nil ? obj.unitID : @""
-                                            }];
-            } else {
-                if ([offerCachedUnitGroups containsObject:obj]) {
-                    [biddingEntries addObject:@{kHeaderBiddingResponseListSortPriorityKey:@([sortedAdSources indexOfObject:obj]),
-                    kHeaderBiddingResponseListSortTypeKey:@3,
-                    kHeaderBiddingResponseListBidResultKey:@1,
-                    kHeaderBiddingResponseListBidPriceKey:@(obj.price),
-                    kHeaderBiddingResponseListAdSourceIDKey:obj.unitID != nil ? obj.unitID : @""
-                    }];
-                }
-            }
-        } else {
-            [biddingEntries addObject:@{kHeaderBiddingResponseListSortPriorityKey:@([sortedAdSources indexOfObject:obj]),
-                                        kHeaderBiddingResponseListSortTypeKey:@1,
-                                        kHeaderBiddingResponseListBidResultKey:@0,
-                                        kHeaderBiddingResponseListBidPriceKey:@(obj.price),
-                                        kHeaderBiddingResponseListAdSourceIDKey:obj.unitID != nil ? obj.unitID : @""
-                                        }];
-        }
-    }];
-    [biddingEntries sortUsingComparator:^NSComparisonResult(NSDictionary*  _Nonnull obj1, NSDictionary*  _Nonnull obj2) {
-        return [obj1[kHeaderBiddingResponseListSortPriorityKey] compare:obj2[kHeaderBiddingResponseListSortPriorityKey]] == NSOrderedSame ? [obj2[kHeaderBiddingResponseListSortTypeKey] compare:obj1[kHeaderBiddingResponseListSortTypeKey]] : [obj1[kHeaderBiddingResponseListSortPriorityKey] compare:obj2[kHeaderBiddingResponseListSortPriorityKey]];
-    }];
-    if ([extraInfo[kATHeaderBiddingResponseListFailedListKey] isKindOfClass:[NSArray class]]) { [biddingEntries addObjectsFromArray:extraInfo[kATHeaderBiddingResponseListFailedListKey]]; }
-    if ([biddingEntries count] > 0) { trackingExtra[@"bidresponselist"] = biddingEntries; }
-    return trackingExtra;
-}
-
-+(NSDictionary*)logHeaderBiddingInfoWithUnitGroups:(NSArray<ATUnitGroupModel*>*)unitGroups placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID {
-    NSMutableArray *adSources = [NSMutableArray<NSDictionary*> array];
-    [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [adSources addObject:@{@"network_firm_id":@(obj.networkFirmID),
-                               @"unit_id":obj.unitID != nil ? obj.unitID : @"",
-                               @"price":@(obj.headerBidding ? ([obj bidTokenWithRequestID:requestID] != nil ? [obj bidPriceWithRequestID:requestID] : obj.price) : obj.price)
-                               }];
-    }];
-    return @{@"placement_id":placementModel.placementID,
-             @"request_id":requestID,
-             @"ad_source_list":adSources
-             };
-}
-
-+(NSArray<ATUnitGroupModel*>*)rankAndShuffleUnitGroups:(NSArray<ATUnitGroupModel*>*)unitGroups {
++(NSArray<ATUnitGroupModel*>*)rankAndShuffleUnitGroups:(NSArray<ATUnitGroupModel*>*)unitGroups placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID {
     NSMutableArray<ATUnitGroupModel*> *rankedAndShuffledUnitGroups = [NSMutableArray<ATUnitGroupModel*> array];
     if ([unitGroups count] > 0) {
-        NSMutableArray<ATUnitGroupModel*> *curRank = [NSMutableArray<ATUnitGroupModel*> arrayWithObject:unitGroups[0]];
-        [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if (idx < [unitGroups  count] - 1) {
-                ATUnitGroupModel *nextObj = unitGroups[idx + 1];
-                if (obj.price == nextObj.price) {
+        NSMutableArray<ATUnitGroupModel*>* sortedUnitGroups = [NSMutableArray<ATUnitGroupModel*> arrayWithArray:unitGroups];
+        [sortedUnitGroups sortUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) { return [@([ATBidInfoManager priceForUnitGroup:obj2 placementID:placementModel.placementID requestID:requestID]) compare:@([ATBidInfoManager priceForUnitGroup:obj1 placementID:placementModel.placementID requestID:requestID])]; }];
+        
+        NSMutableArray<ATUnitGroupModel*> *curRank = [NSMutableArray<ATUnitGroupModel*> arrayWithObject:sortedUnitGroups[0]];
+        [sortedUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (idx < [sortedUnitGroups  count] - 1) {
+                ATUnitGroupModel *nextObj = sortedUnitGroups[idx + 1];
+                if ([ATBidInfoManager priceForUnitGroup:obj placementID:placementModel.placementID requestID:requestID] == [ATBidInfoManager priceForUnitGroup:nextObj placementID:placementModel.placementID requestID:requestID]) {
                     [curRank addObject:nextObj];
                 } else {
                     [rankedAndShuffledUnitGroups addObjectsFromArray:[curRank shuffledArray_anythink]];
@@ -1058,6 +1162,9 @@ static NSString *kHeaderBiddingResponseListErrorMessageKey = @"errormsg";
             }
         }];
     }
+    
+    
+    
     return rankedAndShuffledUnitGroups;
 }
 @end

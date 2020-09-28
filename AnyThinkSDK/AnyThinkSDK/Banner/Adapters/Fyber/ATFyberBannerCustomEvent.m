@@ -9,6 +9,7 @@
 #import "ATFyberBannerCustomEvent.h"
 #import "Utilities.h"
 
+
 @implementation ATFyberBannerCustomEvent
 - (UIViewController * _Nonnull)IAParentViewControllerForUnitController:(id  _Nullable)unitController {
     [ATLogger logMessage:@"FyberBanner::IAParentViewControllerForUnitController:" type:ATLogTypeExternal];
@@ -17,10 +18,7 @@
 
 - (void)IAAdDidReceiveClick:(id  _Nullable)unitController {
     [ATLogger logMessage:@"FyberBanner::IAAdDidReceiveClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackBannerAdClick];
 }
 
 - (void)IAAdWillLogImpression:(id  _Nullable)unitController {
@@ -46,4 +44,9 @@
 - (void)IAUnitControllerWillOpenExternalApp:(id  _Nullable)unitController {
     [ATLogger logMessage:@"FyberBanner::IAUnitControllerWillOpenExternalApp:" type:ATLogTypeExternal];
 }
+
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"spot_id"];
+}
+
 @end

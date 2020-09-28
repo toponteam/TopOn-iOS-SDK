@@ -22,48 +22,45 @@
 @property(nonatomic, readonly) id<ATGDTSplashAd> splashAd;
 @end
 @implementation ATGDTSplashAdapter
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameGDT]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameGDT];
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"GDTSDKConfig") sdkVersion] forNetwork:kNetworkNameGDT];
-            [NSClassFromString(@"GDTSDKConfig") registerAppId:info[@"app_id"]];
+            BOOL enable = ([localInfo isKindOfClass:[NSDictionary class]] && [localInfo[kATAdLoadingExtraGDTEnableDefaultAudioSessionKey] boolValue]) ? [localInfo[kATAdLoadingExtraGDTEnableDefaultAudioSessionKey] boolValue] : NO;
+            [NSClassFromString(@"GDTSDKConfig") enableDefaultAudioSessionSetting:enable];
         }
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"GDTSplashAd") != nil) {
-        NSDictionary *extra = info[kAdapterCustomInfoExtraKey];
+        NSDictionary *extra = localInfo;
         NSTimeInterval tolerateTimeout = [extra containsObjectForKey:kATSplashExtraTolerateTimeoutKey] ? [extra[kATSplashExtraTolerateTimeoutKey] doubleValue] : [[ATAppSettingManager sharedManager] splashTolerateTimeout];
         NSDate *curDate = [NSDate date];
         NSTimeInterval remainingTime = tolerateTimeout - [curDate timeIntervalSinceDate:extra[kATSplashExtraLoadingStartDateKey]];
         if (remainingTime > 0) {
-            _customEvent = [[ATGDTSplashCustomEvent alloc] initWithUnitID:info[@"unit_id"] customInfo:info];
+            _customEvent = [[ATGDTSplashCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
             _customEvent.requestCompletionBlock = completion;
             _customEvent.delegate = self.delegateToBePassed;
             dispatch_async(dispatch_get_main_queue(), ^{
-                self->_splashAd = [[NSClassFromString(@"GDTSplashAd") alloc] initWithPlacementId:info[@"unit_id"]];
+                self->_splashAd = [[NSClassFromString(@"GDTSplashAd") alloc] initWithAppId:serverInfo[@"app_id"] placementId:serverInfo[@"unit_id"]];
                 self->_splashAd.delegate = self->_customEvent;
                 self->_splashAd.fetchDelay = remainingTime;
-                self->_customEvent.timeout = remainingTime;
-                self->_customEvent.loadStartDate = curDate;
-                NSDictionary *extra = info[kAdapterCustomInfoExtraKey];
+                NSDictionary *extra = localInfo;
+                self->_customEvent.backgroundImageView = extra[kATSplashExtraBackgroundImageViewKey];
                 if ([extra containsObjectForKey:kATSplashExtraBackgroundColorKey]) { self->_splashAd.backgroundColor = extra[kATSplashExtraBackgroundColorKey]; }
                 if ([extra containsObjectForKey:kATSplashExtraBackgroundImageKey]) { self->_splashAd.backgroundImage = extra[kATSplashExtraBackgroundImageKey]; }
                 if ([extra containsObjectForKey:kATSplashExtraSkipButtonCenterKey]) { self->_splashAd.skipButtonCenter = [extra[kATSplashExtraSkipButtonCenterKey] CGPointValue]; }
-                self->_customEvent.bottomView = extra[kATSplashExtraContainerViewKey];
-                self->_customEvent.window = extra[kATSplashExtraWindowKey];
-                self->_customEvent.skipView = extra[kATSplashExtraCustomSkipButtonKey];
-                [self->_splashAd loadAd];
+                [self->_splashAd loadAdAndShowInWindow:extra[kATSplashExtraWindowKey] withBottomView:extra[kATSplashExtraContainerViewKey] skipView:extra[kATSplashExtraCustomSkipButtonKey]];
             });
         } else {
-            completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load splash.", NSLocalizedFailureReasonErrorKey:@"It took too long to load placement stragety."}]);
+            completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadSplashADMsg, NSLocalizedFailureReasonErrorKey:kATSDKSplashADTooLongToLoadPlacementSettingMsg}]);
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load splash.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"GDT"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadSplashADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"GDT"]}]);
     }
 }
 @end

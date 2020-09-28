@@ -10,12 +10,16 @@
 #import "Utilities.h"
 #import "ATSplashManager.h"
 #import "ATSplashDelegate.h"
+
+
+
 @interface ATBaiduSplashCustomEvent()
 @property(nonatomic, readonly) NSString *publisherID;
 @end
 @implementation ATBaiduSplashCustomEvent
--(instancetype)initWithPublisherID:(NSString*)publisherID unitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo {
-    self = [super initWithUnitID:unitID customInfo:customInfo];
+
+-(instancetype)initWithPublisherID:(NSString*)publisherID unitID:(NSString *)unitID serverInfo:(NSDictionary *)serverInfo localInfo:(NSDictionary *)localInfo {
+    self = [super initWithInfo:serverInfo localInfo:localInfo];
     if (self != nil) {
         _publisherID = publisherID;
     }
@@ -28,37 +32,40 @@
 
 - (void)splashSuccessPresentScreen:(id<ATBaiduMobAdSplash>)splash {
     [ATLogger logMessage:@"BaiduSplash::splashSuccessPresentScreen:" type:ATLogTypeExternal];
-    [self handleAssets:@{kAdAssetsCustomObjectKey:splash, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
+     [self trackSplashAdLoaded:splash];
+//    [self handleAssets:@{kAdAssetsCustomObjectKey:splash, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
     [_window addSubview:_containerView];
+//    if (self.ad == nil) { if ([self.delegate respondsToSelector:@selector(splashDidShowForPlacementID:extra:)]) { [self.delegate splashDidShowForPlacementID:self.unitID extra:[self delegateExtra]]; } }
+    [self trackSplashAdShow];
 }
 
 - (void)splashlFailPresentScreen:(id<ATBaiduMobAdSplash>)splash withError:(NSInteger) reason {
     [ATLogger logMessage:[NSString stringWithFormat:@"BaiduSplash::splashlFailPresentScreen:%ld", reason] type:ATLogTypeExternal];
     [self.splashView removeFromSuperview];
-    [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.BaiduSplash" code:reason userInfo:@{NSLocalizedDescriptionKey:@"ATSDK has failed to load splash.", NSLocalizedFailureReasonErrorKey:@"BaiduSDK has failed to load splash."}]];
+    [self trackSplashAdLoadFailed:[NSError errorWithDomain:@"com.anythink.BaiduSplash" code:reason userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadSplashADMsg, NSLocalizedFailureReasonErrorKey:@"BaiduSDK has failed to load splash."}]];
 }
 
 - (void)splashDidClicked:(id<ATBaiduMobAdSplash>)splash {
     [ATLogger logMessage:@"BaiduSplash::splashDidClicked:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackSplashAdClick];
 }
 
 - (void)splashDidDismissScreen:(id<ATBaiduMobAdSplash>)splash {
     [ATLogger logMessage:@"BaiduSplash::splashDidDismissScreen:" type:ATLogTypeExternal];
     [_containerView removeFromSuperview];
-    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]];
-    }
-
+    [self trackSplashAdClosed];
 }
 
 - (void)splashDidDismissLp:(id<ATBaiduMobAdSplash>)splash {
     [ATLogger logMessage:@"BaiduSplash::splashDidDismissLp:" type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"unit_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"ad_place_id"];
 }
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"ad_place_id"];
+//    return extra;
+//}
 @end

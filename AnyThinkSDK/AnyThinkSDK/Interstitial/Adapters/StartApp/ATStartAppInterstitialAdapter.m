@@ -28,7 +28,7 @@
     [((id<ATSTAStartAppAd>)interstitial.customObject) showAdWithAdTag:interstitial.unitGroup.content[@"ad_tag"]];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -38,9 +38,10 @@
                 dispatch_async(dispatch_get_main_queue(), ^{
                     id<ATSTAStartAppSDK> sdk = [NSClassFromString(@"STAStartAppSDK") sharedInstance];
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set) { [sdk setUserConsent:!limit forConsentType:@"pas" withTimestamp:[[NSDate date] timeIntervalSince1970]]; }
-                    sdk.appID = info[@"app_id"];
+                    sdk.appID = serverInfo[@"app_id"];
                 });
             }
         });
@@ -48,23 +49,23 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"STAStartAppAd") != nil) {
-        _customEvent = [[ATStartAppInterstitialCustomEvent alloc] initWithUnitID:@"" customInfo:info];
+        _customEvent = [[ATStartAppInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         dispatch_async(dispatch_get_main_queue(), ^{
             id<ATSTAAdPreferences> pre = [NSClassFromString(@"STAAdPreferences") preferencesWithMinCPM:0];
-            pre.adTag = info[@"ad_tag"];
+            pre.adTag = serverInfo[@"ad_tag"];
             
             self->_interstitialAd = [[NSClassFromString(@"STAStartAppAd") alloc] init];
-            if ([info[@"is_video"] boolValue]) {
+            if ([serverInfo[@"is_video"] boolValue]) {
                 [self->_interstitialAd loadVideoAdWithDelegate:self->_customEvent withAdPreferences:pre];
             } else {
                 [self->_interstitialAd loadAdWithDelegate:self->_customEvent withAdPreferences:pre];
             }
         });
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"StartApp"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"StartApp"]}]);
     }
     
 }

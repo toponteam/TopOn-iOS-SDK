@@ -24,6 +24,11 @@ typedef NS_ENUM(NSInteger, ATPACConsentStatus) {
 @property(nonatomic, getter=isTaggedForUnderAgeOfConsent) BOOL tagForUnderAgeOfConsent;
 @end
 
+@protocol ATGADMobileAds<NSObject>
++ (id<ATGADMobileAds>)sharedInstance;
+@property(nonatomic, nonnull, readonly) NSString *sdkVersion;
+@end
+
 @protocol ATGADRequest<NSObject>
 + (NSString *)sdkVersion;
 + (instancetype)request;

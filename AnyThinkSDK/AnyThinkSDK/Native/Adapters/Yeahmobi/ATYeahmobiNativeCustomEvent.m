@@ -15,6 +15,7 @@
 #import "ATNativeADView+Internal.h"
 #import "ATImageLoader.h"
 #import "ATNativeADCache.h"
+
 @implementation ATYeahmobiNativeCustomEvent
 -(void) loadSuccessed:(NSArray<id<ATCTNativeAdModel>>*)ads {
     [ATLogger logMessage:@"YeahmobiNative::loadSuccessed:" type:ATLogTypeExternal];
@@ -25,7 +26,7 @@
         NSMutableDictionary *asset = [NSMutableDictionary dictionaryWithObjectsAndKeys:obj.title, kNativeADAssetsMainTitleKey, obj.desc, kNativeADAssetsMainTextKey, obj.button, kNativeADAssetsCTATextKey, obj.icon, kNativeADAssetsIconURLKey, obj.image, kNativeADAssetsImageURLKey, [NSString stringWithFormat:@"%.1f", obj.star], kNativeADAssetsRatingKey, obj, kAdAssetsCustomObjectKey, self, kYearmobiNativeAssetsCustomEventKey, nil];
         [assets addObject:asset];
         
-        if (obj.icon != nil) {
+        if ([obj.icon length] > 0) {
             dispatch_group_enter(image_loading_group);
             [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.icon] completion:^(UIImage *image, NSError *error) {
                 if ([image isKindOfClass:[UIImage class]]) {asset[kNativeADAssetsIconImageKey] = image;}
@@ -33,7 +34,7 @@
             }];
         }
         
-        if (obj.image != nil) {
+        if ([obj.image length] > 0) {
             dispatch_group_enter(image_loading_group);
             [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.image] completion:^(UIImage *image, NSError *error) {
                 if ([image isKindOfClass:[UIImage class]]) {asset[kNativeADAssetsMainImageKey] = image;}
@@ -64,10 +65,15 @@
     [ATLogger logMessage:@"YeahmobiNaitve::CTNativeAdJumpfail:" type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"slot_id"];
-    return extra;
+    return cache.unitGroup.content[@"slot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"slot_id"];
+//    return extra;
+//}
 @end

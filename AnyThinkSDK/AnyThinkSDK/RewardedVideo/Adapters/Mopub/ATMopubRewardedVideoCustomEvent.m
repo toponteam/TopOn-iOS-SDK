@@ -16,12 +16,12 @@
 @implementation ATMopubRewardedVideoCustomEvent
 - (void)rewardedVideoAdDidLoadForAdUnitID:(NSString *)adUnitID {
     [ATLogger logMessage:@"Mopub: rewardedVideoAdDidLoadForAdUnitID" type:ATLogTypeExternal];
-    [self handleAssets:@{kRewardedVideoAssetsUnitIDKey:self.unitID, kAdAssetsCustomObjectKey:adUnitID}];
+    [self trackRewardedVideoAdLoaded:adUnitID adExtra:nil];
 }
 
 - (void)rewardedVideoAdDidFailToLoadForAdUnitID:(NSString *)adUnitID error:(NSError *)error {
     [ATLogger logError:[NSString stringWithFormat:@"Mopub: rewardedVideoAdDidFailToLoadForAdUnitID:%@, error:%@", adUnitID, error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackRewardedVideoAdLoadFailed:error];
 }
 
 - (void)rewardedVideoAdDidExpireForAdUnitID:(NSString *)adUnitID {
@@ -30,8 +30,7 @@
 
 - (void)rewardedVideoAdDidFailToPlayForAdUnitID:(NSString *)adUnitID error:(NSError *)error {
     [ATLogger logError:[NSString stringWithFormat:@"Mopub: rewardedVideoAdDidFailToPlayForAdUnitID:%@ error:%@", adUnitID, error] type:ATLogTypeExternal];
-    [self saveVideoPlayEventWithError:error];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidFailToPlayForPlacementID:error:extra:)]) { [self.delegate rewardedVideoDidFailToPlayForPlacementID:self.rewardedVideo.placementModel.placementID error:error extra:[self delegateExtra]]; }
+    [self trackRewardedVideoAdPlayEventWithError:error];
 }
 
 - (void)rewardedVideoAdWillAppearForAdUnitID:(NSString *)adUnitID {
@@ -40,11 +39,8 @@
 
 - (void)rewardedVideoAdDidAppearForAdUnitID:(NSString *)adUnitID {
     [ATLogger logMessage:@"Mopub: rewardedVideoAdDidAppearForAdUnitID" type:ATLogTypeExternal];
-    [self trackShow];
-    [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdShow];
+    [self trackRewardedVideoAdVideoStart];
 }
 
 - (void)rewardedVideoAdWillDisappearForAdUnitID:(NSString *)adUnitID {
@@ -53,20 +49,13 @@
 
 - (void)rewardedVideoAdDidDisappearForAdUnitID:(NSString *)adUnitID {
     [ATLogger logMessage:@"Mopub: rewardedVideoAdDidDisappearForAdUnitID" type:ATLogTypeExternal];
-    [self handleClose];
-    [self saveVideoCloseEventRewarded:_rewarded];
+    [self trackRewardedVideoAdCloseRewarded:_rewarded];
     [[ATRewardedVideoManager sharedManager] removeCustomEventForKey:self.rewardedVideo.placementModel.placementID];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
-    }
 }
 
 - (void)rewardedVideoAdDidReceiveTapEventForAdUnitID:(NSString *)adUnitID {
     [ATLogger logMessage:@"Mopub: rewardedVideoAdDidReceiveTapEventForAdUnitID" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdClick];
 }
 
 - (void)rewardedVideoAdWillLeaveApplicationForAdUnitID:(NSString *)adUnitID {
@@ -76,20 +65,18 @@
 - (void)rewardedVideoAdShouldRewardForAdUnitID:(NSString *)adUnitID reward:(id<ATRewardedVideoReward>)reward {
     [ATLogger logMessage:@"Mopub: rewardedVideoAdShouldRewardForAdUnitID:reward:" type:ATLogTypeExternal];
     _rewarded = YES;
-    self.rewardGranted = YES;
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
-    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-        [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdRewarded];
+    [self trackRewardedVideoAdVideoEnd];
     
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unitid"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unitid"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unitid"];
+//    return extra;
+//}
 @end

@@ -16,6 +16,7 @@
 #import "ATPlacementModel.h"
 #import "ATLogger.h"
 #import "ATAdManagement.h"
+
 NSString *const kATFBNativeADAssetsADChoiceImageKey = @"ad_choice";
 NSInteger const kATFBNativeAdViewIconMediaViewFlag = 20190416;
 @implementation ATFacebookCustomEvent
@@ -33,36 +34,34 @@ NSInteger const kATFBNativeAdViewIconMediaViewFlag = 20190416;
         dispatch_group_leave(image_loading_group);
     }];
     
-    dispatch_group_notify(image_loading_group, dispatch_get_main_queue(), ^{ [self handleAssets:assets]; });
+    dispatch_group_notify(image_loading_group, dispatch_get_main_queue(), ^{ [self trackNativeAdLoaded:assets]; });
 }
 
 - (void)nativeAdDidDownloadMedia:(id<ATFBNativeAd>)nativeAd { [ATLogger logMessage:@"FacebookNative::nativeAdDidDownloadMedia:" type:ATLogTypeExternal]; }
 
 - (void)nativeAd:(id<ATFBNativeAd>)nativeAd didFailWithError:(NSError *)error {
     [ATLogger logError:[NSString stringWithFormat:@"FacebookNative::nativeAd:didFailWithError:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackNativeAdLoadFailed:error];
 }
 
 - (void)nativeAdWillLogImpression:(id<ATFBNativeAd>)nativeAd { [ATLogger logMessage:@"FacebookNative::nativeAdWillLogImpression:" type:ATLogTypeExternal]; }
 
 - (void)nativeAdDidClick:(id<ATFBNativeAd>)nativeAd {
     [ATLogger logMessage:@"FacebookNative::nativeAdDidClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 - (void)nativeAdDidFinishHandlingClick:(id<ATFBNativeAd>)nativeAd { [ATLogger logMessage:@"FacebookNative::nativeAdDidFinishHandlingClick:" type:ATLogTypeExternal]; }
 
 - (void)mediaViewVideoDidPlay:(id<ATFBMediaView>)mediaView {
     [ATLogger logMessage:@"FacebookNative::mediaViewVideoDidPlay:" type:ATLogTypeExternal];
-    [self trackVideoStart];
-    [self.adView notifyVideoStart];
+    [self trackNativeAdVideoStart];
+   
 }
 
 - (void)mediaViewVideoDidComplete:(id<ATFBMediaView>)mediaView {
     [ATLogger logMessage:@"FacebookNative::mediaViewVideoDidComplete:" type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    [self.adView notifyVideoEnd];
+    [self trackNativeAdVideoEnd];
 }
 
 -(void) didAttachMediaView {
@@ -77,12 +76,16 @@ NSInteger const kATFBNativeAdViewIconMediaViewFlag = 20190416;
     return nativeAd.adFormatType == ATFBAdFormatTypeVideo ? ATNativeADSourceTypeVideo : ATNativeADSourceTypeImage;
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unit_id"];
-    return extra;
+    return cache.unitGroup.content[@"unit_id"];
 }
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 
 #pragma mark - native banner
 - (void)nativeBannerAdDidLoad:(id<ATFBNativeBannerAd>)nativeBannerAd {
@@ -91,7 +94,7 @@ NSInteger const kATFBNativeAdViewIconMediaViewFlag = 20190416;
     assets[kNativeADAssetsMainTitleKey] = @"";
     assets[kNativeADAssetsMainTextKey] = @"";
     assets[kNativeADAssetsCTATextKey] = @"";
-    [self handleAssets:assets];
+    [self trackNativeAdLoaded:assets];
 }
 
 - (void)nativeBannerAdDidDownloadMedia:(id<ATFBNativeBannerAd>)nativeBannerAd { [ATLogger logMessage:@"FacebookNativeBanner::nativeBannerAdDidDownloadMedia:" type:ATLogTypeExternal]; }
@@ -100,13 +103,12 @@ NSInteger const kATFBNativeAdViewIconMediaViewFlag = 20190416;
 
 - (void)nativeBannerAd:(id<ATFBNativeBannerAd>)nativeBannerAd didFailWithError:(NSError *)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"FacebookNativeBanner::nativeBannerAd:didFailWithError:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackNativeAdLoadFailed:error];
 }
 
 - (void)nativeBannerAdDidClick:(id<ATFBNativeBannerAd>)nativeBannerAd {
     [ATLogger logMessage:@"FacebookNativeBanner::nativeBannerAdDidFinishHandlingClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 - (void)nativeBannerAdDidFinishHandlingClick:(id<ATFBNativeBannerAd>)nativeBannerAd { [ATLogger logMessage:@"FacebookNativeBanner::nativeBannerAdDidFinishHandlingClick:" type:ATLogTypeExternal]; }

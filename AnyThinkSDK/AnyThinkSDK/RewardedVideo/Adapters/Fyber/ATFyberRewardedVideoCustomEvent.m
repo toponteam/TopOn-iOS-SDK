@@ -21,10 +21,7 @@
 //点击
 - (void)IAAdDidReceiveClick:(id<IAUnitController>)unitController {
     [ATLogger logMessage:@"FyberRewardedVideo::IAAdDidReceiveClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdClick];
 }
 
 //展示
@@ -35,10 +32,7 @@
 //奖励回调
 - (void)IAAdDidReward:(id<IAUnitController>)unitController {
     [ATLogger logMessage:@"FyberRewardedVideo::IAAdDidReward:" type:ATLogTypeExternal];
-    self.rewardGranted = YES;
-    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-        [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdRewarded];
 }
 
 - (void)IAUnitControllerWillPresentFullscreen:(id<IAUnitController>)unitController {
@@ -48,11 +42,8 @@
 //成功展示全屏
 - (void)IAUnitControllerDidPresentFullscreen:(id<IAUnitController>)unitController {
     [ATLogger logMessage:@"FyberRewardedVideo::IAUnitControllerDidPresentFullscreen:" type:ATLogTypeExternal];
-    [self trackShow];
-    [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdShow];
+    [self trackRewardedVideoAdVideoStart];
 }
 
 - (void)IAUnitControllerWillDismissFullscreen:(id<IAUnitController>)unitController {
@@ -62,11 +53,7 @@
 //退出全屏展示
 - (void)IAUnitControllerDidDismissFullscreen:(id<IAUnitController>)unitController {
     [ATLogger logMessage:@"FyberRewardedVideo::IAUnitControllerDidDismissFullscreen:" type:ATLogTypeExternal];
-    [self handleClose];
-    [self saveVideoCloseEventRewarded:self.rewardGranted];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdCloseRewarded:self.rewardGranted];
 }
 
 //跳转外链时
@@ -77,18 +64,13 @@
 //视频播放完成
 - (void)IAVideoCompleted:(id<ATIAVideoContentController>)contentController {
     [ATLogger logMessage:@"FyberRewardedVideo::IAVideoCompleted:" type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdVideoEnd];
 }
 
 //视频播放中断
 - (void)IAVideoContentController:(id<ATIAVideoContentController>)contentController videoInterruptedWithError:(NSError * _Nonnull)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"FyberRewardedVideo::IAVideoContentController:videoInterruptedWithError:%@", error] type:ATLogTypeExternal];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidFailToPlayForPlacementID:error:extra:)]) {
-        [self.delegate rewardedVideoDidFailToPlayForPlacementID:self.rewardedVideo.placementModel.placementID error:error extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdPlayEventWithError:error];
 }
 
 //更新视频时长
@@ -101,10 +83,14 @@
 //    [ATLogger logMessage:[NSString stringWithFormat:@"FyberRewardedVideo::IAVideoContentController:videoProgressUpdatedWithCurrentTime:%f totalTime:%f", currentTime, totalTime] type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"spot_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"spot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"spot_id"];
+//    return extra;
+//}
 
 @end

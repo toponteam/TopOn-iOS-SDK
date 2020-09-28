@@ -11,9 +11,11 @@
 @protocol ATAd;
 @class ATPlacementModel;
 @class ATUnitGroupModel;
+@class ATWaterfall;
 extern NSString *const kAdAssetsCustomEventKey;
 extern NSString *const kAdAssetsCustomObjectKey;
 extern NSString *const kAdAssetsUnitIDKey;
+extern NSString *const kAdAssetsPriceKey;
 
 typedef NS_ENUM(NSInteger, ATAdSourceStatus) {
     ATAdSourceStatusInvalid = 0,//pacing & cap_by_hour/cap_by_day
@@ -24,8 +26,8 @@ typedef NS_ENUM(NSInteger, ATAdSourceStatus) {
 };
 
 @protocol ATAdManagement<NSObject>
--(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID;
--(BOOL) inspectAdSourceStatusWithPlacementModel:(ATPlacementModel*)placementModel activeUnitGroups:(NSArray<ATUnitGroupModel*>*)activeUnitGroups unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo;
+-(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID;
+-(BOOL) inspectAdSourceStatusWithPlacementModel:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo;
 -(void) invalidateStatusForAd:(id<ATAd>)ad;
 -(BOOL) adSourceStatusInPlacementModel:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup;
 

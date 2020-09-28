@@ -9,38 +9,30 @@
 #import "ATYeahmobiRewardedVideoCustomEvent.h"
 #import "Utilities.h"
 #import "ATRewardedVideoManager.h"
+
 @interface ATYeahmobiRewardedVideoCustomEvent()
 @property(nonatomic, readonly) BOOL rewarded;
 @end
 @implementation ATYeahmobiRewardedVideoCustomEvent
 - (void)CTRewardVideoLoadSuccess {
     [ATLogger logMessage:@"YeahmobiRewardedVideo::CTRewardVideoLoadSuccess" type:ATLogTypeExternal];
-    [self handleAssets:@{kRewardedVideoAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kRewardedVideoAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:[self.unitID length] > 0 ? self.unitID : @""}];
+    [self trackRewardedVideoAdLoaded:[self.unitID length] > 0 ? self.unitID : @"" adExtra:nil];
 }
 
 - (void)CTRewardVideoDidStartPlaying {
     [ATLogger logMessage:@"YeahmobiRewardedVideo::CTRewardVideoDidStartPlaying" type:ATLogTypeExternal];
-    [self trackShow];
-    [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdShow];
+    [self trackRewardedVideoAdVideoStart];
 }
 
 - (void)CTRewardVideoDidFinishPlaying {
     [ATLogger logMessage:@"YeahmobiRewardedVideo::CTRewardVideoDidFinishPlaying" type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdVideoEnd];
 }
 
 - (void)CTRewardVideoDidClickRewardAd {
     [ATLogger logMessage:@"YeahmobiRewardedVideo::CTRewardVideoDidClickRewardAd" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdClick];
 }
 
 - (void)CTRewardVideoWillLeaveApplication {
@@ -57,25 +49,22 @@
 
 - (void)CTRewardVideoClosed {
     [ATLogger logMessage:@"YeahmobiRewardedVideo::CTRewardVideoClosed" type:ATLogTypeExternal];
-    [self handleClose];
-    [self saveVideoCloseEventRewarded:_rewarded];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdCloseRewarded:_rewarded];
 }
 
 - (void)CTRewardVideoAdRewardedName:(NSString *)rewardName rewardAmount:(NSString *)rewardAmount customParams:(NSString*) customParams {
     [ATLogger logMessage:[NSString stringWithFormat:@"YeahmobiRewardedVideo::CTRewardVideoAdRewardedName:%@ rewardAmount:%@ customParams:%@", rewardName, rewardAmount, customParams] type:ATLogTypeExternal];
     _rewarded = YES;
-    self.rewardGranted = YES;
-    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-        [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdRewarded];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"slot_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"slot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"slot_id"];
+//    return extra;
+//}
 @end

@@ -22,16 +22,16 @@
 
 static NSString *const kUnitIDKey = @"unitid";
 @implementation ATMopubRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kUnitIDKey]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kUnitIDKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id)customObject info:(NSDictionary*)info {
     return [NSClassFromString(@"MPRewardedVideo") hasAdAvailableForAdUnitID:info[kUnitIDKey]];
 }
 
 +(void) showRewardedVideo:(ATRewardedVideo*)rewardedVideo inViewController:(UIViewController*)viewController delegate:(id<ATRewardedVideoDelegate>)delegate {
-    ATMopubRewardedVideoCustomEvent *customEvent = [[ATMopubRewardedVideoCustomEvent alloc] initWithUnitID:rewardedVideo.unitGroup.content[kUnitIDKey] customInfo:nil];
+    ATMopubRewardedVideoCustomEvent *customEvent = [[ATMopubRewardedVideoCustomEvent alloc] initWithInfo:nil localInfo:nil];
     customEvent.delegate = delegate;
     customEvent.rewardedVideo = rewardedVideo;
     [NSClassFromString(@"MPRewardedVideo") setDelegate:customEvent forAdUnitId:rewardedVideo.unitGroup.content[kUnitIDKey]];
@@ -39,7 +39,7 @@ static NSString *const kUnitIDKey = @"unitid";
     [NSClassFromString(@"MPRewardedVideo") presentRewardedVideoAdForAdUnitID:rewardedVideo.unitGroup.content[kUnitIDKey] fromViewController:viewController withReward:[NSClassFromString(@"MPRewardedVideo") selectedRewardForAdUnitID:rewardedVideo.unitGroup.content[kUnitIDKey]]];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -56,7 +56,8 @@ static NSString *const kUnitIDKey = @"unitid";
                     }
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set) {
                         if (limit) {
                             [mopub grantConsent];
@@ -71,22 +72,22 @@ static NSString *const kUnitIDKey = @"unitid";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"MPRewardedVideo")) {
         id<ATMoPub> mopub = [NSClassFromString(@"MoPub") sharedInstance];
 
         __weak typeof(self) weakSelf = self;
         void(^Load)(void) = ^{
-            weakSelf.customEvent = [[ATMopubRewardedVideoCustomEvent alloc] initWithUnitID:info[kUnitIDKey] customInfo:info];
-            weakSelf.customEvent.requestNumber = [info[@"request_num"] integerValue];
+            weakSelf.customEvent = [[ATMopubRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
+            weakSelf.customEvent.requestNumber = [serverInfo[@"request_num"] integerValue];
             weakSelf.customEvent.requestCompletionBlock = completion;
-            for (NSInteger i = 0; i < [info[@"request_num"] integerValue]; i++) {
-                [NSClassFromString(@"MPRewardedVideo") setDelegate:weakSelf.customEvent forAdUnitId:info[kUnitIDKey]];
-                [NSClassFromString(@"MPRewardedVideo") loadRewardedVideoAdWithAdUnitID:info[kUnitIDKey] keywords:info[kATAdLoadingExtraKeywordKey] userDataKeywords:info[kATAdLoadingExtraUserDataKeywordKey] location:info[kATAdLoadingExtraLocationKey] customerId:[[ATAdManager sharedManager] extraInfoForPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]][kATAdLoadingExtraUserIDKey] mediationSettings:nil];
+            for (NSInteger i = 0; i < [serverInfo[@"request_num"] integerValue]; i++) {
+                [NSClassFromString(@"MPRewardedVideo") setDelegate:weakSelf.customEvent forAdUnitId:serverInfo[kUnitIDKey]];
+                [NSClassFromString(@"MPRewardedVideo") loadRewardedVideoAdWithAdUnitID:serverInfo[kUnitIDKey] keywords:serverInfo[kATAdLoadingExtraKeywordKey] userDataKeywords:serverInfo[kATAdLoadingExtraUserDataKeywordKey] location:serverInfo[kATAdLoadingExtraLocationKey] customerId:[[ATAdManager sharedManager] extraInfoForPlacementID:((ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey]).placementID requestID:serverInfo[kAdapterCustomInfoRequestIDKey]][kATAdLoadingExtraUserIDKey] mediationSettings:nil];
             }
         };
         if(![ATAPI getMPisInit]){
-            [mopub initializeSdkWithConfiguration:[[NSClassFromString(@"MPMoPubConfiguration") alloc] initWithAdUnitIdForAppInitialization:info[kUnitIDKey]] completion:^{
+            [mopub initializeSdkWithConfiguration:[[NSClassFromString(@"MPMoPubConfiguration") alloc] initWithAdUnitIdForAppInitialization:serverInfo[kUnitIDKey]] completion:^{
                 [ATAPI setMPisInit:YES];
                 Load();
             }];
@@ -95,7 +96,7 @@ static NSString *const kUnitIDKey = @"unitid";
         }
         
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Mopub"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Mopub"]}]);
     }
 }
 @end

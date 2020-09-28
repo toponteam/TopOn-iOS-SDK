@@ -8,6 +8,6 @@
 
 #import "ATInterstitialCustomEvent.h"
 #import "ATUnityAdsInterstitialAdapter.h"
-@interface ATUnityAdsInterstitialCustomEvent : ATInterstitialCustomEvent<UnityMonetizationDelegate, UMONShowAdDelegate>
+@interface ATUnityAdsInterstitialCustomEvent : ATInterstitialCustomEvent
 
 @end

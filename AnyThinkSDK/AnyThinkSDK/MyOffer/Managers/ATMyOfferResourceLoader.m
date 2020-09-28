@@ -50,20 +50,20 @@ static NSString *const kOfferLoadingErrorDomain = @"com.anythink.MyOfferResource
     if (offerModel != nil) {
         __weak typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-            ATMyOfferResourceModel *resourceModel = [[ATMyOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.resourceID];
+            ATMyOfferResourceModel *resourceModel = [[ATMyOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID];
             
             if (resourceModel != nil) {
                 completion(nil);
             } else {//Load resource for offer
                 if ([offerModel.resourceURLs count] > 0) {
                     [weakSelf.completionCallbackStorageAccessor writeWithBlock:^{
-                        if (weakSelf.completionCallbackStorage[offerModel.resourceID] != nil) {
-                            //Entry for offerModel.resourceId being found in completionCallbackStorage means download for resouceID has been started before, just save the completion callback for later invocation & nothing else needs to be done.
-                            if (completion != nil) { [weakSelf.completionCallbackStorage[offerModel.resourceID] addObject:completion]; }
+                        if (weakSelf.completionCallbackStorage[offerModel.localResourceID] != nil) {
+                            //Entry for offerModel.localResourceID being found in completionCallbackStorage means download for resouceID has been started before, just save the completion callback for later invocation & nothing else needs to be done.
+                            if (completion != nil) { [weakSelf.completionCallbackStorage[offerModel.localResourceID] addObject:completion]; }
                         } else {
                             if (completion != nil) {
                                 NSMutableArray<void(^)(NSError*)> *callbacks = [NSMutableArray<void(^)(NSError*)> arrayWithObject:completion];
-                                weakSelf.completionCallbackStorage[offerModel.resourceID] = callbacks;
+                                weakSelf.completionCallbackStorage[offerModel.localResourceID] = callbacks;
                             }
                             
                             __block NSInteger numberOfFinishedDownload = 0;
@@ -125,12 +125,12 @@ static NSString *const kOfferLoadingErrorDomain = @"com.anythink.MyOfferResource
 
 //This method is not thread-safe, only to be used within certain context
 -(void) finishResourceDownloadWithOfferModel:(ATMyOfferOfferModel*)offerModel resourceModel:(ATMyOfferResourceModel*)resourceModel error:(NSError*)error {
-    if (error == nil && resourceModel != nil) { [[ATMyOfferResourceManager sharedManager] saveResourceModel:resourceModel forResourceID:offerModel.resourceID]; }
+    if (error == nil && resourceModel != nil) { [[ATMyOfferResourceManager sharedManager] saveResourceModel:resourceModel forResourceID:offerModel.localResourceID]; }
     __weak typeof(self) weakSelf = self;
     [weakSelf.completionCallbackStorageAccessor writeWithBlock:^{
-        NSMutableArray<void(^)(NSError*)> *callbacks = weakSelf.completionCallbackStorage[offerModel.resourceID];
+        NSMutableArray<void(^)(NSError*)> *callbacks = weakSelf.completionCallbackStorage[offerModel.localResourceID];
         [callbacks enumerateObjectsUsingBlock:^(void (^ _Nonnull callback)(NSError*), NSUInteger idx, BOOL * _Nonnull stop) { callback(error); }];
-        [weakSelf.completionCallbackStorage removeObjectForKey:offerModel.resourceID];
+        [weakSelf.completionCallbackStorage removeObjectForKey:offerModel.localResourceID];
     }];
 }
 @end

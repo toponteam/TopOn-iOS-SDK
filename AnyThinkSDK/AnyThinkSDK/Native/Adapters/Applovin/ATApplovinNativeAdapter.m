@@ -22,7 +22,7 @@
     return [ATApplovinRenderer class];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameApplovin]) {
@@ -33,7 +33,8 @@
                 [NSClassFromString(@"ALPrivacySettings") setIsAgeRestrictedUser:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameApplovin][kApplovinUnderAgeKey] boolValue]];
             } else {
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) { [NSClassFromString(@"ALPrivacySettings") setHasUserConsent:!limit]; }
             }
         }
@@ -41,14 +42,14 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
     _customEvent = [[ATApplovinCustomEvent alloc] init];
-    _customEvent.unitID = info[@"sdkkey"];
+    _customEvent.unitID = serverInfo[@"sdkkey"];
     _customEvent.requestCompletionBlock = completion;
-    NSDictionary *extraInfo = info[kAdapterCustomInfoExtraKey];
+    NSDictionary *extraInfo = localInfo;
     _customEvent.requestExtra = extraInfo;
-    _customEvent.requestNumber = [info[@"request_num"] integerValue];
-    id<ATALSdk> sdk = [NSClassFromString(@"ALSdk") sharedWithKey:info[@"sdkkey"]];
+    _customEvent.requestNumber = [serverInfo[@"request_num"] integerValue];
+    id<ATALSdk> sdk = [NSClassFromString(@"ALSdk") sharedWithKey:serverInfo[@"sdkkey"]];
     for (NSInteger i = 0; i < _customEvent.requestNumber; i++) { [sdk.nativeAdService loadNextAdAndNotify:_customEvent]; }
 }
 @end

@@ -28,7 +28,7 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
 -(ATDataConsentSet) commonTkDataConsentSet;
 -(NSUInteger) myOfferMaxResourceLength;
 -(NSArray *) preinitInfoArr;
--(BOOL)limitThirdPartySDKDataCollection:(BOOL*)setThirdPartySDK;
+-(BOOL)limitThirdPartySDKDataCollection:(BOOL*)setThirdPartySDK networkFirmID:(NSInteger)networkFirmID;
 -(BOOL)shouldUploadProtectedFields;
 /**
  * If the SDK has been init-ed the first time, the data protected area list will be the embeded one(stored in the Info.plist of the SDK bundle under the key Data Protection Area); or it'll be the one that's returned by the server.
@@ -39,10 +39,21 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
 @property(nonatomic, readonly) NSDictionary *defaultSetting;
 @property(nonatomic, readonly) ATTrackingSetting *trackingSetting;
 
+@property(nonatomic, readonly) NSString *ABTestID;
+
 /*
  *up id
  */
 @property(nonatomic, readonly) NSString* ATID;
+/**
+ * sysid
+ */
+@property(nonatomic, readonly) NSString* SYSID;
+/**
+ * bkupid
+ */
+@property(nonatomic, readonly) NSString* BKUPID;
+
 @property(nonatomic, readonly) NSString *clickNotificationName;
 @property(nonatomic, readonly) NSString *showNotificationName;
 @end
@@ -63,6 +74,11 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
  */
 @property(nonatomic, readonly) NSInteger agentEventBatNumberThreadhold;
 @property(nonatomic, readonly) NSInteger agentEventBatInterval;
+//TCP
+@property(nonatomic, readonly) NSString *trackerTCPAddress;
+@property(nonatomic, readonly) NSInteger trackerTCPPort;
+@property(nonatomic, readonly) NSInteger trackerTCPType;
+@property(nonatomic, readonly) NSString *trackerTCPRate;
 
 //TC
 @property(nonatomic, readonly) NSArray<NSString*>* tcHosts;

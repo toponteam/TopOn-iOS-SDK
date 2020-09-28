@@ -14,8 +14,6 @@ typedef NS_ENUM(NSInteger, ATNetworkingHTTPMethod) {
 
 NS_ASSUME_NONNULL_BEGIN
 extern NSString *const kAPIDomain;
-extern NSString *const kTrackDomain;
-extern NSString *const kAgentDomain;
 @interface ATNetworkingManager : NSObject
 +(NSString*)currentNetworkType;
 +(instancetype)sharedManager;
@@ -24,6 +22,7 @@ extern NSString *const kAgentDomain;
  */
 -(void) sendHTTPRequestToDomain:(NSString* const)domain path:(NSString*)path HTTPMethod:(ATNetworkingHTTPMethod)method parameters:(id)parameters completion:(void(^)(NSData *data, NSURLResponse * _Nullable response, NSError * _Nullable error))completion;
 -(void) sendHTTPRequestToAddress:(NSString*)address HTTPMethod:(ATNetworkingHTTPMethod)method parameters:(id)parameters completion:(void(^)(NSData *data, NSURLResponse * _Nullable response, NSError * _Nullable error))completion;
+-(void) sendHTTPRequestToAddress:(NSString*)address HTTPMethod:(ATNetworkingHTTPMethod)method parameters:(id)parameters gzip:(BOOL)gzip completion:(void(^)(NSData *data, NSURLResponse * _Nullable response, NSError * _Nullable error))completion;
 NS_ASSUME_NONNULL_END
 @end
 

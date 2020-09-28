@@ -19,7 +19,7 @@
 @property(nonatomic, readonly) ATNendBannerCustomEvent *customEvent;
 @end
 @implementation ATNendBannerAdapter
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -33,24 +33,24 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"NADView") != nil) {
-        _customEvent = [[ATNendBannerCustomEvent alloc] initWithUnitID:info[@"spot_id"] customInfo:info];
+        _customEvent = [[ATNendBannerCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        NSDictionary *extra = info[kAdapterCustomInfoExtraKey];
-        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)info[kAdapterCustomInfoUnitGroupModelKey];
+        NSDictionary *extra = localInfo;
+        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
         dispatch_async(dispatch_get_main_queue(), ^{
             NSDictionary *para = extra[kATBannerLoadingExtraParameters];
             BOOL adjustAdSize = [extra[kATAdLoadingExtraBannerSizeAdjustKey] boolValue];
             self->_customEvent.adjustAdSize = adjustAdSize;
             self->_customEvent.loadingParameters = para;
             self->_bannerView = [[NSClassFromString(@"NADView") alloc] initWithFrame:CGRectMake(.0f, .0f, unitGroupModel.adSize.width, unitGroupModel.adSize.height) isAdjustAdSize:adjustAdSize];
-            [self->_bannerView setNendID:info[@"api_key"] spotID:info[@"spot_id"]];
+            [self->_bannerView setNendID:serverInfo[@"api_key"] spotID:serverInfo[@"spot_id"]];
             self->_bannerView.delegate = self->_customEvent;
             [para isKindOfClass:[NSDictionary class]] ? [self->_bannerView load:para] : [self->_bannerView load];
         });
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load banner ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Nend"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Nend"]}]);
     }
 }
 @end

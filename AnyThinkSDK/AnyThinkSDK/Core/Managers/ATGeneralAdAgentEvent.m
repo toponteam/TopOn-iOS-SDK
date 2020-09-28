@@ -13,6 +13,7 @@
 #import "ATCapsManager.h"
 #import "ATAdManager+Internal.h"
 #import "Utilities.h"
+#import "ATWaterfallManager.h"
 
 NSString *const kGeneralAdAgentEventExtraInfoErrorKey = @"error";
 NSString *const kGeneralAdAgentEventExtraInfoNetworkFirmIDKey = @"network_firm_id";
@@ -73,7 +74,7 @@ static NSString *kEventKey = @"1004620";
 
 +(NSArray<NSString*>*)networksInAd:(id<ATAd>)ad {
     NSMutableArray<NSString*>* nws = [NSMutableArray<NSString*> array];
-    NSArray<ATUnitGroupModel*>* unitGroups = [ad.placementModel unitGroupsForRequestID:ad.requestID];
+    NSArray<ATUnitGroupModel*>* unitGroups = ad.finalWaterfall.unitGroups;
     [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [nws addObject:[self networkNameWithNetworkFirmID:obj.networkFirmID]];
     }];
@@ -114,22 +115,22 @@ static NSString *kEventKey = @"1004620";
 @end
 
 @implementation ATPlacementholderAd
-+(instancetype)placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATPlacementholderAd alloc] initWithPlacementModel:placementModel requestID:requestID unitGroup:unitGroup];
++(instancetype)placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(nonnull ATWaterfall *)finalWaterfall {
+    return [[ATPlacementholderAd alloc] initWithPlacementModel:placementModel requestID:requestID unitGroup:unitGroup finalWaterfall:finalWaterfall];
 }
 
--(instancetype) initWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
+-(instancetype) initWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall {
     self = [super init];
     if (self != nil) {
         _showTimes = 0;
-        NSArray<ATUnitGroupModel*>* unitGroups = [placementModel unitGroupsForRequestID:requestID];
-        unitGroups = [unitGroups count] > 0 ? unitGroups : placementModel.unitGroups;
+        NSArray<ATUnitGroupModel*>* unitGroups = finalWaterfall.unitGroups;
         _priority = [unitGroups indexOfObject:unitGroup];
         _placementModel = placementModel;
         _requestID = requestID;
         _cacheDate = [NSDate date];
         _unitGroup = unitGroup;
         _unitID = placementModel.placementID;
+        _finalWaterfall = finalWaterfall;
     }
     return self;
 }

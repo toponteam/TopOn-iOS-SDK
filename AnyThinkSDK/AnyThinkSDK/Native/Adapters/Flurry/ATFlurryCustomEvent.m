@@ -17,6 +17,7 @@
 #import "ATTracker.h"
 #import "ATNativeADView+Internal.h"
 #import "ATNativeADCache.h"
+
 @implementation ATFlurryCustomEvent
 - (void) adNativeDidFetchAd:(id<ATFlurryAdNative>)nativeAd {
     NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:nativeAd, kAdAssetsCustomObjectKey, self.unitID, kNativeADAssetsUnitIDKey, nil];
@@ -36,40 +37,46 @@
     dispatch_group_t img_loading_group = dispatch_group_create();
     
     if ([assets containsObjectForKey:kNativeADAssetsMainImageKey]) {
-        dispatch_group_enter(img_loading_group);
-        [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:assets[kNativeADAssetsMainImageKey]] completion:^(UIImage *image, NSError *error) {
-            if (image != nil) assets[kNativeADAssetsMainImageKey] = image;
-            else [assets removeObjectForKey:kNativeADAssetsMainImageKey];
-            dispatch_group_leave(img_loading_group);
-        }];
+        if ([assets[kNativeADAssetsMainImageKey] length] > 0) {
+            dispatch_group_enter(img_loading_group);
+            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:assets[kNativeADAssetsMainImageKey]] completion:^(UIImage *image, NSError *error) {
+                if (image != nil) assets[kNativeADAssetsMainImageKey] = image;
+                else [assets removeObjectForKey:kNativeADAssetsMainImageKey];
+                dispatch_group_leave(img_loading_group);
+            }];
+        }
     }
     
     if ([assets containsObjectForKey:kNativeADAssetsIconImageKey]) {
-        dispatch_group_enter(img_loading_group);
-        [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:assets[kNativeADAssetsIconImageKey]] completion:^(UIImage *image, NSError *error) {
-            if (image != nil) assets[kNativeADAssetsIconImageKey] = image;
-            else [assets removeObjectForKey:kNativeADAssetsIconImageKey];
-            dispatch_group_leave(img_loading_group);
-        }];
+        if ([assets[kNativeADAssetsIconImageKey] length] > 0) {
+            dispatch_group_enter(img_loading_group);
+            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:assets[kNativeADAssetsIconImageKey]] completion:^(UIImage *image, NSError *error) {
+                if (image != nil) assets[kNativeADAssetsIconImageKey] = image;
+                else [assets removeObjectForKey:kNativeADAssetsIconImageKey];
+                dispatch_group_leave(img_loading_group);
+            }];
+        }
     }
     
     if ([assets containsObjectForKey:kNativeADAssetsSponsoredImageKey]) {
-        dispatch_group_enter(img_loading_group);
-        [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:assets[kNativeADAssetsSponsoredImageKey]] completion:^(UIImage *image, NSError *error) {
-            if (image != nil) assets[kNativeADAssetsSponsoredImageKey] = image;
-            else [assets removeObjectForKey:kNativeADAssetsSponsoredImageKey];
-            dispatch_group_leave(img_loading_group);
-        }];
+        if ([assets[kNativeADAssetsSponsoredImageKey] length] > 0) {
+            dispatch_group_enter(img_loading_group);
+            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:assets[kNativeADAssetsSponsoredImageKey]] completion:^(UIImage *image, NSError *error) {
+                if (image != nil) assets[kNativeADAssetsSponsoredImageKey] = image;
+                else [assets removeObjectForKey:kNativeADAssetsSponsoredImageKey];
+                dispatch_group_leave(img_loading_group);
+            }];
+        }
     }
     
     dispatch_group_notify(img_loading_group, dispatch_get_main_queue(), ^{
-        [self handleAssets:assets];
+        [self trackNativeAdLoaded:assets];
     });
 }
 
 - (void) adNative:(id<ATFlurryAdNative>)nativeAd adError:(ATFlurryAdError)adError errorDescription:(NSError*) errorDescription {
     [ATLogger logError:[NSString stringWithFormat:@"Flurry has failed to load offer with code:%u, error: %@", adError, errorDescription] type:ATLogTypeExternal];
-    [self handleLoadingFailure:errorDescription];
+    [self trackNativeAdLoadFailed:errorDescription];
 }
 
 - (void) adNativeDidLogImpression:(id<ATFlurryAdNative>) nativeAd {
@@ -77,14 +84,19 @@
 }
 
 - (void) adNativeDidReceiveClick:(id<ATFlurryAdNative>) nativeAd {
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"ad_space"];
-    return extra;
+    return cache.unitGroup.content[@"ad_space"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"ad_space"];
+//    return extra;
+//}
 
 @end

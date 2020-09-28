@@ -9,6 +9,6 @@
 #import "ATBannerCustomEvent.h"
 #import "ATApplovinBannerAdapter.h"
 @interface ATApplovinBannerCustomEvent : ATBannerCustomEvent<ATALAdLoadDelegate, ATALAdDisplayDelegate, ATALAdViewEventDelegate>
--(instancetype) initWithUnitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo sdkKey:(NSString*)sdkKey alSize:(CGSize)alSize;
+-(instancetype) initWithUnitID:(NSString *)unitID serverInfo:(NSDictionary *)serverInfo localInfo:(NSDictionary *)localInfo sdkKey:(NSString*)sdkKey alSize:(CGSize)alSize;
 @property(nonatomic, weak) id<ATALAdView> alAdView;
 @end

@@ -36,8 +36,7 @@ NSString *const kATKSNativeExpressAdManager = @"native_KS_admanager";
 
 - (void)nativeAdDidClick:(id<ATKSNativeAd>)nativeAd withView:(UIView *_Nullable)view {
     [ATLogger logMessage:@"KSNative::nativeAdDidClick:withView:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 - (void)nativeAdDidShowOtherController:(id<ATKSNativeAd>)nativeAd interactionType:(ATKSAdInteractionType)interactionType {
@@ -58,30 +57,31 @@ NSString *const kATKSNativeExpressAdManager = @"native_KS_admanager";
         NSMutableDictionary *asset = [NSMutableDictionary dictionary];
         asset[kAdAssetsCustomEventKey] = self;
         asset[kKSAdVideoSoundEnableFlag] = @(self.videoSoundEnable);
-        asset[kKSNativeAdIsVideoFlag] = @(self.isVideo);
         asset[kAdAssetsCustomObjectKey] = obj;
         if ([obj.data.actionDescription length] > 0) { asset[kNativeADAssetsCTATextKey] = obj.data.actionDescription; }
         if ([obj.data.adDescription length] > 0) { asset[kNativeADAssetsMainTextKey] = obj.data.adDescription; }
         if ([obj.data.imageArray count] > 0) {
-            asset[kNativeADAssetsImageURLKey] = obj.data.imageArray[0].imageURL;
+            if ([obj.data.imageArray[0].imageURL length] > 0) {
+                asset[kNativeADAssetsImageURLKey] = obj.data.imageArray[0].imageURL;
+                dispatch_group_enter(image_download_group);
+                [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.data.imageArray[0].imageURL] completion:^(UIImage *image, NSError *error) {
+                    asset[kNativeADAssetsMainImageKey] = image;
+                    dispatch_group_leave(image_download_group);
+                }];
+            }
+        }
+        if ([obj.data.appIconImage.imageURL length] > 0) {
             dispatch_group_enter(image_download_group);
-            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.data.imageArray[0].imageURL] completion:^(UIImage *image, NSError *error) {
-                asset[kNativeADAssetsMainImageKey] = image;
+            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.data.appIconImage.imageURL] completion:^(UIImage *image, NSError *error) {
+                if ([image isKindOfClass:[UIImage class]]) { asset[kNativeADAssetsIconImageKey] = image; }
                 dispatch_group_leave(image_download_group);
             }];
         }
-        dispatch_group_enter(image_download_group);
-        [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.data.appIconImage.imageURL] completion:^(UIImage *image, NSError *error) {
-            if ([image isKindOfClass:[UIImage class]]) { asset[kNativeADAssetsIconImageKey] = image; }
-            dispatch_group_leave(image_download_group);
-        }];
         [assets addObject:asset];
-        
     }];
     dispatch_group_notify(image_download_group, dispatch_get_main_queue(), ^{
         self.requestCompletionBlock(assets, nil);
     });
-//    self.requestCompletionBlock(assets, nil);
 }
 
 - (void)nativeAdsManager:(id<ATKSNativeAdsManager>)adsManager didFailWithError:(NSError *_Nullable)error {
@@ -98,13 +98,12 @@ NSString *const kATKSNativeExpressAdManager = @"native_KS_admanager";
 
 - (void)feedAdDidClick:(id<ATKSFeedAd>)feedAd {
     [ATLogger logMessage:@"KSFeed::feedAdDidClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 - (void)feedAdDislike:(id<ATKSFeedAd>)feedAd {
     [ATLogger logMessage:@"KSFeed::feedAdDislike:" type:ATLogTypeExternal];
-    [self.adView notifyCloseButtonTapped];
+    [self trackNativeAdClosed];
 
 }
 
@@ -147,8 +146,7 @@ NSString *const kATKSNativeExpressAdManager = @"native_KS_admanager";
 
 - (void)drawAdDidClick:(id<ATKSDrawAd>)drawAd {
     [ATLogger logMessage:@"KSDraw::drawAdDidClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 - (void)drawAdDidShowOtherController:(id<ATKSDrawAd>)drawAd interactionType:(ATKSAdInteractionType)interactionType {
@@ -180,11 +178,17 @@ NSString *const kATKSNativeExpressAdManager = @"native_KS_admanager";
     self.requestCompletionBlock(nil, error != nil ? error : [NSError errorWithDomain:@"com.anythink.KSDrawLoad" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load native ad", NSLocalizedFailureReasonErrorKey:@"KS has failed to load native ad"}]);
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"position_id"];
-
-    return extra;
+    return cache.unitGroup.content[@"position_id"];
 }
+
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"position_id"];
+//
+//    return extra;
+//}
 @end

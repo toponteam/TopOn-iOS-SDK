@@ -121,11 +121,11 @@ BOOL AT_ProxyEnabled(void) {
 }
 
 +(NSString*)appBundleID {
-    return [[NSBundle mainBundle] infoDictionary][@"CFBundleIdentifier"];
+    return ([[NSBundle mainBundle] infoDictionary][@"CFBundleIdentifier"] != nil)?[[NSBundle mainBundle] infoDictionary][@"CFBundleIdentifier"]:@"";
 }
 
 +(NSString*)appBundleVersion {
-    return [[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"];
+    return ([[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"] != nil)?[[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"]:@"";
 }
 
 +(NSNumber*)platform {
@@ -191,7 +191,9 @@ BOOL AT_ProxyEnabled(void) {
 }
 
 +(NSString*)advertisingIdentifier {
-    return [ASIdentifierManager sharedManager].advertisingTrackingEnabled ? [ASIdentifierManager sharedManager].advertisingIdentifier.UUIDString : @"";
+//    return [ASIdentifierManager sharedManager].advertisingTrackingEnabled ? [ASIdentifierManager sharedManager].advertisingIdentifier.UUIDString : @"";
+    //remove check idfa enable to solve
+    return [ASIdentifierManager sharedManager].advertisingIdentifier.UUIDString != nil ? [ASIdentifierManager sharedManager].advertisingIdentifier.UUIDString : @"";
 }
 
 +(NSString*)idfv {
@@ -253,6 +255,46 @@ NSString *const kCallStackSymbolCallerClassKey = @"caller_class";
     
     return ([scene isKindOfClass:[NSString class]] && [scene length] == 14 && [scene rangeOfCharacterFromSet:[set invertedSet]].location == NSNotFound);
 }
+
++(BOOL) validateDeviceId:(NSString*)deviceId {
+    NSCharacterSet *set = [NSCharacterSet characterSetWithCharactersInString:@"0-"];
+    return ([deviceId isKindOfClass:[NSString class]] && [deviceId length] > 0 && [deviceId rangeOfCharacterFromSet:[set invertedSet]].location != NSNotFound);
+}
+
++(CGSize) sizeFromString:(NSString *)sizeStr {
+    CGSize size = CGSizeZero;
+    NSArray<NSString*>* comp = [sizeStr componentsSeparatedByString:@"x"];
+    if ([comp count] == 2 && [comp[0] respondsToSelector:@selector(doubleValue)] && [comp[1] respondsToSelector:@selector(doubleValue)]) { size = CGSizeMake([comp[0] doubleValue], [comp[1] doubleValue]); }
+    return size;
+}
+
++(BOOL)higherThanIOS13 {
+    NSString *version = [UIDevice currentDevice].systemVersion;
+    return version.doubleValue >= 13.0;
+}
+
++(BOOL)isBlankDictionary:(NSDictionary *)dic {
+    if (!dic) {
+        return YES;
+    }
+    if ([dic isKindOfClass:[NSNull class]]) {
+        return YES;
+    }
+    if (![dic isKindOfClass:[NSDictionary class]]) {
+        return YES;
+    }
+    if (!dic.count) {
+        return YES;
+    }
+    if (dic == nil) {
+        return YES;
+    }
+    if (dic == NULL) {
+        return YES;
+    }
+    return NO;
+}
+
 @end
 
 @implementation NSDate(ATUtilities)
@@ -262,6 +304,21 @@ NSString *const kCallStackSymbolCallerClassKey = @"caller_class";
     NSInteger interval = [zone secondsFromGMTForDate: normalizaedDate];
     normalizaedDate = [normalizaedDate dateByAddingTimeInterval:interval];
     return normalizaedDate;
+}
+
+-(NSInteger) numberOfDaysSinceDate:(NSDate*)date {
+    NSDate*(^TwelveOClock)(NSDate *date) = ^NSDate*(NSDate* date){
+        NSDateFormatter *formater = [[NSDateFormatter alloc] init];
+        formater.dateFormat = @"yyyy-MM-dd HH:mm:ss";
+        NSString *dateStr = [formater stringFromDate:date];
+        dateStr = [dateStr stringByReplacingCharactersInRange:NSMakeRange(@"yyyy-MM-dd ".length, @"HH:mm:ss".length) withString:@"12:00:00"];
+        return [formater dateFromString:dateStr];
+    };
+    
+    NSDate *twelveOClocked = TwelveOClock(self);
+    NSDate *twelveOclockedDate = TwelveOClock(date);
+    return [twelveOClocked timeIntervalSinceDate:twelveOclockedDate] / (24.0f * 3600.0f) + 1;
+    
 }
 @end
 

@@ -23,15 +23,15 @@
 @end
 
 @implementation ATSigmobSplashAdapter
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameSigmob]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameSigmob];
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"WindAds") sdkVersion] forNetwork:kNetworkNameSigmob];
             id<ATWindAdOptions> options = [NSClassFromString(@"WindAdOptions") options];
-            options.appId = info[@"app_id"];
-            options.apiKey = info[@"app_key"];
+            options.appId = serverInfo[@"app_id"];
+            options.apiKey = serverInfo[@"app_key"];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [NSClassFromString(@"WindAds") startWithOptions:options];
             });
@@ -40,17 +40,17 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"WindSplashAd") != nil) {
-        _customEvent = [[ATSigmobSplashCustomEvent alloc] initWithUnitID:info[@"placement_id"] customInfo:info];
+        NSDictionary *extra = localInfo;
+        _customEvent = [[ATSigmobSplashCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         _customEvent.delegate = self.delegateToBePassed;
-        NSDictionary *extra = info[kAdapterCustomInfoExtraKey];
         NSTimeInterval tolerateTimeout = [extra containsObjectForKey:kATSplashExtraTolerateTimeoutKey] ? [extra[kATSplashExtraTolerateTimeoutKey] doubleValue] : [[ATAppSettingManager sharedManager] splashTolerateTimeout];
         NSDate *curDate = [NSDate date];
         NSTimeInterval remainingTime = tolerateTimeout - [curDate timeIntervalSinceDate:extra[kATSplashExtraLoadingStartDateKey]];
         if (remainingTime > 0) {
-            _splashAd = [[NSClassFromString(@"WindSplashAd") alloc] initWithPlacementId:info[@"placement_id"]];
+            _splashAd = [[NSClassFromString(@"WindSplashAd") alloc] initWithPlacementId:serverInfo[@"placement_id"]];
             _splashAd.delegate = _customEvent;
             _splashAd.fetchDelay = remainingTime;
             if (@available(iOS 13.0, *)) {
@@ -61,10 +61,10 @@
             }
             [_splashAd loadAdAndShowWithBottomView:extra[kATSplashExtraContainerViewKey]];
         } else {
-            completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load splash.", NSLocalizedFailureReasonErrorKey:@"It took too long to load placement stragety."}]);
+            completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadSplashADMsg, NSLocalizedFailureReasonErrorKey:kATSDKSplashADTooLongToLoadPlacementSettingMsg}]);
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load splash.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Sigmob"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadSplashADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Sigmob"]}]);
     }
 }
 @end

@@ -10,6 +10,7 @@
 #import "ATThreadSafeAccessor.h"
 #import "ATAd.h"
 
+extern NSString *const kGeneralAdAgentEventExtraInfoLoadErrorCodeKey;
 extern NSString *const kGeneralAdAgentEventExtraInfoErrorKey;
 extern NSString *const kGeneralAdAgentEventExtraInfoNetworkFirmIDKey;
 extern NSString *const kGeneralAdAgentEventExtraInfoUnitGroupContentKey;
@@ -81,6 +82,8 @@ extern NSString *const kAgentEventExtraInfoMetadataLoadingTimeKey;
 extern NSString *const kAgentEventExtraInfoAdDataLoadingTimeKey;
 //5.4.0 tk failed count;
 extern NSString *const kAgentEventExtraInfoTrackerFailedCountKey;
+//5.6.3 tk failed use TCP or HTTP;
+extern NSString *const kAgentEventExtraInfoTrackerFailedProtocolTypeKey;
 //extern NSString *const kAgentEventExtraInfoLoadingEventTypeLoad;
 extern NSString *const kAgentEventExtraInfoLoadingEventTypeLoadResult;
 
@@ -103,6 +106,21 @@ extern NSString *const kAgentEventExtraInfoShowTimestampKey;
 extern NSString *const kAgentEventExtraInfoCloseTimestampKey;
 extern NSString *const kAgentEventExtraInfoShowDurationKey;
 
+extern NSString *const kAgentEventExtraInfoBidInfoProcessingPriceKey;
+extern NSString *const kAgentEventExtraInfoBidInfoBidRequestTimeKey;
+extern NSString *const kAgentEventExtraInfoBidInfoLoadingStatusKey;
+extern NSString *const kAgentEventExtraInfoBidInfoMarkingPriceKey;
+extern NSString *const kAgentEventExtraInfoBidInfoProcessResultKey;
+extern NSString *const kAgentEventExtraInfoBidInfoBatProcessResultKey;
+
+extern NSString *const kAgentEventExtraInfoAdTypeKey;
+extern NSString *const kAgentEventExtraInfoAdClickUrlKey;
+extern NSString *const kAgentEventExtraInfoAdLastUrlKey;
+extern NSString *const kAgentEventExtraInfoAdPkgNameKey;
+extern NSString *const kAgentEventExtraInfoIsSuccessKey;
+extern NSString *const kAgentEventExtraInfoLoadStartTimeKey;
+extern NSString *const kAgentEventExtraInfoLoadStopTimeKey;
+
 extern NSString *const kATAgentEventKeyLoadFail;
 extern NSString *const kATAgentEventKeyFailToPlay;
 extern NSString *const kATAgentEventKeyRequestFail;
@@ -118,6 +136,9 @@ extern NSString *const kATAgentEventKeyMetadataAndAdDataLoadingTimeKey;
 extern NSString *const kATAgentEventKeyGDPRLevelKey;
 extern NSString *const kATAgentEventKeyAppLifecycleKey;
 extern NSString *const kATAgentEventKeyAdShowDurationKey;
+extern NSString *const kATAgentEventKeyBidInfoProcessingKey;
+extern NSString *const kATAgentEventKeyClickRedirectFailedKey;
+extern NSString *const kATAgentEventKeyPreloadStorekitResultKey;
 
 typedef NS_ENUM(NSInteger, ATAgentEventAdNotReason) {
     ATAgentEventAdNotReasonStatusFalse = 0,

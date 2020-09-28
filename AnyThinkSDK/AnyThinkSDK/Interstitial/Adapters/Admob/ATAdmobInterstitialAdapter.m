@@ -27,13 +27,13 @@
     [admobInterstitial presentFromRootViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             dispatch_async(dispatch_get_main_queue(), ^{
-                [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"GADRequest") sdkVersion] forNetwork:kNetworkNameAdmob];
+                [[ATAPI sharedInstance] setVersion:[[NSClassFromString(@"GADMobileAds") sharedInstance] sdkVersion] forNetwork:kNetworkNameAdmob];
                 if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameAdmob]) {
                     [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameAdmob];
                     id<ATPACConsentInformation> consentInfo = [NSClassFromString(@"PACConsentInformation") sharedInstance];
@@ -42,7 +42,8 @@
                         consentInfo.tagForUnderAgeOfConsent = [[ATAPI sharedInstance].networkConsentInfo[kNetworkNameAdmob][kAdmobUnderAgeKey] boolValue];
                     } else {
                         BOOL set = NO;
-                        BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                        BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                         /**
                         HasUserConsent: 0 Nonpersonalized, 1 Personalized
                         */
@@ -55,17 +56,17 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"GADInterstitial") != nil && NSClassFromString(@"GADRequest") != nil) {
-        _customEvent = [[ATAdmobInterstitialCustomEvent alloc] initWithUnitID:info[@"unit_id"] customInfo:info];
+        _customEvent = [[ATAdmobInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        _interstitial = [[NSClassFromString(@"GADInterstitial") alloc] initWithAdUnitID:info[@"unit_id"]];
+        _interstitial = [[NSClassFromString(@"GADInterstitial") alloc] initWithAdUnitID:serverInfo[@"unit_id"]];
         _interstitial.delegate = _customEvent;
         dispatch_async(dispatch_get_main_queue(), ^{
             [_interstitial loadRequest:[NSClassFromString(@"GADRequest") request]];
         });
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Admob"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Admob"]}]);
     }
 }
 @end

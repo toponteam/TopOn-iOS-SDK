@@ -13,9 +13,7 @@
 @implementation ATFlurryBannerCustomEvent
 - (void) adBannerDidFetchAd:(id<ATFlurryAdBanner>)bannerAd {
     [ATLogger logMessage:@"FlurryBanner::adBannerDidFetchAd:" type:ATLogTypeExternal];
-    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:bannerAd, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, nil];
-    if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
-    [self handleAssets:assets];
+    [self trackBannerAdLoaded:bannerAd adExtra:nil];
 }
 
 - (void) adBannerDidRender:(id<ATFlurryAdBanner>)bannerAd {
@@ -46,10 +44,7 @@
 
 - (void) adBannerDidReceiveClick:(id<ATFlurryAdBanner>)bannerAd {
     [ATLogger logMessage:@"FlurryBanner::adBannerDidReceiveClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackBannerAdClick];
 }
 
 - (void) adBannerVideoDidFinish:(id<ATFlurryAdBanner>)bannerAd {
@@ -58,11 +53,16 @@
 
 - (void) adBanner:(id<ATFlurryAdBanner>) bannerAd adError:(NSInteger) adError errorDescription:(NSError*) errorDescription {
     [ATLogger logMessage:[NSString stringWithFormat:@"FlurryBanner::adBanner: adError:%ld, errorDescription:%@", adError, errorDescription] type:ATLogTypeExternal];
-    if (adError == 1) {[self handleLoadingFailure:errorDescription];}// Failed to fetch ad
+    if (adError == 1) {[self trackBannerAdLoadFailed:errorDescription];}// Failed to fetch ad
 }
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"ad_space"];
-    return extra;
+
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"ad_space"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"ad_space"];
+//    return extra;
+//}
 @end

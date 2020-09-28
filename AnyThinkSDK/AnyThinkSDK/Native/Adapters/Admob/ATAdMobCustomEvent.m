@@ -14,6 +14,8 @@
 #import "ATLogger.h"
 #import "ATThreadSafeAccessor.h"
 #import "ATAdCustomEvent.h"
+
+
 @interface ATAdMobCustomEvent()
 @property(nonatomic, readonly) BOOL clicked;
 @property(nonatomic, readonly) NSMutableArray *offers;
@@ -28,28 +30,8 @@
     }
     return self;
 }
-
-+(NSString*) errorMessageWithError:(NSError*)error {
-    NSDictionary *errorMsgMap = @{@0:@"kGADErrorInvalidRequest",
-                                  @1:@"kGADErrorNoFill",
-                                  @2:@"kGADErrorNetworkError",
-                                  @3:@"kGADErrorServerError",
-                                  @5:@"kGADErrorTimeout",
-                                  @7:@"kGADErrorMediationDataError",
-                                  @8:@"kGADErrorMediationAdapterError",
-                                  @10:@"kGADErrorMediationInvalidAdSize",
-                                  @11:@"kGADErrorInternalError",
-                                  @12:@"kGADErrorInvalidArgument",
-                                  @13:@"kGADErrorReceivedInvalidResponse",
-                                  @9:@"kGADErrorMediationNoFill",
-                                  @19:@"kGADErrorAdAlreadyUsed",
-                                  @20:@"kGADErrorApplicationIdentifierMissing"
-    };
-    return errorMsgMap[@(error.code)] != nil ? errorMsgMap[@(error.code)] : @"Undefined Error";
-}
-
 - (void)adLoader:(id<ATGADAdLoader>)adLoader didFailToReceiveAdWithError:(NSError*)error {
-    [ATLogger logMessage:[NSString stringWithFormat:@"ATAdMobCustomEvent::adLoader:didFailToReceiveAdWithError:%@(code:%@)", error, [ATAdMobCustomEvent errorMessageWithError:error]] type:ATLogTypeExternal];
+    [ATLogger logMessage:[NSString stringWithFormat:@"ATAdMobCustomEvent::adLoader:didFailToReceiveAdWithError:%@", error] type:ATLogTypeExternal];
     dispatch_async(dispatch_get_main_queue(), ^{
         _numberOfFailedRequest++;
         if (_numberOfFailedRequest == self.requestNumber && !_finished) {
@@ -63,7 +45,7 @@
     [ATLogger logMessage:@"ATAdMobCustomEvent::adLoaderDidFinishLoading:" type:ATLogTypeExternal];
     dispatch_async(dispatch_get_main_queue(), ^{
         if (!_finished) {
-            self.requestCompletionBlock([_offers count] > 0 ? _offers : nil, [_offers count] > 0 ? nil : [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AnyThink sdk has failed to load native ad.", NSLocalizedFailureReasonErrorKey:@"Admob sdk did not return any valid response."}]);
+            self.requestCompletionBlock([_offers count] > 0 ? _offers : nil, [_offers count] > 0 ? nil : [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadNativeADMsg, NSLocalizedFailureReasonErrorKey:@"Admob sdk did not return any valid response."}]);
             _finished = YES;
         }
     });
@@ -107,22 +89,19 @@
 
 - (void)nativeAdDidRecordClick:(id<ATGADUnifiedNativeAd>)nativeAd {
     [ATLogger logMessage:@"ATAdMobCustomEvent::nativeAdDidRecordClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
     _clicked = YES;
 }
 
 - (void)videoControllerDidPlayVideo:(id<ATGADVideoController>)videoController {
     [ATLogger logMessage:@"ATAdMobCustomEvent::videoControllerDidPlayVideo:" type:ATLogTypeExternal];
-    [self.adView notifyVideoStart];
-    [self trackVideoStart];
+    [self trackNativeAdVideoStart];
 }
 
 - (void)videoControllerDidEndVideoPlayback:(id<ATGADVideoController>)videoController {
     [ATLogger logMessage:@"ATAdMobCustomEvent::videoControllerDidEndVideoPlayback:" type:ATLogTypeExternal];
-    [self.adView notifyVideoEnd];
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    [self trackVideoEnd];
+    [self trackNativeAdVideoEnd];
 }
 
 -(void) willDetachOffer:(ATNativeADCache *)offer fromAdView:(ATNativeADView *)adView {
@@ -190,10 +169,15 @@
     }
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unit_id"];
-    return extra;
+    return cache.unitGroup.content[@"unit_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

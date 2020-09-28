@@ -15,6 +15,7 @@
 @property(nonatomic, readonly) NSString *ctaText;
 @property(nonatomic, readonly) UIImage *icon;
 @property(nonatomic, readonly) UIImage *mainImage;
+@property(nonatomic, readonly) UIImage *logo;
 @property(nonatomic, readonly) NSNumber *rating;
 @property(nonatomic, readonly) UIImage *sponsorImage;
 /**

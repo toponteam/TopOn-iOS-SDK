@@ -15,6 +15,7 @@
 #import "Utilities.h"
 #import "ATAdAdapter.h"
 #import "ATAppSettingManager.h"
+
 NSString *const kYearmobiNativeAssetsCustomEventKey = @"custom_event";
 @interface ATYeahmobiNativeAdapter()
 @property(nonatomic, readonly) ATYeahmobiNativeCustomEvent *customEvent;
@@ -24,13 +25,13 @@ NSString *const kYearmobiNativeAssetsCustomEventKey = @"custom_event";
     return [ATYeahmobiNativeRenderer class];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameYeahmobi]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameYeahmobi];
             [[ATAPI sharedInstance] setVersion:[[NSClassFromString(@"CTService") shareManager] getSDKVersion] forNetwork:kNetworkNameYeahmobi];
-            [[NSClassFromString(@"CTService") shareManager] loadRequestGetCTSDKConfigBySlot_id:info[@"slot_id"]];
+            [[NSClassFromString(@"CTService") shareManager] loadRequestGetCTSDKConfigBySlot_id:serverInfo[@"slot_id"]];
             
             if ([[ATAPI sharedInstance].networkConsentInfo containsObjectForKey:kNetworkNameYeahmobi]) {
                 if ([[ATAPI sharedInstance].networkConsentInfo isKindOfClass:[NSDictionary class]] && [[ATAPI sharedInstance].networkConsentInfo[kYeahmobiGDPRConsentTypeKey] isKindOfClass:[NSString class]] && [[ATAPI sharedInstance].networkConsentInfo[kYeahmobiGDPRConsentValueKey] isKindOfClass:[NSString class]]) {
@@ -38,7 +39,8 @@ NSString *const kYearmobiNativeAssetsCustomEventKey = @"custom_event";
                 }
             } else {
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) { [[NSClassFromString(@"CTService") shareManager] uploadConsentValue:limit ? @"no" : @"yes" consentType:@"GDPR" complete:^(BOOL status){}]; }
                 
             }
@@ -47,21 +49,21 @@ NSString *const kYearmobiNativeAssetsCustomEventKey = @"custom_event";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"CTService") != nil) {
         _customEvent = [[ATYeahmobiNativeCustomEvent alloc] init];
-        _customEvent.unitID = info[@"slot_id"];
+        _customEvent.unitID = serverInfo[@"slot_id"];
         _customEvent.requestCompletionBlock = completion;
-        NSDictionary *extraInfo = info[kAdapterCustomInfoExtraKey];
+        NSDictionary *extraInfo = localInfo;
         _customEvent.requestExtra = extraInfo;
         __weak typeof(self) weakSelf = self;
-        [[NSClassFromString(@"CTService") shareManager] getMultitermNativeADswithSlotId:info[@"slot_id"] adNumbers:[info[@"request_num"] integerValue] delegate:_customEvent imageWidthHightRate:1 isTest:NO success:^(NSArray * _Nonnull nativeArr) {
+        [[NSClassFromString(@"CTService") shareManager] getMultitermNativeADswithSlotId:serverInfo[@"slot_id"] adNumbers:[serverInfo[@"request_num"] integerValue] delegate:_customEvent imageWidthHightRate:1 isTest:NO success:^(NSArray * _Nonnull nativeArr) {
             [weakSelf.customEvent loadSuccessed:nativeArr];
         } failure:^(NSError * _Nonnull error) {
             [weakSelf.customEvent loadFailed:error];
         }];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load native ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Yeahmobi"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadNativeADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Yeahmobi"]}]);
     }
 }
 @end

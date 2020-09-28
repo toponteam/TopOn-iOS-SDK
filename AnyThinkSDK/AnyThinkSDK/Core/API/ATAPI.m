@@ -43,15 +43,20 @@ NSString *const kNativeADAssetsMainTextKey = @"main_text";
 NSString *const kNativeADAssetsMainTitleKey = @"main_title";
 NSString *const kNativeADAssetsMainImageKey = @"main_image";
 NSString *const kNativeADAssetsIconImageKey = @"icon_iamge";
+NSString *const kNativeADAssetsLogoImageKey = @"logo_iamge";
 NSString *const kNativeADAssetsCTATextKey = @"call_to_action";
 NSString *const kNativeADAssetsRatingKey = @"rating";
 NSString *const kNativeADAssetsContainsVideoFlag = @"native_ad_contains_video";
 NSString *const kNativeADAssetsUnitIDKey = @"unit_id";
 NSString *const kNativeADAssetsIconURLKey = @"icon_url";
 NSString *const kNativeADAssetsImageURLKey = @"image_url";
+NSString *const kNativeADAssetsLogoURLKey = @"logo_url";
 NSString *const kNativeADAssetsSponsoredImageKey = @"sponsor_image";
 
 NSString *const ATADShowingErrorDomain = @"com.anythink.ATAdShowingErrorDomain";
+
+NSString *const ATSDKAdLoadingErrorMsg = @"com.anythink.AdLoadingError";
+NSString *const ATSDKAdLoadFailedErrorMsg = @"AnyThinkSDK has failed to load ad.";
 
 NSString *const ATADLoadingErrorDomain = @"com.anythink.ATADLoadingErrorDomain";
 NSInteger const ATADLoadingErrorCodePlacementStrategyInvalidResponse = 1001;
@@ -72,6 +77,8 @@ NSInteger const ATADLoadingErrorCodePlacementAdDeliverySwitchOff = 1015;
 NSInteger const ATADLoadingErrorCodePreviousLoadNotFinished = 1016;
 NSInteger const ATADLoadingErrorCodeNoUnitGroupsFoundInPlacement = 1017;
 NSInteger const ATADLoadingErrorCodeUnitGroupsFilteredOut = 1018;
+NSInteger const ATADLoadingErrorCodeFailureTooFrequent = 1019;
+NSInteger const ATADLoadingErrorCodeLoadCapsExceeded = 1020;
 
 NSString *const ATSDKInitErrorDomain = @"com.anythink.AnyThinkSDKInitErrorDomain";
 NSInteger const ATSDKInitErrorCodeDataConsentNotSet = 2001;
@@ -118,6 +125,7 @@ NSString *const kNetworkNameKS = @"KS";
 NSString *const kNetworkNameOgury = @"Ogury";
 NSString *const kNetworkNameStartApp = @"StartApp";
 NSString *const kNetworkNameFyber = @"Fyber";
+NSString *const kNetworkNameGoogleAdManager = @"GoogleAdManager";
 
 NSString *const kInmobiGDPRStringKey = @"gdpr";
 NSString *const kInmobiConsentStringKey = @"consent_string";
@@ -140,6 +148,7 @@ NSString *const kAdColonyGDPRConsentStringKey = @"consent_string";
 NSString *const kYeahmobiGDPRConsentValueKey = @"consent_value";
 NSString *const kYeahmobiGDPRConsentTypeKey = @"consent_type";
 
+NSString *const kATCustomDataUserIDKey = @"user_id";//
 NSString *const kATCustomDataAgeKey = @"age";//Integer
 NSString *const kATCustomDataGenderKey = @"gender";//Integer
 NSString *const kATCustomDataNumberOfIAPKey = @"iap_time";//Integer
@@ -185,178 +194,166 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
 }
 
 +(NSDictionary<NSNumber*, NSString*>*)networkNameMap {
-    return @{@1:kNetworkNameFacebook, @2:kNetworkNameAdmob, @3:kNetworkNameInmobi, @4:kNetworkNameFlurry, @5:kNetworkNameApplovin, @6:kNetworkNameMintegral, @7:kNetworkNameMopub, @8:kNetworkNameGDT, @9:kNetworkNameChartboost, @10:kNetworkNameTapjoy, @11:kNetworkNameIronSource, @12:kNetworkNameUnityAds, @13:kNetworkNameVungle, @14:kNetworkNameAdColony, @15:kNetworkNameTT, @17:kNetworkNameOneway, @18:kNetworkNameMobPower, @20:kNetworkNameYeahmobi, @21:kNetworkNameAppnext, @22:kNetworkNameBaidu, @23:kNetworkNameNend, @24:kNetworkNameMaio, @25:kNetworkNameStartApp, @28:kNetworkNameKS, @29:kNetworkNameSigmob,@35:kNetworkNameMyOffer, @36:kNetworkNameOgury, @37:kNetworkNameFyber};
+    return @{@1:kNetworkNameFacebook, @2:kNetworkNameAdmob, @3:kNetworkNameInmobi, @4:kNetworkNameFlurry, @5:kNetworkNameApplovin, @6:kNetworkNameMintegral, @7:kNetworkNameMopub, @8:kNetworkNameGDT, @9:kNetworkNameChartboost, @10:kNetworkNameTapjoy, @11:kNetworkNameIronSource, @12:kNetworkNameUnityAds, @13:kNetworkNameVungle, @14:kNetworkNameAdColony, @15:kNetworkNameTT, @17:kNetworkNameOneway, @18:kNetworkNameMobPower, @20:kNetworkNameYeahmobi, @21:kNetworkNameAppnext, @22:kNetworkNameBaidu, @23:kNetworkNameNend, @24:kNetworkNameMaio, @25:kNetworkNameStartApp, @28:kNetworkNameKS, @29:kNetworkNameSigmob, @33:kNetworkNameGoogleAdManager,@35:kNetworkNameMyOffer, @36:kNetworkNameOgury, @37:kNetworkNameFyber};
+}
+
++(NSDate*)firstLaunchDate {
+    static NSDate *firstLaunchDate = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *key = @"com.anythink.FirstLaunchDate";
+        firstLaunchDate = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+        if (firstLaunchDate == nil) {
+            firstLaunchDate = [NSDate date];
+            [[NSUserDefaults standardUserDefaults] setObject:firstLaunchDate forKey:key];
+            [[NSUserDefaults standardUserDefaults] synchronize];
+        }
+    });
+    return firstLaunchDate;
 }
 
 +(void) integrationChecking {
     NSString *dependenciesKey = @"dependencies";
     NSString *frameworksKey = @"third_party_sdk_packages";
     NSString *resourceBundleKey = @"bundle";
-    NSDictionary<NSString*, NSDictionary*> *integrityDict = @{@"Facebook":@{dependenciesKey:@{@"AnyThinkFacebookNativeAdapter":@[@"FBNativeAd", @"FBAdBidRequest", @"FBAdBidResponse"],
-                                                           @"AnyThinkFacebookRewardedVideoAdapter":@[@"FBRewardedVideoAd", @"FBAdBidRequest", @"FBAdBidResponse"],
-                                                           @"AnyThinkFacebookBannerAdapter":@[@"FBAdView", @"FBAdBidRequest", @"FBAdBidResponse"],
-                                                           @"AnyThinkFacebookInterstitialAdapter":@[@"FBInterstitialAd", @"FBAdBidRequest", @"FBAdBidResponse"]
-    },
-                                         frameworksKey:@[@"FBAudienceNetwork.framework", @"FBAudienceNetworkBiddingKit.framework", @"FBSDKCoreKit.framework"]
-                                         
-    },
-                                                              @"Admob":@{dependenciesKey:@{@"AnyThinkAdmobNativeAdapter":@[@"PACConsentInformation", @"GADAdLoader"],
-                                                                                                                     @"AnyThinkAdmobRewardedVideoAdapter":@[@"PACConsentInformation", @"GADRequest", @"GADRewardedAd"],
-                                                                                                                     @"AnyThinkAdmobBannerAdapter":@[@"PACConsentInformation", @"GADRequest", @"GADBannerView"],
-                                                                                                                     @"AnyThinkAdmobInterstitialAdapter":@[@"PACConsentInformation", @"GADInterstitial", @"GADRequest"]
-                                                              },
-                                                                                                   frameworksKey:@[@"PersonalizedAdConsent.framework", @"GoogleMobileAds.framework"]
-                                                                                                   
-                                                              },
-                                                              @"Inmobi":@{dependenciesKey:@{@"AnyThinkInmobiNativeAdapter":@[@"IMNative"],
-                                                                                                                     @"AnyThinkInmobiRewardedVideoAdapter":@[@"IMNative"],
-                                                                                                                     @"AnyThinkInmobiBannerAdapter":@[@"IMBanner"],
-                                                                                                                     @"AnyThinkInmobiInterstitialAdapter":@[@"IMInterstitial"]
-                                                              },
-                                                                                                   frameworksKey:@[@"InMobiSDK.framework"]
-                                                                                                   
-                                                              },
-                                                              @"Flurry":@{dependenciesKey:@{@"AnyThinkFlurryNativeAdapter":@[@"FlurryAdNative"],
-                                                                                                                     @"AnyThinkFlurryRewardedVideoAdapter":@[@"FlurryAdInterstitial"],
-                                                                                                                     @"AnyThinkFlurryBannerAdapter":@[@"FlurryAdBanner"],
-                                                                                                                     @"AnyThinkFlurryInterstitialAdapter":@[@"FlurryAdInterstitial"]
-                                                              },
-                                                                                                   frameworksKey:@[@"libFlurry_9.0.0.a"]
-                                                                                                   
-                                                              },
-                                                              @"Applovin":@{dependenciesKey:@{@"AnyThinkApplovinNativeAdapter":@[@"ALSdk"],
-                                                                                                                     @"AnyThinkApplovinRewardedVideoAdapter":@[@"ALIncentivizedInterstitialAd"],
-                                                                                                                     @"AnyThinkApplovinBannerAdapter":@[@"ALAdView", @"ALSdk", @"ALAdSize"],
-                                                                                                                     @"AnyThinkApplovinInterstitialAdapter":@[@"ALSdk", @"ALAdService", @"ALInterstitialAd"]
-                                                              },
-                                                                                                   frameworksKey:@[@"AppLovinSDK.framework"],
-                                                                            resourceBundleKey:@"AppLovinSDKResources"
-                                                                                                   
-                                                              },
-                                                              @"Mopub":@{dependenciesKey:@{@"AnyThinkMopubNativeAdapter":@[@"MPNativeAdRequest", @"ATMopubRenderer", @"MPMoPubConfiguration"],
-                                                                                                                     @"AnyThinkMopubRewardedVideoAdapter":@[@"MPRewardedVideo"],
-                                                                                                                     @"AnyThinkMopubBannerAdapter":@[@"MPAdView"],
-                                                                                                                     @"AnyThinkMopubInterstitialAdapter":@[@"MPInterstitialAdController"]
-                                                              },
-                                                                                                   frameworksKey:@[@"MoPubSDKFramework.framework"]},
-                                                              @"GDT":@{dependenciesKey:@{@"AnyThinkGDTNativeAdapter":@[@"GDTNativeExpressAd", @"GDTNativeAd", @"GDTUnifiedNativeAd"],
-                                                                                                                     @"AnyThinkGDTRewardedVideoAdapter":@[@"GDTRewardVideoAd"],
-                                                                                                                     @"AnyThinkGDTBannerAdapter":@[@"GDTMobBannerView", @"GDTUnifiedBannerView"],
-                                                                                                                     @"AnyThinkGDTInterstitialAdapter":@[@"GDTMobInterstitial", @"GDTUnifiedInterstitialAd"],
-                                                                                         @"AnyThinkGDTSplashAdapter":@[@"GDTSplashAd"]
-                                                              },
-                                                                                                   frameworksKey:@[@"libGDTMobSDK.a"]},
-                                                              @"Tapjoy":@{dependenciesKey:@{@"AnyThinkTapjoyRewardedVideoAdapter":@[@"Tapjoy"],
-                                                                                                                     @"AnyThinkTapjoyInterstitialAdapter":@[@"Tapjoy"]
-                                                              },
-                                                                                                   frameworksKey:@[@"Tapjoy.embededframework"]
-                                                              },
-                                                              @"IronSource":@{dependenciesKey:@{@"AnyThinkIronSourceRewardedVideoAdapter":@[@"IronSource"],
-                                                                                                                     @"AnyThinkIronSourceInterstitialAdapter":@[@"IronSource"]
-                                                              },
-                                                                                                   frameworksKey:@[@"IronSource.framework"]
-                                                              },
-                                                              @"UnityAds":@{dependenciesKey:@{@"AnyThinkUnityAdsRewardedVideoAdapter":@[@"UnityMonetization"],
-                                                                                                                     @"AnyThinkUnityAdsInterstitialAdapter":@[@"UnityMonetization"]
-                                                              },
-                                                                                                   frameworksKey:@[@"UnityAds.framework"]
-                                                              },
-                                                              @"Vungle":@{dependenciesKey:@{@"AnyThinkVungleRewardedVideoAdapter":@[@"VungleSDK"],
-                                                                                                                     @"AnyThinkVungleInterstitialAdapter":@[@"VungleSDK"]
-                                                              },
-                                                                                                   frameworksKey:@[@"VungleSDK.framework"]
-                                                              },
-                                                              @"AdColony":@{dependenciesKey:@{@"AnyThinkAdColonyRewardedVideoAdapter":@[@"AdColony"],
-                                                                                                                     @"AnyThinkAdColonyInterstitialAdapter":@[@"AdColony"]
-                                                              },
-                                                                                                   frameworksKey:@[@"AdColony.framework"]
-                                                              },
-                                                              @"TikTok":@{dependenciesKey:@{@"AnyThinkTTNativeAdapter":@[@"BUNativeAdsManager", @"BUAdSlot", @"BUNativeAd"],
-                                                                                                                     @"AnyThinkTTRewardedVideoAdapter":@[@"BURewardedVideoModel", @"BURewardedVideoAd"],
-                                                                                                                     @"AnyThinkTTBannerAdapter":@[@"BUBannerAdView", @"BUSize", @"BUNativeExpressBannerView"],
-                                                                                                                     @"AnyThinkTTInterstitialAdapter":@[@"BUFullscreenVideoAd", @"BUInterstitialAd", @"BUNativeExpressInterstitialAd"],
-                                                                                                                     @"AnyThinkTTSplashAdapter":@[@"BUSplashAdView"]
-                                                              },
-                                                                                                   frameworksKey:@[@"BUAdSDK.framework"],
-                                                                          resourceBundleKey:@"BUAdSDK"
-                                                              },
-                                                              @"Oneway":@{dependenciesKey:@{@"AnyThinkOnewayRewardedVideoAdapter":@[@"OWRewardedAd"],
-                                                                                                                     @"AnyThinkOnewayInterstitialAdapter":@[@"OWInterstitialAd"]
-                                                              },
-                                                                                                   frameworksKey:@[@"OnewaySDK.a"]
-                                                              },
-                                                              @"Yeahmobi":@{dependenciesKey:@{@"AnyThinkYeahmobiNativeAdapter":@[@"CTService"],
-                                                                                                                     @"AnyThinkYeahmobiRewardedVideoAdapter":@[@"CTService"],
-                                                                                                                     @"AnyThinkYeahmobiBannerAdapter":@[@"CTService"],
-                                                                                                                     @"AnyThinkYeahmobiInterstitialAdapter":@[@"CTService"]
-                                                              },
-                                                                                                   frameworksKey:@[@"CTSDK.framework"]
-                                                              },
-                                                              @"Appnext":@{dependenciesKey:@{@"AnyThinkAppnextNativeAdapter":@[@"AppnextNativeAdsRequest", @"AppnextNativeAdsSDKApi"],
-                                                                                                                     @"AnyThinkAppnextRewardedVideoAdapter":@[@"AppnextRewardedVideoAd"],
-                                                                                                                     @"AnyThinkAppnextBannerAdapter":@[@"BannerRequest", @"AppnextBannerView"],
-                                                                                                                     @"AnyThinkAppnextInterstitialAdapter":@[@"AppnextInterstitialAd"]
-                                                              },
-                                                                                                   frameworksKey:@[@"libAppnextNativeAdsSDK.a", @"libAppnextSDKCore.a", @"libAppnextLib.a"]
-                                                              },
-                                                              @"Baidu":@{dependenciesKey:@{@"AnyThinkBaiduNativeAdapter":@[@"BaiduMobAdNativeAdView", @"BaiduMobAdNative"],
-                                                                                                                     @"AnyThinkBaiduRewardedVideoAdapter":@[@"BaiduMobAdRewardVideo"],
-                                                                                                                     @"AnyThinkBaiduBannerAdapter":@[@"BaiduMobAdView"],
-                                                                                                                     @"AnyThinkBaiduInterstitialAdapter":@[@"BaiduMobAdInterstitial"],
-                                                                                           @"AnyThinkBaiduSplashAdapter":@[@"BaiduMobAdSplash"]
-                                                              },
-                                                                                                   frameworksKey:@[@"BaiduMobAdSDK.framework"],
-                                                                         resourceBundleKey:@"baidumobadsdk"
-                                                              },
-                                                              @"Nend":@{dependenciesKey:@{@"AnyThinkNendNativeAdapter":@[@"NADNative", @"NADNativeClient", @"NADNativeVideoLoader", @"NADNativeVideo"],
-                                                                                                                     @"AnyThinkNendRewardedVideoAdapter":@[@"NADRewardedVideo"],
-                                                                                                                     @"AnyThinkNendBannerAdapter":@[@"NADView"],
-                                                                                                                     @"AnyThinkNendInterstitialAdapter":@[@"NADInterstitial", @"NADInterstitialVideo", @"NADFullBoard", @"NADFullBoardLoader"]
-                                                              },
-                                                                                                   frameworksKey:@[@"Nend.embededframework"]
-                                                              },
-                                                              @"Maio":@{dependenciesKey:@{@"AnyThinkMaioRewardedVideoAdapter":@[@"Maio"],
-                                                                                                                     @"AnyThinkMaioInterstitialAdapter":@[@"Maio"]
-                                                              },
-                                                                                                   frameworksKey:@[@"Maio.framework"]
-                                                              },
-                                                              @"StartApp":@{dependenciesKey:@{@"AnyThinkStartAppRewardedVideoAdapter":@[@"STAStartAppAd"],
-                                                                                                                     @"AnyThinkStartAppInterstitialAdapter":@[@"STAStartAppAd"]
-                                                              },
-                                                                                                   frameworksKey:@[@"StartApp.framework"],
-                                                                                                   resourceBundleKey:@"StartApp"
-                                                              },
-                                                              @"KS":@{dependenciesKey:@{@"AnyThinkKSNativeAdapter":@[@"KSNativeAd", @"KSFeedAd"],
-                                                                                        @"AnyThinkKSRewardedVideoAdapter":@[@"KSRewardedVideoAd"],
-                                                                                                                     @"AnyThinkKSInterstitialAdapter":@[@"KSFullscreenVideoAd"]
-                                                              },
-                                                                                                   frameworksKey:@[@"KSAdSDK.framework"],
-                                                                      resourceBundleKey:@"KSAdSDK"
-                                                              },
-                                                              @"Sigmob":@{dependenciesKey:@{@"AnyThinkSigmobRewardedVideoAdapter":@[@"WindAdRequest", @"WindRewardedVideoAd"],
-                                                                                                                     @"AnyThinkSigmobInterstitialAdapter":@[@"WindFullscreenVideoAd", @"WindAdRequest"],
-                                                                                                                     @"AnyThinkSigmobSplashAdapter":@[@"WindSplashAd"]
-                                                              },
-                                                                                                   frameworksKey:@[@"WindSDK.framework"],
-                                                                          resourceBundleKey:@"Sigmob"
-                                                              },
-                                                              @"Ogury":@{dependenciesKey:@{@"AnyThinkOguryRewardedVideoAdapter":@[@"OguryAdsOptinVideo"],
-                                                                                                                     @"AnyThinkOguryInterstitialAdapter":@[@"OguryAdsInterstitial"]
-                                                              },
-                                                                                                   frameworksKey:@[@"OMSDK_Oguryco.framework", @"OguryAds.framework", @"OguryConsentManager.framework"]
-                                                              },
-                                                              @"MyOffer":@{dependenciesKey:@{@"AnyThinkMyOfferRewardedVideoAdapter":@[@"ATMyOfferOfferManager"],
-                                                                                                                     @"AnyThinkMyOfferInterstitialAdapter":@[@"ATMyOfferOfferManager"]
-                                                              },
-                                                                                                   frameworksKey:@[@"AnyThinkMyOffer.framework"]
-                                                              },
-                                                              @"Fyber":@{dependenciesKey:@{@"AnyThinkFyberRewardedVideoAdapter":@[@"IAAdRequest", @"IAVideoContentController", @"IAFullscreenUnitController", @"IAAdSpot"],
-                                                                                                                     @"AnyThinkFyberInterstitialAdapter":@[@"IAAdRequest", @"IAVideoContentController", @"IAFullscreenUnitController", @"IAAdSpot"],
-                                                                                           @"AnyThinkFyberBannerAdapter":@[@"IAAdRequest", @"IAViewUnitController", @"IAAdSpot"]
-                                                              },
-                                                                                                   frameworksKey:@[@"IASDKCore.framework", @"IASDKMRAID.framework", @"IASDKVideo.framework"],
-                                                                                                   resourceBundleKey:@"IASDKResources"
-                                                              }
+    NSDictionary<NSString*, NSDictionary*> *integrityDict = @{
+        @"Facebook":@{
+                dependenciesKey:@{@"AnyThinkFacebookNativeAdapter":@[@"FBNativeAd"],
+                                  @"AnyThinkFacebookRewardedVideoAdapter":@[@"FBRewardedVideoAd"],
+                                  @"AnyThinkFacebookBannerAdapter":@[@"FBAdView"],
+                                  @"AnyThinkFacebookInterstitialAdapter":@[@"FBInterstitialAd"]},
+                frameworksKey:@[@"FBAudienceNetwork.framework", @"FBSDKCoreKit.framework"]},
+        @"Admob":@{
+                dependenciesKey:@{@"AnyThinkAdmobNativeAdapter":@[@"PACConsentInformation", @"GADAdLoader"],
+                                  @"AnyThinkAdmobRewardedVideoAdapter":@[@"PACConsentInformation", @"GADRequest", @"GADRewardedAd"],
+                                  @"AnyThinkAdmobBannerAdapter":@[@"PACConsentInformation", @"GADRequest", @"GADBannerView"],
+                                  @"AnyThinkAdmobInterstitialAdapter":@[@"PACConsentInformation", @"GADInterstitial", @"GADRequest"]},
+                frameworksKey:@[@"PersonalizedAdConsent.framework", @"GoogleMobileAds.framework"]},
+        @"Inmobi":@{
+                dependenciesKey:@{@"AnyThinkInmobiNativeAdapter":@[@"IMNative"],
+                                  @"AnyThinkInmobiRewardedVideoAdapter":@[@"IMNative"],
+                                  @"AnyThinkInmobiBannerAdapter":@[@"IMBanner"],
+                                  @"AnyThinkInmobiInterstitialAdapter":@[@"IMInterstitial"]},
+                frameworksKey:@[@"InMobiSDK.framework"]},
+        @"Flurry":@{
+                dependenciesKey:@{@"AnyThinkFlurryNativeAdapter":@[@"FlurryAdNative"],
+                                  @"AnyThinkFlurryRewardedVideoAdapter":@[@"FlurryAdInterstitial"],
+                                  @"AnyThinkFlurryBannerAdapter":@[@"FlurryAdBanner"],
+                                  @"AnyThinkFlurryInterstitialAdapter":@[@"FlurryAdInterstitial"] },
+                frameworksKey:@[@"libFlurry_9.0.0.a"] },
+        @"Applovin":@{
+                dependenciesKey:@{@"AnyThinkApplovinNativeAdapter":@[@"ALSdk"],
+                                  @"AnyThinkApplovinRewardedVideoAdapter":@[@"ALIncentivizedInterstitialAd"],
+                                  @"AnyThinkApplovinBannerAdapter":@[@"ALAdView", @"ALSdk", @"ALAdSize"],
+                                  @"AnyThinkApplovinInterstitialAdapter":@[@"ALSdk", @"ALAdService", @"ALInterstitialAd"] },
+                frameworksKey:@[@"AppLovinSDK.framework"],
+                resourceBundleKey:@"AppLovinSDKResources" },
+        @"Mopub":@{
+                dependenciesKey:@{@"AnyThinkMopubNativeAdapter":@[@"MPNativeAdRequest", @"ATMopubRenderer", @"MPMoPubConfiguration"],
+                                  @"AnyThinkMopubRewardedVideoAdapter":@[@"MPRewardedVideo"],
+                                  @"AnyThinkMopubBannerAdapter":@[@"MPAdView"],
+                                  @"AnyThinkMopubInterstitialAdapter":@[@"MPInterstitialAdController"] },
+                frameworksKey:@[@"MoPubSDKFramework.framework"] },
+        @"GDT":@{
+                dependenciesKey:@{@"AnyThinkGDTNativeAdapter":@[@"GDTNativeExpressAd", @"GDTUnifiedNativeAd"],
+                                  @"AnyThinkGDTRewardedVideoAdapter":@[@"GDTRewardVideoAd"],
+                                  @"AnyThinkGDTBannerAdapter":@[@"GDTUnifiedBannerView"],
+                                  @"AnyThinkGDTInterstitialAdapter":@[@"GDTUnifiedInterstitialAd"],
+                                  @"AnyThinkGDTSplashAdapter":@[@"GDTSplashAd"] },
+                frameworksKey:@[@"libGDTMobSDK.a"]},
+        @"Tapjoy":@{
+                dependenciesKey:@{@"AnyThinkTapjoyRewardedVideoAdapter":@[@"Tapjoy"],
+                                  @"AnyThinkTapjoyInterstitialAdapter":@[@"Tapjoy"] },
+                frameworksKey:@[@"Tapjoy.embededframework"] },
+        @"IronSource":@{
+                dependenciesKey:@{@"AnyThinkIronSourceRewardedVideoAdapter":@[@"IronSource"],
+                                  @"AnyThinkIronSourceInterstitialAdapter":@[@"IronSource"] },
+                frameworksKey:@[@"IronSource.framework"] },
+        @"UnityAds":@{
+                dependenciesKey:@{@"AnyThinkUnityAdsRewardedVideoAdapter":@[@"UnityMonetization"],
+                                  @"AnyThinkUnityAdsInterstitialAdapter":@[@"UnityMonetization"] },
+                frameworksKey:@[@"UnityAds.framework"] },
+        @"Vungle":@{
+                dependenciesKey:@{@"AnyThinkVungleRewardedVideoAdapter":@[@"VungleSDK"],
+                                  @"AnyThinkVungleInterstitialAdapter":@[@"VungleSDK"] },
+                frameworksKey:@[@"VungleSDK.framework"] },
+        @"AdColony":@{
+                dependenciesKey:@{@"AnyThinkAdColonyRewardedVideoAdapter":@[@"AdColony"],
+                                  @"AnyThinkAdColonyInterstitialAdapter":@[@"AdColony"] },
+                frameworksKey:@[@"AdColony.framework"] },
+        @"Chartboost":@{
+                dependenciesKey:@{@"AnyThinkChartboostRewardedVideoAdapter":@[@"Chartboost"],
+                                  @"AnyThinkChartboostInterstitialAdapter":@[@"Chartboost"] },
+                frameworksKey:@[@"Chartboost.framework"]},
+        @"TikTok":@{dependenciesKey:@{@"AnyThinkTTNativeAdapter":@[@"BUNativeAdsManager", @"BUAdSlot", @"BUNativeAd"],
+                                      @"AnyThinkTTRewardedVideoAdapter":@[@"BURewardedVideoModel", @"BURewardedVideoAd"],
+                                      @"AnyThinkTTBannerAdapter":@[@"BUBannerAdView", @"BUSize", @"BUNativeExpressBannerView"],
+                                      @"AnyThinkTTInterstitialAdapter":@[@"BUFullscreenVideoAd", @"BUInterstitialAd", @"BUNativeExpressInterstitialAd"],
+                                      @"AnyThinkTTSplashAdapter":@[@"BUSplashAdView"] },
+                    frameworksKey:@[@"BUAdSDK.framework"],
+                    resourceBundleKey:@"BUAdSDK" },
+        @"Oneway":@{
+                dependenciesKey:@{@"AnyThinkOnewayRewardedVideoAdapter":@[@"OWRewardedAd"],
+                                  @"AnyThinkOnewayInterstitialAdapter":@[@"OWInterstitialAd"] },
+                frameworksKey:@[@"OnewaySDK.a"] },
+        @"Yeahmobi":@{
+                dependenciesKey:@{@"AnyThinkYeahmobiNativeAdapter":@[@"CTService"],
+                                  @"AnyThinkYeahmobiRewardedVideoAdapter":@[@"CTService"],
+                                  @"AnyThinkYeahmobiBannerAdapter":@[@"CTService"],
+                                  @"AnyThinkYeahmobiInterstitialAdapter":@[@"CTService"] },
+                frameworksKey:@[@"CTSDK.framework"] },
+        @"Appnext":@{
+                dependenciesKey:@{@"AnyThinkAppnextNativeAdapter":@[@"AppnextNativeAdsRequest", @"AppnextNativeAdsSDKApi"],
+                                  @"AnyThinkAppnextRewardedVideoAdapter":@[@"AppnextRewardedVideoAd"],
+                                  @"AnyThinkAppnextBannerAdapter":@[@"BannerRequest", @"AppnextBannerView"],
+                                  @"AnyThinkAppnextInterstitialAdapter":@[@"AppnextInterstitialAd"] },
+                frameworksKey:@[@"libAppnextNativeAdsSDK.a", @"libAppnextSDKCore.a", @"libAppnextLib.a"] },
+        @"Baidu":@{
+                dependenciesKey:@{@"AnyThinkBaiduNativeAdapter":@[@"BaiduMobAdNativeAdView", @"BaiduMobAdNative"],
+                                  @"AnyThinkBaiduRewardedVideoAdapter":@[@"BaiduMobAdRewardVideo"],
+                                  @"AnyThinkBaiduBannerAdapter":@[@"BaiduMobAdView"],
+                                  @"AnyThinkBaiduInterstitialAdapter":@[@"BaiduMobAdInterstitial"],
+                                  @"AnyThinkBaiduSplashAdapter":@[@"BaiduMobAdSplash"] },
+                frameworksKey:@[@"BaiduMobAdSDK.framework"],
+                resourceBundleKey:@"baidumobadsdk" },
+        @"Nend":@{
+                dependenciesKey:@{@"AnyThinkNendNativeAdapter":@[@"NADNative", @"NADNativeClient", @"NADNativeVideoLoader", @"NADNativeVideo"],
+                                  @"AnyThinkNendRewardedVideoAdapter":@[@"NADRewardedVideo"],
+                                  @"AnyThinkNendBannerAdapter":@[@"NADView"],
+                                  @"AnyThinkNendInterstitialAdapter":@[@"NADInterstitial", @"NADInterstitialVideo", @"NADFullBoard", @"NADFullBoardLoader"] },
+                frameworksKey:@[@"Nend.embededframework"] },
+        @"Maio":@{
+                dependenciesKey:@{@"AnyThinkMaioRewardedVideoAdapter":@[@"Maio"],
+                                  @"AnyThinkMaioInterstitialAdapter":@[@"Maio"] },
+                frameworksKey:@[@"Maio.framework"] },
+        @"StartApp":@{
+                dependenciesKey:@{@"AnyThinkStartAppRewardedVideoAdapter":@[@"STAStartAppAd"], },
+                frameworksKey:@[@"StartApp.framework"],
+                resourceBundleKey:@"StartApp" },
+        @"KS":@{
+                dependenciesKey:@{@"AnyThinkKSNativeAdapter":@[@"KSNativeAd", @"KSFeedAd"],
+                                  @"AnyThinkKSRewardedVideoAdapter":@[@"KSRewardedVideoAd"],
+                                  @"AnyThinkKSInterstitialAdapter":@[@"KSFullscreenVideoAd"] },
+                frameworksKey:@[@"KSAdSDK.framework"]},
+        @"Sigmob":@{dependenciesKey:@{@"AnyThinkSigmobRewardedVideoAdapter":@[@"WindAdRequest", @"WindRewardedVideoAd"],
+                                      @"AnyThinkSigmobInterstitialAdapter":@[@"WindFullscreenVideoAd", @"WindAdRequest"],
+                                      @"AnyThinkSigmobSplashAdapter":@[@"WindSplashAd"] },
+                    frameworksKey:@[@"WindSDK.framework"],
+                    resourceBundleKey:@"Sigmob" },
+        @"Ogury":@{
+                dependenciesKey:@{@"AnyThinkOguryRewardedVideoAdapter":@[@"OguryAdsOptinVideo"],
+                                  @"AnyThinkOguryInterstitialAdapter":@[@"OguryAdsInterstitial"] },
+                frameworksKey:@[@"OMSDK_Oguryco.framework", @"OguryAds.framework", @"OguryChoiceManager.framework"] },
+        @"MyOffer":@{
+                dependenciesKey:@{@"AnyThinkMyOfferRewardedVideoAdapter":@[@"ATMyOfferOfferManager"],
+                                  @"AnyThinkMyOfferInterstitialAdapter":@[@"ATMyOfferOfferManager"] },
+                frameworksKey:@[@"AnyThinkMyOffer.framework"] },
+        @"Fyber":@{
+                dependenciesKey:@{@"AnyThinkFyberRewardedVideoAdapter":@[@"IAAdRequest", @"IAVideoContentController", @"IAFullscreenUnitController", @"IAAdSpot"],
+                                  @"AnyThinkFyberInterstitialAdapter":@[@"IAAdRequest", @"IAVideoContentController", @"IAFullscreenUnitController", @"IAAdSpot"],
+                                  @"AnyThinkFyberBannerAdapter":@[@"IAAdRequest", @"IAViewUnitController", @"IAAdSpot"] },
+                frameworksKey:@[@"IASDKCore.framework", @"IASDKMRAID.framework", @"IASDKVideo.framework"],
+                resourceBundleKey:@"IASDKResources" }
     };
     
     NSMutableArray<NSDictionary*>* results = [NSMutableArray<NSDictionary*> array];
@@ -408,10 +405,19 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
     }];
     
     NSString *classesKey = @"classes";
-    NSDictionary<NSString*, NSDictionary<NSString*, NSArray<NSString*>*>*> *dependencies = @{@"AnyThinkMintegralNativeAdapter":@{classesKey:@[@"MTGNativeAdManager", @"MTGBidNativeAdManager", @"MTGBiddingRequest", @"MTGBiddingResponse", @"MTGBiddingBannerRequestParameter"], frameworksKey:@[@"MTGSDK.framework", @"MTGSDKBidding.framework"]},
-                                                           @"AnyThinkMintegralRewardedVideoAdapter":@{classesKey:@[@"MTGBidRewardAdManager", @"MTGRewardAdManager", @"MTGBiddingRequest", @"MTGBiddingResponse", @"MTGBiddingBannerRequestParameter"], frameworksKey:@[@"MTGSDK.framework", @"MTGSDKReward.framework", @"MTGSDKBidding.framework"]},
-                                                           @"AnyThinkMintegralBannerAdapter":@{classesKey:@[@"MTGSDK", @"MTGBannerAdView", @"MTGBiddingRequest", @"MTGBiddingResponse", @"MTGBiddingBannerRequestParameter"], frameworksKey:@[@"MTGSDK.framework", @"MTGSDKBanner.framework", @"MTGSDKBidding.framework"]},
-                                                           @"AnyThinkMintegralInterstitialAdapter":@{classesKey:@[@"MTGInterstitialVideoAdManager", @"MTGInterstitialAdManager", @"MTGBiddingRequest", @"MTGBiddingResponse", @"MTGBiddingBannerRequestParameter"], frameworksKey:@[@"MTGSDK.framework", @"MTGSDKInterstitialVideo.framework", @"MTGSDKInterstitial.framework", @"MTGSDKBidding.framework"]}
+    NSDictionary<NSString*, NSDictionary<NSString*, NSArray<NSString*>*>*> *dependencies = @{
+        @"AnyThinkMintegralNativeAdapter":@{
+                classesKey:@[@"MTGNativeAdManager", @"MTGBidNativeAdManager", @"MTGBiddingRequest", @"MTGBiddingResponse", @"MTGBiddingBannerRequestParameter"],
+                frameworksKey:@[@"MTGSDK.framework", @"MTGSDKBidding.framework"]},
+        @"AnyThinkMintegralRewardedVideoAdapter":@{
+                classesKey:@[@"MTGBidRewardAdManager", @"MTGRewardAdManager", @"MTGBiddingRequest", @"MTGBiddingResponse", @"MTGBiddingBannerRequestParameter"],
+                frameworksKey:@[@"MTGSDK.framework", @"MTGSDKReward.framework", @"MTGSDKBidding.framework"]},
+        @"AnyThinkMintegralBannerAdapter":@{
+                classesKey:@[@"MTGSDK", @"MTGBannerAdView", @"MTGBiddingRequest", @"MTGBiddingResponse", @"MTGBiddingBannerRequestParameter"],
+                frameworksKey:@[@"MTGSDK.framework", @"MTGSDKBanner.framework", @"MTGSDKBidding.framework"]},
+        @"AnyThinkMintegralInterstitialAdapter":@{
+                classesKey:@[@"MTGInterstitialVideoAdManager", @"MTGInterstitialAdManager", @"MTGBiddingRequest", @"MTGBiddingResponse", @"MTGBiddingBannerRequestParameter"],
+                frameworksKey:@[@"MTGSDK.framework", @"MTGSDKInterstitialVideo.framework", @"MTGSDKInterstitial.framework", @"MTGSDKBidding.framework"]}
     };
     
     __block BOOL networkStatus = YES;
@@ -457,7 +463,7 @@ static NSString *const UAInfoUAKey = @"ua";
     self = [super init];
     if (self != nil) {
         _networkVersionsAccessor = [ATThreadSafeAccessor new];
-        _networkVersionsInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"", kNetworkNameFacebook, @"", kNetworkNameInmobi, @"", kNetworkNameAdmob, @"", kNetworkNameFlurry, @"", kNetworkNameMintegral, @"", kNetworkNameApplovin, @"", kNetworkNameMopub, @"", kNetworkNameGDT, @"", kNetworkNameTapjoy, @"", kNetworkNameChartboost, @"", kNetworkNameIronSource, @"", kNetworkNameVungle, @"", kNetworkNameAdColony, @"", kNetworkNameUnityAds, @"", kNetworkNameTT, @"", kNetworkNameOneway, @"", kNetworkNameMobPower, @"", kNetworkNameAppnext, @"", kNetworkNameYeahmobi, @"", kNetworkNameBaidu, @"", kNetworkNameNend, @"", kNetworkNameMaio, @"", kNetworkNameStartApp, @"", kNetworkNameKS,@"", kNetworkNameSigmob, @"",kNetworkNameOgury, @"",kNetworkNameMyOffer, @"", kNetworkNameFyber, nil];
+        _networkVersionsInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"", kNetworkNameFacebook, @"", kNetworkNameInmobi, @"", kNetworkNameAdmob, @"", kNetworkNameFlurry, @"", kNetworkNameMintegral, @"", kNetworkNameApplovin, @"", kNetworkNameMopub, @"", kNetworkNameGDT, @"", kNetworkNameTapjoy, @"", kNetworkNameChartboost, @"", kNetworkNameIronSource, @"", kNetworkNameVungle, @"", kNetworkNameAdColony, @"", kNetworkNameUnityAds, @"", kNetworkNameTT, @"", kNetworkNameOneway, @"", kNetworkNameMobPower, @"", kNetworkNameAppnext, @"", kNetworkNameYeahmobi, @"", kNetworkNameBaidu, @"", kNetworkNameNend, @"", kNetworkNameMaio, @"", kNetworkNameStartApp, @"", kNetworkNameKS,@"", kNetworkNameSigmob, @"",kNetworkNameOgury, @"",kNetworkNameMyOffer, @"", kNetworkNameFyber, @"", kNetworkNameGoogleAdManager, nil];
         _dataConsentSet = [self retrieveDataConsentSet];
         _dataConsentSettingAccessor = [ATThreadSafeAccessor new];
         _networkInitFlags = [NSMutableDictionary<NSString*, NSNumber*> dictionary];
@@ -713,7 +719,7 @@ static NSString *const psIDInfoIDKey = @"id";
 }
 
 -(NSString*)version {
-    return @"UA_5.5.9";
+    return @"UA_5.6.8";
 }
 
 -(void) setDataConsentSet:(ATDataConsentSet)dataConsentSet consentString:(NSDictionary<NSString *,NSString *> *)consentString {
@@ -761,13 +767,12 @@ static NSString *const psIDInfoIDKey = @"id";
 #pragma mark - internal methods
 -(void) setNetworkVersions:(NSDictionary<NSString *,NSString *> *)networkVersions {
     [networkVersions enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
-        if ([@[kNetworkNameAdmob, kNetworkNameFacebook, kNetworkNameApplovin, kNetworkNameFlurry, kNetworkNameInmobi, kNetworkNameMintegral, kNetworkNameMopub, kNetworkNameGDT, kNetworkNameTapjoy, kNetworkNameChartboost, kNetworkNameIronSource, kNetworkNameVungle, kNetworkNameAdColony, kNetworkNameUnityAds, kNetworkNameTT, kNetworkNameOneway, kNetworkNameMobPower, kNetworkNameAppnext, kNetworkNameYeahmobi, kNetworkNameBaidu, kNetworkNameNend, kNetworkNameMaio, kNetworkNameStartApp, kNetworkNameKS,kNetworkNameOgury, kNetworkNameSigmob, kNetworkNameMyOffer, kNetworkNameFyber] containsObject:key] && [obj isKindOfClass:[NSString class]])
+        if ([@[kNetworkNameAdmob, kNetworkNameFacebook, kNetworkNameApplovin, kNetworkNameFlurry, kNetworkNameInmobi, kNetworkNameMintegral, kNetworkNameMopub, kNetworkNameGDT, kNetworkNameTapjoy, kNetworkNameChartboost, kNetworkNameIronSource, kNetworkNameVungle, kNetworkNameAdColony, kNetworkNameUnityAds, kNetworkNameTT, kNetworkNameOneway, kNetworkNameMobPower, kNetworkNameAppnext, kNetworkNameYeahmobi, kNetworkNameBaidu, kNetworkNameNend, kNetworkNameMaio, kNetworkNameStartApp, kNetworkNameKS,kNetworkNameOgury, kNetworkNameSigmob, kNetworkNameMyOffer, kNetworkNameFyber, kNetworkNameGoogleAdManager] containsObject:key] && [obj isKindOfClass:[NSString class]])
             [[ATAPI sharedInstance] setVersion:obj forNetwork:key];
     }];
 }
 
 -(void) setVersion:(NSString*)version forNetwork:(NSString*)network {
-//    NSLog(@"Marvin -- nw_ver:%@",version);
     [_networkVersionsAccessor writeWithBlock:^{ if (version != nil && network != nil) _networkVersionsInfo[network] = version; }];
 }
 

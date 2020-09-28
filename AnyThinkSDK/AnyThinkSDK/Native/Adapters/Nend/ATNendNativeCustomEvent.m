@@ -17,6 +17,7 @@
 #import "ATAdManagement.h"
 #import "ATPlacementModel.h"
 #import "ATNativeADCache.h"
+
 @implementation ATNendNativeCustomEvent
 -(void) handleNativeAds:(NSArray*)nativeAds error:(NSError *)error {
     if ([nativeAds count] > 0) {
@@ -70,8 +71,7 @@
 #pragma mark - native delegate
 - (void)nadNativeDidClickAd:(id<ATNADNative>)ad {
     [ATLogger logMessage:@"NendNative::nadNativeDidClickAd:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 #pragma mark - native delegate(s)
@@ -81,8 +81,7 @@
 
 - (void)nadNativeVideoDidClickAd:(id<ATNADNativeVideo> _Nonnull)ad {
     [ATLogger logMessage:@"NendNaitve::nadNativeVideoDidClickAd:" type:ATLogTypeExternal];
-    [self.adView notifyNativeAdClick];
-    [self trackClick];
+    [self trackNativeAdClick];
 }
 
 - (void)nadNativeVideoDidClickInformation:(id<ATNADNativeVideo> _Nonnull)ad {
@@ -94,8 +93,7 @@
     [ATLogger logMessage:@"NendNaitve::nadNativeVideoViewDidStartPlay:" type:ATLogTypeExternal];
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
 //    [[ATTracker sharedTracker] trackWithPlacementID:cache.placementModel.placementID unitGroupID:cache.unitGroup.unitGroupID requestID:cache.requestID network:cache.unitGroup.networkFirmID format:0 trackType:ATNativeADTrackTypeVideoPlayed resourceType:ATNativeADSourceTypeVideo progress:0 extra:nil];
-    [self trackVideoStart];
-    [self.adView notifyVideoStart];
+    [self trackNativeAdVideoStart];
 }
 
 - (void)nadNativeVideoViewDidStopPlay:(id<ATNADNativeVideoView>)videoView {
@@ -106,8 +104,7 @@
     [ATLogger logMessage:@"NendNaitve::nadNativeVideoViewDidCompletePlay:" type:ATLogTypeExternal];
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
 //    [[ATTracker sharedTracker] trackWithPlacementID:cache.placementModel.placementID unitGroupID:cache.unitGroup.unitGroupID requestID:cache.requestID network:cache.unitGroup.networkFirmID format:0 trackType:ATNativeADTrackTypeVideoPlayed resourceType:ATNativeADSourceTypeVideo progress:100 extra:nil];
-    [self trackVideoEnd];
-    [self.adView notifyVideoEnd];
+    [self trackNativeAdVideoEnd];
 }
 
 - (void)nadNativeVideoViewDidFailToPlay:(id<ATNADNativeVideoView>)videoView {
@@ -124,10 +121,15 @@
     [self.adView notifyVideoExitFullScreen];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"spot_id"];
-    return extra;
+    return cache.unitGroup.content[@"spot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"spot_id"];
+//    return extra;
+//}
 @end

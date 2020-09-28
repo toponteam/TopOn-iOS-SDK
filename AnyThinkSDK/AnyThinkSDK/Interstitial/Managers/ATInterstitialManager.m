@@ -14,6 +14,7 @@
 #import "ATCapsManager.h"
 #import "ATInterstitialAdapter.h"
 #import "ATAdStorageUtility.h"
+#import "ATWaterfallManager.h"
 NSString *const kInterstitialAssetsUnitIDKey = @"unit_id";
 NSString *const kInterstitialAssetsCustomEventKey = @"custom_event";
 @interface ATInterstitialManager()
@@ -49,11 +50,11 @@ static NSString *const requestIDKey = @"request_id";
     return [[_interstitialStorageAccessor readWithBlock:^id{ return @([ATAdStorageUtility highestPriorityOfShownAdInStorage:weakSelf.interstitialStorage placementID:placementID requestID:requestID]);}] integerValue];
 }
 
--(BOOL) inspectAdSourceStatusWithPlacementModel:(ATPlacementModel*)placementModel activeUnitGroups:(NSArray<ATUnitGroupModel*>*)activeUnitGroups unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo {
+-(BOOL) inspectAdSourceStatusWithPlacementModel:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo {
     __weak typeof(self) weakSelf = self;
     return [[_interstitialStorageAccessor readWithBlock:^id{
         BOOL status = [ATAdStorageUtility adSourceStatusInStorage:weakSelf.statusStorage placementModel:placementModel unitGroup:unitGroup];
-        if (status) { [ATAdStorageUtility renewOffersWithPlacementModel:placementModel activeUnitGroups:activeUnitGroups requestID:requestID inStatusStorage:weakSelf.statusStorage offerStorate:weakSelf.interstitialStorage extraInfo:extraInfo]; }
+        if (status) { [ATAdStorageUtility renewOffersWithPlacementModel:placementModel finalWaterfall:finalWaterfall requestID:requestID inStatusStorage:weakSelf.statusStorage offerStorate:weakSelf.interstitialStorage extraInfo:extraInfo]; }
         return @(status);
     }] boolValue];
 }
@@ -68,11 +69,11 @@ static NSString *const requestIDKey = @"request_id";
     [_interstitialStorageAccessor writeWithBlock:^{ [ATAdStorageUtility invalidateStatusForAd:ad inStatusStorage:weakSelf.statusStorage]; }];
 }
 
--(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID {
-    ATInterstitial *interstitial = [[ATInterstitial alloc] initWithPriority:[placementModel.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup];
+-(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID {
+    ATInterstitial *interstitial = [[ATInterstitial alloc] initWithPriority:[finalWaterfall.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup finalWaterfall:finalWaterfall];
     __weak typeof(self) weakSelf = self;
     [_interstitialStorageAccessor writeWithBlock:^{
-        [ATAdStorageUtility saveAd:interstitial toStorage:weakSelf.interstitialStorage requestID:interstitial.requestID];
+        [ATAdStorageUtility saveAd:interstitial finalWaterfall:finalWaterfall toStorage:weakSelf.interstitialStorage requestID:interstitial.requestID];
         [ATAdStorageUtility saveAd:interstitial toStatusStorage:weakSelf.statusStorage];
     }];
 }

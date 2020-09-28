@@ -9,7 +9,6 @@
 #import "ATFacebookInterstitialAdapter.h"
 #import "ATFacebookInterstitialCustomEvent.h"
 #import "ATAPI+Internal.h"
-#import "ATAdLoader+HeaderBidding.h"
 #import "ATAdAdapter.h"
 @interface ATFacebookInterstitialAdapter()
 @property(nonatomic, readonly) id<ATFBInterstitialAd> interstitialAd;
@@ -25,7 +24,7 @@
     [((id<ATFBInterstitialAd>)interstitial.customObject) showAdFromRootViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameFacebook]) {
@@ -36,23 +35,15 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"FBInterstitialAd") != nil) {
-        _customEvent = [[ATFacebookInterstitialCustomEvent alloc] initWithUnitID:info[@"unit_id"] customInfo:info];
+        _customEvent = [[ATFacebookInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        _interstitialAd = [[NSClassFromString(@"FBInterstitialAd") alloc] initWithPlacementID:info[@"unit_id"]];
+        _interstitialAd = [[NSClassFromString(@"FBInterstitialAd") alloc] initWithPlacementID:serverInfo[@"unit_id"]];
         _interstitialAd.delegate = _customEvent;
-        
-        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)info[kAdapterCustomInfoUnitGroupModelKey];
-        NSString *requestID = info[kAdapterCustomInfoRequestIDKey];
-        if ([unitGroupModel bidTokenWithRequestID:requestID] != nil) {
-            [_interstitialAd loadAdWithBidPayload:[unitGroupModel bidTokenWithRequestID:requestID]];
-            [unitGroupModel setBidTokenUsedFlagForRequestID:requestID];
-        } else {
-            [_interstitialAd loadAd];
-        }
+        [_interstitialAd loadAd];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Facebook"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Facebook"]}]);
     }
 }
 @end

@@ -10,11 +10,11 @@
 #import "Utilities.h"
 #import "ATSplashManager.h"
 #import "ATSplashDelegate.h"
+
 @implementation ATTTSplashCustomEvent
 - (void)splashAdDidClick:(id<ATBUSplashAdView>)splashAd {
     [ATLogger logMessage:@"TTSplash::splashAdDidClick" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackSplashAdClick];
 }
 
 - (void)splashAdDidClose:(id<ATBUSplashAdView>)splashAd {
@@ -22,8 +22,7 @@
     [_containerView removeFromSuperview];
     [_backgroundImageView removeFromSuperview];
     [(UIView*)splashAd removeFromSuperview];
-    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackSplashAdClosed];
 }
 
 - (void)splashAdWillClose:(id<ATBUSplashAdView>)splashAd {
@@ -33,13 +32,16 @@
 - (void)splashAdDidLoad:(id<ATBUSplashAdView>)splashAd {
     [ATLogger logMessage:@"TTSplash::splashAdDidLoad" type:ATLogTypeExternal];
     if ([[NSDate date] timeIntervalSinceDate:_expireDate] > 0) {
-        NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load splash.", NSLocalizedFailureReasonErrorKey:@"It took too long for TT to load splash."}];
+        NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadSplashADMsg, NSLocalizedFailureReasonErrorKey:@"It took too long for TT to load splash."}];
         [_backgroundImageView removeFromSuperview];
-        [self handleLoadingFailure:error];
+        [self trackSplashAdLoadFailed:error];
     } else {
+//        if (self.ad == nil) { if ([self.delegate respondsToSelector:@selector(splashDidShowForPlacementID:extra:)]) { [self.delegate splashDidShowForPlacementID:self.unitID extra:[self delegateExtra]]; } }
         [_window addSubview:_containerView];
         [_window addSubview:_ttSplashView];
-        [self handleAssets:@{kAdAssetsCustomObjectKey:splashAd, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
+        [self trackSplashAdLoaded:splashAd];
+        [self trackSplashAdShow];
+//        [self handleAssets:@{kAdAssetsCustomObjectKey:splashAd, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
     }
 }
 
@@ -67,25 +69,26 @@
     [_backgroundImageView removeFromSuperview];
     [_ttSplashView removeFromSuperview];
     [_containerView removeFromSuperview];
-    [self handleLoadingFailure:error];
+    [self trackSplashAdLoadFailed:error];
 }
 
 - (void)nativeExpressSplashViewRenderSuccess:(id<BUNativeExpressSplashView>)splashAdView {
     [ATLogger logMessage:@"TTSplash::splashAdDidLoad" type:ATLogTypeExternal];
     if ([[NSDate date] timeIntervalSinceDate:_expireDate] > 0) {
-        NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load splash.", NSLocalizedFailureReasonErrorKey:@"It took too long for TT to load splash."}];
+        NSError *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadSplashADMsg, NSLocalizedFailureReasonErrorKey:@"It took too long for TT to load splash."}];
         [_backgroundImageView removeFromSuperview];
-        [self handleLoadingFailure:error];
+        [self trackSplashAdLoadFailed:error];
     } else {
         [_window addSubview:_containerView];
         [_window addSubview:_ttSplashView];
-        [self handleAssets:@{kAdAssetsCustomObjectKey:splashAdView, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
+        [self trackSplashAdLoaded:splashAdView];
+//        [self handleAssets:@{kAdAssetsCustomObjectKey:splashAdView, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
     }
 }
 
 - (void)nativeExpressSplashViewRenderFail:(id<BUNativeExpressSplashView>)splashAdView error:(NSError * __nullable)error {
     [_backgroundImageView removeFromSuperview];
-    [self handleLoadingFailure:error];
+    [self trackSplashAdLoadFailed:error];
 }
 
 - (void)nativeExpressSplashViewWillVisible:(id<BUNativeExpressSplashView>)splashAdView {
@@ -94,8 +97,7 @@
 
 - (void)nativeExpressSplashViewDidClick:(id<BUNativeExpressSplashView>)splashAdView {
     [ATLogger logMessage:@"TTSplash::splashAdDidClick" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackSplashAdClick];
 }
 
 - (void)nativeExpressSplashViewDidClickSkip:(id<BUNativeExpressSplashView>)splashAdView {
@@ -107,8 +109,7 @@
     [_containerView removeFromSuperview];
     [_backgroundImageView removeFromSuperview];
     [(UIView*)splashAdView removeFromSuperview];
-    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackSplashAdClosed];
 
 }
 
@@ -116,10 +117,14 @@
     
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"slot_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"slot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"slot_id"];
+//    return extra;
+//}
 
 @end

@@ -49,14 +49,21 @@ BOOL AT_ProxyEnabled(void);
 
 +(NSString*)computeSignWithParameters:(NSDictionary*)parameters;
 
++(BOOL)higherThanIOS13;
+
++(BOOL)isBlankDictionary:(NSDictionary *)dic;
+
 extern NSString *const kCallStackSymbolCallerMethodKey;
 extern NSString *const kCallStackSymbolCallerClassKey;
 +(NSArray<NSDictionary<NSString*, NSString*>*>*)parseCallStackSymbols:(NSArray<NSString*>*)callStackSymbols;
 +(BOOL) validateShowingScene:(NSString*)scene;
++(BOOL) validateDeviceId:(NSString*)deviceId;
++(CGSize) sizeFromString:(NSString *)sizeStr;
 @end
 
 @interface NSDate(ATUtilities)
 +(instancetype) normalizaedDate;
+-(NSInteger) numberOfDaysSinceDate:(NSDate*)date;
 @end
 
 @interface NSData(ATKit)

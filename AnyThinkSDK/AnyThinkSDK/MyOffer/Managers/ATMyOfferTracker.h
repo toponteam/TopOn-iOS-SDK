@@ -7,6 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
+#import<StoreKit/StoreKit.h>
+
 #import "ATMyOfferOfferManager.h"
 typedef NS_ENUM(NSInteger, ATMyOfferTrackerEvent) {
     ATMyOfferTrackerEventVideoStart = 0,
@@ -26,5 +28,7 @@ extern NSString *const kATMyOfferTrackerExtraScene;
 +(instancetype) sharedTracker;
 -(void) trackEvent:(ATMyOfferTrackerEvent)event offerModel:(ATMyOfferOfferModel*)offerModel extra:(NSDictionary*)extra;
 -(void) impressionOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel extra:(NSDictionary*)extra;
--(void) clickOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel extra:(NSDictionary*)extra;
+-(void) clickOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting *)setting extra:(NSDictionary*)extra;
+-(void) clickOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting *)setting extra:(NSDictionary*)extra skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *) viewController circleId:(NSString *) circleId;
+-(void)preloadStorekitForOfferModel:(ATMyOfferOfferModel *)offerModel setting:(ATMyOfferSetting *) setting  viewController:(UIViewController *)viewController circleId:(NSString *) circleId skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate;
 @end

@@ -14,6 +14,7 @@
 #import <objc/runtime.h>
 #import "ATAdAdapter.h"
 #import "ATAdManager+Interstitial.h"
+
 NSString *const kATNendInterstitialLoadedNotification = @"com.anythink.NendInterstitialLoadedNotificatino";
 NSString *const kATNendInterstitialClickNotification = @"com.anythink.NendInterstitialClickNotification";
 NSString *const kATNendInterstitialNotificationUserInfoSpotIDKey = @"sopt_id";
@@ -86,7 +87,7 @@ static NSString *const kFullscreenInterstitialLoaderClassName = @"NADFullBoardLo
     }
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameNend]) {
@@ -97,16 +98,16 @@ static NSString *const kFullscreenInterstitialLoaderClassName = @"NADFullBoardLo
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kInterstitialClassName) != nil && NSClassFromString(kInterstitialVideoClassName) != nil && NSClassFromString(kFullscreenInterstitialClassName) != nil && NSClassFromString(kFullscreenInterstitialLoaderClassName) != nil) {
-        _customEvent = [[ATNendInterstitialCustomEvent alloc] initWithUnitID:info[@"spot_id"] customInfo:info];
+        _customEvent = [[ATNendInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        NSDictionary *extra = info[kAdapterCustomInfoExtraKey];
-        if ([info[@"is_video"] integerValue] == 0) {
+        NSDictionary *extra = localInfo;
+        if ([serverInfo[@"is_video"] integerValue] == 0) {
             if (((id<ATNADInterstitial>)[NSClassFromString(kInterstitialClassName) sharedInstance]).delegate == nil) { ((id<ATNADInterstitial>)[NSClassFromString(kInterstitialClassName) sharedInstance]).delegate = [ATNendInterstitialDelegate sharedInstance]; }
-            [[NSClassFromString(kInterstitialClassName) sharedInstance] loadAdWithApiKey:info[@"api_key"] spotId:info[@"spot_id"]];
-        } else if ([info[@"is_video"] integerValue] == 1) {
-            _interstitialVideo = [[NSClassFromString(kInterstitialVideoClassName) alloc] initWithSpotId:info[@"spot_id"] apiKey:info[@"api_key"]];
+            [[NSClassFromString(kInterstitialClassName) sharedInstance] loadAdWithApiKey:serverInfo[@"api_key"] spotId:serverInfo[@"spot_id"]];
+        } else if ([serverInfo[@"is_video"] integerValue] == 1) {
+            _interstitialVideo = [[NSClassFromString(kInterstitialVideoClassName) alloc] initWithSpotId:serverInfo[@"spot_id"] apiKey:serverInfo[@"api_key"]];
             _interstitialVideo.delegate = _customEvent;
             if ([extra isKindOfClass:[NSDictionary class]]) {
                 if ([extra[kATInterstitialExtraMediationNameKey] isKindOfClass:[NSString class]]) { _interstitialVideo.mediationName = extra[kATInterstitialExtraMediationNameKey]; }
@@ -116,17 +117,17 @@ static NSString *const kFullscreenInterstitialLoaderClassName = @"NADFullBoardLo
                 if ([extra[kATInterstitialExtraMuteStartPlayingFlagKey] respondsToSelector:@selector(boolValue)]) { _interstitialVideo.isMuteStartPlaying = [extra[kATInterstitialExtraMuteStartPlayingFlagKey] boolValue]; }
                 if ([extra[kATInterstitialExtraFallbackFullboardBackgroundColorKey] isKindOfClass:[UIColor class]]) { _interstitialVideo.fallbackFullboardBackgroundColor = extra[kATInterstitialExtraFallbackFullboardBackgroundColorKey]; }
             }
-            [_interstitialVideo addFallbackFullboardWithSpotId:info[@"spot_id"] apiKey:info[@"api_key"]];
+            [_interstitialVideo addFallbackFullboardWithSpotId:serverInfo[@"spot_id"] apiKey:serverInfo[@"api_key"]];
             [_interstitialVideo loadAd];
-        } else if ([info[@"is_video"] integerValue] == 2) {
-            _fullBoardLoader = [[NSClassFromString(kFullscreenInterstitialLoaderClassName) alloc] initWithSpotId:info[@"spot_id"] apiKey:info[@"api_key"]];
+        } else if ([serverInfo[@"is_video"] integerValue] == 2) {
+            _fullBoardLoader = [[NSClassFromString(kFullscreenInterstitialLoaderClassName) alloc] initWithSpotId:serverInfo[@"spot_id"] apiKey:serverInfo[@"api_key"]];
             __weak typeof(self) weakSelf = self;
             [_fullBoardLoader loadAdWithCompletionHandler:^(id<ATNADFullBoard> ad, NSInteger error) {
                 [weakSelf.customEvent completeFullBoardLoad:ad errorCode:error];
             }];
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Nend"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Nend"]}]);
     }
 }
 @end

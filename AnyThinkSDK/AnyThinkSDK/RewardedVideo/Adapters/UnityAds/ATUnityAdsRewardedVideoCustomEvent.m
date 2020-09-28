@@ -10,64 +10,83 @@
 #import "ATRewardedVideoManager.h"
 #import "Utilities.h"
 
+extern NSString *const kATUnityAdsRVLoadedNotification;
+extern NSString *const kATUnityAdsRVFailedToLoadNotification;
+extern NSString *const kATUnityAdsRVPlayStartNotification;
+extern NSString *const kATUnityAdsRVClickNotification;
+extern NSString *const kATUnityAdsRVCloseNotification;
+extern NSString *const kATUnityAdsRVNotificationUserInfoPlacementIDKey;
+extern NSString *const kATUnityAdsRVNotificationUserInfoErrorKey;
+extern NSString *const kATUnityAdsRVNotificationUserInfoRewardedFlag;
+
 @interface ATUnityAdsRewardedVideoCustomEvent()
 @property(nonatomic, readonly) BOOL requestFinished;
 @end
 @implementation ATUnityAdsRewardedVideoCustomEvent
-- (void)unityServicesDidError:(NSInteger)error withMessage:(NSString *)message {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::unityServicesDidError:%ld withMessage:%@", error, message] type:ATLogTypeExternal];
-    [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.UnityAdsRewardedVideoLoad" code:error userInfo:@{NSLocalizedDescriptionKey:@"anythinkSDK has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[message length] > 0 ? message : @"UnityAds SDK has failed to load rewarded video." }]];
-    _requestFinished = YES;
+
+-(instancetype) initWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
+    self = [super initWithInfo:serverInfo localInfo:localInfo];
+    if (self != nil) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadedNotification:) name:kATUnityAdsRVLoadedNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleFailedToLoadNotification:) name:kATUnityAdsRVFailedToLoadNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleStartPlayingNotification:) name:kATUnityAdsRVPlayStartNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleCloseNotification:) name:kATUnityAdsRVCloseNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleClickNotification:) name:kATUnityAdsRVClickNotification object:nil];
+    }
+    return self;
 }
 
--(void)placementContentReady:(NSString *)placementId placementContent:(id<UMONShowAdPlacementContent>)decision {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::placementContentReady:%@ placementContent:", placementId] type:ATLogTypeExternal];
-    if ([placementId isEqualToString:self.unitID] && !_requestFinished) {
-        [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::Ad ready for placementID:%@", placementId] type:ATLogTypeExternal];
-        [self handleAssets:@{kAdAssetsCustomObjectKey:decision, kRewardedVideoAssetsUnitIDKey:self.unitID, kRewardedVideoAssetsCustomEventKey:self}];
+-(void) handleLoadedNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kATUnityAdsRVNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && !_requestFinished) {
+        [self trackRewardedVideoAdLoaded:self adExtra:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsRVLoadedNotification object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsRVFailedToLoadNotification object:nil];
         _requestFinished = YES;
     }
 }
 
--(void)placementContentStateDidChange:(NSString *)placementId placementContent:(id<UMONShowAdPlacementContent>)placementContent previousState:(NSInteger)previousState newState:(NSInteger)newState {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::placementContentStateDidChange:%@ placementContent:previousState:%ld newState:%ld", placementId, previousState, newState] type:ATLogTypeExternal];
-    
+-(void) handleFailedToLoadNotification:(NSNotification*)notification {
+    [self trackRewardedVideoAdLoadFailed:notification.userInfo[kATUnityAdsRVNotificationUserInfoPlacementIDKey]];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsRVLoadedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsRVFailedToLoadNotification object:nil];
+    _requestFinished = YES;
 }
 
-- (void)unityAdsDidStart:(NSString *)placementId {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::unityAdsDidStart:%@", placementId] type:ATLogTypeExternal];
-    if ([placementId isEqualToString:self.unitID]) {
-        [self trackShow];
-        [self trackVideoStart];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-            [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-        }
+-(void) handleStartPlayingNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kATUnityAdsRVNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID]) {
+        [self trackRewardedVideoAdShow];
+        [self trackRewardedVideoAdVideoStart];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsRVPlayStartNotification object:nil];
     }
 }
 
-- (void)unityAdsDidFinish:(NSString *)placementId withFinishState:(NSInteger)state {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::unityAdsDidFinish:withFinishState:%ld", state] type:ATLogTypeExternal];
-    if ([placementId isEqualToString:self.unitID]) {
-        self.rewardGranted = YES;
-        [self handleClose];
-        [self trackVideoEnd];
-        [self saveVideoCloseEventRewarded:state == kATUnityAdsFinishStateCompleted];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-            [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-        }
-        if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-            [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-        }
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-            [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
-        }
+-(void) handleClickNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kATUnityAdsRVNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID]) {
+        [self trackRewardedVideoAdClick];
     }
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"placement_id"];
-    return extra;
+-(void) handleCloseNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kATUnityAdsRVNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID]) {
+        self.rewardGranted = [notification.userInfo[kATUnityAdsRVNotificationUserInfoRewardedFlag] boolValue];
+        [self trackRewardedVideoAdVideoEnd];
+        if(self.rewardGranted){
+            [self trackRewardedVideoAdRewarded];
+        }
+        [self trackRewardedVideoAdCloseRewarded:self.rewardGranted];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsRVClickNotification object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsRVCloseNotification object:nil];
+    }
 }
+
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"placement_id"];
+}
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"placement_id"];
+//    return extra;
+//}
 
 @end

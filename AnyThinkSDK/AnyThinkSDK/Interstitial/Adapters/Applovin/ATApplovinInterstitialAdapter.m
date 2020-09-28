@@ -31,7 +31,7 @@
     objc_setAssociatedObject(interstitial.customEvent, "al_interstitial_ad", alInterstitial, OBJC_ASSOCIATION_RETAIN);
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameApplovin]) {
@@ -42,7 +42,8 @@
                 [NSClassFromString(@"ALPrivacySettings") setIsAgeRestrictedUser:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameApplovin][kApplovinUnderAgeKey] boolValue]];
             } else {
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) {
                     /**
                     HasUserConsent: 0 Nonpersonalized, 1 Personalized
@@ -55,13 +56,13 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"ALSdk") != nil && NSClassFromString(@"ALAdService") != nil && NSClassFromString(@"ALInterstitialAd") != nil) {
-        _customEvent = [[ATApplovinInterstitialCustomEvent alloc] initWithUnitID:info[@"sdkkey"] customInfo:info];
+        _customEvent = [[ATApplovinInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        [((id<ATALSdk>)[NSClassFromString(@"ALSdk") sharedWithKey:info[@"sdkkey"]]).adService loadNextAdForZoneIdentifier:info[@"zone_id"] andNotify:_customEvent];
+        [((id<ATALSdk>)[NSClassFromString(@"ALSdk") sharedWithKey:serverInfo[@"sdkkey"]]).adService loadNextAdForZoneIdentifier:serverInfo[@"zone_id"] andNotify:_customEvent];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Applovin"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Applovin"]}]);
     }
 }
 @end

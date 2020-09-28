@@ -8,7 +8,8 @@
 
 #ifndef ATRewardedVideoAdapter_h
 #define ATRewardedVideoAdapter_h
-#import "ATAdAdapter.h"
+#import <AnyThinkSDK/AnyThinkSDK.h>
+//#import "ATAdAdapter.h"
 #import "ATRewardedVideoDelegate.h"
 #import "ATRewardedVideo.h"
 #import <UIKit/UIKit.h>

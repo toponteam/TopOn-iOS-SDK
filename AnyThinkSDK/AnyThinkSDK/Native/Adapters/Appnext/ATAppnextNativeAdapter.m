@@ -13,6 +13,7 @@
 #import "ATAdCustomEvent.h"
 #import "NSObject+ExtraInfo.h"
 #import "ATAdAdapter.h"
+
 NSString *const kAppnextNativeAssetsAPIObjectKey = @"api_object";
 @interface ATAppnextNativeAdapter()
 @property(nonatomic, readonly) id<ATAppnextNativeAdsSDKApi> api;
@@ -24,7 +25,7 @@ NSString *const kAppnextNativeAssetsAPIObjectKey = @"api_object";
     return [ATAppnextNativeRenderer class];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameAppnext]) {
@@ -35,25 +36,25 @@ NSString *const kAppnextNativeAssetsAPIObjectKey = @"api_object";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"AppnextNativeAdsSDKApi") != nil && NSClassFromString(@"AppnextNativeAdsRequest") != nil) {
         UIViewController *AppnextVc = [UIApplication sharedApplication].delegate.window.rootViewController;
-        _api = [[NSClassFromString(@"AppnextNativeAdsSDKApi") alloc] initWithPlacementID:info[@"placement_id"] withViewController:AppnextVc];
+        _api = [[NSClassFromString(@"AppnextNativeAdsSDKApi") alloc] initWithPlacementID:serverInfo[@"placement_id"] withViewController:AppnextVc];
 //        [_api setViewController:AppnextVc];
         
         _customEvent = [[ATAppnextNativeCustomEvent alloc] init];
-        _customEvent.unitID = info[@"placement_id"];
+        _customEvent.unitID = serverInfo[@"placement_id"];
         _customEvent.requestCompletionBlock = completion;
         _customEvent.api = _api;
         
-        NSDictionary *extraInfo = info[kAdapterCustomInfoExtraKey];
+        NSDictionary *extraInfo = localInfo;
         _customEvent.requestExtra = extraInfo;
         
         id<ATAppnextNativeAdsRequest> request = [[NSClassFromString(@"AppnextNativeAdsRequest") alloc] init];
-        request.count = [info[@"request_num"] integerValue];
+        request.count = [serverInfo[@"request_num"] integerValue];
         [_api loadAds:request withRequestDelegate:_customEvent];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load native ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Appnext"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadNativeADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Appnext"]}]);
     }
 }
 @end

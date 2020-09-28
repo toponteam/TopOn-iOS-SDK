@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "ATAd.h"
 #import "ATAdManager+Internal.h"
+#import "ATWaterfallManager.h"
 typedef NS_ENUM(NSInteger, ATAdNotReadyReason) {
     ATAdNotReadyReasonStatusFalse = 0,
     ATAdNotReadyReasonStatusExpired = 1,
@@ -19,7 +20,7 @@ typedef NS_ENUM(NSInteger, ATAdNotReadyReason) {
  *Methods defined in this class are not thread-safe; Calls have to provide accessors themselves.
  */
 @interface ATAdStorageUtility : NSObject
-+(NSDictionary<NSString*, NSArray<id<ATAd>>*>*) saveAd:(id<ATAd>)ad toStorage:(NSMutableDictionary*)storage requestID:(NSString*)requestID;
++(NSDictionary<NSString*, NSArray<id<ATAd>>*>*) saveAd:(id<ATAd>)ad finalWaterfall:(ATWaterfall*)finalWaterfall toStorage:(NSMutableDictionary*)storage requestID:(NSString*)requestID;
 
 +(id<ATAd>) adInStorage:(NSMutableDictionary*)storage statusStorage:(NSMutableDictionary*)statusStorage forPlacementID:(NSString*)placementID caller:(ATAdManagerReadyAPICaller)caller extra:(NSDictionary* __autoreleasing*)extra;
 
@@ -43,5 +44,5 @@ typedef NS_ENUM(NSInteger, ATAdNotReadyReason) {
 +(void) saveAd:(id<ATAd>)ad toStatusStorage:(NSMutableDictionary*)storage;
 +(void) invalidateStatusForAd:(id<ATAd>)ad inStatusStorage:(NSMutableDictionary*)statusStorage;
 +(BOOL) adSourceStatusInStorage:(NSDictionary*)storage placementModel:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup;
-+(void) renewOffersWithPlacementModel:(ATPlacementModel*)placementModel activeUnitGroups:(NSArray<ATUnitGroupModel*>*)activeUnitGroups requestID:(NSString*)requestID inStatusStorage:(NSMutableDictionary*)statusStorage offerStorate:(NSMutableDictionary*)offerStorage extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo;
++(void) renewOffersWithPlacementModel:(ATPlacementModel*)placementModel finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID inStatusStorage:(NSMutableDictionary*)statusStorage offerStorate:(NSMutableDictionary*)offerStorage extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo;
 @end

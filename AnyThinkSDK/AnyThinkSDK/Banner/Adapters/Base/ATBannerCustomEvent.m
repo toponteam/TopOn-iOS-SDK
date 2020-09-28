@@ -15,22 +15,23 @@
 #import "ATGeneralAdAgentEvent.h"
 #import "ATAdAdapter.h"
 #import "ATAdManager+Banner.h"
+#import "ATBannerManager.h"
 
 @implementation ATBannerCustomEvent
--(instancetype) initWithUnitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo{
-    self = [super initWithUnitID:unitID customInfo:customInfo];
+-(instancetype) initWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo{
+    self = [super initWithUnitID:self.networkUnitId serverInfo:serverInfo localInfo:localInfo];
     if (self != nil) {
         self.requestNumber = 1;
         self.priorityIndex = [ATAdCustomEvent calculateAdPriority:self.ad];
-        _unitID = unitID;
-        _size = [customInfo[kAdapterCustomInfoExtraKey][kATAdLoadingExtraBannerAdSizeKey] respondsToSelector:@selector(CGSizeValue)] ? [customInfo[kAdapterCustomInfoExtraKey][kATAdLoadingExtraBannerAdSizeKey] CGSizeValue] : CGSizeMake(320.0f, 50.0f);
+        _unitID = self.networkUnitId;
+        _size = [localInfo[kATAdLoadingExtraBannerAdSizeKey] respondsToSelector:@selector(CGSizeValue)] ? [localInfo[kATAdLoadingExtraBannerAdSizeKey] CGSizeValue] : CGSizeMake(320.0f, 50.0f);
         
     }
     return self;
 }
 
 -(NSDictionary*)delegateExtra {
-    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.priorityIndex),kATBannerDelegateExtraPrice:@(self.banner.unitGroup.price), kATADDelegateExtraECPMLevelKey:@(self.banner.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.banner.placementModel.groupID)}];
+    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.priorityIndex),kATBannerDelegateExtraPrice:@(self.banner.price), kATADDelegateExtraECPMLevelKey:@(self.banner.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.banner.placementModel.groupID)}];
     NSString *channel = [ATAPI sharedInstance].channel;
     if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
     NSString *subchannel = [ATAPI sharedInstance].subchannel;
@@ -39,12 +40,16 @@
     NSString *extraID = [NSString stringWithFormat:@"%@%@%@",self.banner.requestID,self.banner.unitGroup.unitID,self.sdkTime];
     extra[kATADDelegateExtraIDKey] = [extraID md5];
     extra[kATADDelegateExtraAdunitIDKey] = self.banner.placementModel.placementID;
-    extra[kATADDelegateExtraPublisherRevenueKey] = @(self.banner.unitGroup.price / 1000.0f);
+    extra[kATADDelegateExtraPublisherRevenueKey] = @(self.banner.price / 1000.0f);
     extra[kATADDelegateExtraCurrencyKey] = self.banner.placementModel.callback[@"currency"];
     extra[kATADDelegateExtraCountryKey] = self.banner.placementModel.callback[@"cc"];
     extra[kATADDelegateExtraFormatKey] = @"Banner";
     extra[kATADDelegateExtraPrecisionKey] = self.banner.unitGroup.precision;
     extra[kATADDelegateExtraNetworkTypeKey] = self.banner.unitGroup.networkFirmID == 35 ? @"Cross_promotion":@"Network";
+    
+    //add adsource unit_id value
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.networkUnitId != nil ? self.networkUnitId:@"";
+    
     return extra;
 }
 
@@ -80,12 +85,43 @@
     [ATLogger logMessage:[NSString stringWithFormat:@"%@ dealloc(Added for testing memory issues).", NSStringFromClass([self class])] type:ATLogTypeInternal];
 }
 
--(void) trackClick {
+-(void) trackBannerAdLoaded:(id)bannerView adExtra:(NSDictionary *)adExtra {
+    NSMutableDictionary *assets;
+    if(adExtra != nil){
+        assets = [NSMutableDictionary dictionaryWithDictionary:adExtra];
+    }else{
+        assets = [NSMutableDictionary dictionary];
+    }
+    if(bannerView != nil){
+        assets[kBannerAssetsBannerViewKey] = bannerView;
+    }
+    assets[kBannerAssetsCustomEventKey] = self;
+    if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
+    [self handleAssets:assets];
+}
+
+-(void) trackBannerAdLoadFailed:(NSError*)error {
+     [self handleLoadingFailure:error];
+}
+
+-(void) trackBannerAdClosed {
+    if ([self.delegate respondsToSelector:@selector(bannerView:didTapCloseButtonWithPlacementID:extra:)]) {
+           [self.delegate bannerView:self.bannerView didTapCloseButtonWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
+       }
+    [self handleClose];
+}
+
+-(void) trackBannerAdClick {
     [ATLogger logMessage:[NSString stringWithFormat:@"\nClick with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:self.banner event:ATGeneralAdAgentEventTypeClick extra:nil error:nil]] type:ATLogTypeTemporary];
     
-    NSDictionary *loadExtra = [self.customInfo[kAdapterCustomInfoExtraKey] isKindOfClass:[NSDictionary class]] ? self.customInfo[kAdapterCustomInfoExtraKey] : nil;
-    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:self.banner.unitGroup requestID:self.banner.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.banner.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.banner.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.banner.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+    NSDictionary *loadExtra = [self.localInfo isKindOfClass:[NSDictionary class]] ? self.localInfo : nil;
+    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.banner requestID:self.banner.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.banner.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.banner.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.banner.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+    if (self.banner.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
     [[ATTracker sharedTracker] trackClickWithAd:self.ad extra:trackingExtra];
+    
+    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
+        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
+    }
 
 }
 

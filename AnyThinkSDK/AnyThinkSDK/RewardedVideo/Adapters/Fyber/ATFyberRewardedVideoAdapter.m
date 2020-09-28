@@ -23,9 +23,9 @@
 @end
 
 @implementation ATFyberRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[@"spot_id"]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[@"spot_id"]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id)customObject info:(NSDictionary*)info {
     return customObject != nil;
@@ -38,7 +38,7 @@
     [customEvent.fullscreenUnitController showAdAnimated:YES completion:nil];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -46,21 +46,21 @@
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameFyber]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameFyber];
                 [[ATAPI sharedInstance] setVersion:((id<ATIASDKCore>)[NSClassFromString(@"IASDKCore") sharedInstance]).version forNetwork:kNetworkNameFyber];
-                [[NSClassFromString(@"IASDKCore") sharedInstance] initWithAppID:info[@"app_id"]];
+                [[NSClassFromString(@"IASDKCore") sharedInstance] initWithAppID:serverInfo[@"app_id"]];
             }
         });
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"IAAdRequest") != nil && NSClassFromString(@"IAVideoContentController") != nil && NSClassFromString(@"IAFullscreenUnitController") != nil && NSClassFromString(@"IAAdSpot") != nil) {
-        _customEvent = [[ATFyberRewardedVideoCustomEvent alloc] initWithUnitID:info[@"spot_id"] customInfo:info];
+        _customEvent = [[ATFyberRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         
         id<ATIAAdRequest> request = [NSClassFromString(@"IAAdRequest") build:^(id<IAAdRequestBuilder>  _Nonnull builder) {
             builder.useSecureConnections = NO;
-            builder.spotID = info[@"spot_id"];
+            builder.spotID = serverInfo[@"spot_id"];
         }];
         
         _videoContentController = [NSClassFromString(@"IAVideoContentController") build:^(id<IAVideoContentControllerBuilder>  _Nonnull builder) {
@@ -79,14 +79,14 @@
         
         [_adSpot fetchAdWithCompletion:^(id<ATIAAdSpot>  _Nullable adSpot, id  _Nullable adModel, NSError * _Nullable error) {
             if (error) {
-                [self->_customEvent handleLoadingFailure:error];
+                [self->_customEvent trackRewardedVideoAdLoadFailed:error];
             } else {
                 self->_customEvent.fullscreenUnitController = self->_fullscreenUnitController;
-                [self->_customEvent handleAssets:@{kRewardedVideoAssetsUnitIDKey:[info[@"spot_id"] length] > 0 ? info[@"spot_id"] : @"", kRewardedVideoAssetsCustomEventKey:self->_customEvent, kAdAssetsCustomObjectKey:self->_fullscreenUnitController}];
+                [self->_customEvent trackRewardedVideoAdLoaded:self->_fullscreenUnitController adExtra:nil];
             }
         }];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Fyber"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Fyber"]}]);
     }
 }
 @end

@@ -59,7 +59,7 @@
     [_numberOfFinishedRequestsAccessor writeWithBlock:^{ _numberOfFinishedRequests_impl = numberOfFinishedRequests; }];
 }
 
--(void) handleAssets:(NSDictionary*)assets {
+-(void) trackNativeAdLoaded:(NSDictionary*)assets {
     [self.assets addObject:assets];
     self.numberOfFinishedRequests++;
     [ATLogger logMessage:[NSString stringWithFormat:@"Successfully loaded, event:%@, finishedNumber: %ld, successful loads:%ld, total: %ld", NSStringFromClass([self class]), [self.assets count], self.numberOfFinishedRequests, self.requestNumber] type:ATLogTypeInternal];
@@ -69,7 +69,7 @@
     }
 }
 
--(void) handleLoadingFailure:(NSError*)error {
+-(void) trackNativeAdLoadFailed:(NSError*)error {
     self.numberOfFinishedRequests++;
     [ATLogger logMessage:[NSString stringWithFormat:@"Loading failed, event:%@, finishedNumber: %ld, successful loads:%ld, total: %ld", NSStringFromClass([self class]), [self.assets count], self.numberOfFinishedRequests, self.requestNumber] type:ATLogTypeInternal];
     if (self.numberOfFinishedRequests == self.requestNumber) {
@@ -86,7 +86,7 @@
     
 }
 
--(void) trackShow:(BOOL)refresh {
+-(void) trackNativeAdShow:(BOOL)refresh {
     ATNativeADCache *offer = (ATNativeADCache*)self.adView.nativeAd;
     [[ATLoadingScheduler sharedScheduler] cancelScheduleLoadingWithPlacementModel:offer.placementModel unitGroup:offer.unitGroup requestID:offer.requestID];
     offer.sdkTime = [Utilities normalizedTimeStamp];
@@ -94,35 +94,47 @@
     generalAdAgentEventExtraInfo[kGeneralAdAgentEventExtraInfoAutoRequestFlagKey] = [self.requestExtra[kAdLoadingExtraAutoloadFlagKey] boolValue] ? @"1" : @"0";
     [ATLogger logMessage:[NSString stringWithFormat:@"\nImpression with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:offer event:ATGeneralAdAgentEventTypeImpression extra:self.requestExtra error:nil]] type:ATLogTypeTemporary];
     NSDictionary *loadExtra = [self.requestExtra isKindOfClass:[NSDictionary class]] ? self.requestExtra : nil;
-    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:offer.unitGroup requestID:offer.requestID], kATTrackerExtraHeaderBiddingInfoKey, offer.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(offer.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(offer.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey,offer.sdkTime,kATTrackerExtraAdShowSDKTimeKey,nil];
+    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:offer requestID:offer.requestID], kATTrackerExtraHeaderBiddingInfoKey, offer.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(offer.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(offer.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey,offer.sdkTime,kATTrackerExtraAdShowSDKTimeKey,nil];
+    if (offer.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
     [[ATTracker sharedTracker] trackWithPlacementID:offer.placementModel.placementID requestID:offer.requestID trackType:ATNativeADTrackTypeADShow extra:trackingExtra];
 }
 
--(void) trackClick {
+-(void) trackNativeAdClick {
     ATNativeADCache *offer = (ATNativeADCache*)self.adView.nativeAd;
     [ATLogger logMessage:[NSString stringWithFormat:@"\nClick with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:offer event:ATGeneralAdAgentEventTypeClick extra:nil error:nil]] type:ATLogTypeTemporary];
     NSMutableDictionary *generalAdAgentEventExtraInfo = [NSMutableDictionary dictionaryWithDictionary:[ATAgentEvent generalAdAgentInfoWithPlacementModel:offer.placementModel unitGroupModel:offer.unitGroup requestID:offer.requestID]];
     generalAdAgentEventExtraInfo[kGeneralAdAgentEventExtraInfoAutoRequestFlagKey] = [self.requestExtra[kAdLoadingExtraAutoloadFlagKey] boolValue] ? @"1" : @"0";
     NSDictionary *loadExtra = [self.requestExtra isKindOfClass:[NSDictionary class]] ? self.requestExtra : nil;
-    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:offer.unitGroup requestID:offer.requestID], kATTrackerExtraHeaderBiddingInfoKey, offer.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(offer.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(offer.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:offer requestID:offer.requestID], kATTrackerExtraHeaderBiddingInfoKey, offer.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(offer.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(offer.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+    if (offer.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
     [[ATTracker sharedTracker] trackClickWithAd:(ATNativeADCache*)self.adView.nativeAd extra:trackingExtra];
 
+    [self.adView notifyNativeAdClick];
 }
 
--(void) trackVideoStart {
+-(void) trackNativeAdVideoStart {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
     NSDictionary *loadExtra = [self.requestExtra isKindOfClass:[NSDictionary class]] ? self.requestExtra : nil;
-    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:cache.unitGroup requestID:cache.requestID], kATTrackerExtraHeaderBiddingInfoKey, cache.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(cache.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(cache.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:cache requestID:cache.requestID], kATTrackerExtraHeaderBiddingInfoKey, cache.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(cache.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(cache.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+    if (cache.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
     [[ATTracker sharedTracker] trackWithPlacementID:cache.placementModel.placementID requestID:cache.requestID trackType:ATNativeAdTrackTypeVideoStart extra:trackingExtra];
+    
+     [self.adView notifyVideoStart];
 }
 
--(void) trackVideoEnd {
+-(void) trackNativeAdVideoEnd {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
     NSDictionary *loadExtra = [self.requestExtra isKindOfClass:[NSDictionary class]] ? self.requestExtra : nil;
-    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:cache.unitGroup requestID:cache.requestID], kATTrackerExtraHeaderBiddingInfoKey, cache.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(cache.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(cache.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:cache requestID:cache.requestID], kATTrackerExtraHeaderBiddingInfoKey, cache.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(cache.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(cache.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
+    if (cache.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
     [[ATTracker sharedTracker] trackWithPlacementID:cache.placementModel.placementID requestID:cache.requestID trackType:ATNativeAdTrackTypeVideoEnd extra:trackingExtra];
+    
+     [self.adView notifyVideoEnd];
 }
 
+-(void) trackNativeAdClosed {
+    [self.adView notifyCloseButtonTapped];
+}
 -(ATNativeADSourceType) sourceType {
     return self.isVideoContents ? ATNativeADSourceTypeVideo : ATNativeADSourceTypeImage;
 }
@@ -133,7 +145,7 @@
 
 -(NSDictionary*)delegateExtra {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATNativeDelegateExtraNetworkIDKey:@(cache.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:cache.unitGroup.unitID != nil ? cache.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(cache.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(cache.priorityIndex),kATNativeDelegateExtraPrice:@(cache.unitGroup.price), kATADDelegateExtraECPMLevelKey:@(cache.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(cache.placementModel.groupID)}];
+    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATNativeDelegateExtraNetworkIDKey:@(cache.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:cache.unitGroup.unitID != nil ? cache.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(cache.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(cache.priorityIndex),kATNativeDelegateExtraPrice:@(cache.price), kATADDelegateExtraECPMLevelKey:@(cache.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(cache.placementModel.groupID)}];
     
     NSString *channel = [ATAPI sharedInstance].channel;
     if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
@@ -143,12 +155,15 @@
     NSString *extraID = [NSString stringWithFormat:@"%@%@%@",cache.requestID,cache.unitGroup.unitID,cache.sdkTime];
     extra[kATADDelegateExtraIDKey] = [extraID md5];
     extra[kATADDelegateExtraAdunitIDKey] = cache.placementModel.placementID;
-    extra[kATADDelegateExtraPublisherRevenueKey] = @(cache.unitGroup.price / 1000.0f);
+    extra[kATADDelegateExtraPublisherRevenueKey] = @(cache.price / 1000.0f);
      extra[kATADDelegateExtraCurrencyKey] = cache.placementModel.callback[@"currency"];
     extra[kATADDelegateExtraCountryKey] = cache.placementModel.callback[@"cc"];
     extra[kATADDelegateExtraFormatKey] = @"Native";
     extra[kATADDelegateExtraPrecisionKey] = cache.unitGroup.precision;
     extra[kATADDelegateExtraNetworkTypeKey] = cache.unitGroup.networkFirmID == 35 ? @"Cross_promotion":@"Network";
+    
+    //add adsource unit_id value
+    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.networkUnitId != nil ? self.networkUnitId:@"";
     return extra;
 }
 @end

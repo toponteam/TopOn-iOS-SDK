@@ -23,14 +23,14 @@ static NSString *const kZoneIDKey = @"zone_id";
 @property(nonatomic, readonly) ATMaioRewardedVideoCustomEvent *customEvent;
 @end
 @implementation ATMaioRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kZoneIDKey]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kZoneIDKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
-+(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup {
-    ATMaioRewardedVideoCustomEvent *customEvent = [[ATMaioRewardedVideoCustomEvent alloc] initWithUnitID:unitGroup.content[kZoneIDKey] customInfo:[ATAdCustomEvent customInfoWithUnitGroupModel:unitGroup extra:nil]];
++(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+    ATMaioRewardedVideoCustomEvent *customEvent = [[ATMaioRewardedVideoCustomEvent alloc] initWithInfo:[ATAdCustomEvent customInfoWithUnitGroupModel:unitGroup extra:nil] localInfo:nil];
     [NSClassFromString(kMaioClassName) addDelegateObject:customEvent];
-    ATRewardedVideo *ad = [[ATRewardedVideo alloc] initWithPriority:priority placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:[customEvent.unitID length] > 0 ? customEvent.unitID : @"", kRewardedVideoAssetsCustomEventKey:customEvent, kAdAssetsCustomObjectKey:customEvent.unitID != nil ? customEvent.unitID : @""} unitGroup:unitGroup];
+    ATRewardedVideo *ad = [[ATRewardedVideo alloc] initWithPriority:priority placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:[customEvent.unitID length] > 0 ? customEvent.unitID : @"", kRewardedVideoAssetsCustomEventKey:customEvent, kAdAssetsCustomObjectKey:customEvent.unitID != nil ? customEvent.unitID : @""} unitGroup:unitGroup finalWaterfall:finalWaterfall];
     return ad;
 }
 
@@ -47,7 +47,7 @@ static NSString *const kZoneIDKey = @"zone_id";
     [NSClassFromString(kMaioClassName) showAtZoneId:rewardedVideo.unitGroup.content[kZoneIDKey] vc:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -61,18 +61,18 @@ static NSString *const kZoneIDKey = @"zone_id";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kMaioClassName) != nil) {
-        _customEvent = [[ATMaioRewardedVideoCustomEvent alloc] initWithUnitID:info[kZoneIDKey] customInfo:info];
+        _customEvent = [[ATMaioRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        if ([NSClassFromString(kMaioClassName) canShowAtZoneId:info[kZoneIDKey]]) {
+        if ([NSClassFromString(kMaioClassName) canShowAtZoneId:serverInfo[kZoneIDKey]]) {
             [NSClassFromString(kMaioClassName) addDelegateObject:_customEvent];
-            [_customEvent handleAssets:@{kRewardedVideoAssetsUnitIDKey:[_customEvent.unitID length] > 0 ? _customEvent.unitID : @"", kRewardedVideoAssetsCustomEventKey:_customEvent, kAdAssetsCustomObjectKey:_customEvent.unitID != nil ? _customEvent.unitID : @""}];
+            [_customEvent trackRewardedVideoAdLoaded:_customEvent.unitID != nil ? _customEvent.unitID : @"" adExtra:nil];
         } else {
-            [NSClassFromString(kMaioClassName) startWithMediaId:info[kMediaIDKey] delegate:_customEvent];
+            [NSClassFromString(kMaioClassName) startWithMediaId:serverInfo[kMediaIDKey] delegate:_customEvent];
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Maio"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Maio"]}]);
     }
 }
 @end

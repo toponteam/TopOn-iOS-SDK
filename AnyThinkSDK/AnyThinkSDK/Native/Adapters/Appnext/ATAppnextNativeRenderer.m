@@ -28,8 +28,7 @@
 }
 
 -(void) adViewTapped {
-    [self.ADView.customEvent trackClick];
-    [self.ADView notifyNativeAdClick];
+    [self.ADView.customEvent trackNativeAdClick];
     id<ATAppnextNativeAdsSDKApi> api = ((ATNativeADCache*)(((id<ATNativeADView>)self.ADView).nativeAd)).assets[kAppnextNativeAssetsAPIObjectKey];
     id<ATAppnextAdData> nativeAd = ((ATNativeADCache*)(((id<ATNativeADView>)self.ADView).nativeAd)).assets[kAdAssetsCustomObjectKey];
     [api adClicked:nativeAd withAdOpenedDelegate:(ATAppnextNativeCustomEvent*)self.ADView.customEvent];

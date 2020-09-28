@@ -136,23 +136,23 @@ NSString *const kATOnewayInterstitialNotificationUserInfoSessionKey = @"session"
     }
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameOneway]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameOneway];
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"OneWaySDK") getVersion] forNetwork:kNetworkNameOneway];
-            [NSClassFromString(@"OneWaySDK") configure:info[@"publisher_id"]];
+            [NSClassFromString(@"OneWaySDK") configure:serverInfo[@"publisher_id"]];
         }
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"OWInterstitialAd") != nil && NSClassFromString(@"OWInterstitialImageAd") != nil) {
-        _customEvent = [[ATOnewayInterstitialCustomEvent alloc] initWithUnitID:info[@"publisher_id"] customInfo:info];
+        _customEvent = [[ATOnewayInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        if ([info[@"is_video"] boolValue]) {
+        if ([serverInfo[@"is_video"] boolValue]) {
             static dispatch_once_t onceToken;
             dispatch_once(&onceToken, ^{ [NSClassFromString(@"OWInterstitialAd") initWithDelegate:[ATOWInterstitialDelegate sharedDelegate]]; });
             if ([NSClassFromString(@"OWInterstitialAd") isReady]) { [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialReadyNotification object:nil]; }
@@ -162,7 +162,7 @@ NSString *const kATOnewayInterstitialNotificationUserInfoSessionKey = @"session"
             if ([NSClassFromString(@"OWInterstitialImageAd") isReady]) { [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayInterstitialImageReadyNotification object:nil]; }
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Oneway"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Oneway"]}]);
     }
 }
 @end

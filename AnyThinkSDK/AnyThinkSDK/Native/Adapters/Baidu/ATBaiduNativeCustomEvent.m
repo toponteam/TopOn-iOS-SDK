@@ -12,6 +12,7 @@
 #import "ATAPI+Internal.h"
 #import "ATImageLoader.h"
 #import "ATNativeADCache.h"
+
 @implementation ATBaiduNativeCustomEvent
 - (void)nativeAdObjectsSuccessLoad:(NSArray<id<ATBaiduMobAdNativeAdObject>> *)nativeAds {
     [ATLogger logMessage:@"BaiduNative::nativeAdObjectsSuccessLoad::" type:ATLogTypeExternal];
@@ -53,23 +54,27 @@
 - (void)nativeAdsFailLoad:(NSInteger) reason {
     NSString *errorDesc = [NSString stringWithFormat:@"BaiduNative::nativeAdsFailLoad:%@(%ld)", @{@0:@"BaiduMobFailReason_NOAD", @1:@"BaiduMobFailReason_EXCEPTION", @2:@"BaiduMobFailReason_FRAME"}[@(reason)], reason];
     [ATLogger logMessage:errorDesc type:ATLogTypeExternal];
-    [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.BaiduNativeLoad" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load native ad", NSLocalizedFailureReasonErrorKey:errorDesc}]];
+    [self trackNativeAdLoadFailed:[NSError errorWithDomain:@"com.anythink.BaiduNativeLoad" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load native ad", NSLocalizedFailureReasonErrorKey:errorDesc}]];
 }
 
 - (void)nativeAdClicked:(UIView *)nativeAdView {
     [ATLogger logMessage:@"BaiduNative::nativeAdClicked:" type:ATLogTypeExternal];
-    [self.adView notifyNativeAdClick];
-    [self trackClick];
+    [self trackNativeAdClick];
 }
 
 - (void)didDismissLandingPage:(UIView *)nativeAdView {
     [ATLogger logMessage:@"BaiduNative::didDismissLandingPage:" type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"placement_id"];
-    return extra;
+    return cache.unitGroup.content[@"placement_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"placement_id"];
+//    return extra;
+//}
 @end

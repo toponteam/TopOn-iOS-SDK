@@ -101,8 +101,7 @@
         id<ATGDTNativeAd> nativeAd = cache.assets[kAdAssetsCustomObjectKey];
         id<ATGDTNativeAdData> nativeAdData = cache.assets[kGDTNativeAssetsNativeAdDataKey];
         [nativeAd clickAd:nativeAdData];
-        [self.ADView.customEvent trackClick];
-        [self.ADView notifyNativeAdClick];
+        [self.ADView.customEvent trackNativeAdClick];
     }
 }
 

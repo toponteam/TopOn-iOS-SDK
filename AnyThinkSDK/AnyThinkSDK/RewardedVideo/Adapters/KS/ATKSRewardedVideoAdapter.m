@@ -23,9 +23,9 @@ static NSString *const kKSVideoClassName = @"KSRewardedVideoAd";
 @end
 @implementation ATKSRewardedVideoAdapter
 
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[@"unit_id"]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[@"unit_id"]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id)customObject info:(NSDictionary*)info {
     return ((id<ATKSRewardedVideoAd>)customObject).isValid;
@@ -38,7 +38,7 @@ static NSString *const kKSVideoClassName = @"KSRewardedVideoAd";
     [((id<ATKSRewardedVideoAd>)rewardedVideo.customObject)  showAdFromRootViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if(self != nil){
         static dispatch_once_t onceToken;
@@ -46,23 +46,23 @@ static NSString *const kKSVideoClassName = @"KSRewardedVideoAd";
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameKS]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameKS];
                 [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"KSAdSDKManager") SDKVersion] forNetwork:kNetworkNameKS];
-                [NSClassFromString(@"KSAdSDKManager") setAppId:info[@"app_id"]];
+                [NSClassFromString(@"KSAdSDKManager") setAppId:serverInfo[@"app_id"]];
             }
         });
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if(NSClassFromString(kKSVideoClassName)!=nil){
-        _customEvent = [[ATKSRewardedVideoCustomEvent alloc] initWithUnitID:info[@"position_id"] customInfo:info];
+        _customEvent = [[ATKSRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
-        _rewardedVideo = [[NSClassFromString(kKSVideoClassName) alloc]initWithPosId:info[@"position_id"] rewardedVideoModel:[NSClassFromString(@"KSRewardedVideoModel") new]];
+        _rewardedVideo = [[NSClassFromString(kKSVideoClassName) alloc]initWithPosId:serverInfo[@"position_id"] rewardedVideoModel:[NSClassFromString(@"KSRewardedVideoModel") new]];
         _rewardedVideo.delegate = _customEvent;
         [_rewardedVideo loadAdData];
     }else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"KS"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"KS"]}]);
     }
 }
 @end

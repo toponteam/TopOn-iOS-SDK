@@ -84,7 +84,7 @@ static NSString *const kPlacementNameKey = @"placement_name";
     [NSClassFromString(kIronSourceClassName) showISDemandOnlyInterstitial:viewController instanceId:interstitial.customObject];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -96,7 +96,8 @@ static NSString *const kPlacementNameKey = @"placement_name";
                     [NSClassFromString(kIronSourceClassName) setConsent:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameIronSource] boolValue]];
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set) {
                         /*
                          consent: 1 Personalized, 0 Nonpersonalized
@@ -110,15 +111,15 @@ static NSString *const kPlacementNameKey = @"placement_name";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kIronSourceClassName) != nil) {
-        _customEvent = [[ATIronSourceInterstitialCustomEvent alloc] initWithUnitID:info[@"instance_id"] customInfo:info];
-        _customEvent.requestNumber = [info[@"request_num"] integerValue];
+        _customEvent = [[ATIronSourceInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
+        _customEvent.requestNumber = [serverInfo[@"request_num"] integerValue];
         _customEvent.requestCompletionBlock = completion;
-        [NSClassFromString(kIronSourceClassName) setISDemandOnlyInterstitialDelegate:[ATIronSourceInterstitialDelegate sharedDelegateWithAppKey:info[@"app_key"]]];
-        [NSClassFromString(kIronSourceClassName) loadISDemandOnlyInterstitial:info[@"instance_id"]];
+        [NSClassFromString(kIronSourceClassName) setISDemandOnlyInterstitialDelegate:[ATIronSourceInterstitialDelegate sharedDelegateWithAppKey:serverInfo[@"app_key"]]];
+        [NSClassFromString(kIronSourceClassName) loadISDemandOnlyInterstitial:serverInfo[@"instance_id"]];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kIronSourceClassName]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kIronSourceClassName]}]);
     }
     
 }

@@ -84,9 +84,9 @@ static NSString *const kIronSourceClassName = @"IronSource";
 static NSString *const kUnitIDKey = @"unit_id";
 static NSString *const kPlacementNameKey = @"placement_name";
 @implementation ATIronSourceRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kPlacementNameKey]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kPlacementNameKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id)customObject info:(NSDictionary*)info {
     return [NSClassFromString(kIronSourceClassName) hasISDemandOnlyRewardedVideo:customObject];
@@ -98,7 +98,7 @@ static NSString *const kPlacementNameKey = @"placement_name";
     [NSClassFromString(kIronSourceClassName) showISDemandOnlyRewardedVideo:viewController instanceId:customEvent.unitID];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -110,7 +110,8 @@ static NSString *const kPlacementNameKey = @"placement_name";
                     [NSClassFromString(kIronSourceClassName) setConsent:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameIronSource] boolValue]];
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set) { [NSClassFromString(kIronSourceClassName) setConsent:!limit]; }
                 }
             }
@@ -119,15 +120,15 @@ static NSString *const kPlacementNameKey = @"placement_name";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kIronSourceClassName) != nil) {
-        _customEvent = [[ATIronSourceRewardedVideoCustomEvent alloc] initWithUnitID:info[@"instance_id"] customInfo:info];
-        _customEvent.requestNumber = [info[@"request_num"] integerValue];
+        _customEvent = [[ATIronSourceRewardedVideoCustomEvent alloc] initWithUnitID:serverInfo[@"instance_id"] serverInfo:serverInfo localInfo:localInfo];
+        _customEvent.requestNumber = [serverInfo[@"request_num"] integerValue];
         _customEvent.requestCompletionBlock = completion;
-        [NSClassFromString(kIronSourceClassName) setISDemandOnlyRewardedVideoDelegate:[ATIronSrouceRewardedVideoDelegate sharedDelegateWithAppKey:info[@"app_key"]]];
-        [NSClassFromString(kIronSourceClassName) loadISDemandOnlyRewardedVideo:info[@"instance_id"]];
+        [NSClassFromString(kIronSourceClassName) setISDemandOnlyRewardedVideoDelegate:[ATIronSrouceRewardedVideoDelegate sharedDelegateWithAppKey:serverInfo[@"app_key"]]];
+        [NSClassFromString(kIronSourceClassName) loadISDemandOnlyRewardedVideo:serverInfo[@"instance_id"]];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kIronSourceClassName]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kIronSourceClassName]}]);
     }
     
 }

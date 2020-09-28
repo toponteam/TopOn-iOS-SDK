@@ -26,7 +26,7 @@
 }
 
 -(void) loadRewardedVideoForPlacementID:(NSString*)placementID {
-    [[ATAdManager sharedManager] loadADWithPlacementID:placementID extra:@{kATAdLoadingExtraUserIDKey:[[[UIDevice currentDevice] identifierForVendor] UUIDString] != nil ? [[[UIDevice currentDevice] identifierForVendor] UUIDString] : @""} delegate:self];
+    [[ATAdManager sharedManager] loadADWithPlacementID:placementID extra:@{kATAdLoadingExtraUserIDKey:[[[UIDevice currentDevice] identifierForVendor] UUIDString] != nil ? [[[UIDevice currentDevice] identifierForVendor] UUIDString] : @"", kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} delegate:self];
 }
 
 -(void) showRewardedVideoForPlacementID:(NSString*)placementID inViewController:(UIViewController*)viewController {

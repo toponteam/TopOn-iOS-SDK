@@ -1,4 +1,0 @@
-module OMSDK_Oguryco {
-    header "Headers/OMIDImports.h"
-    export *
-}

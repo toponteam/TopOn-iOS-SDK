@@ -21,6 +21,10 @@
 
 -(NSString*)stringByBase64Encoding_anythink;
 -(NSString*)stringByBase64Decoding_anythink;
+
+-(NSString*)stringUrlEncode;
+-(NSString*)stringUrlDecode;
+
 @end
 
 @interface NSData(AES256)

@@ -15,6 +15,7 @@
 #import "ATRewardedVideo.h"
 #import "ATRewardedVideoAdapter.h"
 #import "ATAdStorageUtility.h"
+#import "ATWaterfallManager.h"
 
 NSString *const kRewardedVideoAssetsUnitIDKey = @"unit_id";
 NSString *const kRewardedVideoAssetsCustomEventKey = @"custom_event";
@@ -58,20 +59,20 @@ static NSString *const kRequestIDKey = @"request_id";
     return [[_videoStorageAccessor readWithBlock:^id{ return @([ATAdStorageUtility highestPriorityOfShownAdInStorage:weakSelf.videoStorage placementID:placementID requestID:requestID]);}] integerValue];
 }
 
--(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID {
-    ATRewardedVideo *video = [[ATRewardedVideo alloc] initWithPriority:[placementModel.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup];
+-(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID {
+    ATRewardedVideo *video = [[ATRewardedVideo alloc] initWithPriority:[finalWaterfall.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup finalWaterfall:finalWaterfall];
     __weak typeof(self) weakSelf = self;
     [_videoStorageAccessor writeWithBlock:^{
-        [ATAdStorageUtility saveAd:video toStorage:weakSelf.videoStorage requestID:video.requestID];
+        [ATAdStorageUtility saveAd:video finalWaterfall:finalWaterfall toStorage:weakSelf.videoStorage requestID:video.requestID];
         [ATAdStorageUtility saveAd:video toStatusStorage:weakSelf.statusStorage];
     }];
 }
 
--(BOOL) inspectAdSourceStatusWithPlacementModel:(ATPlacementModel*)placementModel activeUnitGroups:(NSArray<ATUnitGroupModel*>*)activeUnitGroups unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo {
+-(BOOL) inspectAdSourceStatusWithPlacementModel:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo {
     __weak typeof(self) weakSelf = self;
     return [[_videoStorageAccessor readWithBlock:^id{
         BOOL status = [ATAdStorageUtility adSourceStatusInStorage:weakSelf.statusStorage placementModel:placementModel unitGroup:unitGroup];
-        if (status) { [ATAdStorageUtility renewOffersWithPlacementModel:placementModel activeUnitGroups:activeUnitGroups requestID:requestID inStatusStorage:weakSelf.statusStorage offerStorate:weakSelf.videoStorage extraInfo:extraInfo]; }
+        if (status) { [ATAdStorageUtility renewOffersWithPlacementModel:placementModel finalWaterfall:finalWaterfall requestID:requestID inStatusStorage:weakSelf.statusStorage offerStorate:weakSelf.videoStorage extraInfo:extraInfo]; }
         return @(status);
     }] boolValue];
 }

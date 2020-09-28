@@ -7,10 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "ATAd.h"
+#import <AnyThinkSDK/AnyThinkSDK.h>
+//#import "ATAd.h"
 @class ATRewardedVideoCustomEvent;
 @interface ATRewardedVideo : NSObject<ATAd>
--(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup;
+-(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall;
 @property(nonatomic) NSInteger showTimes;
 /**
  Priority is calculate by the index of the unit group in the placement's unit group list; zero is the highest
@@ -33,4 +34,7 @@
 @property(nonatomic, readonly) NSString *appID;
 @property(nonatomic) BOOL defaultPlayIfRequired;
 @property(nonatomic) NSString *scene;
+@property(nonatomic, readonly) double price;
+@property(nonatomic, readonly, weak) ATWaterfall *finalWaterfall;
+@property(nonatomic, readonly) NSInteger autoReqType;
 @end

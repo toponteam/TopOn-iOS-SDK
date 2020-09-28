@@ -22,7 +22,7 @@
 @end
 
 @implementation ATBaiduSplashAdapter
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameBaidu]) {
@@ -33,17 +33,17 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+    NSDictionary *extra = localInfo;
     if (NSClassFromString(@"BaiduMobAdSplash") != nil) {
-        _customEvent = [[ATBaiduSplashCustomEvent alloc] initWithPublisherID:info[@"app_id"] unitID:info[@"ad_place_id"] customInfo:info];
+        _customEvent = [[ATBaiduSplashCustomEvent alloc] initWithPublisherID:serverInfo[@"app_id"] unitID:serverInfo[kATSplashExtraPlacementIDKey] != nil ? serverInfo[kATSplashExtraPlacementIDKey] : extra[kATSplashExtraPlacementIDKey] serverInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         _customEvent.delegate = self.delegateToBePassed;
         
         dispatch_async(dispatch_get_main_queue(), ^{
             self->_splash = [[NSClassFromString(@"BaiduMobAdSplash") alloc] init];
             self->_splash.delegate = self->_customEvent;
-            self->_splash.AdUnitTag = info[@"ad_place_id"];
-            NSDictionary *extra = info[kAdapterCustomInfoExtraKey];
+            self->_splash.AdUnitTag = serverInfo[@"ad_place_id"];
             UIView *containerView = extra[kATSplashExtraContainerViewKey];
             containerView.frame = CGRectMake(CGRectGetMidX([UIScreen mainScreen].bounds) - CGRectGetMidX(containerView.bounds), CGRectGetHeight([UIScreen mainScreen].bounds) - CGRectGetHeight(containerView.bounds), CGRectGetWidth(containerView.bounds), CGRectGetHeight(containerView.bounds));
             UIWindow *window = extra[kATSplashExtraWindowKey];
@@ -57,7 +57,7 @@
             [self->_splash loadAndDisplayUsingContainerView:splashView];
         });
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load splash.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Baidu"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadSplashADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Baidu"]}]);
     }
 }
 @end

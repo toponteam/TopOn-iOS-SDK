@@ -23,12 +23,8 @@
 
 #ifdef UNDER_DEVELOPMENT
 NSString *const kAPIDomain = @"test.aa.toponad.com";//@"18.140.1.181:8080";//@"test.go-api.toponad.com";//@"test.aa.toponad.com";//
-NSString *const kTrackDomain = @"test.tk.toponad.com";
-NSString *const kAgentDomain = @"test.tk.toponad.com";
 #else
-NSString *const kAPIDomain = @"aa.toponad.com";//@"52.2.132.38:3020";//
-NSString *const kTrackDomain = @"tk.toponad.com";
-NSString *const kAgentDomain = @"tk.toponad.com";
+NSString *const kAPIDomain = @"api.anythinktech.com";//@"52.2.132.38:3020";//
 #endif
 
 @implementation ATNetworkingManager
@@ -60,7 +56,11 @@ NSString *const kAgentDomain = @"tk.toponad.com";
 }
 
 -(void) sendHTTPRequestToAddress:(NSString*)address HTTPMethod:(ATNetworkingHTTPMethod)method parameters:(id)parameters completion:(void(^)(NSData *data, NSURLResponse * _Nullable response, NSError * _Nullable error))completion {
-    [self postParameters:parameters toURL:[NSURL URLWithString:address] gzipBody:YES completion:completion];
+    [self sendHTTPRequestToAddress:address HTTPMethod:method parameters:parameters gzip:YES completion:completion];
+}
+
+-(void) sendHTTPRequestToAddress:(NSString*)address HTTPMethod:(ATNetworkingHTTPMethod)method parameters:(id)parameters gzip:(BOOL)gzip completion:(void(^)(NSData *data, NSURLResponse * _Nullable response, NSError * _Nullable error))completion {
+    [self postParameters:parameters toURL:[NSURL URLWithString:address] gzipBody:gzip completion:completion];
 }
 
 -(void) postParameters:(id)parameters toURL:(NSURL*)URL gzipBody:(BOOL)gzip completion:(void(^)(NSData *data, NSURLResponse * _Nullable response, NSError * _Nullable error))completion {
@@ -97,14 +97,10 @@ NSString *const kAgentDomain = @"tk.toponad.com";
 
 -(NSString*)schemeWithDomain:(NSString*)domain {
 #ifdef UNDER_DEVELOPMENT
-    return @{kAPIDomain:@"http",
-             kTrackDomain:@"http",
-             kAgentDomain:@"http"
+    return @{kAPIDomain:@"http"
              }[domain];
 #else
-    return @{kAPIDomain:@"https",
-             kTrackDomain:@"https",
-             kAgentDomain:@"https"
+    return @{kAPIDomain:@"https"
              }[domain];
 #endif
     

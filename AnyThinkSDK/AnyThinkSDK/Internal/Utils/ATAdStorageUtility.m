@@ -13,7 +13,6 @@
 #import "ATAPI+Internal.h"
 #import "ATAgentEvent.h"
 #import "ATLogger.h"
-#import "ATAdLoader+HeaderBidding.h"
 #import "ATTracker.h"
 #import "ATAppSettingManager.h"
 #import "ATAdAdapter.h"
@@ -41,6 +40,7 @@ NSString *const kAdStorageExtraUnitGroupInfoNetworkFirmIDKey = @"nw_firm_id";
 NSString *const kAdStorageExtraUnitGroupInfoUnitIDKey = @"unit_id";
 NSString *const kAdStorageExtraUnitGroupInfoNetworkSDKVersionKey = @"nw_ver";
 NSString *const kAdStorageExtraUnitGroupInfoReadyFlagKey = @"result";
+NSString *const kAdStorageExtraFinalWaterfallKey = @"final_waterfall";
 
 @protocol ATMyOfferDefault<NSObject>
 +(instancetype) sharedManager;
@@ -52,6 +52,7 @@ The structure of offer storage is as follows:
 {
     placement_id:{
         request_id:request_id,
+        final_waterfall:finalWaterfall
         offers:{
             unit_group_id_1:[offer_1, offer_2],
             unit_group_id_2:[offer_1, offer_2],
@@ -63,14 +64,15 @@ The structure of offer storage is as follows:
 */
 static NSString *const kOffersKey = @"offers";
 static NSString *const kRequestIDKey = @"request_id";
+static NSString *const kFinalWaterfallKey = @"final_waterfall";
 @implementation ATAdStorageUtility
 +(NSInteger) highestPriorityOfShownAdInStorage:(NSMutableDictionary*)storage placementID:(NSString*)placementID requestID:(NSString*)requestID {
     __block NSInteger priority = NSNotFound;
     NSString *requestIDInStorage = storage[placementID][kRequestIDKey];
     if ([requestIDInStorage isEqualToString:requestID]) {
         NSDictionary *offers = storage[placementID][kOffersKey];
-        ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
-        [placementModel.unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull unitGroup, NSUInteger idx, BOOL * _Nonnull stop) {
+        ATWaterfall *finalWaterfall = storage[placementID][kFinalWaterfallKey];
+        [finalWaterfall.unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull unitGroup, NSUInteger idx, BOOL * _Nonnull stop) {
             if ([[offers[unitGroup.unitGroupID] valueForKeyPath:@"@sum.showTimes"] integerValue]> 0) {
                 *stop = YES;
                 priority = idx;
@@ -116,10 +118,11 @@ static NSString *const kStatusStorageOfferKey = @"offer";
     return [entry[kStatusStorageStatusKey] boolValue] && [entry[kStatusStorageDateKey] timeIntervalSinceDate:[NSDate date]] > .0f;
 }
 
-+(void) renewOffersWithPlacementModel:(ATPlacementModel*)placementModel activeUnitGroups:(NSArray<ATUnitGroupModel*>*)activeUnitGroups requestID:(NSString*)requestID inStatusStorage:(NSMutableDictionary*)statusStorage offerStorate:(NSMutableDictionary*)offerStorage extraInfo:(NSArray<NSDictionary*>**)extraInfo {
++(void) renewOffersWithPlacementModel:(ATPlacementModel*)placementModel finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID inStatusStorage:(NSMutableDictionary*)statusStorage offerStorate:(NSMutableDictionary*)offerStorage extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo {
     NSMutableDictionary *placementEntry = statusStorage[placementModel.placementID];
     NSMutableArray<NSDictionary*> *extra = [NSMutableArray<NSDictionary*> array];
     if (placementEntry != nil) {
+        NSArray<ATUnitGroupModel*>* activeUnitGroups = finalWaterfall.unitGroups;
         [activeUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull unitGroup, NSUInteger priority, BOOL * _Nonnull stop) {
             NSArray<NSDictionary*> *adSourceEntries = placementEntry[unitGroup.unitID];
             __block BOOL extraInfoAdded = NO;
@@ -127,7 +130,7 @@ static NSString *const kStatusStorageOfferKey = @"offer";
                 if ([self validateAdSourceStatusEntry:obj]) {
                     id<ATAd> ad = obj[kStatusStorageOfferKey];
                     [ad renewAdWithPriority:priority placementModel:placementModel unitGroup:unitGroup requestID:requestID];
-                    [self saveAd:ad toStorage:offerStorage requestID:requestID];
+                    [self saveAd:ad finalWaterfall:finalWaterfall toStorage:offerStorage requestID:requestID];
                     if (!extraInfoAdded) {
                         [extra addObject:@{kAgentEventExtraInfoNetworkFirmIDKey:@(ad.unitGroup.networkFirmID), kAgentEventExtraInfoAdSourceIDKey:unitGroup.unitID, kAgentEventExtraInfoPriorityKey:@(priority), kAgentEventExtraInfoOriginalRequestIDKey:ad.originalRequestID, kAgentEventExtraInfoRequestIDKey:requestID}];
                         extraInfoAdded = YES;
@@ -187,7 +190,7 @@ static NSString *const kStatusStorageOfferKey = @"offer";
     }
 }
 
-+(NSDictionary<NSString*, NSArray<id<ATAd>>*>*) saveAd:(id<ATAd>)ad toStorage:(NSMutableDictionary*)storage requestID:(NSString*)requestID {
++(NSDictionary<NSString*, NSArray<id<ATAd>>*>*) saveAd:(id<ATAd>)ad finalWaterfall:(ATWaterfall*)finalWaterfall toStorage:(NSMutableDictionary*)storage requestID:(NSString*)requestID {
     NSDictionary<NSString*, NSArray<id<ATAd>>*>* discardedAds = nil;
     NSMutableDictionary *placementInfo = storage[ad.placementModel.placementID];
     if (placementInfo == nil) {
@@ -200,6 +203,8 @@ static NSString *const kStatusStorageOfferKey = @"offer";
             [placementInfo[kOffersKey] removeAllObjects];
         }
     }
+    if (finalWaterfall != nil) { placementInfo[kFinalWaterfallKey] = finalWaterfall; }
+    
     NSMutableArray<id<ATAd>>* adsInUnitGroup = placementInfo[kOffersKey][ad.unitGroup.unitGroupID];
     if (adsInUnitGroup == nil) {
         adsInUnitGroup = [NSMutableArray<id<ATAd>> array];
@@ -227,14 +232,13 @@ static NSString *const kStatusStorageOfferKey = @"offer";
     NSMutableArray<ATMyOfferOfferModel*>* myOfferModels = [NSMutableArray<ATMyOfferOfferModel*> array];
     NSMutableDictionary<NSString*, id<ATAd>>* myOfferAds = [NSMutableDictionary<NSString*, id<ATAd>> dictionary];
     
-    NSArray<ATUnitGroupModel*>* unitGroups = [placementModel unitGroupsForRequestID:requestID];
-    unitGroups = [unitGroups count] > 0 ? unitGroups : placementModel.unitGroups;
+    ATWaterfall *finalWaterfall = storage[placementID][kFinalWaterfallKey];
+    NSArray<ATUnitGroupModel*>* unitGroups = finalWaterfall.unitGroups;
+    if (unitGroups.count == 0 && placementModel.usesDefaultMyOffer != 0) {
+        unitGroups = placementModel.unitGroups;
+    }
     [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSMutableDictionary *unitGroupInfo = [NSMutableDictionary dictionaryWithDictionary:@{kAdStorageExtraUnitGroupInfoPriorityKey:@(idx),
-                                                                                             kAdStorageExtraUnitGroupInfoNetworkFirmIDKey:@(obj.networkFirmID),
-                                                                                             kAdStorageExtraUnitGroupInfoUnitIDKey:obj.unitID != nil ? obj.unitID : @"",
-                                                                                             kAdStorageExtraUnitGroupInfoNetworkSDKVersionKey:[[ATAPI sharedInstance] versionForNetworkFirmID:obj.networkFirmID]
-                                                                                             }];
+        NSMutableDictionary *unitGroupInfo = [NSMutableDictionary dictionaryWithDictionary:@{kAdStorageExtraUnitGroupInfoPriorityKey:@(idx), kAdStorageExtraUnitGroupInfoNetworkFirmIDKey:@(obj.networkFirmID), kAdStorageExtraUnitGroupInfoUnitIDKey:obj.unitID != nil ? obj.unitID : @"", kAdStorageExtraUnitGroupInfoNetworkSDKVersionKey:[[ATAPI sharedInstance] versionForNetworkFirmID:obj.networkFirmID] }];
         if ([self validateCapsForUnitGroup:obj placementID:placementID]) {
             if ([self validatePacingForUnitGroup:obj placementID:placementID]) {
                 if ([adsInPlacement[obj.unitGroupID] count] > 0) {
@@ -247,7 +251,7 @@ static NSString *const kStatusStorageOfferKey = @"offer";
                             } else {
                                 if (obj.showTimes < 1) {
                                     unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(1);
-                                    headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithUnitGroup:obj.unitGroup requestID:obj.requestID];
+                                    headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithAd:obj requestID:obj.requestID];
                                     networkFirmID = obj.unitGroup.networkFirmID;
                                     unitID = obj.unitGroup.unitID;
                                     networkSDKVer = [[ATAPI sharedInstance] versionForNetworkFirmID:obj.unitGroup.networkFirmID];
@@ -256,10 +260,10 @@ static NSString *const kStatusStorageOfferKey = @"offer";
                                     *stop = YES;
                                 } else {//offer's been shown
                                     if (idx == [adsInPlacement[obj.unitGroup.unitGroupID] count] - 1) {
-                                        id<ATAd> filledAd = [self fillIfReadyWithPlacementModel:placementModel unitGroupModel:obj.unitGroup requestID:requestID priority:obj.priority storage:storage statusStorage:statusStorage];
+                                        id<ATAd> filledAd = [self fillIfReadyWithPlacementModel:placementModel unitGroupModel:obj.unitGroup requestID:requestID priority:obj.priority storage:storage statusStorage:statusStorage finalWaterfall:finalWaterfall];
                                         if (filledAd != nil) {
                                             unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(1);
-                                            headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithUnitGroup:filledAd.unitGroup requestID:requestID];
+                                            headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithAd:filledAd requestID:requestID];
                                             networkFirmID = filledAd.unitGroup.networkFirmID;
                                             unitID = filledAd.unitGroup.unitID;
                                             networkSDKVer = [[ATAPI sharedInstance] versionForNetworkFirmID:filledAd.unitGroup.networkFirmID];
@@ -287,11 +291,11 @@ static NSString *const kStatusStorageOfferKey = @"offer";
                         }
                     }];
                 } else {//No offer for the unit group
-                    id<ATAd> filledAd = [self fillIfReadyWithPlacementModel:placementModel unitGroupModel:obj requestID:[requestID length] > 0 ? requestID : [Utilities generateRequestID] priority:idx storage:storage statusStorage:statusStorage];
+                    id<ATAd> filledAd = [self fillIfReadyWithPlacementModel:placementModel unitGroupModel:obj requestID:[requestID length] > 0 ? requestID : [Utilities generateRequestID] priority:idx storage:storage statusStorage:statusStorage finalWaterfall:finalWaterfall];
                     if (filledAd != nil) {
                         requestID = filledAd.requestID;
                         unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(1);
-                        headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithUnitGroup:obj requestID:requestID];
+                        headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithAd:filledAd requestID:requestID];
                         networkFirmID = obj.networkFirmID;
                         unitID = obj.unitID;
                         networkSDKVer = [[ATAPI sharedInstance] versionForNetworkFirmID:obj.networkFirmID];
@@ -321,7 +325,7 @@ static NSString *const kStatusStorageOfferKey = @"offer";
                 unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(0);
                 if ([obj.adapterClass respondsToSelector:@selector(resourceReadyMyOfferForPlacementModel:unitGroupModel:info:)]) {
                     ATMyOfferOfferModel *offerModel = [obj.adapterClass resourceReadyMyOfferForPlacementModel:placementModel unitGroupModel:obj info:nil];
-                    id<ATAd> myOfferAd = ([adsInPlacement[obj.unitGroupID] isKindOfClass:[NSArray class]] && [adsInPlacement[obj.unitGroupID] count] > 0) ? ((NSArray*)adsInPlacement[obj.unitGroupID])[0] : [self fillIfReadyWithPlacementModel:placementModel unitGroupModel:obj requestID:[requestID length] > 0 ? requestID : [Utilities generateRequestID] priority:idx storage:storage statusStorage:statusStorage];
+                    id<ATAd> myOfferAd = ([adsInPlacement[obj.unitGroupID] isKindOfClass:[NSArray class]] && [adsInPlacement[obj.unitGroupID] count] > 0) ? ((NSArray*)adsInPlacement[obj.unitGroupID])[0] : [self fillIfReadyWithPlacementModel:placementModel unitGroupModel:obj requestID:[requestID length] > 0 ? requestID : [Utilities generateRequestID] priority:idx storage:storage statusStorage:statusStorage finalWaterfall:finalWaterfall];
                     if (offerModel != nil && myOfferAd != nil) {
                         [myOfferModels addObject:offerModel];
                         NSMutableDictionary *myOfferUnitGroupInfo = [NSMutableDictionary dictionaryWithDictionary:unitGroupInfo];
@@ -337,7 +341,7 @@ static NSString *const kStatusStorageOfferKey = @"offer";
             unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(0);
             if ([obj.adapterClass respondsToSelector:@selector(resourceReadyMyOfferForPlacementModel:unitGroupModel:info:)]) {
                 ATMyOfferOfferModel *offerModel = [obj.adapterClass resourceReadyMyOfferForPlacementModel:placementModel unitGroupModel:obj info:nil];
-                id<ATAd> myOfferAd = ([adsInPlacement[obj.unitGroupID] isKindOfClass:[NSArray class]] && [adsInPlacement[obj.unitGroupID] count] > 0) ? ((NSArray*)adsInPlacement[obj.unitGroupID])[0] : [self fillIfReadyWithPlacementModel:placementModel unitGroupModel:obj requestID:[requestID length] > 0 ? requestID : [Utilities generateRequestID] priority:idx storage:storage statusStorage:statusStorage];
+                id<ATAd> myOfferAd = ([adsInPlacement[obj.unitGroupID] isKindOfClass:[NSArray class]] && [adsInPlacement[obj.unitGroupID] count] > 0) ? ((NSArray*)adsInPlacement[obj.unitGroupID])[0] : [self fillIfReadyWithPlacementModel:placementModel unitGroupModel:obj requestID:[requestID length] > 0 ? requestID : [Utilities generateRequestID] priority:idx storage:storage statusStorage:statusStorage finalWaterfall:finalWaterfall];
                 if (offerModel != nil && myOfferAd != nil) {
                     [myOfferModels addObject:offerModel];
                     NSMutableDictionary *myOfferUnitGroupInfo = [NSMutableDictionary dictionaryWithDictionary:unitGroupInfo];
@@ -353,13 +357,13 @@ static NSString *const kStatusStorageOfferKey = @"offer";
         [unitGroupInfos addObject:unitGroupInfo];
     }];
     if ((caller == ATAdManagerReadyAPICallerReady && placementModel.usesDefaultMyOffer == 1) || (caller == ATAdManagerReadyAPICallerShow && placementModel.usesDefaultMyOffer != 0)) {
-        if (ad == nil && ([myOfferAds count] > 0 && [myOfferModels count] > 0 && [myOfferUnitGroupInfos count] > 0)) {//
+        if (ad == nil && ([myOfferAds count] > 0 && [myOfferModels count] > 0 && [myOfferUnitGroupInfos count] > 0)) {
             ATMyOfferOfferModel *offerModel = [[NSClassFromString(@"ATMyOfferOfferManager") sharedManager] defaultOfferInOfferModels:myOfferModels];
             id<ATAd> myOfferAd = myOfferAds[offerModel.offerID];
             NSMutableDictionary *myOfferUnitGroupInfo = myOfferUnitGroupInfos[offerModel.offerID];
             if (myOfferAd != nil && [myOfferAd respondsToSelector:@selector(setDefaultPlayIfRequired:)] && myOfferUnitGroupInfo != nil) {
                 myOfferAd.defaultPlayIfRequired = YES;
-                headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithUnitGroup:myOfferAd.unitGroup requestID:myOfferAd.requestID];
+                headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithAd:myOfferAd requestID:myOfferAd.requestID];
                 networkFirmID = myOfferAd.unitGroup.networkFirmID;
                 unitID = myOfferAd.unitGroup.unitID;
                 networkSDKVer = [[ATAPI sharedInstance] versionForNetworkFirmID:myOfferAd.unitGroup.networkFirmID];
@@ -384,19 +388,21 @@ static NSString *const kStatusStorageOfferKey = @"offer";
         if ([ad respondsToSelector:@selector(filledByAutoloadOnClose)] && ad.filledByAutoloadOnClose) { extraInfo[kAdLoadingExtraAutoLoadOnCloseFlagKey] = @YES;}
         if ([ad respondsToSelector:@selector(fillByAutorefresh)] && ad.fillByAutorefresh) { extraInfo[kATTrackerExtraRefreshFlagKey] = @YES; }
         if (ad != nil) { extraInfo[kATTrackerExtraAdObjectKey] = ad; }
+        if (finalWaterfall != nil) { extraInfo[kAdStorageExtraFinalWaterfallKey] = finalWaterfall; }
+        if (ad.autoReqType == 5) { extraInfo[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
         *extra = extraInfo;
     }
     return ad;
 }
 
-+(id<ATAd>) fillIfReadyWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel requestID:(NSString*)requestID priority:(NSInteger)priority storage:(NSMutableDictionary*)storage statusStorage:(NSMutableDictionary*)statusStorage {
++(id<ATAd>) fillIfReadyWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel requestID:(NSString*)requestID priority:(NSInteger)priority storage:(NSMutableDictionary*)storage statusStorage:(NSMutableDictionary*)statusStorage finalWaterfall:(ATWaterfall*)finalWaterfall {
     id<ATAd> ad = nil;
     NSMutableDictionary *content = [NSMutableDictionary dictionaryWithObject:@(unitGroupModel.headerBidding) forKey:@"is_hb_adsource"];
     if ([unitGroupModel.content isKindOfClass:[NSDictionary class]]) { [content addEntriesFromDictionary:unitGroupModel.content]; }
     if ([unitGroupModel.adapterClass respondsToSelector:@selector(adReadyForInfo:)] && [unitGroupModel.adapterClass adReadyForInfo:content]) {
-        ad = [unitGroupModel.adapterClass respondsToSelector:@selector(readyFilledAdWithPlacementModel:requestID:priority:unitGroup:)] ? [unitGroupModel.adapterClass readyFilledAdWithPlacementModel:placementModel requestID:requestID priority:priority unitGroup:unitGroupModel] : nil;
+        ad = [unitGroupModel.adapterClass respondsToSelector:@selector(readyFilledAdWithPlacementModel:requestID:priority:unitGroup:finalWaterfall:)] ? [unitGroupModel.adapterClass readyFilledAdWithPlacementModel:placementModel requestID:requestID priority:priority unitGroup:unitGroupModel finalWaterfall:finalWaterfall] : nil;
         if (ad != nil) {
-            [self saveAd:ad toStorage:storage requestID:requestID];
+            [self saveAd:ad finalWaterfall:finalWaterfall toStorage:storage requestID:requestID];
             [self saveAd:ad toStatusStorage:statusStorage];
             [[ATLoadingScheduler sharedScheduler] scheduleLoadingWithPlacementModel:placementModel unitGroup:unitGroupModel requestID:requestID extra:@{}];
         }

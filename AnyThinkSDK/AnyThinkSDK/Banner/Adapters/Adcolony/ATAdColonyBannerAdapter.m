@@ -26,30 +26,31 @@ static NSString *const kZoneIDKey = @"zone_id";
 static NSString *const kAdColonyConfig = @"com.topon.adColony_Config_finish";
 static NSString *const kAdColonyRewardedSuccess = @"com.topon.adColony_rewarded_success";
 @implementation ATAdColonyBannerAdapter
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(kAdColonyClassName) getSDKVersion] forNetwork:kNetworkNameAdColony];
         });
-        _info = info;
+        _info = serverInfo;
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kAdColonyClassName) != nil) {
-        _customEvent = [[ATAdColonyBannerCustomEvent alloc] initWithUnitID:info[kZoneIDKey] customInfo:info];
+        _customEvent = [[ATAdColonyBannerCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        ATUnitGroupModel *unitGroupModel = info[kAdapterCustomInfoUnitGroupModelKey];
+        ATUnitGroupModel *unitGroupModel = serverInfo[kAdapterCustomInfoUnitGroupModelKey];
         AdColonyAdSize bannerSize = {unitGroupModel.adSize.width, unitGroupModel.adSize.height};
         __weak typeof(self) weakSelf = self;
         [[ATAPI sharedInstance] inspectInitFlagForNetwork:kNetworkNameAdColony usingBlock:^NSInteger(NSInteger currentValue) {
             if (currentValue == ATBannerAdColonyInitStateNotInit) {
                 id<ATAdColonyAppOptions> options = [[NSClassFromString(@"AdColonyAppOptions") alloc] init];
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) {
                     /**
                      gdprConsentString: @"0" Nonpersonalized, @"1" Personalized
@@ -57,11 +58,11 @@ static NSString *const kAdColonyRewardedSuccess = @"com.topon.adColony_rewarded_
                     options.gdprConsentString = limit ? @"0" : @"1";
                     options.gdprRequired = [[ATAPI sharedInstance] inDataProtectionArea];
                 }
-                [NSClassFromString(kAdColonyClassName) configureWithAppID:info[@"app_id"] zoneIDs:info[@"zone_ids"] options:options completion:^(NSArray<id<ATAdColonyZone>> *zones) {
+                [NSClassFromString(kAdColonyClassName) configureWithAppID:serverInfo[@"app_id"] zoneIDs:serverInfo[@"zone_ids"] options:options completion:^(NSArray<id<ATAdColonyZone>> *zones) {
                     [zones enumerateObjectsUsingBlock:^(id<ATAdColonyZone>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { if (obj.rewarded) { [obj setReward:^(BOOL success, NSString *name, int amount) { if (success) { [[NSNotificationCenter defaultCenter] postNotificationName:kAdColonyRewardedSuccess object:nil userInfo:nil]; } }]; } }];
                     [[NSNotificationCenter defaultCenter] postNotificationName:kAdColonyConfig object:nil userInfo:nil];
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        [NSClassFromString(kAdColonyClassName) requestAdViewInZone:info[kZoneIDKey] withSize:bannerSize viewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]] andDelegate:weakSelf.customEvent];
+                        [NSClassFromString(kAdColonyClassName) requestAdViewInZone:serverInfo[kZoneIDKey] withSize:bannerSize viewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey]).placementID requestID:serverInfo[kAdapterCustomInfoRequestIDKey]] andDelegate:weakSelf.customEvent];
                     });
                     [[ATAPI sharedInstance] setInitFlag:ATBannerAdColonyInitStateInited forNetwork:kNetworkNameAdColony];
                 }];
@@ -71,14 +72,14 @@ static NSString *const kAdColonyRewardedSuccess = @"com.topon.adColony_rewarded_
                 return currentValue;
             } else if (currentValue == ATBannerAdColonyInitStateInited) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [NSClassFromString(kAdColonyClassName) requestAdViewInZone:info[kZoneIDKey] withSize:bannerSize viewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]] andDelegate:weakSelf.customEvent];
+                    [NSClassFromString(kAdColonyClassName) requestAdViewInZone:serverInfo[kZoneIDKey] withSize:bannerSize viewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey]).placementID requestID:serverInfo[kAdapterCustomInfoRequestIDKey]] andDelegate:weakSelf.customEvent];
                 });
                 return currentValue;
             }
             return currentValue;
         }];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kAdColonyClassName]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kAdColonyClassName]}]);
     }
 }
 

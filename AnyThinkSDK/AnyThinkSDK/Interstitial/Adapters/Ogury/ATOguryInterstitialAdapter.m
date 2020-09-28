@@ -36,7 +36,7 @@ static NSString *const kOguryInterstitialClassName = @"OguryAdsInterstitial";
     [((id<ATOguryAdsInterstitial>)interstitial.customObject) showInViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if(self != nil){
         static dispatch_once_t onceToken;
@@ -45,7 +45,7 @@ static NSString *const kOguryInterstitialClassName = @"OguryAdsInterstitial";
                 if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameOgury]) {
                     [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameOgury];
                     _ad = [NSClassFromString(@"OguryAds") shared];
-                    [_ad setupWithAssetKey:info[@"key"]];
+                    [_ad setupWithAssetKey:serverInfo[@"key"]];
                     if ([[(NSObject*)_ad valueForKey:@"state"]intValue] == 1) {
                         [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameOgury];
                     }
@@ -57,23 +57,23 @@ static NSString *const kOguryInterstitialClassName = @"OguryAdsInterstitial";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (NSClassFromString(kOguryInterstitialClassName) != nil) {
-            self.adInfo = info;
+            self.adInfo = serverInfo;
             self.complet = completion;
             if ([[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameOgury] && !_isReload) {
                 _isReload = YES;
-                _customEvent = [[ATOguryInterstitialCustomEvent alloc] initWithUnitID:info[@"unit_id"] customInfo:info];
+                _customEvent = [[ATOguryInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
                 _customEvent.requestCompletionBlock = completion;
                 _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
-                _interstitial = [[NSClassFromString(kOguryInterstitialClassName) alloc]initWithAdUnitID:info[@"unit_id"]];
+                _interstitial = [[NSClassFromString(kOguryInterstitialClassName) alloc]initWithAdUnitID:serverInfo[@"unit_id"]];
                 _interstitial.interstitialDelegate = _customEvent;
                 _customEvent.oguryAds = _interstitial;
                 [_interstitial load];
             }
         } else {
-            completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Ogury"]}]);
+            completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Ogury"]}]);
         }
     });
 }
@@ -83,7 +83,7 @@ static NSString *const kOguryInterstitialClassName = @"OguryAdsInterstitial";
         if ([[object valueForKey:@"state"]intValue] == 1 && !_isReload) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameOgury];
             _isReload = YES;
-            _customEvent = [[ATOguryInterstitialCustomEvent alloc] initWithUnitID:self.adInfo[@"unit_id"] customInfo:self.adInfo];
+            _customEvent = [[ATOguryInterstitialCustomEvent alloc] initWithInfo:self.adInfo localInfo:nil];
             _customEvent.requestCompletionBlock = self.complet;
             _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
             _interstitial = [[NSClassFromString(kOguryInterstitialClassName) alloc]initWithAdUnitID:self.adInfo[@"unit_id"]];

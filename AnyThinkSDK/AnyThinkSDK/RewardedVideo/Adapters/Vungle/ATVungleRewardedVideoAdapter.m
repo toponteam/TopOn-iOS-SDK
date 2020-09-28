@@ -82,11 +82,11 @@ static NSString *const kPlacementIDKey = @"placement_id";
 static NSString *const kVungleSDKClassName = @"VungleSDK";
 static NSString *const kOptionsUserKey = @"user";
 @implementation ATVungleRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kPlacementIDKey]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kPlacementIDKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
-+(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup {
++(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall {
     return nil;
 }
 
@@ -109,21 +109,22 @@ static NSString *const kOptionsUserKey = @"user";
     if (error != nil) [customEvent handlerPlayError:error];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
-        _placementID = info[kPlacementIDKey];
+        _placementID = serverInfo[kPlacementIDKey];
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameVungle];
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameVungle]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameVungle];
                 if ([[ATAPI sharedInstance].networkConsentInfo containsObjectForKey:kNetworkNameVungle]) {
-                    [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameVungle] integerValue] consentMessageVersion:@"6.5.4"];
+                    [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameVungle] integerValue] consentMessageVersion:@"6.3.2"];
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
-                    if (set) { [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.5.4"]; }
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
+                    if (set) { [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.4.6"]; }
                 }
             }
         });
@@ -135,27 +136,27 @@ static NSString *const kOptionsUserKey = @"user";
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kVungleSDKClassName) != nil) {
-        _customEvent = [[ATVungleRewardedVideoCustomEvent alloc] initWithUnitID:info[kPlacementIDKey] customInfo:info];
+        _customEvent = [[ATVungleRewardedVideoCustomEvent alloc] initWithUnitID:serverInfo[kPlacementIDKey] serverInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         if (!((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]).isInitialized) {
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleInitNotification:) name:kVungleRewardedVideoInitializationNotification object:nil];
             NSError *error = nil;
             ((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]).delegate = [ATVungleDelegate_RewardedVideo sharedDelegate];
-            [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) startWithAppId:info[@"app_id"] error:&error];
-            if (error != nil) { [_customEvent handleLoadingFailure:error]; }
+            [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) startWithAppId:serverInfo[@"app_id"] error:&error];
+            if (error != nil) { [_customEvent trackRewardedVideoAdLoadFailed:error]; }
         } else {
             [self startLoad];
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Vungle"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Vungle"]}]);
     }
 }
 
 -(void) handleInitNotification:(NSNotification*)notification {
     if (notification.userInfo[kVungleRewardedVideoNotificationUserInfoErrorKey] != nil) {
-        [_customEvent handleLoadingFailure:notification.userInfo[kVungleRewardedVideoNotificationUserInfoErrorKey]];
+        [_customEvent trackRewardedVideoAdLoadFailed:notification.userInfo[kVungleRewardedVideoNotificationUserInfoErrorKey]];
     } else {
         [self startLoad];
     }
@@ -164,6 +165,6 @@ static NSString *const kOptionsUserKey = @"user";
 -(void) startLoad {
     NSError *error = nil;
     [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) loadPlacementWithID:_placementID error:&error];
-    if (error != nil) [_customEvent handleLoadingFailure:error];
+    if (error != nil) [_customEvent trackRewardedVideoAdLoadFailed:error];
 }
 @end

@@ -24,6 +24,13 @@ typedef NS_ENUM(NSInteger, ATMyOfferEndCardClickable) {
 @property(nonatomic, readonly) NSTimeInterval closeButtonAppearanceInterval;
 @property(nonatomic, readonly) NSTimeInterval resourceDownloadTimeout;
 @property(nonatomic, readonly) NSTimeInterval resourceCacheTime;
+//setting for banner
+@property(nonatomic, readonly) NSString *bannerSize;
+@property(nonatomic, readonly) BOOL showBannerCloseBtn;
+@property(nonatomic, readonly) NSInteger splashCountDownTime;
+@property(nonatomic, readonly) BOOL skipable;
+@property(nonatomic, readonly) NSInteger splashOrientation;
+@property(nonatomic, readonly) NSInteger storekitTime;
 
 +(instancetype) mockSetting;
 @end

@@ -10,7 +10,7 @@
 #import "ATBaiduSplashAdapter.h"
 
 @interface ATBaiduSplashCustomEvent : ATSplashCustomEvent<BaiduMobAdSplashDelegate>
--(instancetype)initWithPublisherID:(NSString*)publisherID unitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo;
+-(instancetype)initWithPublisherID:(NSString*)publisherID unitID:(NSString *)unitID serverInfo:(NSDictionary *)serverInfo localInfo:(NSDictionary *)localInfo;
 @property(nonatomic) UIWindow *window;
 @property(nonatomic) UIView *containerView;
 @property(nonatomic, weak) UIView *splashView;

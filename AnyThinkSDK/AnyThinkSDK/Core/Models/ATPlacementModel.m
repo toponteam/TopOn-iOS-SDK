@@ -11,8 +11,6 @@
 NSString *const kPlacementModelCacheDateKey = @"placement_cache_date";
 NSString *const kPlacementModelCustomDataKey = @"custom_data";
 @interface ATPlacementModel()
-@property (nonatomic, readonly) dispatch_queue_t unit_group_by_request_id_access_queue;
-@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSArray<ATUnitGroupModel*>*>* unitGroupsByRequestID;
 @end
 @implementation ATPlacementModel
 -(instancetype) initWithDictionary:(NSDictionary *)dictionary associatedCustomData:(NSDictionary*)customData placementID:(NSString*)placementID {
@@ -22,9 +20,7 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
         if ([customData isKindOfClass:[NSDictionary class]]) {
             _associatedCustomData = [NSDictionary dictionaryWithDictionary:customData];
         } else {
-            if ([dictionary[kPlacementModelCustomDataKey] isKindOfClass:[NSDictionary class]]) {
-                _associatedCustomData = [NSDictionary dictionaryWithDictionary:dictionary[kPlacementModelCustomDataKey]];
-            }
+            if ([dictionary[kPlacementModelCustomDataKey] isKindOfClass:[NSDictionary class]]) { _associatedCustomData = [NSDictionary dictionaryWithDictionary:dictionary[kPlacementModelCustomDataKey]]; }
         }
         _format = [dictionary[@"format"] integerValue];
         _adDeliverySwitch = [dictionary[@"ad_delivery_sw"] boolValue];
@@ -40,7 +36,7 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
         _unitCapsByHour = [dictionary[@"unit_caps_h"] integerValue] == -1 ? NSIntegerMax : [dictionary[@"unit_caps_h"] integerValue];
         _unitPacing = [dictionary[@"unit_pacing"] doubleValue];
         _wifiAutoSwitch = [dictionary[@"wifi_auto_sw"] boolValue];
-        _offerLoadingTimeout = [dictionary[@"s_t"] doubleValue];
+        _offerLoadingTimeout = [dictionary[@"s_t"] doubleValue] / 1000.0f;
         _statusValidDuration = [dictionary[@"l_s_t"] doubleValue];
         _asid = dictionary[@"asid"];
         _trafficGroupID = dictionary[@"t_g_id"];
@@ -55,6 +51,10 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
         _cacheValidDuration = [dictionary[@"ps_ct"] doubleValue] / 1000.0f;
         _cacheDate = dictionary[kPlacementModelCacheDateKey];
         _cachesPlacementSetting = [dictionary[@"pucs"] boolValue];
+        _loadFailureInterval = [dictionary[@"load_fail_wtime"] doubleValue] / 1000.0f;
+        _loadCap = [dictionary[@"load_cap"] integerValue];
+        _loadCapDuration = [dictionary[@"load_cap_time"] doubleValue] / 1000.0f;
+        _expectedNumberOfOffers = [dictionary[@"cached_offers_num"] integerValue];
         
         NSMutableArray<ATUnitGroupModel*>* unitGroups = [NSMutableArray<ATUnitGroupModel*> array];
         NSArray<NSDictionary*>* unitGroupDicts = dictionary[@"ug_list"];
@@ -72,10 +72,18 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
         }];
         _headerBiddingUnitGroups = headerBiddingUnitGroups;
         
-        _headerBiddingRequestTimeout = [[_headerBiddingUnitGroups valueForKeyPath:@"@max.headerBiddingRequestTimeout"] doubleValue];
+        NSMutableArray<ATUnitGroupModel*>* S2SHeaderBiddingUnitGroups = [NSMutableArray<ATUnitGroupModel*> array];
+        NSArray<NSDictionary*>* S2SHeaderBiddingUnitGroupDicts = dictionary[@"s2shb_list"];
+        [S2SHeaderBiddingUnitGroupDicts enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            NSMutableDictionary *unitGroupDict = [NSMutableDictionary dictionaryWithDictionary:obj];
+            unitGroupDict[@"header_bidding"] = @YES;
+            [S2SHeaderBiddingUnitGroups addObject:[[ATUnitGroupModel alloc] initWithDictionary:unitGroupDict]];
+        }];
+        _S2SHeaderBiddingUnitGroups = S2SHeaderBiddingUnitGroups;
         
-        _unitGroupsByRequestID = [NSMutableDictionary<NSString*, NSArray<ATUnitGroupModel*>*> dictionary];
-        _unit_group_by_request_id_access_queue = dispatch_queue_create("com.anythink.unitGroupsByRequestIDAccessingQueue", DISPATCH_QUEUE_SERIAL);
+        _S2SBidRequestAddress = dictionary[@"addr_bid"];
+        _headerBiddingRequestTimeout = [dictionary[@"hb_bid_timeout"] doubleValue] / 1000.0f;
+        _headerBiddingRequestTolerateInterval = [dictionary[@"hb_start_time"] doubleValue] / 1000.0f;
         
         _preloadMyOffer = [dictionary[@"p_m_o"] boolValue];
         _myOfferSetting = [[ATMyOfferSetting alloc] initWithDictionary:dictionary[@"m_o_s"] placementID:_placementID];
@@ -83,7 +91,7 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
         NSArray<NSDictionary*>* offerDicts = dictionary[@"m_o"];
         NSDictionary *placeHolders = dictionary[@"m_o_ks"];
         [offerDicts enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            ATMyOfferOfferModel *offerModel = [[ATMyOfferOfferModel alloc] initWithDictionary:obj placeholders:placeHolders];
+            ATMyOfferOfferModel *offerModel = [[ATMyOfferOfferModel alloc] initWithDictionary:obj placeholders:placeHolders format:_format setting:_myOfferSetting];
             if (offerModel != nil) { [offers addObject:offerModel]; }
         }];
         _offers = offers;
@@ -95,16 +103,6 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
 
 -(instancetype) initWithDictionary:(NSDictionary *)dictionary placementID:(NSString*)placementID {
     return [self initWithDictionary:dictionary associatedCustomData:nil placementID:placementID];
-}
-
--(NSArray<ATUnitGroupModel*>*)unitGroupsForRequestID:(NSString*)requestID {
-    __block NSArray<ATUnitGroupModel*>* unitGroups = nil;
-    dispatch_sync(_unit_group_by_request_id_access_queue, ^{ unitGroups = _unitGroupsByRequestID[requestID]; });
-    return unitGroups;
-}
-
--(void) updateUnitGroups:(NSArray<ATUnitGroupModel*>*)unitGroups forRequestID:(NSString*)requestID {
-    if (requestID != nil && [unitGroups count] > 0) { dispatch_async(_unit_group_by_request_id_access_queue, ^{ _unitGroupsByRequestID[requestID] = unitGroups; }); }
 }
 
 -(NSString*)description {

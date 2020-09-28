@@ -8,7 +8,7 @@
 
 #ifndef ATInterstitialAdapter_h
 #define ATInterstitialAdapter_h
-#import "ATAdAdapter.h"
+#import <AnyThinkSDK/AnyThinkSDK.h>
 #import "ATInterstitialDelegate.h"
 #import "ATInterstitial.h"
 #import <UIKit/UIKit.h>

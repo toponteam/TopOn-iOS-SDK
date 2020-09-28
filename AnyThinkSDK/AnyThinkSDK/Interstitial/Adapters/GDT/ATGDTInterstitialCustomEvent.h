@@ -8,6 +8,6 @@
 
 #import "ATInterstitialCustomEvent.h"
 #import "ATGDTInterstitialAdapter.h"
-@interface ATGDTInterstitialCustomEvent : ATInterstitialCustomEvent<ATGDTMobInterstitialDelegate, GDTUnifiedInterstitialAdDelegate>
+@interface ATGDTInterstitialCustomEvent : ATInterstitialCustomEvent<GDTUnifiedInterstitialAdDelegate>
 
 @end

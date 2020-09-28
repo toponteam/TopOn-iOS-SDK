@@ -20,6 +20,13 @@
         _closeButtonAppearanceInterval = [dictionary[@"s_c_t"] doubleValue];
         _resourceDownloadTimeout = [dictionary[@"m_t"] doubleValue] / 1000.0f;//to do: to be divided by 1000.0f
         _resourceCacheTime = [dictionary[@"o_c_t"] doubleValue] / 1000.0f;
+        _bannerSize = dictionary[@"size"];
+        _splashCountDownTime = [dictionary[@"ctdown_time"] integerValue];
+        _skipable = ![dictionary[@"sk_able"] boolValue];
+        _splashOrientation = [dictionary[@"orient"] integerValue];
+        _storekitTime = [dictionary[@"skit_time"] integerValue];
+        _showBannerCloseBtn = ![dictionary[@"cl_btn"] boolValue];
+
     }
     return self;
 }

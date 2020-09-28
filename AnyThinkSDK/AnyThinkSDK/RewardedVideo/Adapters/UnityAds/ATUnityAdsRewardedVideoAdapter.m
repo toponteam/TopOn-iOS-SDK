@@ -17,6 +17,60 @@
 #import "ATAdAdapter.h"
 #import "ATAppSettingManager.h"
 
+NSString *const kATUnityAdsRVLoadedNotification = @"com.anythink.UnityAdsRewardAdLoaded";
+NSString *const kATUnityAdsRVFailedToLoadNotification = @"com.anythink.UnityAdsRewardAdFailedToLoad";
+NSString *const kATUnityAdsRVPlayStartNotification = @"com.anythink.UnityAdsRewardAdPlayStart";
+NSString *const kATUnityAdsRVClickNotification = @"com.anythink.UnityAdsRewardAdClick";
+NSString *const kATUnityAdsRVCloseNotification = @"com.anythink.UnityAdsRewardAdClose";
+NSString *const kATUnityAdsRVNotificationUserInfoPlacementIDKey = @"placement_id";
+NSString *const kATUnityAdsRVNotificationUserInfoErrorKey = @"error";
+NSString *const kATUnityAdsRVNotificationUserInfoRewardedFlag = @"reward";
+
+@interface ATUnityAdsRewardedDelegate:NSObject<UnityAdsDelegate, UnityAdsExtendedDelegate>
+@end
+@implementation ATUnityAdsRewardedDelegate
++(instancetype) sharedDelegate {
+    static ATUnityAdsRewardedDelegate *sharedDelegate = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedDelegate = [[ATUnityAdsRewardedDelegate alloc] init];
+    });
+    return sharedDelegate;
+}
+
+- (void)unityAdsDidError:(NSInteger)error withMessage:(NSString *)message {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::unityAdsDidError:%ld withMessage:%@", error, message] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsRVFailedToLoadNotification object:nil userInfo:@{kATUnityAdsRVNotificationUserInfoErrorKey:[NSError errorWithDomain:@"com.anythink.UnityAdsRewardedVideoLoad" code:error userInfo:@{NSLocalizedDescriptionKey:@"anythinkSDK has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[message length] > 0 ? message : @"UnityAds SDK has failed to load rewarded video." }]}];
+}
+
+- (void)unityAdsPlacementStateChanged:(NSString *)placementId oldState:(NSInteger)oldState newState:(NSInteger)newState {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::unityAdsPlacementStateChanged:%@ oldState:%ld newState:%ld", placementId, oldState, newState] type:ATLogTypeExternal];
+    if (newState == 0) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsRVLoadedNotification object:nil userInfo:@{kATUnityAdsRVNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @""}];
+    }
+}
+
+-(void)unityAdsDidStart:(NSString*)placementId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::unityAdsDidStart:%@", placementId] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsRVPlayStartNotification object:nil userInfo:@{kATUnityAdsRVNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @""}];
+}
+
+-(void)unityAdsDidFinish:(NSString*)placementId withFinishState:(NSInteger)finishState {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::unityAdsDidFinish:%@ withFinishState:%ld", placementId, finishState] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsRVCloseNotification object:nil userInfo:@{kATUnityAdsRVNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @"",kATUnityAdsRVNotificationUserInfoRewardedFlag:finishState == kATUnityAdsFinishStateCompleted ? @YES : @NO}];
+}
+
+- (void)unityAdsReady:(NSString *)placementId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::unityAdsReady:%@", placementId] type:ATLogTypeExternal];
+}
+
+- (void)unityAdsDidClick:(NSString *)placementId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsRewardedVideo::unityAdsDidClick:%@", placementId] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsRVClickNotification object:nil userInfo:@{kATUnityAdsRVNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @""}];
+}
+
+@end
+
 @interface ATUnityAdsRewardedVideoAdapter()
 @property(nonatomic, readonly) ATUnityAdsRewardedVideoCustomEvent *customEvent;
 @end
@@ -24,23 +78,22 @@
 static NSString *const kUnityAdsClassName = @"UnityAds";
 static NSString *const kPlacementIDKey = @"placement_id";
 @implementation ATUnityAdsRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kPlacementIDKey]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kPlacementIDKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
-+(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup {
-    ATUnityAdsRewardedVideoCustomEvent *customEvent = [[ATUnityAdsRewardedVideoCustomEvent alloc] initWithUnitID:unitGroup.content[kPlacementIDKey] customInfo:[ATAdCustomEvent customInfoWithUnitGroupModel:unitGroup extra:nil]];
-    id<UMONShowAdPlacementContent> placementContent = [[NSClassFromString(@"UMONShowAdPlacementContent") alloc] initWithPlacementId:unitGroup.content[kPlacementIDKey] withParams:nil];
-    ATRewardedVideo *ad = [[ATRewardedVideo alloc] initWithPriority:priority placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsCustomEventKey:customEvent, kRewardedVideoAssetsUnitIDKey:[customEvent.unitID length] > 0 ? customEvent.unitID : @"", kAdAssetsCustomObjectKey:placementContent} unitGroup:unitGroup];
++(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+    ATUnityAdsRewardedVideoCustomEvent *customEvent = [[ATUnityAdsRewardedVideoCustomEvent alloc] initWithInfo:[ATAdCustomEvent customInfoWithUnitGroupModel:unitGroup extra:nil] localInfo:nil];
+    ATRewardedVideo *ad = [[ATRewardedVideo alloc] initWithPriority:priority placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsCustomEventKey:customEvent, kRewardedVideoAssetsUnitIDKey:[customEvent.unitID length] > 0 ? customEvent.unitID : @"", kAdAssetsCustomObjectKey:unitGroup.content[kPlacementIDKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
     return ad;
 }
 
 +(BOOL) adReadyForInfo:(NSDictionary*)info {
-    return [NSClassFromString(@"UnityMonetization") isReady:info[@"placement_id"]];
+    return [NSClassFromString(@"UnityAds") isReady:info[@"placement_id"]];
 }
 
 +(BOOL) adReadyWithCustomObject:(id<UMONShowAdPlacementContent>)customObject info:(NSDictionary*)info {
-    return [NSClassFromString(@"UnityMonetization") isReady:info[@"placement_id"]];
+    return [NSClassFromString(@"UnityAds") isReady:info[@"placement_id"]];
 }
 
 +(void) showRewardedVideo:(ATRewardedVideo*)rewardedVideo inViewController:(UIViewController*)viewController delegate:(id<ATRewardedVideoDelegate>)delegate {
@@ -54,11 +107,11 @@ static NSString *const kPlacementIDKey = @"placement_id";
     customEvent.rewardedVideo = rewardedVideo;
     customEvent.delegate = delegate;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [rewardedVideo.customObject show:viewController withDelegate:(ATUnityAdsRewardedVideoCustomEvent*)rewardedVideo.customEvent];
+        [NSClassFromString(@"UnityAds") show:viewController placementId:rewardedVideo.customEvent.serverInfo[@"placement_id"]];
     });
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameUnityAds]) {
@@ -69,7 +122,8 @@ static NSString *const kPlacementIDKey = @"placement_id";
                 [playerMetaData set:@"gdpr.consent" value:[ATAPI sharedInstance].networkConsentInfo[kNetworkNameUnityAds]];
             } else {
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) { [playerMetaData set:@"gdpr.consent" value:@(!limit)]; }
             }
             [playerMetaData commit];
@@ -78,18 +132,22 @@ static NSString *const kPlacementIDKey = @"placement_id";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
-    if (NSClassFromString(@"UnityMonetization") != nil) {
-        _customEvent = [[ATUnityAdsRewardedVideoCustomEvent alloc] initWithUnitID:info[@"placement_id"] customInfo:info];
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+    if (NSClassFromString(@"UnityAds") != nil) {
+        _customEvent = [[ATUnityAdsRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        if ([NSClassFromString(@"UnityMonetization") isReady:info[@"placement_id"]]) {
-            id<UMONShowAdPlacementContent> placementContent = [[NSClassFromString(@"UMONShowAdPlacementContent") alloc] initWithPlacementId:info[@"placement_id"] withParams:nil];
-            [_customEvent handleAssets:@{kRewardedVideoAssetsCustomEventKey:_customEvent, kRewardedVideoAssetsUnitIDKey:[_customEvent.unitID length] > 0 ? _customEvent.unitID : @"", kAdAssetsCustomObjectKey:placementContent}];
+        if ([NSClassFromString(@"UnityAds") isReady:serverInfo[@"placement_id"]]) {
+            [NSClassFromString(@"UnityAds") removeDelegate:[ATUnityAdsRewardedDelegate sharedDelegate]];
+            [NSClassFromString(@"UnityAds") addDelegate:[ATUnityAdsRewardedDelegate sharedDelegate]];
+            [_customEvent trackRewardedVideoAdLoaded:serverInfo[@"placement_id"] adExtra:nil];
         } else {
-            [NSClassFromString(@"UnityMonetization") initialize:info[@"game_id"] delegate:_customEvent];
+            if (![NSClassFromString(@"UnityAds") isInitialized]) {
+                [NSClassFromString(@"UnityAds") initialize:serverInfo[@"game_id"]];
+                [NSClassFromString(@"UnityAds") addDelegate:[ATUnityAdsRewardedDelegate sharedDelegate]];
+            }
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"UnityAds"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"UnityAds"]}]);
     }
 }
 @end

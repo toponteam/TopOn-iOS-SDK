@@ -27,6 +27,8 @@ NSString *const kATBannerDelegateExtraPriority = @"adsource_index";
 NSString *const kATBannerLoadingExtraParameters = @"banner_parameters";
 NSString *const kATAdLoadingExtraBannerAdSizeKey = @"banner_ad_size";
 NSString *const kATAdLoadingExtraBannerSizeAdjustKey = @"adust_size";
+NSString *const kATAdLoadingExtraAdmobBannerSizeKey = @"inline_adaptive_width";
+NSString *const kATAdLoadingExtraAdmobAdSizeFlagsKey = @"Admob_AdSize_Flags";//Admob AdSize flags
 @implementation ATAdManager (Banner)
 -(BOOL) bannerAdReadyForPlacementID:(NSString*)placementID {
     BOOL ready = [self bannerReadyForPlacementID:placementID caller:ATAdManagerReadyAPICallerReady banner:nil];

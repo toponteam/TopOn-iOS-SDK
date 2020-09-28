@@ -18,8 +18,8 @@ NSString *const kFacebookHeaderBiddingPlacement = @"Facebook(Header Bidding)";
 NSString *const kAdMobPlacement = @"AdMob";
 NSString *const kApplovinPlacement = @"Applovin";
 NSString *const kFlurryPlacement = @"Flurry";
-NSString *const kMintegralPlacement = @"Mintegral";
 NSString *const kMintegralAdvancedPlacement = @"Mintegral(Advanced)";
+NSString *const kMintegralPlacement = @"Mintegral";
 NSString *const kMopubPlacementName = @"Mopub";
 NSString *const kMopubVideoPlacementName = @"Mopub Video Placement";
 NSString *const kGDTPlacement = @"GDT";
@@ -32,13 +32,15 @@ NSString *const kAllPlacementName = @"All";
 NSString *const kNendVideoPlacement = @"Nend(Video)";
 NSString *const kSigmobPlacement = @"Sigmob";
 NSString *const kKSDrawPlacement = @"KS(Draw)";
+NSString *const kGAMPlacement = @"GAM";
+
 
 
 static NSString *const kMPPlacementID = @"b5c2084d12aca4";
 static NSString *const kPlacement0ID = @"b5ad9ba61dcb39";
 static NSString *const kInmobiPlacementID = @"b5b0f553483724";
-static NSString *const kMintegralPlacementID = @"b5b0f555698607";
 static NSString *const kMintegralAdvancedPlacementID = @"b5ee1d26cb56ee";
+static NSString *const kMintegralPlacementID = @"b5b0f555698607";
 static NSString *const kMintegralHeaderBiddingPlacementID = @"b5d1333d023691";
 static NSString *const kFacebookPlacementID = @"b5b0f551340ea9";
 static NSString *const kFacebookHeaderBiddingPlacementID = @"b5d13342d52304";
@@ -57,6 +59,9 @@ static NSString *const kNendPlacementID = @"b5cb96d44c0c5f";
 static NSString *const kNendVideoPlacementID = @"b5cb96d5291e93";
 static NSString *const kBaiduPlacementID = @"b5d36c4ad68a26";
 static NSString *const kKSPlacementID = @"b5e4613e50cbf2";//@"b5e43ac9ca3fc5";
+static NSString *const kGAMPlacementID = @"b5f238964f3e6f";
+static NSString *const kMyOfferPlacementID = @"b5f33878ee0646";
+
 //static NSString *const kKSDrawPlcementID = @"b5e4613e50cbf2";
 //static NSString *const kTTDrawPlacementID = @"b5c2c6d62b9d65";
 
@@ -91,6 +96,10 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";//@"b5e43ac9ca3fc5";
     _mainImageView.contentMode = UIViewContentModeScaleAspectFit;
     [self addSubview:_mainImageView];
     
+    _logoImageView = [UIImageView autolayoutView];
+    _logoImageView.contentMode = UIViewContentModeScaleAspectFit;
+    [self addSubview:_logoImageView];
+    
     _sponsorImageView = [UIImageView autolayoutView];
     _sponsorImageView.contentMode = UIViewContentModeScaleAspectFit;
     [self addSubview:_sponsorImageView];
@@ -110,11 +119,13 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";//@"b5e43ac9ca3fc5";
     [super makeConstraintsForSubviews];
     NSDictionary *viewsDict = nil;
     if (self.mediaView != nil) {
-        viewsDict = @{@"titleLabel":self.titleLabel, @"textLabel":self.textLabel, @"ctaLabel":self.ctaLabel, @"ratingLabel":self.ratingLabel, @"iconImageView":self.iconImageView, @"mainImageView":self.mainImageView, @"mediaView":self.mediaView, @"advertiserLabel":self.advertiserLabel, @"sponsorImageView":self.sponsorImageView};
+        viewsDict = @{@"titleLabel":self.titleLabel, @"textLabel":self.textLabel, @"ctaLabel":self.ctaLabel, @"ratingLabel":self.ratingLabel, @"iconImageView":self.iconImageView, @"mainImageView":self.mainImageView, @"logoImageView":self.logoImageView, @"mediaView":self.mediaView, @"advertiserLabel":self.advertiserLabel, @"sponsorImageView":self.sponsorImageView};
     } else {
-        viewsDict = @{@"titleLabel":self.titleLabel, @"textLabel":self.textLabel, @"ctaLabel":self.ctaLabel, @"ratingLabel":self.ratingLabel, @"iconImageView":self.iconImageView, @"mainImageView":self.mainImageView, @"advertiserLabel":self.advertiserLabel, @"sponsorImageView":self.sponsorImageView};
+        viewsDict = @{@"titleLabel":self.titleLabel, @"textLabel":self.textLabel, @"ctaLabel":self.ctaLabel, @"ratingLabel":self.ratingLabel, @"iconImageView":self.iconImageView, @"logoImageView":self.logoImageView, @"mainImageView":self.mainImageView, @"advertiserLabel":self.advertiserLabel, @"sponsorImageView":self.sponsorImageView};
     }
     [self addConstraintsWithVisualFormat:@"|[mainImageView]|" options:0 metrics:nil views:viewsDict];
+    [self addConstraintsWithVisualFormat:@"[logoImageView(60)]-5-|" options:0 metrics:nil views:viewsDict];
+    [self addConstraintsWithVisualFormat:@"V:[logoImageView(20)]-5-|" options:0 metrics:nil views:viewsDict];
     [self addConstraintsWithVisualFormat:@"V:[iconImageView]-20-[mainImageView]|" options:0 metrics:nil views:viewsDict];
     
     [self addConstraintWithItem:self.iconImageView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:self.iconImageView attribute:NSLayoutAttributeHeight multiplier:1.0f constant:.0f];
@@ -197,7 +208,9 @@ static NSString *const kCallbackKey = @"request";
              kNendPlacement:kNendPlacementID,
              kNendVideoPlacement:kNendVideoPlacementID,
              kBaiduPlacement:kBaiduPlacementID,
-             kKSPlacement:kKSPlacementID
+             kKSPlacement:kKSPlacementID,
+             kGAMPlacement:kGAMPlacementID,
+             kMyOfferPlacement:kMyOfferPlacementID,
              };
 }
 
@@ -259,7 +272,7 @@ static NSString *const kCallbackKey = @"request";
         [_loadingView startAnimating];
         [self.view addSubview:_loadingView];
         [self increaseLoad];
-        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdTypeKey:@([@{kGDTPlacement:@(ATGDTNativeAdTypeSelfRendering), kGDTTemplatePlacement:@(ATGDTNativeAdTypeTemplate), kMintegralPlacement:@(ATGDTNativeAdTypeSelfRendering)}[_name] integerValue]), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds) - 30.0f, 300.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388} delegate:self];
+        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdTypeKey:@([@{kGDTPlacement:@(ATGDTNativeAdTypeSelfRendering), kGDTTemplatePlacement:@(ATGDTNativeAdTypeTemplate), kMintegralPlacement:@(ATGDTNativeAdTypeSelfRendering)}[_name] integerValue]), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds) - 50.0f, 350.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388, kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} delegate:self];
     }
 }
 
@@ -297,7 +310,7 @@ static NSInteger adViewTag = 3333;
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
     [self increaseLoad];
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdTypeKey:@([@{kGDTPlacement:@(ATGDTNativeAdTypeSelfRendering), kGDTTemplatePlacement:@(ATGDTNativeAdTypeTemplate)}[_name] integerValue]), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds) - 30.0f, 300.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388} delegate:self];
+    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdTypeKey:@([@{kGDTPlacement:@(ATGDTNativeAdTypeSelfRendering), kGDTTemplatePlacement:@(ATGDTNativeAdTypeTemplate)}[_name] integerValue]), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds) - 30.0f, 300.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388, kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} delegate:self];
 }
 
 -(void) showAD {

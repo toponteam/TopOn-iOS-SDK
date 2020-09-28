@@ -13,7 +13,7 @@
 #import "ATSplashManager.h"
 #import "ATSplashCustomEvent.h"
 @implementation ATSplash
--(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup {
+-(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
     self = [super init];
     if (self != nil) {
         _priority = priority;
@@ -29,6 +29,9 @@
         _customEvent.ad = self;
         _customObject = assets[kAdAssetsCustomObjectKey];
         _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? ([ATAdCustomEvent calculateAdPriority:self] / _placementModel.maxConcurrentRequestCount) + 1 : 1;
+        _price = unitGroup.headerBidding ? [assets[kAdAssetsPriceKey] doubleValue] : unitGroup.price;
+        _finalWaterfall = finalWaterfall;
+        if ([assets[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { _autoReqType = 5; }
     }
     return self;
 }

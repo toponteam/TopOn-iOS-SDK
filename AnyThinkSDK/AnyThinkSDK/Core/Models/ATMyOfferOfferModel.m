@@ -7,13 +7,17 @@
 //
 
 #import "ATMyOfferOfferModel.h"
+#import "ATMyOfferSetting.h"
+#import "ATMyOfferCapsManager.h"
+#import "Utilities.h"
+
 @implementation ATMyOfferOfferModel
--(instancetype) initWithDictionary:(NSDictionary *)dictionary placeholders:(NSDictionary*)placeholders {
+-(instancetype) initWithDictionary:(NSDictionary *)dictionary placeholders:(NSDictionary*)placeholders format:(NSInteger)format setting:(ATMyOfferSetting*)setting{
     self = [super initWithDictionary:dictionary];
     if (self != nil) {
         NSMutableArray<NSString*> *resourceURLs = [NSMutableArray<NSString*> array];
         _offerID = dictionary[@"o_id"];
-
+        
         _resourceID = dictionary[@"c_id"];
         _title = dictionary[@"t"];
         _text = dictionary[@"d"];
@@ -21,8 +25,8 @@
         _iconURL = dictionary[@"ic_u"];
         if (_iconURL != nil) { [resourceURLs addObject:_iconURL]; }
         
-//        _mainImageURL = dictionary[@"im_u"];
-//        if (_mainImageURL != nil) { [resourceURLs addObject:_mainImageURL]; }
+        //        _mainImageURL = dictionary[@"im_u"];
+        //        if (_mainImageURL != nil) { [resourceURLs addObject:_mainImageURL]; }
         
         _fullScreenImageURL = dictionary[@"f_i_u"];
         if (_fullScreenImageURL != nil) { [resourceURLs addObject:_fullScreenImageURL]; }
@@ -37,10 +41,11 @@
         _videoURL = dictionary[@"v_u"];
         if (_videoURL != nil) { [resourceURLs addObject:_videoURL]; }
         
+        _interstitalType = [dictionary[@"unit_type"] integerValue];
         _videoOrientation = [dictionary[@"v_o"] integerValue];
         _storeURL = dictionary[@"p_u"];
         _jumpType = [dictionary[@"l_t"] integerValue];
-//        _deepLink = dictionary[@"dl"];
+        //        _deepLink = dictionary[@"dl"];
         _performsAsynchronousRedirection = [dictionary[@"c_m"] boolValue];
         
         _videoStartTKURL = dictionary[@"t_u"];//@"{sh}://{do}/video_start?p={p}&p2={p2}";//to do
@@ -62,7 +67,33 @@
         
         _placeholders = placeholders;
         
+        
+        //v5.6.6
+        _bannerImageUrl = dictionary[@"ext_h_pic"];
+        if(_bannerImageUrl != nil && _bannerImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize320_50]){
+            [resourceURLs addObject:_bannerImageUrl];
+        }
+        _bannerBigImageUrl = dictionary[@"ext_big_h_pic"];
+        if(_bannerBigImageUrl != nil && _bannerBigImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize320_90]){
+            [resourceURLs addObject:_bannerBigImageUrl];
+        }
+        _rectangleImageUrl = dictionary[@"ext_rect_h_pic"];
+        if(_rectangleImageUrl != nil && _rectangleImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize300_250]){
+            [resourceURLs addObject:_rectangleImageUrl];
+        }
+        _homeImageUrl = dictionary[@"ext_home_h_pic"];
+        if(_homeImageUrl != nil && _homeImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize728_90]){
+            [resourceURLs addObject:_homeImageUrl];
+        }
+        _pkgName = dictionary[@"p_g"];
+        if(_pkgName == nil || _pkgName.length == 0){
+            _pkgName = nil;
+        }
+//        _pkgName = @"529479190";
         _resourceURLs = resourceURLs;
+        
+        _localResourceID = [NSString stringWithFormat:@"%@%@", _resourceID, setting.placementID].md5;
+        
     }
     return self;
 }
@@ -77,6 +108,6 @@
                                               @"c_t":@"INSTALL NOW",
                                               @"v_u":@"http://cdn-adn.rayjump.com/cdn-adn/19/06/22/01/06/5d0d0e78d77b3.mp4",
                                               @"p_u":@"https://itunes.apple.com/cn/app/id529479190"
-                                              }];
+    }];
 }
 @end

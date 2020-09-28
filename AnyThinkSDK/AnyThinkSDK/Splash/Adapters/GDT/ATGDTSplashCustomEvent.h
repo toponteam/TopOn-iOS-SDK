@@ -11,9 +11,4 @@
 
 @interface ATGDTSplashCustomEvent : ATSplashCustomEvent<GDTSplashAdDelegate>
 @property(nonatomic, weak) UIImageView *backgroundImageView;
-@property(nonatomic) NSDate *loadStartDate;
-@property(nonatomic) NSTimeInterval timeout;
-@property(nonatomic, weak) UIWindow *window;
-@property(nonatomic, weak) UIView *bottomView;
-@property(nonatomic, weak) UIView *skipView;
 @end

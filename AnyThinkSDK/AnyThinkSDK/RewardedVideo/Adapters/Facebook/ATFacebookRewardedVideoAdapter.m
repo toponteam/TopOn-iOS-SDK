@@ -14,7 +14,6 @@
 #import "ATAdManager+RewardedVideo.h"
 #import "ATAdManager+Internal.h"
 #import "ATAdAdapter.h"
-#import "ATAdLoader+HeaderBidding.h"
 
 NSString *const kFacebookRVCustomEventKey = @"custom_event";
 @interface ATFacebookRewardedVideoAdapter()
@@ -25,9 +24,9 @@ NSString *const kFacebookRVCustomEventKey = @"custom_event";
 static NSString *const kPlacementID = @"unit_id";
 static NSString *const kRewardedVideoClassName = @"FBRewardedVideoAd";
 @implementation ATFacebookRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kPlacementID]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kPlacementID]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id<ATFBRewardedVideoAd>)customObject info:(NSDictionary*)info {
     return customObject.isAdValid;
@@ -40,7 +39,7 @@ static NSString *const kRewardedVideoClassName = @"FBRewardedVideoAd";
     [((id<ATFBRewardedVideoAd>)rewardedVideo.customObject) showAdFromRootViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -54,22 +53,15 @@ static NSString *const kRewardedVideoClassName = @"FBRewardedVideoAd";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kRewardedVideoClassName)) {
-        _customEvent = [[ATFacebookRewardedVideoCustomEvent alloc] initWithUnitID:info[kPlacementID] customInfo:info];
+        _customEvent = [[ATFacebookRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        _rewardedVideoAd = [[NSClassFromString(kRewardedVideoClassName) alloc] initWithPlacementID:info[kPlacementID] withUserID:[[ATAdManager sharedManager] extraInfoForPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]][kATAdLoadingExtraUserIDKey] withCurrency:@"gold"];
+        _rewardedVideoAd = [[NSClassFromString(kRewardedVideoClassName) alloc] initWithPlacementID:serverInfo[kPlacementID] withUserID:[[ATAdManager sharedManager] extraInfoForPlacementID:((ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey]).placementID requestID:serverInfo[kAdapterCustomInfoRequestIDKey]][kATAdLoadingExtraUserIDKey] withCurrency:@"gold"];
         _rewardedVideoAd.delegate = _customEvent;
-        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)info[kAdapterCustomInfoUnitGroupModelKey];
-        NSString *requestID = info[kAdapterCustomInfoRequestIDKey];
-        if ([unitGroupModel bidTokenWithRequestID:requestID] != nil) {
-            [_rewardedVideoAd loadAdWithBidPayload:[unitGroupModel bidTokenWithRequestID:requestID]];
-            [unitGroupModel setBidTokenUsedFlagForRequestID:requestID];
-        } else {
-            [_rewardedVideoAd loadAd];
-        }
+        [_rewardedVideoAd loadAd];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Facebook"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Facebook"]}]);
     }
 }
 @end

@@ -10,6 +10,7 @@
 #import "ATBaiduInterstitialCustomEvent.h"
 #import "ATAPI+Internal.h"
 #import "Utilities.h"
+
 @interface ATBaiduInterstitialAdapter()
 @property(nonatomic, readonly) ATBaiduInterstitialCustomEvent *customEvent;
 @property(nonatomic) id<ATBaiduMobAdInterstitial> interstitial;
@@ -26,7 +27,7 @@
     });
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -43,20 +44,20 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"BaiduMobAdInterstitial") != nil) {
-        _customEvent = [[ATBaiduInterstitialCustomEvent alloc] initWithUnitID:info[@"ad_place_id"] customInfo:info];
+        _customEvent = [[ATBaiduInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         __weak typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_main_queue(), ^{
             weakSelf.interstitial = [[NSClassFromString(@"BaiduMobAdInterstitial") alloc] init];
             weakSelf.interstitial.delegate = weakSelf.customEvent;
-            weakSelf.interstitial.AdUnitTag = info[@"ad_place_id"];
+            weakSelf.interstitial.AdUnitTag = serverInfo[@"ad_place_id"];
             weakSelf.interstitial.interstitialType = BaiduMobAdViewTypeInterstitialOther;
             [weakSelf.interstitial load];
         });
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Baidu"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Baidu"]}]);
     }
 }
 @end

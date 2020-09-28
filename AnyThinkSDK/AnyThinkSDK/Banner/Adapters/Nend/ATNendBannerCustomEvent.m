@@ -9,6 +9,8 @@
 #import "ATNendBannerCustomEvent.h"
 #import "Utilities.h"
 #import "ATBannerManager.h"
+
+
 @implementation ATNendBannerCustomEvent
 - (void)nadViewDidFinishLoad:(id<ATNADView>)adView {
     [ATLogger logMessage:@"NendBanner::nadViewDidFinishLoad:" type:ATLogTypeExternal];
@@ -16,30 +18,31 @@
 
 - (void)nadViewDidReceiveAd:(id<ATNADView>)adView {
     [ATLogger logMessage:@"NendBanner::nadViewDidReceiveAd:" type:ATLogTypeExternal];
-    [self handleAssets:@{kBannerAssetsBannerViewKey:adView, kBannerAssetsCustomEventKey:self, kBannerAssetsUnitIDKey:self.unitID}];
+
+    [self trackBannerAdLoaded:adView adExtra:nil];
 }
 
 - (void)nadViewDidFailToReceiveAd:(id<ATNADView>)adView {
     [ATLogger logMessage:@"NendBanner::nadViewDidFailToReceiveAd:" type:ATLogTypeExternal];
-    [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.NendBannerLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load banner", NSLocalizedFailureReasonErrorKey:@"NendBanner has failed to load banner ad"}]];
+    [self trackBannerAdLoadFailed:[NSError errorWithDomain:@"com.anythink.NendBannerLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load banner", NSLocalizedFailureReasonErrorKey:@"NendBanner has failed to load banner ad"}]];
 }
 
 - (void)nadViewDidClickAd:(id<ATNADView>)adView {
     [ATLogger logMessage:@"NendBanner::nadViewDidClickAd:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackBannerAdClick];
 }
 
 - (void)nadViewDidClickInformation:(id<ATNADView>)adView {
     [ATLogger logMessage:@"NendBanner::nadViewDidClickInformation:" type:ATLogTypeExternal];
 }
 
-
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"spot_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"spot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"spot_id"];
+//    return extra;
+//}
 @end

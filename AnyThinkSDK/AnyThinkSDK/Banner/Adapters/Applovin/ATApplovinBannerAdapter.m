@@ -22,7 +22,7 @@
     [bannerView render:banner.customObject];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameApplovin]) {
@@ -33,7 +33,8 @@
                 [NSClassFromString(@"ALPrivacySettings") setIsAgeRestrictedUser:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameApplovin][kApplovinUnderAgeKey] boolValue]];
             } else {
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) { [NSClassFromString(@"ALPrivacySettings") setHasUserConsent:!limit]; }
                 
             }
@@ -42,14 +43,14 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"ALAdView") != nil && NSClassFromString(@"ALSdk") != nil && NSClassFromString(@"ALAdSize") != nil) {
-        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)info[kAdapterCustomInfoUnitGroupModelKey];
-        _customEvent = [[ATApplovinBannerCustomEvent alloc] initWithUnitID:info[@"zone_id"] customInfo:info sdkKey:info[@"sdkkey"] alSize:unitGroupModel.adSize];
+        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+        _customEvent = [[ATApplovinBannerCustomEvent alloc] initWithUnitID:serverInfo[@"zone_id"] serverInfo:serverInfo localInfo:localInfo sdkKey:serverInfo[@"sdkkey"] alSize:unitGroupModel.adSize];
         _customEvent.requestCompletionBlock = completion;
         dispatch_async(dispatch_get_main_queue(), ^{
 //            self->_bannerView = [[NSClassFromString(@"ALAdView") alloc] initWithFrame:CGRectMake(.0f, .0f, unitGroupModel.adSize.width, unitGroupModel.adSize.height) size:CGSizeEqualToSize(unitGroupModel.adSize, CGSizeMake(300.0f, 250.0f)) ? [NSClassFromString(@"ALAdSize") sizeMRec] : [NSClassFromString(@"ALAdSize") sizeBanner] sdk:[NSClassFromString(@"ALSdk") sharedWithKey:info[@"sdkkey"]]];
-            self->_bannerView = [[NSClassFromString(@"ALAdView") alloc] initWithSdk:[NSClassFromString(@"ALSdk") sharedWithKey:info[@"sdkkey"]] size:CGSizeEqualToSize(unitGroupModel.adSize, CGSizeMake(300.0f, 250.0f)) ? [NSClassFromString(@"ALAdSize") sizeMRec] : [NSClassFromString(@"ALAdSize") sizeBanner] zoneIdentifier:info[@"zone_id"]];
+            self->_bannerView = [[NSClassFromString(@"ALAdView") alloc] initWithSdk:[NSClassFromString(@"ALSdk") sharedWithKey:serverInfo[@"sdkkey"]] size:CGSizeEqualToSize(unitGroupModel.adSize, CGSizeMake(300.0f, 250.0f)) ? [NSClassFromString(@"ALAdSize") sizeMRec] : [NSClassFromString(@"ALAdSize") sizeBanner] zoneIdentifier:serverInfo[@"zone_id"]];
             self->_bannerView.adLoadDelegate = self->_customEvent;
             self->_bannerView.adEventDelegate = self->_customEvent;
             self->_bannerView.adEventDelegate = self->_customEvent;
@@ -57,7 +58,7 @@
             [self->_bannerView loadNextAd];
         });
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load banner.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Applovin"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Applovin"]}]);
     }
 }
 @end

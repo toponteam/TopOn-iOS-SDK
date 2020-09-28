@@ -12,6 +12,7 @@
 
 
 @interface ATMintegralBannerCustomEvent : ATBannerCustomEvent<ATMTGBannerAdViewDelegate>
+@property(nonatomic) double price;
 @end
 
 

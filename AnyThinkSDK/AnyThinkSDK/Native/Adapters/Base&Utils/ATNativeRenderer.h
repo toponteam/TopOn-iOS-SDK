@@ -7,8 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AnyThinkSDK/AnyThinkSDK.h>
 #import "ATNativeADRenderer.h"
-#import "ATAPI.h"
+//#import "ATAPI.h"
 @protocol ATNativeADRenderer;
 @class ATNativeADCache;
 @interface ATNativeRenderer : NSObject<ATNativeADRenderer>

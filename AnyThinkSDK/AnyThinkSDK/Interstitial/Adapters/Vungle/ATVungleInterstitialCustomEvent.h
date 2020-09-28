@@ -11,7 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface ATVungleInterstitialCustomEvent : ATInterstitialCustomEvent<ATVungleSDKDelegate>
--(instancetype) initWithUnitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo adapter:(ATVungleInterstitialAdapter*)adapter;
+-(instancetype) initWithInfo:(NSDictionary *)serverInfo localInfo:(NSDictionary *)localInfo adapter:(ATVungleInterstitialAdapter*)adapter;
 -(void) handlerPlayError:(NSError*)error;
 @end
 

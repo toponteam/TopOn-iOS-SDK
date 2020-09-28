@@ -6,22 +6,29 @@
 //  Copyright © 2018 Martin Lau. All rights reserved.
 //
 
-#import "ATAdCustomEvent.h"
+#import <AnyThinkSDK/AnyThinkSDK.h>
+//#import "ATAdCustomEvent.h"
 #import "ATBannerDelegate.h"
-#import "ATAdAdapter.h"
-#import "ATPlacementModel.h"
+//#import "ATAdAdapter.h"
+//#import "ATPlacementModel.h"
 #import "ATBanner.h"
 #import "ATBannerView.h"
 @interface ATBannerCustomEvent : ATAdCustomEvent
--(void) trackClick;
+-(void) trackBannerAdClick;
+-(void) trackBannerAdClosed;
+-(void) trackBannerAdLoaded:(id)bannerView adExtra:(NSDictionary *)adExtra;
+//-(void) trackBannerAdShow;
+-(void) trackBannerAdLoadFailed:(NSError*)error;
 -(NSDictionary*)delegateExtra;
--(instancetype) initWithUnitID:(NSString*)unitID customInfo:(NSDictionary*)customInfo;
+-(instancetype) initWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo;
 -(void) cleanup;
 @property(nonatomic, assign) id<ATBannerDelegate> delegate;
 @property(nonatomic, weak) ATBanner *banner;
 @property(nonatomic, weak) ATBannerView *bannerView;
 @property(nonatomic, readonly) NSString *unitID;
 @property(nonatomic, readonly) CGSize size;
+@property(nonatomic, strong) NSValue *admobAdSizeValue;//For admob
+@property(nonatomic, assign) NSInteger admobAdSizeFlags;//For admob
 @property(nonatomic) NSDictionary *loadingParameters;//For nend
 @property(nonatomic) BOOL adjustAdSize;//For nend
 @property(nonatomic, assign) NSInteger priorityIndex;

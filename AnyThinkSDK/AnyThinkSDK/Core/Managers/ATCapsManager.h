@@ -37,8 +37,16 @@
 -(void) setShowFlagForPlacementID:(NSString*)placementID requestID:(NSString*)requestID;
 -(BOOL) showFlagForPlacementID:(NSString*)placementID requestID:(NSString*)requestID;
 
+-(void) recordShowForPlacementID:(NSString*)placementID unitGroupUnitID:(NSString*)unitID requestID:(NSString*)requestID;
+-(NSArray<NSString*>*)showRecordsForPlacementID:(NSString*)placementID requestID:(NSString*)requestID;
+
 +(BOOL)validateCapsForPlacementModel:(ATPlacementModel*)placementModel;
 +(BOOL)validatePacingForPlacementModel:(ATPlacementModel*)placementModel;
+@end
+
+@interface ATCapsManager(LoadingControl)
+-(BOOL)validateLoadCapsForPlacementID:(NSString*)placementID cap:(NSInteger)cap duration:(NSTimeInterval)duration;
+-(void)increaseCapWithPlacementID:(NSString*)placementID duration:(NSTimeInterval)duration;
 @end
 
 @interface NSObject(ATAdValidation)

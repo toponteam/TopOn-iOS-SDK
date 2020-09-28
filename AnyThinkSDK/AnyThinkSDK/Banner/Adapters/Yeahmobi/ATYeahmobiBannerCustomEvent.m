@@ -10,25 +10,24 @@
 #import "Utilities.h"
 #import "ATBannerManager.h"
 
+
 @implementation ATYeahmobiBannerCustomEvent
 - (void)CTAdViewDidRecieveBannerAd:(id<ATCTADMRAIDView>)adView {
     [ATLogger logMessage:@"YeahmobiBanner::CTAdViewDidRecieveBannerAd:" type:ATLogTypeExternal];
-    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:adView, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, nil];
-    if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
-    [self handleAssets:assets];
+//    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:adView, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, nil];
+//    if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
+//    [self handleAssets:assets];
+    [self trackBannerAdLoaded:adView adExtra:nil];
 }
 
 - (void)CTAdView:(id<ATCTADMRAIDView>)adView didFailToReceiveAdWithError:(NSError*)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"YeahmobiBanner::CTAdView:didFailToReceiveAdWithError:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackBannerAdLoadFailed:error];
 }
 
 - (BOOL)CTAdView:(id<ATCTADMRAIDView>)adView shouldOpenURL:(NSURL*)url {
     [ATLogger logMessage:[NSString stringWithFormat:@"YeahmobiBanner::CTAdView:shouldOpenURL:%@", url] type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackBannerAdClick];
     return YES;
 }
 
@@ -36,9 +35,13 @@
     [ATLogger logMessage:@"YeahmobiBanner::CTAdViewWillLeaveApplication:" type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"slot_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"slot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"slot_id"];
+//    return extra;
+//}
 @end

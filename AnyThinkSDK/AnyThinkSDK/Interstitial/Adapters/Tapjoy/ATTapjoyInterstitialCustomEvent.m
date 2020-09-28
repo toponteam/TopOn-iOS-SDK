@@ -9,6 +9,7 @@
 #import "ATTapjoyInterstitialCustomEvent.h"
 #import "Utilities.h"
 #import "ATInterstitialManager.h"
+
 @implementation ATTapjoyInterstitialCustomEvent
 #pragma mark - placement
 - (void)requestDidSucceed:(id<ATTJPlacement>)placement {
@@ -18,26 +19,23 @@
 
 - (void)requestDidFail:(id<ATTJPlacement>)placement error:(NSError*)error {
     [ATLogger logError:[NSString stringWithFormat:@"TapjoyInterstitial: requestDidFail, error:%@", error]  type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackInterstitialAdLoadFailed:error];
 }
 
 - (void)contentIsReady:(id<ATTJPlacement>)placement {
     [ATLogger logMessage:[NSString stringWithFormat:@"TapjoyInterstitial: contentIsReady"]  type:ATLogTypeExternal];
-    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:placement}];
+//    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:placement}];
+    [self trackInterstitialAdLoaded:placement adExtra:nil];
 }
 
 - (void)contentDidAppear:(id<ATTJPlacement>)placement {
     [ATLogger logMessage:[NSString stringWithFormat:@"TapjoyInterstitial: contentDidAppear"]  type:ATLogTypeExternal];
-    [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackInterstitialAdShow];
 }
 
 - (void)contentDidDisappear:(id<ATTJPlacement>)placement {
     [ATLogger logMessage:[NSString stringWithFormat:@"TapjoyInterstitial: contentDidDisappear"]  type:ATLogTypeExternal];
-    [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdClose];
 }
 
 - (void)placement:(id<ATTJPlacement>)placement didRequestPurchase:(id<ATTJActionRequest>)request productId:(NSString*)productId {
@@ -50,31 +48,27 @@
 #pragma mark - video
 - (void)videoDidStart:(id<ATTJPlacement>)placement {
     [ATLogger logMessage:[NSString stringWithFormat:@"TapjoyInterstitial: videoDidStart"]  type:ATLogTypeExternal];
-    [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidStartPlayingVideoForPlacementID:extra:)]) {
-        [self.delegate interstitialDidStartPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdVideoStart];
 }
 
 - (void)videoDidComplete:(id<ATTJPlacement>)placement {
     [ATLogger logMessage:[NSString stringWithFormat:@"TapjoyInterstitial: videoDidComplete"]  type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidEndPlayingVideoForPlacementID:extra:)]) {
-        [self.delegate interstitialDidEndPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdVideoEnd];
 }
 
 - (void)videoDidFail:(id<ATTJPlacement>)placement error:(NSString*)errorMsg {
     [ATLogger logError:[NSString stringWithFormat:@"TapjoyInterstitial: videoDidFail, msg:%@", errorMsg]  type:ATLogTypeExternal];
     NSError *error = [NSError errorWithDomain:@"Tapjoy interstitial ad video playing failed." code:10000 userInfo:@{NSLocalizedFailureReasonErrorKey:errorMsg, NSLocalizedDescriptionKey:errorMsg}];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidFailToPlayVideoForPlacementID:error:extra:)]) {
-        [self.delegate interstitialDidFailToPlayVideoForPlacementID:self.interstitial.placementModel.placementID error:error extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdDidFailToPlayVideo:error];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"placement_name"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"placement_name"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"placement_name"];
+//    return extra;
+//}
 @end

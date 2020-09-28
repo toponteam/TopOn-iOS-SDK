@@ -48,10 +48,10 @@
 - (void)rewardedVideoAdServerRewardDidFail:(id<ATBURewardedVideoAd>)rewardedVideoAd;
 @end
 
-@protocol BUNativeExpressRewardedVideoAdDelegate;
+@protocol ATBUNativeExpressRewardedVideoAdDelegate;
 @protocol ATBUNativeExpressRewardedVideoAd <NSObject>
 @property (nonatomic, strong) id<ATBURewardedVideoModel> rewardedVideoModel;
-@property (nonatomic, weak, nullable) id<BUNativeExpressRewardedVideoAdDelegate> delegate;
+@property (nonatomic, weak, nullable) id<ATBUNativeExpressRewardedVideoAdDelegate> delegate;
 @property (nonatomic, getter=isAdValid, readonly) BOOL adValid;
 - (instancetype)initWithSlotID:(NSString *)slotID rewardedVideoModel:(id <ATBURewardedVideoModel>)model;
 - (void)loadAdData;
@@ -59,7 +59,7 @@
 
 @end
 
-@protocol BUNativeExpressRewardedVideoAdDelegate <NSObject>
+@protocol ATBUNativeExpressRewardedVideoAdDelegate <NSObject>
 @optional
 - (void)nativeExpressRewardedVideoAdDidLoad:(id <ATBUNativeExpressRewardedVideoAd>)rewardedVideoAd;
 - (void)nativeExpressRewardedVideoAd:(id <ATBUNativeExpressRewardedVideoAd>)rewardedVideoAd didFailWithError:(NSError *_Nullable)error;

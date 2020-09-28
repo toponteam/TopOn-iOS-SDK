@@ -44,6 +44,8 @@ extern NSString *const kOguryPlacement;
 extern NSString *const kStartAppPlacement;
 extern NSString *const kStartAppVideoPlacement;
 extern NSString *const kFyberPlacement;
+extern NSString *const kGAMPlacement;
+
 
 @interface ATInterstitialViewController : UIViewController
 -(instancetype) initWithPlacementName:(NSString*)name;

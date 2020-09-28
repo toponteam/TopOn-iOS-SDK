@@ -11,6 +11,10 @@
 extern NSString *const kATBannerLoadingExtraParameters;
 extern NSString *const kATAdLoadingExtraBannerAdSizeKey;//defaults to 320 * 50
 extern NSString *const kATAdLoadingExtraBannerSizeAdjustKey;//Currently supported by Nend
+
+extern NSString *const kATAdLoadingExtraAdmobBannerSizeKey;//Admob Adaptive width
+extern NSString *const kATAdLoadingExtraAdmobAdSizeFlagsKey;//Admob AdSize flags
+
 @class ATBannerView;
 @interface ATAdManager (Banner)
 -(BOOL) bannerAdReadyForPlacementID:(NSString*)placementID;

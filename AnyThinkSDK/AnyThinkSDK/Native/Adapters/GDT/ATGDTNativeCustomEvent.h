@@ -10,4 +10,5 @@
 #import "ATGDTNativeAdapter.h"
 @interface ATGDTNativeCustomEvent : ATNativeADCustomEvent<GDTNativeExpressAdDelegete, GDTNativeAdDelegate, GDTUnifiedNativeAdDelegate, GDTUnifiedNativeAdViewDelegate>
 @property(nonatomic, weak) id<ATGDTNativeAd> gdtNativeAd;
+@property(nonatomic, weak) id<ATGDTVideoConfig> videoConfig;
 @end

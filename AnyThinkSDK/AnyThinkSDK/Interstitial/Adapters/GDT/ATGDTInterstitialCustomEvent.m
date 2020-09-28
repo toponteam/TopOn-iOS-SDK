@@ -9,72 +9,22 @@
 #import "ATGDTInterstitialCustomEvent.h"
 #import "Utilities.h"
 #import "ATInterstitialManager.h"
+
 @interface ATGDTInterstitialCustomEvent()
 @property(nonatomic, readonly) BOOL fullScreenVideoStarted;
 @end
 @implementation ATGDTInterstitialCustomEvent
-- (void)interstitialSuccessToLoadAd:(id<ATGDTMobInterstitial>)interstitial {
-    [ATLogger logMessage:@"GDTInterstitial::interstitialSuccessToLoadAd" type:ATLogTypeExternal];
-    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:interstitial, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
-}
-
-- (void)interstitialFailToLoadAd:(id<ATGDTMobInterstitial>)interstitial error:(NSError *)error {
-    [ATLogger logMessage:[NSString stringWithFormat:@"GDTInterstitial::interstitialFailToLoadAd:error:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
-}
-
-- (void)interstitialWillPresentScreen:(id<ATGDTMobInterstitial>)interstitial {
-    [ATLogger logMessage:@"GDTInterstitial::interstitialWillPresentScreen" type:ATLogTypeExternal];
-}
-
-- (void)interstitialDidPresentScreen:(id<ATGDTMobInterstitial>)interstitial {
-    [ATLogger logMessage:@"GDTInterstitial::interstitialDidPresentScreen" type:ATLogTypeExternal];
-}
-
-- (void)interstitialDidDismissScreen:(id<ATGDTMobInterstitial>)interstitial {
-    [ATLogger logMessage:@"GDTInterstitial::interstitialDidDismissScreen" type:ATLogTypeExternal];
-    [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) { [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
-}
-
-- (void)interstitialApplicationWillEnterBackground:(id<ATGDTMobInterstitial>)interstitial {
-    [ATLogger logMessage:@"GDTInterstitial::interstitialApplicationWillEnterBackground" type:ATLogTypeExternal];
-}
-
-- (void)interstitialWillExposure:(id<ATGDTMobInterstitial>)interstitial {//will be called multiple times
-    [ATLogger logMessage:@"GDTInterstitial::interstitialWillExposure" type:ATLogTypeExternal];
-}
-
-- (void)interstitialClicked:(id<ATGDTMobInterstitial>)interstitial {
-    [ATLogger logMessage:@"GDTInterstitial::interstitialClicked" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) { [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
-}
-
-- (void)interstitialAdWillPresentFullScreenModal:(id<ATGDTMobInterstitial>)interstitial {
-    [ATLogger logMessage:@"GDTInterstitial::interstitialAdWillPresentFullScreenModal" type:ATLogTypeExternal];
-}
-
-- (void)interstitialAdDidPresentFullScreenModal:(id<ATGDTMobInterstitial>)interstitial {
-    [ATLogger logMessage:@"GDTInterstitial::interstitialAdDidPresentFullScreenModal" type:ATLogTypeExternal];
-}
-- (void)interstitialAdWillDismissFullScreenModal:(id<ATGDTMobInterstitial>)interstitial {
-    [ATLogger logMessage:@"GDTInterstitial::interstitialAdWillDismissFullScreenModal" type:ATLogTypeExternal];
-}
-
-- (void)interstitialAdDidDismissFullScreenModal:(id<ATGDTMobInterstitial>)interstitial {
-    [ATLogger logMessage:@"GDTInterstitial::interstitialAdDidDismissFullScreenModal" type:ATLogTypeExternal];
-}
 
 #pragma mark - interstitial 2.0
 - (void)unifiedInterstitialSuccessToLoadAd:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
     [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialSuccessToLoadAd:" type:ATLogTypeExternal];
-    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:unifiedInterstitial, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
+//    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:unifiedInterstitial, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
+    [self trackInterstitialAdLoaded:unifiedInterstitial adExtra:nil];
 }
 
 - (void)unifiedInterstitialFailToLoadAd:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial error:(NSError *)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"GDTUnifiedInterstitial::unifiedInterstitialFailToLoadAd:error:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackInterstitialAdLoadFailed:error];
 }
 
 - (void)unifiedInterstitialWillPresentScreen:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
@@ -83,14 +33,12 @@
 
 - (void)unifiedInterstitialDidPresentScreen:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
     [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialDidPresentScreen:" type:ATLogTypeExternal];
-    [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackInterstitialAdShow];
 }
 
 - (void)unifiedInterstitialDidDismissScreen:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
     [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialDidDismissScreen:" type:ATLogTypeExternal];
-    [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) { [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackInterstitialAdClose];
 }
 
 - (void)unifiedInterstitialWillLeaveApplication:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
@@ -103,8 +51,7 @@
 
 - (void)unifiedInterstitialClicked:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
     [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialClicked:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) { [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackInterstitialAdClick];
 }
 
 - (void)unifiedInterstitialAdWillPresentFullScreenModal:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
@@ -129,15 +76,11 @@
         case GDTMediaPlayerStatusStarted:
             if (!_fullScreenVideoStarted) {
                 _fullScreenVideoStarted = YES;
-                [self trackVideoStart];
-                if ([self.delegate respondsToSelector:@selector(interstitialDidStartPlayingVideoForPlacementID:extra:)]) { [self.delegate interstitialDidStartPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+                [self trackInterstitialAdVideoStart];
             }
             break;
         case GDTMediaPlayerStatusStoped:
-            [self trackVideoEnd];
-            if ([self.delegate respondsToSelector:@selector(interstitialDidEndPlayingVideoForPlacementID:extra:)]) {
-                [self.delegate interstitialDidEndPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-            }
+            [self trackInterstitialAdVideoEnd];
             break;
         default:
             break;
@@ -159,9 +102,14 @@
 - (void)unifiedInterstitialAdViewDidDismissVideoVC:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {
     [ATLogger logMessage:@"GDTUnifiedInterstitial::unifiedInterstitialAdViewDidDismissVideoVC:" type:ATLogTypeExternal];
 }
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"unit_id"];
-    return extra;
+
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unit_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

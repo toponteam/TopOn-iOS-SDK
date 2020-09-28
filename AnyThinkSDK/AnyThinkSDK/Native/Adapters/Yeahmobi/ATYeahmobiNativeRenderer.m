@@ -33,9 +33,8 @@
 -(void) adViewTapped {
     id<ATCTNativeAdModel> nativeAd = ((ATNativeADCache*)(((id<ATNativeADView>)self.ADView).nativeAd)).assets[kAdAssetsCustomObjectKey];
     [nativeAd clickAdJumpToMarker];
-    [self.ADView notifyNativeAdClick];
     ATYeahmobiNativeCustomEvent *customEvent = ((ATNativeADCache*)(((id<ATNativeADView>)self.ADView).nativeAd)).assets[kYearmobiNativeAssetsCustomEventKey];
-    [customEvent trackClick];
+    [customEvent trackNativeAdClick];
 }
 
 -(__kindof UIView*)createMediaView {

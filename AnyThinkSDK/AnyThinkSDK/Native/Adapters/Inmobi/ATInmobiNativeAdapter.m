@@ -16,6 +16,7 @@
 #import "ATNativeADOfferManager.h"
 #import "ATAdAdapter.h"
 #import "ATAppSettingManager.h"
+
 NSString *const kInmobiNativeADAdapterAssetKey = @"native_ad_model";
 NSString *const kInmobiNativeADAdapterEventKey = @"event";
 static NSString *const kATInmobiSDKInitedNotification = @"com.anythink.InMobiInitNotification";
@@ -24,6 +25,7 @@ static NSString *const kATInmobiSDKInitedNotification = @"com.anythink.InMobiIni
 @property(nonatomic, readonly) id<ATIMNative> nativeAd;
 @property(nonatomic, readonly) ATInmobiCustomEvent *customEvent;
 @property(nonatomic, readonly) NSDictionary *info;
+@property(nonatomic, readonly) NSDictionary *localInfo;
 @property(nonatomic, readonly) void (^LoadCompletionBlock)(NSArray<NSDictionary*> *assets, NSError *error);
 @end
 
@@ -32,7 +34,7 @@ static NSString *const kATInmobiSDKInitedNotification = @"com.anythink.InMobiIni
     return [ATInmobiNativeADRenderer class];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -43,51 +45,53 @@ static NSString *const kATInmobiSDKInitedNotification = @"com.anythink.InMobiIni
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
     if (NSClassFromString(@"IMSdk") != nil && NSClassFromString(@"IMNative") != nil) {
         [[ATAPI sharedInstance] inspectInitFlagForNetwork:kNetworkNameInmobi usingBlock:^NSInteger(NSInteger currentValue) {
             if (currentValue == 0) {//not inited
 //                [[ATAPI sharedInstance] setInitFlag:1 forNetwork:kNetworkNameInmobi];
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) { [NSClassFromString(@"IMSdk") updateGDPRConsent:@{@"gdpr_consent_available":limit ? @"false" : @"true", @"gdpr":[[ATAPI sharedInstance] inDataProtectionArea] ? @"1" : @"0"}]; }
-                [NSClassFromString(@"IMSdk") initWithAccountID:info[@"app_id"] andCompletionHandler:^(NSError *error) {
+                [NSClassFromString(@"IMSdk") initWithAccountID:serverInfo[@"app_id"] andCompletionHandler:^(NSError *error) {
                     if (error == nil) {
                         [[ATAPI sharedInstance] setInitFlag:2 forNetwork:kNetworkNameInmobi];
                         [[NSNotificationCenter defaultCenter] postNotificationName:kATInmobiSDKInitedNotification object:nil];
-                        [self loadADUsingInfo:info completion:completion];
+                        [self loadADUsingInfo:serverInfo localInfo:localInfo completion:completion];
                     } else {
-                        completion(nil, error != nil ? error : [NSError errorWithDomain:@"com.anythink.InmobiNativeLoading" code:0 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load ad", NSLocalizedFailureReasonErrorKey:@"IMSDK has failed to initialize"}]);
+                        completion(nil, error != nil ? error : [NSError errorWithDomain:@"com.anythink.InmobiNativeLoading" code:0 userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"IMSDK has failed to initialize"}]);
                     }
                 }];
                 return 1;
             } else if (currentValue == 1) {//initing
-                self->_info = info;
+                self->_info = serverInfo;
+                self->_localInfo = localInfo;
                 self->_LoadCompletionBlock = completion;
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleInitNotification:) name:kATInmobiSDKInitedNotification object:nil];
                 return currentValue;
             } else if (currentValue == 2) {//inited
-                [self loadADUsingInfo:info completion:completion];
+                [self loadADUsingInfo:serverInfo localInfo:localInfo completion:completion];
                 return currentValue;
             }
             return currentValue;
         }];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load native ad.", NSLocalizedFailureReasonErrorKey:@"This might be due to Inmobi SDK not being imported or it's imported but a unsupported version is being used."}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadNativeADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Inmobi"]}]);
     }
 }
 
 -(void) handleInitNotification:(NSNotification*)notification {
-    [self loadADUsingInfo:self.info completion:self.LoadCompletionBlock];
+    [self loadADUsingInfo:self.info localInfo:self.localInfo completion:self.LoadCompletionBlock];
 }
 
--(void) loadADUsingInfo:(NSDictionary*)info completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
+-(void) loadADUsingInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
     _customEvent = [ATInmobiCustomEvent new];
-    _customEvent.unitID = info[@"unit_id"];
+    _customEvent.unitID = serverInfo[@"unit_id"];
     _customEvent.requestCompletionBlock = completion;
-    _customEvent.requestExtra = info[kAdapterCustomInfoExtraKey];
+    _customEvent.requestExtra = localInfo;
     _customEvent.requestNumber = 1;
-    _nativeAd = [[NSClassFromString(@"IMNative") alloc] initWithPlacementId:[info[@"unit_id"] longLongValue] delegate:self->_customEvent];
+    _nativeAd = [[NSClassFromString(@"IMNative") alloc] initWithPlacementId:[serverInfo[@"unit_id"] longLongValue] delegate:self->_customEvent];
     [_nativeAd load];
 }
 @end

@@ -18,6 +18,7 @@
 #import "NSObject+ExtraInfo.h"
 #import "ATAdCustomEvent.h"
 #import "ATBaiduNativeRenderer.h"
+
 @interface ATBaiduNativeAdapter()
 @property(nonatomic, readonly) ATBaiduNativeCustomEvent *customEvent;
 @property(nonatomic, readonly) id<ATBaiduMobAdNative> naitve;
@@ -27,7 +28,7 @@
     return [ATBaiduNativeRenderer class];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -44,23 +45,23 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"BaiduMobAdNative") != nil && NSClassFromString(@"BaiduMobAdNativeAdView") != nil) {
         _customEvent = [[ATBaiduNativeCustomEvent alloc] init];
-        _customEvent.unitID = info[@"placement_id"];
+        _customEvent.unitID = serverInfo[@"placement_id"];
         _customEvent.requestCompletionBlock = completion;
-        NSDictionary *extraInfo = info[kAdapterCustomInfoExtraKey];
+        NSDictionary *extraInfo = localInfo;
         _customEvent.requestExtra = extraInfo;
         
         [NSClassFromString(@"BaiduMobAdNativeAdView") dealTapGesture:YES];
         _naitve = [[NSClassFromString(@"BaiduMobAdNative") alloc] init];
         _naitve.delegate = _customEvent;
         _customEvent.baiduNative = _naitve;
-        _naitve.publisherId = info[@"app_id"];
-        _naitve.adId = info[@"ad_place_id"];
+        _naitve.publisherId = serverInfo[@"app_id"];
+        _naitve.adId = serverInfo[@"ad_place_id"];
         [_naitve requestNativeAds];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load native ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"MobPower"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadNativeADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Baidu"]}]);
     }
 }
 @end

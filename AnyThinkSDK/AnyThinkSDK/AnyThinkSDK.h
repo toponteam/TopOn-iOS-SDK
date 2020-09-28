@@ -8,8 +8,16 @@
 
 #import <Foundation/Foundation.h>
 #import "ATAPI.h"
+#import "ATAPI+Internal.h"
+#import "ATImageLoader.h"
 #import "ATAdManager.h"
 #import "ATAdLoadingDelegate.h"
+#import "ATAd.h"
+#import "ATTracker.h"
+#import "ATAdCustomEvent.h"
+#import "ATAdAdapter.h"
+#import "ATPlacementModel.h"
+
 //! Project version number for AnyThinkSDK.
 FOUNDATION_EXPORT double AnyThinkSDKVersionNumber;
 

@@ -10,49 +10,69 @@
 #import "Utilities.h"
 #import "ATAPI.h"
 #import "ATInterstitialManager.h"
+
 @interface ATUnityAdsInterstitialCustomEvent()
 @property(nonatomic, readonly) BOOL requestFinished;
 @end
 @implementation ATUnityAdsInterstitialCustomEvent
-- (void)unityServicesDidError:(NSInteger)error withMessage:(NSString *)message {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::unityServicesDidError:%ld withMessage:%@", error, message] type:ATLogTypeExternal];
-    [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.UnityAdsInterstitialLoad" code:error userInfo:@{NSLocalizedDescriptionKey:@"anythinkSDK has failed to load interstitial.", NSLocalizedFailureReasonErrorKey:[message length] > 0 ? message : @"UnityAds SDK has failed to load interstitial." }]];
-    _requestFinished = YES;
-}
--(void)placementContentReady:(NSString *)placementId placementContent:(id<UMONShowAdPlacementContent>)decision {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::placementContentReady:%@ placementContent:", placementId] type:ATLogTypeExternal];
+
+-(instancetype) initWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
+    self = [super initWithInfo:serverInfo localInfo:localInfo];
+    if (self != nil) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadedNotification:) name:kATUnityAdsInterstitialLoadedNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleFailedToLoadNotification:) name:kATUnityAdsInterstitialFailedToLoadNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleStartPlayingNotification:) name:kATUnityAdsInterstitialPlayStartNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleCloseNotification:) name:kATUnityAdsInterstitialCloseNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleClickNotification:) name:kATUnityAdsInterstitialClickNotification object:nil];
+    }
+    return self;
 }
 
--(void)placementContentStateDidChange:(NSString *)placementId placementContent:(id<UMONShowAdPlacementContent>)placementContent previousState:(NSInteger)previousState newState:(NSInteger)newState {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::placementContentStateDidChange:%@ placementContent:previousState:%ld newState:%ld", placementId, previousState, newState] type:ATLogTypeExternal];
-    if (newState == 0 && [placementId isEqualToString:self.unitID] && !_requestFinished) {
-        [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::Ad ready for placementID:%@", placementId] type:ATLogTypeExternal];
-        [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:placementContent}];
+-(void) handleLoadedNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kATUnityAdsInterstitialNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && !_requestFinished) {
+        [self trackInterstitialAdLoaded:self adExtra:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsInterstitialLoadedNotification object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsInterstitialFailedToLoadNotification object:nil];
         _requestFinished = YES;
     }
 }
 
--(void)unityAdsDidStart:(NSString*)placementId {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::unityAdsDidStart:%@", placementId] type:ATLogTypeExternal];
-    if ([placementId isEqualToString:self.unitID]) {
-        [self trackShow];
-        if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+-(void) handleFailedToLoadNotification:(NSNotification*)notification {
+    [self trackInterstitialAdLoadFailed:notification.userInfo[kATUnityAdsInterstitialNotificationUserInfoErrorKey]];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsInterstitialLoadedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsInterstitialFailedToLoadNotification object:nil];
+    _requestFinished = YES;
+}
+
+-(void) handleStartPlayingNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kATUnityAdsInterstitialNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && self.interstitial != nil) {
+        [self trackInterstitialAdShow];
+        [self trackInterstitialAdVideoStart];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsInterstitialPlayStartNotification object:nil];
     }
 }
 
--(void)unityAdsDidFinish:(NSString*)placementId withFinishState:(NSInteger)finishState {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::unityAdsDidFinish:%@ withFinishState:%ld", placementId, finishState] type:ATLogTypeExternal];
-    if ([placementId isEqualToString:self.unitID]) {
-        [self handleClose];
-        if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-            [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-        }
+-(void) handleClickNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kATUnityAdsInterstitialNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && self.interstitial != nil) {
+        [self trackInterstitialAdClick];
     }
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"placement_id"];
-    return extra;
+-(void) handleCloseNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kATUnityAdsInterstitialNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && self.interstitial != nil) {
+        [super trackInterstitialAdClose];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsInterstitialClickNotification object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kATUnityAdsInterstitialCloseNotification object:nil];
+    }
 }
+
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"placement_id"];
+}
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"placement_id"];
+//    return extra;
+//}
 @end

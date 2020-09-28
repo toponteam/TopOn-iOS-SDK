@@ -9,8 +9,13 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+extern NSString *const kAdAssetsCustomEventKey;
+extern NSString *const kAdAssetsCustomObjectKey;
+
 //Banner's ad size, the value is a NSValue wrapped CGSize; for banner ad loading, we only support (320.0f, 50.0f) now, so the value you pass via this key will be ignored.
 extern NSString *const kExtraInfoAdSizeKey;
+extern NSString *const kATAdLoadingExtraExcludedBundleIDListKey;
+extern NSString *const kATAdLoadingExtraGDTEnableDefaultAudioSessionKey;
 @protocol ATAdLoadingDelegate;
 @interface ATAdManager : NSObject
 +(instancetype) sharedManager;

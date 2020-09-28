@@ -14,13 +14,18 @@ typedef NS_ENUM(NSInteger, ATPACConsentStatus) {
     ATPACConsentStatusNonPersonalized = 1,  ///< User consented to non-personalized ads.
     ATPACConsentStatusPersonalized = 2,     ///< User consented to personalized ads.
 };
-@interface ATAdmobRewardedVideoAdapter : NSObject<ATRewardedVideoAdapter>
+@interface ATAdmobRewardedVideoAdapter : NSObject
 @end
 
 @protocol ATPACConsentInformation<NSObject>
 + (instancetype)sharedInstance;
 @property(nonatomic) ATPACConsentStatus consentStatus;
 @property(nonatomic, getter=isTaggedForUnderAgeOfConsent) BOOL tagForUnderAgeOfConsent;
+@end
+
+@protocol ATGADMobileAds<NSObject>
++ (id<ATGADMobileAds>)sharedInstance;
+@property(nonatomic, nonnull, readonly) NSString *sdkVersion;
 @end
 
 @protocol ATGADRequest<NSObject>

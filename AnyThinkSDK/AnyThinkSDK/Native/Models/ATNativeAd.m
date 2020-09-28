@@ -18,6 +18,7 @@
         _mainText = assets[kNativeADAssetsMainTextKey];
         _icon = assets[kNativeADAssetsIconImageKey];
         _mainImage = assets[kNativeADAssetsMainImageKey];
+        _logo = assets[kNativeADAssetsLogoImageKey];
         _ctaText = assets[kNativeADAssetsCTATextKey];
         _rating = assets[kNativeADAssetsRatingKey];
         _sponsorImage = assets[kNativeADAssetsSponsoredImageKey];

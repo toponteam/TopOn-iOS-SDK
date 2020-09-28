@@ -34,9 +34,9 @@ static NSString *const kAdColonyRewardedSuccess = @"com.topon.adColony_rewarded_
 static NSString *const kAdColonyClassName = @"AdColony";
 static NSString *const kZoneIDKey = @"zone_id";
 @implementation ATAdColonyRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kZoneIDKey]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kZoneIDKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id<ATAdColonyInterstitial>)customObject info:(NSDictionary*)info {
     return !customObject.expired;
@@ -50,21 +50,21 @@ static NSString *const kZoneIDKey = @"zone_id";
     [interstitial showWithPresentingViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(kAdColonyClassName) getSDKVersion] forNetwork:kNetworkNameAdColony];
         });
-        _info = info;
+        _info = serverInfo;
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kAdColonyClassName) != nil) {
-        _customEvent = [[ATAdColonyRewardedVideoCustomEvent alloc] initWithUnitID:info[kZoneIDKey] customInfo:info];
+        _customEvent = [[ATAdColonyRewardedVideoCustomEvent alloc] initWithUnitID:serverInfo[kZoneIDKey] serverInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         __weak typeof(self) weakSelf = self;
         [[ATAPI sharedInstance] inspectInitFlagForNetwork:kNetworkNameAdColony usingBlock:^NSInteger(NSInteger currentValue) {
@@ -75,13 +75,14 @@ static NSString *const kZoneIDKey = @"zone_id";
                     options.gdprConsentString = [ATAPI sharedInstance].networkConsentInfo[kNetworkNameAdColony][kAdColonyGDPRConsentStringKey];
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set) {
                         options.gdprConsentString = limit ? @"0" : @"1";
                         options.gdprRequired = [[ATAPI sharedInstance] inDataProtectionArea];
                     }
                 }
-                [NSClassFromString(kAdColonyClassName) configureWithAppID:info[@"app_id"] zoneIDs:info[@"zone_ids"] options:options completion:^(NSArray<id<ATAdColonyZone>> *zones) {
+                [NSClassFromString(kAdColonyClassName) configureWithAppID:serverInfo[@"app_id"] zoneIDs:serverInfo[@"zone_ids"] options:options completion:^(NSArray<id<ATAdColonyZone>> *zones) {
                     [zones enumerateObjectsUsingBlock:^(id<ATAdColonyZone>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                         if (obj.rewarded) {
                             [obj setReward:^(BOOL success, NSString *name, int amount) {
@@ -92,7 +93,7 @@ static NSString *const kZoneIDKey = @"zone_id";
                         }
                     }];
                     [[NSNotificationCenter defaultCenter] postNotificationName:kAdColonyRVConfig object:nil userInfo:nil];
-                    [NSClassFromString(kAdColonyClassName) requestInterstitialInZone:info[kZoneIDKey] options:options andDelegate:weakSelf.customEvent];
+                    [NSClassFromString(kAdColonyClassName) requestInterstitialInZone:serverInfo[kZoneIDKey] options:options andDelegate:weakSelf.customEvent];
                     [[ATAPI sharedInstance]setInitFlag:ATRVAdColonyInitStateInited forNetwork:kNetworkNameAdColony];
                 }];
                 return ATRVAdColonyInitStateIniting;
@@ -100,14 +101,14 @@ static NSString *const kZoneIDKey = @"zone_id";
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleConfigurationFinishedNotification:) name:kAdColonyRVConfig object:nil];
                 return currentValue;
             } else if (currentValue == ATRVAdColonyInitStateInited) {
-                [NSClassFromString(kAdColonyClassName) requestInterstitialInZone:info[kZoneIDKey] options:nil andDelegate:weakSelf.customEvent];
+                [NSClassFromString(kAdColonyClassName) requestInterstitialInZone:serverInfo[kZoneIDKey] options:nil andDelegate:weakSelf.customEvent];
                 return currentValue;
             }
             return currentValue;
         }];
         
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kAdColonyClassName]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kAdColonyClassName]}]);
     }
     
 }

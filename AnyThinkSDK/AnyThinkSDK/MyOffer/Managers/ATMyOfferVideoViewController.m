@@ -197,6 +197,10 @@
     }];
 }
 
+UIEdgeInsets SafeAreaInsets_ATMyOfferVideoVC() {
+    return ([[UIApplication sharedApplication].keyWindow respondsToSelector:@selector(safeAreaInsets)] ? [UIApplication sharedApplication].keyWindow.safeAreaInsets : UIEdgeInsetsZero);
+}
+
 -(void)endCard {
     if ([self.delegate respondsToSelector:@selector(myOfferVideoEndCardDidShowWithOfferModel:extra:)]) {
         [self.delegate myOfferVideoEndCardDidShowWithOfferModel:self.offerModel extra:nil];
@@ -293,7 +297,7 @@
 #pragma mark - 懒加载
 -(ATMyOfferProgressView *)progressview {
     if(!_progressview){
-        _progressview = [[ATMyOfferProgressView alloc]initWithFrame:CGRectMake(20, 30, 30, 30)];
+        _progressview = [[ATMyOfferProgressView alloc]initWithFrame:CGRectMake(20, SafeAreaInsets_ATMyOfferVideoVC().top + 10, 30, 30)];
         self.progressview.alpha = 0.6;
         self.progressview.signProgress = self.totalTime;
     }
@@ -310,7 +314,7 @@
 
 -(UIButton *)closeBtn {
     if(!_closeBtn){
-        _closeBtn = [[UIButton alloc]initWithFrame:CGRectMake(self.view.frame.size.width - 65, 25, 40, 40)];
+        _closeBtn = [[UIButton alloc]initWithFrame:CGRectMake(self.view.frame.size.width - 65, SafeAreaInsets_ATMyOfferVideoVC().top + 5, 40, 40)];
         _closeBtn.imageEdgeInsets = UIEdgeInsetsMake(5, 5, 5, 5);
         [_closeBtn setImage:[UIImage anythink_imageWithName:@"MyOfferVideo_Close"] forState:UIControlStateNormal];
         [_closeBtn addTarget:self action:@selector(clickMyOfferCloseVideo) forControlEvents:UIControlEventTouchUpInside];
@@ -320,7 +324,7 @@
 
 -(UIButton *)voiceBtn {
     if(!_voiceBtn){
-        _voiceBtn = [[UIButton alloc]initWithFrame:CGRectMake(70, 30, 30, 30)];
+        _voiceBtn = [[UIButton alloc]initWithFrame:CGRectMake(70, SafeAreaInsets_ATMyOfferVideoVC().top + 10, 30, 30)];
         if (_setting.mute) {
             [_voiceBtn setImage:[UIImage anythink_imageWithName:@"MyOfferVoice_Muted"] forState:UIControlStateNormal];
         }else{
@@ -334,7 +338,7 @@
 -(ATMyOfferVideoBannerView *)bannerView {
     if (!_bannerView) {
         CGFloat height = 80.0;
-        _bannerView = [[ATMyOfferVideoBannerView alloc]initWithFrame:CGRectMake(10, videoHeight - height -8, videoWidth - 20, height)];
+        _bannerView = [[ATMyOfferVideoBannerView alloc]initWithFrame:CGRectMake(10, videoHeight - SafeAreaInsets_ATMyOfferVideoVC().bottom - height - 8, videoWidth - 20, height)];
         NSString * path = [[ATMyOfferResourceManager sharedManager]resourcePathForOfferModel:self.offerModel resourceURL:self.offerModel.iconURL];
         [_bannerView.iconImage setImage:[UIImage imageWithData:[NSData dataWithContentsOfFile:path]]];
         _bannerView.title.text = self.offerModel.title;

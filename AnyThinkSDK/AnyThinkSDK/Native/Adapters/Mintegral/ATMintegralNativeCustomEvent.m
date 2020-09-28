@@ -24,11 +24,17 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
     [nativeAds enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         dispatch_group_enter(ads_loading_group);
         __weak id<ATMTGCampaign> campaign = obj;
-        NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:campaign, kAdAssetsCustomObjectKey, self.unitID, kNativeADAssetsUnitIDKey, self, kATMintegralNativeAssetCustomEvent, nil];
+        NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:campaign, kAdAssetsCustomObjectKey, self.unitID, kNativeADAssetsUnitIDKey, self, kATMintegralNativeAssetCustomEvent, @(_price), kAdAssetsPriceKey, nil];
         assets[kMTGAssetsNativeAdManagerKey] = _nativeAdManager;
-        if ([campaign.appName length] > 0) { assets[kNativeADAssetsMainTitleKey] = campaign.appName; }
-        if ([campaign.appDesc length] > 0) { assets[kNativeADAssetsMainTextKey] = campaign.appDesc; }
-        if ([campaign.adCall length] > 0) { assets[kNativeADAssetsCTATextKey] = campaign.adCall; }
+        if ([campaign.appName length] > 0) {
+            assets[kNativeADAssetsMainTitleKey] = campaign.appName;
+        }
+        if ([campaign.appDesc length] > 0) {
+            assets[kNativeADAssetsMainTextKey] = campaign.appDesc;
+        }
+        if ([campaign.adCall length] > 0) {
+            assets[kNativeADAssetsCTATextKey] = campaign.adCall;
+        }
         
         dispatch_group_t image_load_group = dispatch_group_create();
         
@@ -36,7 +42,9 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
             assets[kNativeADAssetsImageURLKey] = campaign.imageUrl;
             dispatch_group_enter(image_load_group);
             [campaign loadImageUrlAsyncWithBlock:^(UIImage *image) {
-                if (image != nil) { assets[kNativeADAssetsMainImageKey] = image; }
+                if (image != nil) {
+                    assets[kNativeADAssetsMainImageKey] = image;
+                }
                 dispatch_group_leave(image_load_group);
             }];
         }
@@ -45,7 +53,9 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
             assets[kNativeADAssetsIconURLKey] = campaign.iconUrl;
             dispatch_group_enter(image_load_group);
             [campaign loadIconUrlAsyncWithBlock:^(UIImage *image) {
-                if (image != nil) { assets[kNativeADAssetsIconImageKey] = image; }
+                if (image != nil) {
+                    assets[kNativeADAssetsIconImageKey] = image;
+                }
                 dispatch_group_leave(image_load_group);
             }];
         }
@@ -54,7 +64,9 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
             dispatch_group_leave(ads_loading_group);
         });
     }];
-    dispatch_group_notify(ads_loading_group, dispatch_get_main_queue(), ^{ self.requestCompletionBlock(offers, nil); });
+    dispatch_group_notify(ads_loading_group, dispatch_get_main_queue(), ^{
+        self.requestCompletionBlock(offers, nil);
+    });
 }
 
 - (void)nativeAdsFailedToLoadWithError:(nonnull NSError *)error nativeManager:(nonnull id<ATMTGNativeAdManager>)nativeManager {
@@ -62,12 +74,14 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
     self.requestCompletionBlock(nil, error != nil ? error : [NSError errorWithDomain:@"com.anythink.MTGNativeLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load native ad", NSLocalizedFailureReasonErrorKey:@"MTGSDK has failed to load native ad"}]);
 }
 
-- (void)nativeAdImpressionWithType:(ATMTGAdSourceType)type mediaView:(id<ATMTGMediaView>)mediaView { [ATLogger logMessage:@"MTGNative::nativeAdImpressionWithType:mediaView:" type:ATLogTypeExternal]; }
+- (void)nativeAdImpressionWithType:(ATMTGAdSourceType)type mediaView:(id<ATMTGMediaView>)mediaView {
+    //Impression will be tracked within the base ad view
+    [ATLogger logMessage:@"MTGNative::nativeAdImpressionWithType:mediaView:" type:ATLogTypeExternal];
+}
 
 - (void)nativeAdDidClick:(nonnull id<ATMTGCampaign>)nativeAd nativeManager:(id<ATMTGMediaView>)nativeManager {
     [ATLogger logMessage:@"MTGNative::nativeAdDidClick:nativeManager:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 #pragma mark - header bidding
@@ -80,9 +94,15 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
         __weak id<ATMTGCampaign> campaign = obj;
         NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:campaign, kAdAssetsCustomObjectKey, self.unitID, kNativeADAssetsUnitIDKey, self, kATMintegralNativeAssetCustomEvent, nil];
         assets[kMTGAssetsNativeAdManagerKey] = _bidNativeAdManager;
-        if ([campaign.appName length] > 0) { assets[kNativeADAssetsMainTitleKey] = campaign.appName; }
-        if ([campaign.appDesc length] > 0) { assets[kNativeADAssetsMainTextKey] = campaign.appDesc; }
-        if ([campaign.adCall length] > 0) { assets[kNativeADAssetsCTATextKey] = campaign.adCall; }
+        if ([campaign.appName length] > 0) {
+            assets[kNativeADAssetsMainTitleKey] = campaign.appName;
+        }
+        if ([campaign.appDesc length] > 0) {
+            assets[kNativeADAssetsMainTextKey] = campaign.appDesc;
+        }
+        if ([campaign.adCall length] > 0) {
+            assets[kNativeADAssetsCTATextKey] = campaign.adCall;
+        }
         
         dispatch_group_t image_load_group = dispatch_group_create();
         
@@ -90,7 +110,9 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
             assets[kNativeADAssetsImageURLKey] = campaign.imageUrl;
             dispatch_group_enter(image_load_group);
             [campaign loadImageUrlAsyncWithBlock:^(UIImage *image) {
-                if (image != nil) { assets[kNativeADAssetsMainImageKey] = image; }
+                if (image != nil) {
+                    assets[kNativeADAssetsMainImageKey] = image;
+                }
                 dispatch_group_leave(image_load_group);
             }];
         }
@@ -99,7 +121,9 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
             assets[kNativeADAssetsIconURLKey] = campaign.iconUrl;
             dispatch_group_enter(image_load_group);
             [campaign loadIconUrlAsyncWithBlock:^(UIImage *image) {
-                if (image != nil) { assets[kNativeADAssetsIconImageKey] = image; }
+                if (image != nil) {
+                    assets[kNativeADAssetsIconImageKey] = image;
+                }
                 dispatch_group_leave(image_load_group);
             }];
         }
@@ -108,7 +132,9 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
             dispatch_group_leave(ads_loading_group);
         });
     }];
-    dispatch_group_notify(ads_loading_group, dispatch_get_main_queue(), ^{ self.requestCompletionBlock(offers, nil); });
+    dispatch_group_notify(ads_loading_group, dispatch_get_main_queue(), ^{
+        self.requestCompletionBlock(offers, nil);
+    });
 }
 
 - (void)nativeAdsFailedToLoadWithError:(nonnull NSError *)error bidNativeManager:(nonnull id<ATMTGBidNativeAdManager>)bidNativeManager {
@@ -117,24 +143,30 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
 }
 
 - (void)nativeAdDidClick:(id<ATMTGCampaign>)nativeAd mediaView:(id<ATMTGMediaView>)mediaView {
-    [ATLogger logMessage:@"MTGNative::nativeAdDidClick:mediaView:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [ATLogger logMessage:@"nativeAdDidClick:mediaView:" type:ATLogTypeExternal];
+    [self trackNativeAdClick];
 }
 
 - (void)nativeAdDidClick:(nonnull id<ATMTGCampaign>)nativeAd bidNativeManager:(nonnull id<ATMTGBidNativeAdManager>)bidNativeManager {
     [ATLogger logMessage:[NSString stringWithFormat:@"MTGNative(Header Bidding)::nativeAdDidClick: bidNativeManager:"] type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
-- (void)nativeAdClickUrlWillStartToJump:(nonnull NSURL *)clickUrl bidNativeManager:(nonnull id<ATMTGBidNativeAdManager>)bidNativeManager { [ATLogger logMessage:[NSString stringWithFormat:@"MTGNative(Header Bidding)::nativeAdClickUrlWillStartToJump:%@ bidNativeManager:", clickUrl] type:ATLogTypeExternal]; }
+- (void)nativeAdClickUrlWillStartToJump:(nonnull NSURL *)clickUrl bidNativeManager:(nonnull id<ATMTGBidNativeAdManager>)bidNativeManager {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MTGNative(Header Bidding)::nativeAdClickUrlWillStartToJump:%@ bidNativeManager:", clickUrl] type:ATLogTypeExternal];
+}
 
-- (void)nativeAdClickUrlDidJumpToUrl:(nonnull NSURL *)jumpUrl bidNativeManager:(nonnull id<ATMTGBidNativeAdManager>)bidNativeManager { [ATLogger logMessage:[NSString stringWithFormat:@"MTGNative(Header Bidding)::nativeAdClickUrlDidJumpToUrl:%@ bidNativeManager:", jumpUrl] type:ATLogTypeExternal]; }
+- (void)nativeAdClickUrlDidJumpToUrl:(nonnull NSURL *)jumpUrl bidNativeManager:(nonnull id<ATMTGBidNativeAdManager>)bidNativeManager {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MTGNative(Header Bidding)::nativeAdClickUrlDidJumpToUrl:%@ bidNativeManager:", jumpUrl] type:ATLogTypeExternal];
+}
 
-- (void)nativeAdClickUrlDidEndJump:(nullable NSURL *)finalUrl error:(nullable NSError *)error bidNativeManager:(nonnull id<ATMTGBidNativeAdManager>)bidNativeManager { [ATLogger logMessage:[NSString stringWithFormat:@"MTGNative(Header Bidding)::nativeAdClickUrlDidEndJump: error:%@ bidNativeManager:", error] type:ATLogTypeExternal]; }
+- (void)nativeAdClickUrlDidEndJump:(nullable NSURL *)finalUrl error:(nullable NSError *)error bidNativeManager:(nonnull id<ATMTGBidNativeAdManager>)bidNativeManager {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MTGNative(Header Bidding)::nativeAdClickUrlDidEndJump: error:%@ bidNativeManager:", error] type:ATLogTypeExternal];
+}
 
-- (void)nativeAdImpressionWithType:(NSInteger)type bidNativeManager:(nonnull id<ATMTGBidNativeAdManager>)bidNativeManager { [ATLogger logMessage:[NSString stringWithFormat:@"MTGNative(Header Bidding)::nativeAdImpressionWithType:%ld bidNativeManager:", type] type:ATLogTypeExternal]; }
+- (void)nativeAdImpressionWithType:(NSInteger)type bidNativeManager:(nonnull id<ATMTGBidNativeAdManager>)bidNativeManager {
+    [ATLogger logMessage:[NSString stringWithFormat:@"MTGNative(Header Bidding)::nativeAdImpressionWithType:%ld bidNativeManager:", type] type:ATLogTypeExternal];
+}
 
 #pragma mark - advanced native ad
 - (void)nativeAdvancedAdLoadSuccess:(id<ATMTGNativeAdvancedAd>)nativeAd {
@@ -144,15 +176,14 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
 
 - (void)nativeAdvancedAdLoadFailed:(id<ATMTGNativeAdvancedAd>)nativeAd error:(NSError *)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"MintegralAdvancedNativeAd::nativeAdvancedAdLoadFailed:error:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error != nil ? error : [NSError errorWithDomain:@"com.anythink.MintegralAdvancedNativeAdLoading" code:0 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load native", NSLocalizedFailureReasonErrorKey:@"MTGSDK has failed to load native"}]];
+    [self trackNativeAdLoadFailed:error != nil ? error : [NSError errorWithDomain:@"com.anythink.MintegralAdvancedNativeAdLoading" code:0 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load native", NSLocalizedFailureReasonErrorKey:@"MTGSDK has failed to load native"}]];
 }
 
 - (void)nativeAdvancedAdWillLogImpression:(id<ATMTGNativeAdvancedAd>)nativeAd { [ATLogger logMessage:@"MintegralAdvancedNativeAd::nativeAdvancedAdWillLogImpression:" type:ATLogTypeExternal]; }
 
 - (void)nativeAdvancedAdDidClicked:(id<ATMTGNativeAdvancedAd>)nativeAd {
     [ATLogger logMessage:@"MintegralAdvancedNativeAd::nativeAdvancedAdDidClicked:" type:ATLogTypeExternal];
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 - (void)nativeAdvancedAdWillLeaveApplication:(id<ATMTGNativeAdvancedAd>)nativeAd { [ATLogger logMessage:@"MintegralAdvancedNativeAd::nativeAdvancedAdWillLeaveApplication:" type:ATLogTypeExternal]; }
@@ -163,13 +194,18 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
 
 - (void)nativeAdvancedAdClosed:(id<ATMTGNativeAdvancedAd>)nativeAd {
     [ATLogger logMessage:@"MintegralAdvancedNativeAd::nativeAdvancedAdClosed:" type:ATLogTypeExternal];
-    [self.adView notifyCloseButtonTapped];
+    [self trackNativeAdClosed];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unitid"];
-    return extra;
+    return cache.unitGroup.content[@"unitid"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unitid"];
+//    return extra;
+//}
 @end

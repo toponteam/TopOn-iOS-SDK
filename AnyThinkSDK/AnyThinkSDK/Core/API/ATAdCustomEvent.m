@@ -18,7 +18,14 @@
 #import "ATPlacementSettingManager.h"
 #import "ATAdLoader.h"
 #import "ATAdManager+Internal.h"
+#import "ATWaterfallManager.h"
 
+NSString *const kATSDKFailedToLoadSplashADMsg = @"AnythinkSDK has failed to load splash ad.";
+NSString *const kATSDKFailedToLoadBannerADMsg = @"AnythinkSDK has failed to load banner ad.";
+NSString *const kATSDKFailedToLoadInterstitialADMsg = @"AnythinkSDK has failed to load interstitial ad.";
+NSString *const kATSDKFailedToLoadNativeADMsg = @"AnythinkSDK has failed to load native ad.";
+NSString *const kATSDKFailedToLoadRewardedVideoADMsg = @"AnythinkSDK has failed to load rewarded video ad.";
+NSString *const kATSDKSplashADTooLongToLoadPlacementSettingMsg = @"It took too long to load placement setting.";
 NSString *const kSDKImportIssueErrorReason = @"This might be due to %@ SDK not being imported or it's imported but a unsupported version is being used.";
 NSString *const kSDKImportIssueRecoverySuggestionKey = @"Make sure %@ are correctly imported.";
 NSString *const kATAdAssetsAppIDKey = @"app_id";
@@ -32,18 +39,19 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
 @implementation ATAdCustomEvent
 +(NSDictionary*)customInfoWithUnitGroupModel:(ATUnitGroupModel*)unitGroupModel extra:(NSDictionary*)extra {
     NSMutableDictionary *info = [NSMutableDictionary dictionaryWithDictionary:unitGroupModel.content];
-    info[kAdapterCustomInfoExtraKey] = @{kAdLoadingExtraFilledByReadyFlagKey:@YES};
+    info[kAdLoadingExtraFilledByReadyFlagKey] = @YES;
     return info;
 }
 
--(instancetype) initWithUnitID:(NSString*)unitID customInfo:(NSDictionary*)customInfo {
+-(instancetype) initWithUnitID:(NSString*)unitID serverInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         _assetsAccessor = [ATThreadSafeAccessor new];
         _assets_impl = [NSMutableArray<NSDictionary*> array];
         _numberOfFinishedRequestsAccessor = [ATThreadSafeAccessor new];
         
-        _customInfo = customInfo;
+        _serverInfo = serverInfo;
+        _localInfo = localInfo;
     }
     return self;
 }
@@ -66,10 +74,17 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
 }
 
 +(NSInteger) calculateAdPriority:(id<ATAd>)ad {
-    NSArray<ATUnitGroupModel*>* ugs = [ad.placementModel unitGroupsForRequestID:ad.requestID];
-    ugs = [ugs count] > 0 ? ugs : ad.placementModel.unitGroups;
-    
-    return [ugs indexOfObject:ad.unitGroup];;
+    NSArray<ATUnitGroupModel*>* ugs = ad.finalWaterfall.unitGroups;
+    __block NSInteger priority = NSNotFound;
+    if (ugs != nil && ad != nil) {
+           [ugs enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull unitGroup, NSUInteger idx, BOOL * _Nonnull stop) {
+               if ([unitGroup.unitID isEqualToString:ad.unitGroup.unitID]) {
+                   *stop = YES;
+                   priority = idx;
+               }
+           }];
+       }
+    return priority;
 }
 
 -(ATNativeADSourceType) adSourceType {
@@ -80,20 +95,22 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
     if (self.ad != nil) {
         self.sdkTime = [Utilities normalizedTimeStamp];
         [[ATLoadingScheduler sharedScheduler] cancelScheduleLoadingWithPlacementModel:self.ad.placementModel unitGroup:self.ad.unitGroup requestID:self.ad.requestID];
-        [ATLogger logMessage:[NSString stringWithFormat:@"\nImpression with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:self.ad event:ATGeneralAdAgentEventTypeImpression extra:self.customInfo[kAdapterCustomInfoExtraKey] error:nil]] type:ATLogTypeTemporary];
+        [ATLogger logMessage:[NSString stringWithFormat:@"\nImpression with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:self.ad event:ATGeneralAdAgentEventTypeImpression extra:self.localInfo error:nil]] type:ATLogTypeTemporary];
         [[ATCapsManager sharedManager] increaseCapWithPlacementID:self.ad.placementModel.placementID unitGroupID:self.ad.unitGroup.unitGroupID requestID:self.ad.requestID];
         [[ATCapsManager sharedManager] setLastShowTimeWithPlacementID:self.ad.placementModel.placementID unitGroupID:self.ad.unitGroup.unitGroupID];
         
-        NSDictionary *loadExtra = [self.customInfo[kAdapterCustomInfoExtraKey] isKindOfClass:[NSDictionary class]] ? self.customInfo[kAdapterCustomInfoExtraKey] : nil;
-        NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:self.ad.unitGroup requestID:self.ad.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.ad.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.ad.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.ad.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, self.sdkTime,kATTrackerExtraAdShowSDKTimeKey,nil];
+        NSDictionary *loadExtra = [self.localInfo isKindOfClass:[NSDictionary class]] ? self.localInfo : nil;
+        NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.ad requestID:self.ad.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.ad.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.ad.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.ad.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, self.sdkTime,kATTrackerExtraAdShowSDKTimeKey,nil];
+        if (self.ad.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
         [[ATTracker sharedTracker] trackWithPlacementID:self.ad.placementModel.placementID requestID:self.ad.requestID trackType:ATNativeADTrackTypeADShow extra:trackingExtra];
     }
 }
 
 -(void) trackClick {
-    [ATLogger logMessage:[NSString stringWithFormat:@"\nClick with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:self.ad event:ATGeneralAdAgentEventTypeClick extra:self.customInfo[kAdapterCustomInfoExtraKey] error:nil]] type:ATLogTypeTemporary];
-    NSDictionary *loadExtra = [self.customInfo[kAdapterCustomInfoExtraKey] isKindOfClass:[NSDictionary class]] ? self.customInfo[kAdapterCustomInfoExtraKey] : nil;
-    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithUnitGroup:self.ad.unitGroup requestID:self.ad.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.ad.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.ad.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, nil];
+    [ATLogger logMessage:[NSString stringWithFormat:@"\nClick with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:self.ad event:ATGeneralAdAgentEventTypeClick extra:self.localInfo error:nil]] type:ATLogTypeTemporary];
+    NSDictionary *loadExtra = [self.localInfo isKindOfClass:[NSDictionary class]] ? self.localInfo : nil;
+    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.ad requestID:self.ad.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.ad.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.ad.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, nil];
+    if (self.ad.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
 //    [[ATTracker sharedTracker] trackWithPlacementID:self.ad.placementModel.placementID requestID:self.ad.requestID trackType:ATNativeADTrackTypeADClicked extra:trackingExtra];
     [[ATTracker sharedTracker]trackClickWithAd:self.ad extra:trackingExtra];
 }
@@ -129,4 +146,10 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
     _showDate = [NSDate date];
     _psIDOnShow = [ATAPI sharedInstance].psID;
 }
+
+- (NSString *)networkUnitId {
+    return @"";
+}
+
+
 @end

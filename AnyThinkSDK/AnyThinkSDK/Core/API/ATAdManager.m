@@ -33,10 +33,13 @@ NSString *const kAdLoadingTrackingExtraFlagKey = @"hight_priority_shown_flag";
 NSString *const kAdLoadingExtraDefaultLoadKey = @"default_ad_source_load";
 NSString *const kAdLoadingExtraFilledByReadyFlagKey = @"filled_by_ready";
 NSString *const kAdLoadingExtraAutoLoadOnCloseFlagKey = @"auto_load_on_close";
+NSString *const kATAdLoadingExtraExcludedBundleIDListKey = @"excluded_offer_bundle_id_list";
+NSString *const kATAdLoadingExtraGDTEnableDefaultAudioSessionKey = @"GDT_Enable_Default_AudioSession";
 
 NSString *const kAdAssetsCustomEventKey = @"custom_event";
 NSString *const kAdAssetsCustomObjectKey = @"custom_object";
 NSString *const kAdAssetsUnitIDKey = @"unit_id";
+NSString *const kAdAssetsPriceKey = @"price";
 @protocol ATAdReady<NSObject>
 -(BOOL) nativeAdReadyForPlacementID:(NSString*)placementID;
 -(BOOL) interstitialReadyForPlacementID:(NSString*)placementID;
@@ -52,6 +55,7 @@ NSString *const kAdAssetsUnitIDKey = @"unit_id";
 @property(nonatomic, readonly) NSMutableSet *placementIDs_impl;
 @property(nonatomic, readonly) ATThreadSafeAccessor *extraInfoAccessor;
 @property(nonatomic, readonly) NSMutableDictionary *extraInfo;
+@property(nonatomic, readonly) NSMutableDictionary *lastExtraInfo;
 @property(nonatomic, readonly) dispatch_queue_t show_api_control_queue_impl;
 @property(nonatomic, readonly) ATThreadSafeAccessor *adBeingShownFlagsAccessor;
 @property(nonatomic, readonly) NSMutableDictionary<NSString*, NSNumber*> *adBeingShowFlags;
@@ -78,6 +82,7 @@ NSString *const kAdAssetsUnitIDKey = @"unit_id";
         }
         _extraInfoAccessor = [ATThreadSafeAccessor new];
         _extraInfo = [NSMutableDictionary new];
+        _lastExtraInfo = [NSMutableDictionary new];
         _show_api_control_queue_impl = dispatch_queue_create("com.anythink.ShowAPIControlQueue", DISPATCH_QUEUE_SERIAL);
          [ATLogger logMessage:@"ATAdManager init end" type:ATLogTypeInternal];
         
@@ -148,6 +153,7 @@ NSString *const kAdAssetsUnitIDKey = @"unit_id";
     [self loadADWithPlacementID:placementID extra:extra delegate:delegate];
 }
 
+//move the custom data param to ATAPI.setCustomData
 -(void) loadADWithPlacementID:(NSString*)placementID extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
     [ATLogger logMessage:[NSString stringWithFormat:@"\nAPI invocation info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent apiLogInfoWithPlacementID:placementID format:NSNotFound api:kATAPILoad]] type:ATLogTypeTemporary];
     if ([placementID length] <= 0 || [[ATAPI sharedInstance].appID length] <= 0 ||  [[ATAPI sharedInstance].appKey length] <= 0) {
@@ -169,19 +175,19 @@ NSString *const kAdAssetsUnitIDKey = @"unit_id";
     //Unit pacing & cap by day&hour
     if (placementModel.unitPacing >= 0 && [[ATCapsManager sharedManager] lastShowTimeOfPlacementID:placementID] != nil && [[NSDate date] timeIntervalSinceDate:[[ATCapsManager sharedManager] lastShowTimeOfPlacementID:placementID]] < placementModel.unitPacing / 1000.0f) {
         if (error != nil) {
-            *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeShowIntervalWithinPlacementPacing userInfo:@{NSLocalizedDescriptionKey:@"The AD for the placement is being shown too frequently.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"The interval between the moment you're trying to show the AD and the moment you showed it last time(%ld) is less than the pacing you've set in the placement strategy(%ld).", (long)[[NSDate date] timeIntervalSinceDate:[[ATCapsManager sharedManager] lastShowTimeOfPlacementID:placementID]], (NSInteger)(placementModel.unitPacing / 1000)]}];
+            *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeShowIntervalWithinPlacementPacing userInfo:@{NSLocalizedDescriptionKey:@"The AD for the placement is being shown too frequently.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"The interval between the moment you're trying to show the AD and the moment you showed it last time(%ld) is less than the pacing you've set in the placement setting(%ld).", (long)[[NSDate date] timeIntervalSinceDate:[[ATCapsManager sharedManager] lastShowTimeOfPlacementID:placementID]], (NSInteger)(placementModel.unitPacing / 1000)]}];
         }
         return nil;
     }
     if (placementModel.unitCapsByDay <= [[ATCapsManager sharedManager] capByDayWithPlacementID:placementID]) {
         if (error != nil) {
-            *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeShowTimesExceedsDayCap userInfo:@{NSLocalizedDescriptionKey:@"The AD for the placement has been shown too many times today.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"The times for which this placment has shown it's AD(%ld) has exceeds the limit you set in the placement strategy(%ld)", (long)[[ATCapsManager sharedManager] capByDayWithPlacementID:placementID], placementModel.unitCapsByDay]}];
+            *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeShowTimesExceedsDayCap userInfo:@{NSLocalizedDescriptionKey:@"The AD for the placement has been shown too many times today.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"The times for which this placment has shown it's AD(%ld) has exceeds the limit you set in the placement setting(%ld)", (long)[[ATCapsManager sharedManager] capByDayWithPlacementID:placementID], placementModel.unitCapsByDay]}];
         }
         return nil;
     }
     if (placementModel.unitCapsByHour <= [[ATCapsManager sharedManager] capByHourWithPlacementID:placementID]) {
         if (error != nil) {
-            *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeShowTimesExceedsHourCap userInfo:@{NSLocalizedDescriptionKey:@"The AD for the placement has been shown too many times within the current hour.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"The times for which this placment has shown it's AD(%ld) has exceeds the limit you set in the placement strategy(%ld)", (long)[[ATCapsManager sharedManager] capByHourWithPlacementID:placementID], placementModel.unitCapsByHour]}];
+            *error = [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeShowTimesExceedsHourCap userInfo:@{NSLocalizedDescriptionKey:@"The AD for the placement has been shown too many times within the current hour.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"The times for which this placment has shown it's AD(%ld) has exceeds the limit you set in the placement setting(%ld)", (long)[[ATCapsManager sharedManager] capByHourWithPlacementID:placementID], placementModel.unitCapsByHour]}];
         }
         return nil;
     }
@@ -272,6 +278,7 @@ static NSString *extraInfoKey = @"extra_info";
     if ([extraInfo isKindOfClass:[NSDictionary class]] && [placementID isKindOfClass:[NSString class]] && [requestID isKindOfClass:[NSString class]]) {
         [_extraInfoAccessor writeWithBlock:^{
             _extraInfo[placementID] = @{requestIDKey:requestID, extraInfoKey:extraInfo};
+            _lastExtraInfo[placementID] = extraInfo;
         }];
     }
 }
@@ -282,6 +289,23 @@ static NSString *extraInfoKey = @"extra_info";
             [_extraInfo removeObjectForKey:placementID];
         }];
     }
+}
+
+/*
+lastExtra info is saved as below:
+{
+    placement_id:extraInfo
+    //other extra info
+}
+*/
+-(NSDictionary*)lastExtraInfoForPlacementID:(NSString*)placementID {
+    return [_extraInfoAccessor readWithBlock:^id{
+        if ([_lastExtraInfo containsObjectForKey:placementID]) {
+            return _lastExtraInfo[placementID];
+        } else {
+            return nil;
+        }
+    }];
 }
 
 /*
@@ -304,6 +328,7 @@ static NSString *extraInfoKey = @"extra_info";
         NSString *latestRequestID = [[ATPlacementSettingManager sharedManager] latestRequestIDForPlacementID:placementID];
         NSInteger latestRequestIDDifferFlag = 1;
         BOOL ready = NO;
+        ATWaterfall *finalWaterfall = nil;
         if (placementModel != nil) {
             if ([ATCapsManager validateCapsForPlacementModel:placementModel]) {
                 if ([ATCapsManager validatePacingForPlacementModel:placementModel]) {
@@ -325,6 +350,8 @@ static NSString *extraInfoKey = @"extra_info";
                     if (extra[kAgentEventExtraInfoMyOfferDefaultFlagKey] != nil) { extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey] = extra[kAgentEventExtraInfoMyOfferDefaultFlagKey]; }
                     if ([extra[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey] boolValue]) { extraInfo[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey] = extra[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey]; }
                     if (extra[kATTrackerExtraAdObjectKey] != nil) { extraInfo[kATTrackerExtraAdObjectKey] = extra[kATTrackerExtraAdObjectKey]; }
+                    finalWaterfall = extra[kAdStorageExtraFinalWaterfallKey];
+                    if ([extra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { extraInfo[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
                 } else {//Logically, control currently will never reach this point
                     extraInfo[kAgentEventExtraInfoNotReadyReasonKey] = @3;
                     ready = NO;
@@ -355,7 +382,9 @@ static NSString *extraInfoKey = @"extra_info";
             if (extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey] != nil) { trackingInfo[kATTrackerExtraMyOfferDefaultFalgKey] = extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey]; }
             if (extraInfo[kATTrackerExtraAdObjectKey] != nil) { trackingInfo[kATTrackerExtraAdObjectKey] = extraInfo[kATTrackerExtraAdObjectKey]; }
             if (scene != nil) { trackingInfo[kATTrackerExtraAdShowSceneKey] = scene; }
+            if ([extraInfo[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { trackingInfo[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
             [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:extraInfo[kAdStorageExtraRequestIDKey] trackType:ATNativeAdTrackTypeShowAPICall extra:trackingInfo];
+            [[ATCapsManager sharedManager] recordShowForPlacementID:placementID unitGroupUnitID:extraInfo[kAdStoreageExtraUnitGroupUnitID] requestID:extraInfo[kAdStorageExtraRequestIDKey]];
         } else {
             //agent event
             NSMutableDictionary *agentEventExtraInfo = [NSMutableDictionary dictionaryWithDictionary:@{kAgentEventExtraInfoReadyFlagKey:@(ready ? 1 : 0), kAgentEventExtraInfoASResultKey:extraInfo[kAdStorageExtraUnitGroupInfosKey] != nil ? extraInfo[kAdStorageExtraUnitGroupInfosKey] : @[]}];
@@ -372,11 +401,11 @@ static NSString *extraInfoKey = @"extra_info";
             agentEventExtraInfo[kAgentEventExtraInfoAutoloadOnCloseFlagKey] = @([extraInfo[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0);
             //Add failed hb adsource
             if (!ready && extraInfo[kAdStorageExtraRequestIDKey] != nil) {
-                NSArray<ATUnitGroupModel*>* sortedAdSource = [placementModel unitGroupsForRequestID:extraInfo[kAdStorageExtraRequestIDKey]];
+                NSArray<ATUnitGroupModel*>* sortedAdSource = [finalWaterfall.unitGroups count] > 0 ? finalWaterfall.unitGroups : @[];
                 NSMutableArray<NSDictionary*>* adsourceResults = [NSMutableArray<NSDictionary*> array];
                 if ([extraInfo[kAdStorageExtraUnitGroupInfosKey] isKindOfClass:[NSArray class]]) { [adsourceResults addObjectsFromArray:extraInfo[kAdStorageExtraUnitGroupInfosKey]]; }
                 
-                NSMutableArray<ATUnitGroupModel*>* hbAdSource = [NSMutableArray arrayWithArray:placementModel.headerBiddingUnitGroups];
+                NSMutableArray<ATUnitGroupModel*>* hbAdSource = [NSMutableArray arrayWithArray:placementModel.S2SHeaderBiddingUnitGroups];
                 [hbAdSource removeObjectsInArray:sortedAdSource];
                 [hbAdSource enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                     NSInteger adsourceNotReadyReason = 0;
@@ -399,7 +428,7 @@ static NSString *extraInfoKey = @"extra_info";
                 }];
                 
                 //Add caped/pacinged adsource for header bidding
-                if ([placementModel.headerBiddingUnitGroups count] > 0) {
+                if ([placementModel.S2SHeaderBiddingUnitGroups count] > 0) {
                     NSMutableArray<ATUnitGroupModel*>* adSources = [NSMutableArray<ATUnitGroupModel*> arrayWithArray:placementModel.unitGroups];
                     [adSources removeObjectsInArray:sortedAdSource];
                     [adSources enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {

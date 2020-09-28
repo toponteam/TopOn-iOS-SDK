@@ -7,9 +7,15 @@
 //
 
 #import "ATModel.h"
+#import "ATMyOfferSetting.h"
 typedef NS_ENUM(NSInteger, ATMyOfferScreenOrientation) {
     ATMyOfferScreenOrientationPortrait,
     ATMyOfferScreenOrientationLandscape
+};
+
+typedef NS_ENUM(NSInteger, ATMyOfferInterstitialType) {
+    ATMyOfferInterstitialVideo = 1,
+    ATMyOfferInterstitialPicture
 };
 
 typedef NS_ENUM(NSInteger, ATMyOfferJumpType) {
@@ -19,7 +25,7 @@ typedef NS_ENUM(NSInteger, ATMyOfferJumpType) {
 };
 
 @interface ATMyOfferOfferModel : ATModel
--(instancetype) initWithDictionary:(NSDictionary *)dictionary placeholders:(NSDictionary*)placeholders;
+-(instancetype) initWithDictionary:(NSDictionary *)dictionary placeholders:(NSDictionary*)placeholders format:(NSInteger)format setting:(ATMyOfferSetting*)setting;
 @property(nonatomic, readonly) NSString *offerID;
 @property(nonatomic, readonly) NSString *resourceID;
 @property(nonatomic, readonly) NSString *title;
@@ -31,6 +37,7 @@ typedef NS_ENUM(NSInteger, ATMyOfferJumpType) {
 @property(nonatomic, readonly) NSString *logoURL;
 @property(nonatomic, readonly) NSString *CTA;
 @property(nonatomic, readonly) NSString *videoURL;
+@property(nonatomic, readonly) ATMyOfferInterstitialType interstitalType;
 @property(nonatomic, readonly) ATMyOfferScreenOrientation videoOrientation;
 @property(nonatomic, readonly) NSString *storeURL;
 @property(nonatomic, readonly) BOOL performsAsynchronousRedirection;
@@ -51,6 +58,17 @@ typedef NS_ENUM(NSInteger, ATMyOfferJumpType) {
 @property(nonatomic, readonly) NSTimeInterval pacing;
 @property(nonatomic, readonly) NSDictionary<NSString*, NSString*> *placeholders;
 @property(nonatomic, readonly) NSArray<NSString*>* resourceURLs;
+
+//v5.6.6
+@property(nonatomic, readonly) NSString *bannerImageUrl;
+@property(nonatomic, readonly) NSString *bannerBigImageUrl;
+@property(nonatomic, readonly) NSString *rectangleImageUrl;
+@property(nonatomic, readonly) NSString *homeImageUrl;
+//@property(nonatomic, readonly) NSInteger screenOrientation;
+
+@property(nonatomic, readonly) NSString *pkgName;
+@property(nonatomic, readonly) NSString *localResourceID;
+
 +(instancetype) mockOfferModel;
 @end
 

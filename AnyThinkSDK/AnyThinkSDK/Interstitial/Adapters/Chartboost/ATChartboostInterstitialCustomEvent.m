@@ -11,6 +11,7 @@
 #import "Utilities.h"
 #import "ATInterstitialManager.h"
 #import "ATAPI.h"
+
 NSString *CacheErrorDesc_ATCHBInterstitial(NSUInteger code) {
     return @{
         @0:@"CHBCacheErrorCodeInternal",
@@ -50,9 +51,10 @@ NSString *ClickErrorDesc_ATCHBInterstitial(NSUInteger code) {
 - (void)didCacheAd:(id)event error:(id<ATCHBError>)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"ChartboostInterstitial::didCacheAd:error:%@", error != nil ? CacheErrorDesc_ATCHBInterstitial(error.code) : @""] type:ATLogTypeExternal];
     if (error == nil) {
-        [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:_interstitialAd, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
+//        [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:_interstitialAd, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
+        [self trackInterstitialAdLoaded:_interstitialAd adExtra:nil];
     } else {
-        [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.ChartboostInterstitalLoading" code:error.code userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load interstitial", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"Chartboost has failed to cache interstitial with code:%@", CacheErrorDesc_ATCHBInterstitial(error.code)]}]];
+        [self trackInterstitialAdLoadFailed:[NSError errorWithDomain:@"com.anythink.ChartboostInterstitalLoading" code:error.code userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load interstitial", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"Chartboost has failed to cache interstitial with code:%@", CacheErrorDesc_ATCHBInterstitial(error.code)]}]];
     }
 }
 
@@ -61,10 +63,9 @@ NSString *ClickErrorDesc_ATCHBInterstitial(NSUInteger code) {
 - (void)didShowAd:(id)event error:(id<ATCHBError>)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"ChartboostInterstitial::didShowAd:error:%@", error != nil ? ShowErrorDesc_ATCHBInterstitial(error.code) : @""] type:ATLogTypeExternal];
     if (error == nil) {
-    [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+        [self trackInterstitialAdShow];
     } else {
-        if ([self.delegate respondsToSelector:@selector(interstitialFailedToShowForPlacementID:error:extra:)]) { [self.delegate interstitialFailedToShowForPlacementID:self.interstitial.placementModel.placementID error:[NSError errorWithDomain:@"com.anythink.ChartboostInterstitialShow" code:error.code userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to show interstitial", NSLocalizedFailureReasonErrorKey:@"Chartboost SDK has failed to show interstitial"}] extra:[self delegateExtra]]; }
+        [self trackInterstitialAdShowFailed:[NSError errorWithDomain:@"com.anythink.ChartboostInterstitialShow" code:error.code userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to show interstitial", NSLocalizedFailureReasonErrorKey:@"Chartboost SDK has failed to show interstitial"}]];
     }
 }
 
@@ -76,8 +77,7 @@ NSString *ClickErrorDesc_ATCHBInterstitial(NSUInteger code) {
 - (void)didClickAd:(id)event error:(id<ATCHBError>)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"ChartboostInterstitial::didClickAd:error:%@", error != nil ? ClickErrorDesc_ATCHBInterstitial(error.code) : @""] type:ATLogTypeExternal];
     if (error == nil) {
-        [self trackClick];
-        if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) { [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+        [self trackInterstitialAdClick];
     }
 }
 
@@ -85,13 +85,16 @@ NSString *ClickErrorDesc_ATCHBInterstitial(NSUInteger code) {
 
 - (void)didDismissAd:(id)event {
     [ATLogger logMessage:@"ChartboostInterstitial::didDismissAd:" type:ATLogTypeExternal];
-    [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) { [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackInterstitialAdClose];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"location"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"location"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"location"];
+//    return extra;
+//}
 @end

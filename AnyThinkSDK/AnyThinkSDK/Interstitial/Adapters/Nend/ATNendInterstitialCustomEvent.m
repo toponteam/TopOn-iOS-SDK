@@ -10,13 +10,14 @@
 #import "ATNendInterstitialAdapter.h"
 #import "Utilities.h"
 #import "ATInterstitialManager.h"
+
 @implementation ATNendInterstitialCustomEvent
 -(void) dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
--(instancetype) initWithUnitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo {
-    self = [super initWithUnitID:unitID customInfo:customInfo];
+-(instancetype) initWithInfo:(NSDictionary *)serverInfo localInfo:(NSDictionary *)localInfo {
+    self = [super initWithInfo:serverInfo localInfo:localInfo];
     if (self != nil) {
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadedNotification:) name:kATNendInterstitialLoadedNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleClickNotification:) name:kATNendInterstitialClickNotification object:nil];
@@ -29,9 +30,10 @@
     if ([spotID isEqualToString:self.unitID]) {
         NSInteger status = [notification.userInfo[kATNendInterstitialNotificationUserInfoStatusKey] integerValue];
         if (status == 0) {
-            [self handleAssets:@{kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:self.unitID != nil ? self.unitID : @""}];
+//            [self handleAssets:@{kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:self.unitID != nil ? self.unitID : @""}];
+            [self trackInterstitialAdLoaded:self.unitID != nil ? self.unitID : @"" adExtra:nil];
         } else {
-            [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.NendInterstitialLoading" code:status userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load interstitial ad", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"Nend interstitial has failed to load interstitial ad with error code:%ld", status]}]];
+            [self trackInterstitialAdLoadFailed:[NSError errorWithDomain:@"com.anythink.NendInterstitialLoading" code:status userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load interstitial ad", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"Nend interstitial has failed to load interstitial ad with error code:%ld", status]}]];
         }
     }
 }
@@ -42,9 +44,9 @@
         if ([spotID isEqualToString:self.unitID]) {
             NSInteger status = [notification.userInfo[kATNendInterstitialNotificationUserInfoClickTypeKey] integerValue];
             if (status == 0) {//Click
-                [self handleClick];
+                [self trackInterstitialAdClick];
             } else if (status == 1) {//Close
-                [self handleClose];
+                [self trackInterstitialAdClose];
             }
         }
     }
@@ -78,37 +80,33 @@
 #pragma mark - interstitial video
 - (void)nadInterstitialVideoAdDidReceiveAd:(id<ATNADInterstitialVideo>)nadInterstitialVideoAd {
     [ATLogger logMessage:@"NendInterstitialVideo::nadInterstitialVideoAdDidReceiveAd:" type:ATLogTypeExternal];
-    [self handleAssets:@{kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:nadInterstitialVideoAd}];
+//    [self handleAssets:@{kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:nadInterstitialVideoAd}];
+    [self trackInterstitialAdLoaded:nadInterstitialVideoAd adExtra:nil];
 }
 
 - (void)nadInterstitialVideoAd:(id<ATNADInterstitialVideo>)nadInterstitialVideoAd didFailToLoadWithError:(NSError *)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"NendInterstitialVideo::nadInterstitialVideoAd:didFailToLoadWithError:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackInterstitialAdLoadFailed:error];
 }
 
 - (void)nadInterstitialVideoAdDidFailedToPlay:(id<ATNADInterstitialVideo>)nadInterstitialVideoAd {
     [ATLogger logMessage:@"NendInterstitialVideo::nadInterstitialVideoAdDidFailedToPlay:" type:ATLogTypeExternal];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidFailToPlayVideoForPlacementID:error:extra:)]) {
-        [self.delegate interstitialDidFailToPlayVideoForPlacementID:self.interstitial.placementModel.placementID error:[NSError errorWithDomain:@"com.anythink.NendInterstitialVideoPlayingFailure" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to play video for interstitial", NSLocalizedFailureReasonErrorKey:@"NendInterstitialVideo failed to play video"}] extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdDidFailToPlayVideo:[NSError errorWithDomain:@"com.anythink.NendInterstitialVideoPlayingFailure" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to play video for interstitial", NSLocalizedFailureReasonErrorKey:@"NendInterstitialVideo failed to play video"}]];
 }
 
 - (void)nadInterstitialVideoAdDidOpen:(id<ATNADInterstitialVideo>)nadInterstitialVideoAd {
     [ATLogger logMessage:@"NendInterstitialVideo::nadInterstitialVideoAdDidOpen:" type:ATLogTypeExternal];
-    [self handleShowSuccess];
+    [self trackInterstitialAdShow];
 }
 
 - (void)nadInterstitialVideoAdDidClose:(id<ATNADInterstitialVideo>)nadInterstitialVideoAd {
     [ATLogger logMessage:@"NendInterstitialVideo::nadInterstitialVideoAdDidClose:" type:ATLogTypeExternal];
-    [self handleClose];
+    [self trackInterstitialAdClose];
 }
 
 - (void)nadInterstitialVideoAdDidStartPlaying:(id<ATNADInterstitialVideo>)nadInterstitialVideoAd {
     [ATLogger logMessage:@"NendInterstitialVideo::nadInterstitialVideoAdDidStartPlaying:" type:ATLogTypeExternal];
-    [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidStartPlayingVideoForPlacementID:extra:)]) {
-        [self.delegate interstitialDidStartPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdVideoStart];
 }
 
 - (void)nadInterstitialVideoAdDidStopPlaying:(id<ATNADInterstitialVideo>)nadInterstitialVideoAd {
@@ -117,15 +115,12 @@
 
 - (void)nadInterstitialVideoAdDidCompletePlaying:(id<ATNADInterstitialVideo>)nadInterstitialVideoAd {
     [ATLogger logMessage:@"NendInterstitialVideo::nadInterstitialVideoAdDidCompletePlaying:" type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidEndPlayingVideoForPlacementID:extra:)]) {
-        [self.delegate interstitialDidEndPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdVideoEnd];
 }
 
 - (void)nadInterstitialVideoAdDidClickAd:(id<ATNADInterstitialVideo>)nadInterstitialVideoAd {
     [ATLogger logMessage:@"NendInterstitialVideo::nadInterstitialVideoAdDidClickAd:" type:ATLogTypeExternal];
-    [self handleClick];
+    [self trackInterstitialAdClick];
 }
 
 - (void)nadInterstitialVideoAdDidClickInformation:(id<ATNADInterstitialVideo>)nadInterstitialVideoAd {
@@ -135,30 +130,35 @@
 #pragma mark - interstitial video
 -(void) completeFullBoardLoad:(id<ATNADFullBoard>)fullBoard errorCode:(NSInteger)error {
     if (fullBoard != nil) {
-        [self handleAssets:@{kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:fullBoard}];
+//        [self handleAssets:@{kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:fullBoard}];
+        [self trackInterstitialAdLoaded:fullBoard adExtra:nil];
     } else {
-        [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.NendFullBoardLoading" code:error userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load interstitial", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"NADFullBoard has failed to load ad with error code:%ld", error]}]];
+        [self trackInterstitialAdLoadFailed:[NSError errorWithDomain:@"com.anythink.NendFullBoardLoading" code:error userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load interstitial", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"NADFullBoard has failed to load ad with error code:%ld", error]}]];
     }
 }
 
 - (void)NADFullBoardDidShowAd:(id<ATNADFullBoard>)ad {
     [ATLogger logMessage:@"NendInterstitialFullBoard::NADFullBoardDidShowAd:" type:ATLogTypeExternal];
-    [self handleShowSuccess];
+    [self trackInterstitialAdShow];
 }
 
 - (void)NADFullBoardDidDismissAd:(id<ATNADFullBoard>)ad {
     [ATLogger logMessage:@"NendInterstitialFullBoard::NADFullBoardDidDismissAd:" type:ATLogTypeExternal];
-    [self handleClose];
+    [self trackInterstitialAdClose];
 }
 
 - (void)NADFullBoardDidClickAd:(id<ATNADFullBoard>)ad {
     [ATLogger logMessage:@"NendInterstitialFullBoard::NADFullBoardDidClickAd:" type:ATLogTypeExternal];
-    [self handleClick];
+    [self trackInterstitialAdClick];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"spot_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"spot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"spot_id"];
+//    return extra;
+//}
 @end

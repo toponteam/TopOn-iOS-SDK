@@ -25,9 +25,9 @@ NSString *const kAdmobRVAssetsCustomEventKey = @"admob_rewarded_video_custom_obj
 
 static NSString *const kUnitIDKey = @"unit_id";
 @implementation ATAdmobRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kUnitIDKey]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kUnitIDKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id<ATGADRewardedAd>)customObject info:(NSDictionary*)info {
     return customObject.isReady;
@@ -39,13 +39,13 @@ static NSString *const kUnitIDKey = @"unit_id";
     [((id<ATGADRewardedAd>)rewardedVideo.customObject) presentFromRootViewController:viewController delegate:customEvent];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             dispatch_async(dispatch_get_main_queue(), ^{
-                [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"GADRequest") sdkVersion] forNetwork:kNetworkNameAdmob];
+                [[ATAPI sharedInstance] setVersion:[[NSClassFromString(@"GADMobileAds") sharedInstance] sdkVersion] forNetwork:kNetworkNameAdmob];
                 if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameAdmob]) {
                     [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameAdmob];
                     id<ATPACConsentInformation> consentInfo = [NSClassFromString(@"PACConsentInformation") sharedInstance];
@@ -54,7 +54,8 @@ static NSString *const kUnitIDKey = @"unit_id";
                         consentInfo.tagForUnderAgeOfConsent = [[ATAPI sharedInstance].networkConsentInfo[kNetworkNameAdmob][kAdmobUnderAgeKey] boolValue];
                     } else {
                         BOOL set = NO;
-                        BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                        BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                         if (set) {
                             consentInfo.consentStatus = limit ? ATPACConsentStatusNonPersonalized : ATPACConsentStatusPersonalized;
                         }
@@ -66,23 +67,22 @@ static NSString *const kUnitIDKey = @"unit_id";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"GADRequest") != nil && NSClassFromString(@"GADRewardedAd") != nil) {
-        _customEvent = [[ATAdmobRewardedVideoCustomEvent alloc] initWithUnitID:info[kUnitIDKey] customInfo:info];
-        _customEvent.requestNumber = [info[@"request_num"] integerValue];
+        _customEvent = [[ATAdmobRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
+        _customEvent.requestNumber = [serverInfo[@"request_num"] integerValue];
         _customEvent.requestCompletionBlock = completion;
-        _rewardedAd = [[NSClassFromString(@"GADRewardedAd") alloc] initWithAdUnitID:info[@"unit_id"]];
+        _rewardedAd = [[NSClassFromString(@"GADRewardedAd") alloc] initWithAdUnitID:serverInfo[@"unit_id"]];
         __weak typeof(self) weakSelf = self;
         [_rewardedAd loadRequest:(id<ATGADRequest>)[NSClassFromString(@"GADRequest") request] completionHandler:^(NSError * _Nullable error) {
             if (error == nil) {
-                [weakSelf.customEvent handleAssets:@{kRewardedVideoAssetsUnitIDKey:info[@"unit_id"], kRewardedVideoAssetsCustomEventKey:weakSelf.customEvent, kAdAssetsCustomObjectKey:weakSelf.rewardedAd}];
+                [weakSelf.customEvent trackRewardedVideoAdLoaded:weakSelf.rewardedAd adExtra:nil];
             } else {
-                [ATLogger logMessage:[NSString stringWithFormat:@"AdmobRewardedVideo::requestFailedWithError:%@(code:%@)", error, [ATAdmobRewardedVideoCustomEvent errorMessageWithError:error]] type:ATLogTypeExternal];
-                [weakSelf.customEvent handleLoadingFailure:error];
+                [weakSelf.customEvent trackRewardedVideoAdLoadFailed:error];
             }
         }];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Admob"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Admob"]}]);
     }
 }
 @end

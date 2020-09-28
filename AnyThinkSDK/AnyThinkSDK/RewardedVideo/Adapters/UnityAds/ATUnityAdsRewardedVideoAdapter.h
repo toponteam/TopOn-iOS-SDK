@@ -8,6 +8,16 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+
+extern NSString *const kATUnityAdsRVLoadedNotification;
+extern NSString *const kATUnityAdsRVFailedToLoadNotification;
+extern NSString *const kATUnityAdsRVPlayStartNotification;
+extern NSString *const kATUnityAdsRVClickNotification;
+extern NSString *const kATUnityAdsRVCloseNotification;
+extern NSString *const kATUnityAdsRVNotificationUserInfoPlacementIDKey;
+extern NSString *const kATUnityAdsRVNotificationUserInfoErrorKey;
+extern NSString *const kATUnityAdsRVNotificationUserInfoRewardedFlag;
+
 typedef NS_ENUM(NSInteger, ATUnityAdsPlacementState) {
     kATUnityAdsPlacementStateReady,
     kATUnityAdsPlacementStateNotAvailable,
@@ -38,8 +48,27 @@ typedef NS_ENUM(NSInteger, ATUnityAdsError) {
 @interface ATUnityAdsRewardedVideoAdapter : NSObject
 @end
 
+@protocol UnityAdsDelegate <NSObject>
+- (void)unityAdsReady:(NSString *)placementId;
+- (void)unityAdsDidError:(NSInteger)error withMessage:(NSString *)message;
+- (void)unityAdsDidStart:(NSString *)placementId;
+- (void)unityAdsDidFinish:(NSString *)placementId
+          withFinishState:(NSInteger)state;
+@end
+
+@protocol UnityAdsExtendedDelegate <UnityAdsDelegate>
+- (void)unityAdsDidClick:(NSString *)placementId;
+- (void)unityAdsPlacementStateChanged:(NSString *)placementId oldState:(NSInteger)oldState newState:(NSInteger)newState;
+@end
+
 @protocol ATUnityAds<NSObject>
 + (NSString *)getVersion;
++ (BOOL)isInitialized;
++ (void)initialize:(NSString *)gameId;
++ (void)addDelegate:(__nullable id<UnityAdsDelegate>)delegate;
++ (void)removeDelegate:(id<UnityAdsDelegate>)delegate;
++ (BOOL)isReady:(NSString *)placementId;
++ (void)show:(UIViewController *)viewController placementId:(NSString *)placementId;
 @end
 
 @protocol UADSPlayerMetaData<NSObject>

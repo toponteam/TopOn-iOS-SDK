@@ -22,15 +22,16 @@ static NSString *const kOguryRewardedVideoClassName = @"OguryAdsOptinVideo";
 @property (nonatomic,readonly) ATOguryRewardedVideoCustomEvent *customEvent;
 @property (nonatomic,readonly) id<ATOguryAdsOptinVideo> rewardedVideo;
 @property (nonatomic) NSDictionary *adInfo;
+@property (nonatomic) NSDictionary *localInfo;
 @property (nonatomic,copy) void (^complet)(NSArray<NSDictionary *> *, NSError *);
 @property (nonatomic,assign) BOOL isReload;
 @property (nonatomic)id<ATOguryAds> ad;
 @end
 @implementation ATOguryRewardedVideoAdapter
 
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[@"unit_id"]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[@"unit_id"]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id)customObject info:(NSDictionary*)info {
     return ((id<ATOguryAdsOptinVideo>)customObject).isLoaded;
@@ -43,17 +44,17 @@ static NSString *const kOguryRewardedVideoClassName = @"OguryAdsOptinVideo";
     [((id<ATOguryAdsOptinVideo>)rewardedVideo.customObject)  showInViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if(self != nil){
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameOgury]) {
-                    [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameOgury];
                     // to do consent with gdpr
+                    [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameOgury];
                     _ad = [NSClassFromString(@"OguryAds") shared];
-                    [_ad setupWithAssetKey:info[@"key"]];
+                    [_ad setupWithAssetKey:serverInfo[@"key"]];
                     if ([[(NSObject*)_ad valueForKey:@"state"]intValue] == 1) {
                         [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameOgury];
                     }
@@ -65,23 +66,24 @@ static NSString *const kOguryRewardedVideoClassName = @"OguryAdsOptinVideo";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (NSClassFromString(kOguryRewardedVideoClassName) != nil) {
-            self.adInfo = info;
+            self.adInfo = serverInfo;
+            self.localInfo = localInfo;
             self.complet = completion;
             if ([[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameOgury] && !_isReload) {
                 _isReload = YES;
-                _customEvent = [[ATOguryRewardedVideoCustomEvent alloc] initWithUnitID:info[@"unit_id"] customInfo:info];
+                _customEvent = [[ATOguryRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
                 _customEvent.requestCompletionBlock = completion;
                 _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
-                _rewardedVideo = [[NSClassFromString(kOguryRewardedVideoClassName) alloc]initWithAdUnitID:info[@"unit_id"]];
+                _rewardedVideo = [[NSClassFromString(kOguryRewardedVideoClassName) alloc]initWithAdUnitID:serverInfo[@"unit_id"]];
                 _rewardedVideo.optInVideoDelegate = _customEvent;
                 _customEvent.OguryAd = _rewardedVideo;
                 [_rewardedVideo load];
             }
         } else {
-            completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Ogury"]}]);
+            completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Ogury"]}]);
         }
     });
 }
@@ -91,7 +93,7 @@ static NSString *const kOguryRewardedVideoClassName = @"OguryAdsOptinVideo";
         if ([[object valueForKey:@"state"]intValue] == 1 && !_isReload) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameOgury];
             _isReload = YES;
-           _customEvent = [[ATOguryRewardedVideoCustomEvent alloc] initWithUnitID:self.adInfo[@"unit_id"] customInfo:self.adInfo];
+            _customEvent = [[ATOguryRewardedVideoCustomEvent alloc] initWithInfo:self.adInfo localInfo:self.localInfo];
             _customEvent.requestCompletionBlock = self.complet;
             _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
             _rewardedVideo = [[NSClassFromString(kOguryRewardedVideoClassName) alloc]initWithAdUnitID:self.adInfo[@"unit_id"]];

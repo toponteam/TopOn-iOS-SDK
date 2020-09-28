@@ -13,6 +13,7 @@
 #import "Utilities.h"
 #import "ATInterstitialManager.h"
 #import "ATAppSettingManager.h"
+
 @interface ATMopubInterstitialAdapter()
 @property(nonatomic) ATMopubInterstitialCustomEvent *customEvent;
 @property(nonatomic) id<ATMPInterstitialAdController> interstitial;
@@ -31,7 +32,7 @@ static NSString *const kUnitIDKey = @"unitid";
     });
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -48,7 +49,8 @@ static NSString *const kUnitIDKey = @"unitid";
                     }
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set) {
                         if (limit) {
                             /**
@@ -69,29 +71,29 @@ static NSString *const kUnitIDKey = @"unitid";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
      if (NSClassFromString(@"MPInterstitialAdController")) {
-        _customEvent = (ATMopubInterstitialCustomEvent*)[[ATInterstitialManager sharedManager] interstitialWithPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID unitGroupID:((ATUnitGroupModel*)info[kAdapterCustomInfoUnitGroupModelKey]).unitGroupID].customEvent;
+        _customEvent = (ATMopubInterstitialCustomEvent*)[[ATInterstitialManager sharedManager] interstitialWithPlacementID:((ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey]).placementID unitGroupID:((ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey]).unitGroupID].customEvent;
          id<ATMoPub> mopub = [NSClassFromString(@"MoPub") sharedInstance];
 
          __weak typeof(self) weakSelf = self;
          void(^Load)(void) = ^{
-             weakSelf.customEvent = [[ATMopubInterstitialCustomEvent alloc] initWithUnitID:info[kUnitIDKey] customInfo:info];
+             weakSelf.customEvent = [[ATMopubInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
              weakSelf.customEvent.requestCompletionBlock = completion;
-             weakSelf.interstitial = [NSClassFromString(@"MPInterstitialAdController") interstitialAdControllerForAdUnitId:info[kUnitIDKey]];
+             weakSelf.interstitial = [NSClassFromString(@"MPInterstitialAdController") interstitialAdControllerForAdUnitId:serverInfo[kUnitIDKey]];
              weakSelf.interstitial.delegate = self->_customEvent;
              [weakSelf.interstitial loadAd];
          };
          if(![ATAPI getMPisInit]){
              [ATAPI setMPisInit:YES];
-             [mopub initializeSdkWithConfiguration:[[NSClassFromString(@"MPMoPubConfiguration") alloc] initWithAdUnitIdForAppInitialization:info[kUnitIDKey]] completion:^{
+             [mopub initializeSdkWithConfiguration:[[NSClassFromString(@"MPMoPubConfiguration") alloc] initWithAdUnitIdForAppInitialization:serverInfo[kUnitIDKey]] completion:^{
                  Load();
              }];
          }else{
               Load();
          }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Mopub"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Mopub"]}]);
     }
 }
 @end

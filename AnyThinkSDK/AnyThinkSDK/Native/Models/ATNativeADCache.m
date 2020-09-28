@@ -17,7 +17,7 @@
 @end
 
 @implementation ATNativeADCache
--(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup {
+-(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
     self = [super initWithAssets:assets];
     if (self != nil) {
         _priority = priority;
@@ -25,7 +25,8 @@
         _requestID = requestID;
         _originalRequestID = requestID;
         _assets = [NSDictionary dictionaryWithDictionary:assets];
-        _unitGroup = unitGroup; 
+        _unitGroup = unitGroup;
+         _finalWaterfall = finalWaterfall;
         _cacheDate = [NSDate normalizaedDate];
         _expireDate = [[NSDate date] dateByAddingTimeInterval:_unitGroup.networkCacheTime / 1000.0f];
         _showTimes = 0;
@@ -35,6 +36,8 @@
         _appID = assets[kATAdAssetsAppIDKey];
         _priorityIndex = [ATAdCustomEvent calculateAdPriority:self];
         _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? (_priorityIndex / _placementModel.maxConcurrentRequestCount) + 1 : 1;
+        _price = unitGroup.headerBidding ? [assets[kAdAssetsPriceKey] doubleValue] : unitGroup.price;
+        if ([assets[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { _autoReqType = 5; }
     }
     return self;
 }

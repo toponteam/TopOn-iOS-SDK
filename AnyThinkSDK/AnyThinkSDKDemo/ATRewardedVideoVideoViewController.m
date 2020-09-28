@@ -71,6 +71,8 @@ static NSString *const kMyOfferPlacementID = @"b5db6c247dbb1e";
 static NSString *const kOguryPlacementID = @"b5dde2379dc6ce";
 static NSString *const kStartAppPlacementID = @"b5e7319f619931";
 static NSString *const kFyberPlacementID = @"b5e96db106d8f2";
+static NSString *const kGAMPlacementID = @"b5f23897bba4ca";
+
 
 @implementation ATRewardedVideoVideoViewController
 -(instancetype) initWithPlacementName:(NSString*)name {
@@ -108,7 +110,8 @@ static NSString *const kFyberPlacementID = @"b5e96db106d8f2";
                           kMyOfferPlacement:kMyOfferPlacementID,
                           kOguryPlacement:kOguryPlacementID,
                           kStartAppPlacement:kStartAppPlacementID,
-                          kFyberPlacement:kFyberPlacementID
+                          kFyberPlacement:kFyberPlacementID,
+                          kGAMPlacement:kGAMPlacementID
                           };
     }
     return self;
@@ -174,7 +177,7 @@ static NSString *const kFyberPlacementID = @"b5e96db106d8f2";
 //    _reload = YES;
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kATAdLoadingExtraMediaExtraKey:@{@"media_key":@"media_val"}, kATAdLoadingExtraUserIDKey:@"rv_test_user_id"} customData:nil delegate:self];
+    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{ kATAdLoadingExtraMediaExtraKey:@"media_val", kATAdLoadingExtraUserIDKey:@"rv_test_user_id", kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} customData:nil delegate:self];
 }
 
 -(void) showAD {
@@ -183,7 +186,7 @@ static NSString *const kFyberPlacementID = @"b5e96db106d8f2";
 
 #pragma mark - loading delegate
 -(void) didFinishLoadingADWithPlacementID:(NSString *)placementID {
-    NSLog(@"ATRewardedVideoVideoViewController::didFinishLoadingADWithPlacementID");
+    NSLog(@"ATRewardedVideoVideoViewController::didFinishLoadingADWithPlacementID:%@", placementID);
     _failureTipsLabel.hidden = YES;
     [_loadingView removeFromSuperview];
 //    if (!_reload) [self showAD];

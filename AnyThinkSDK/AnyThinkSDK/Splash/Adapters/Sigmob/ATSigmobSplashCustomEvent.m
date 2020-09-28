@@ -10,21 +10,24 @@
 #import "Utilities.h"
 #import "ATSplashManager.h"
 #import "ATSplashDelegate.h"
+
 @implementation ATSigmobSplashCustomEvent
 - (void)onSplashAdSuccessPresentScreen:(id<ATWindSplashAd>)splashAd {
     [ATLogger logMessage:@"SigmobSplash::onSplashAdSuccessPresentScreen:" type:ATLogTypeExternal];
-    [self handleAssets:@{kAdAssetsCustomObjectKey:splashAd, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
+    [self trackSplashAdLoaded:splashAd];
+//    [self handleAssets:@{kAdAssetsCustomObjectKey:splashAd, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
+//    if (self.ad == nil) { if ([self.delegate respondsToSelector:@selector(splashDidShowForPlacementID:extra:)]) { [self.delegate splashDidShowForPlacementID:self.unitID extra:[self delegateExtra]]; } }
+    [self trackSplashAdShow];
 }
 
 - (void)onSplashAdFailToPresent:(id<ATWindSplashAd>)splashAd withError:(NSError *)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"SigmobSplash::onSplashAdFailToPresent:withError:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error != nil ? error : [NSError errorWithDomain:@"com.anythink.SigmobSplashLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load splash", NSLocalizedFailureReasonErrorKey:@"Sigmob has failed to load splash"}]];
+    [self trackSplashAdLoadFailed:error != nil ? error : [NSError errorWithDomain:@"com.anythink.SigmobSplashLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load splash", NSLocalizedFailureReasonErrorKey:@"Sigmob has failed to load splash"}]];
 }
 
 - (void)onSplashAdClicked:(id<ATWindSplashAd>)splashAd {
     [ATLogger logMessage:@"SigmobSplash::onSplashAdClicked:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackSplashAdClick];
 }
 
 - (void)onSplashAdWillClosed:(id<ATWindSplashAd>)splashAd {
@@ -33,13 +36,15 @@
 
 - (void)onSplashAdClosed:(id<ATWindSplashAd>)splashAd {
     [ATLogger logMessage:@"SigmobSplash::onSplashAdClosed:" type:ATLogTypeExternal];
-    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackSplashAdClosed];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"placement_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"placement_id"];
 }
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"placement_id"];
+//    return extra;
+//}
 @end

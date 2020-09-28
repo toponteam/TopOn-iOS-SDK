@@ -84,9 +84,9 @@ NSString *const kATOnewayRVNotificationUserInfoSessionKey = @"session";
 
 static NSString *const kPublisherIDKey = @"publisher_id";
 @implementation ATOnewayRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kPublisherIDKey]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kPublisherIDKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id)customObject info:(NSDictionary*)info {
     return [NSClassFromString(@"OWRewardedAd") isReady];
@@ -99,29 +99,29 @@ static NSString *const kPublisherIDKey = @"publisher_id";
     [NSClassFromString(@"OWRewardedAd") show:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameOneway]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameOneway];
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"OneWaySDK") getVersion] forNetwork:kNetworkNameOneway];
 
-            [NSClassFromString(@"OneWaySDK") configure:info[kPublisherIDKey]];
+            [NSClassFromString(@"OneWaySDK") configure:serverInfo[kPublisherIDKey]];
         }
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"OWRewardedAd")) {
-        _customEvent = [[ATOnewayRewardedVideoCustomEvent alloc] initWithUnitID:info[kPublisherIDKey] customInfo:info];
+        _customEvent = [[ATOnewayRewardedVideoCustomEvent alloc] initWithUnitID:serverInfo[kPublisherIDKey] serverInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{ [NSClassFromString(@"OWRewardedAd") initWithDelegate:[ATOnewayRewardedVideoDelegate sharedDelegate]]; });
         
         if ([NSClassFromString(@"OWRewardedAd") isReady]) { [[NSNotificationCenter defaultCenter] postNotificationName:kATOnewayRVReadyNotification object:nil]; }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Oneway"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Oneway"]}]);
     }
 }
 @end

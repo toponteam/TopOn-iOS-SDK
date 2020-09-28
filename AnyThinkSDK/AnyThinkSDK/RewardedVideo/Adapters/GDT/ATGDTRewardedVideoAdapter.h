@@ -15,6 +15,7 @@
 @protocol ATGDTSDKConfig<NSObject>
 + (BOOL)registerAppId:(NSString *)appId;
 + (NSString *)sdkVersion;
++ (void)enableDefaultAudioSessionSetting:(BOOL)enabled;
 @end
 
 @protocol GDTRewardedVideoAdDelegate;

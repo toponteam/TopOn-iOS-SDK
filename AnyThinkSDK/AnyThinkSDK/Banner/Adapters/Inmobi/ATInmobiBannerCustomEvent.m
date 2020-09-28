@@ -25,14 +25,13 @@
 
 -(void)bannerDidFinishLoading:(id<ATIMBanner>)banner {
     [ATLogger logMessage:@"InmobiBanner::bannerDidFinishLoading:" type:ATLogTypeExternal];
-    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:banner, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, nil];
-    if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
-    [self handleAssets:assets];
+
+    [self trackBannerAdLoaded:banner adExtra:nil];
 }
 
 -(void)banner:(id<ATIMBanner>)banner didFailToLoadWithError:(NSError*)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"InmobiBanner::banner:didFailToLoadWithError:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackBannerAdLoadFailed:error];
 }
 
 -(void)banner:(id<ATIMBanner>)banner didInteractWithParams:(NSDictionary*)params {
@@ -78,14 +77,17 @@
 
 -(void) handleClick {
     if (!_interacted || !_clickHandled) {
-        [self trackClick];
-        if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) { [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]]; }
+        [self trackBannerAdClick];
     }
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"unit_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unit_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

@@ -19,8 +19,8 @@
 @property(nonatomic, readonly) CGSize alSize;
 @end
 @implementation ATApplovinBannerCustomEvent
--(instancetype) initWithUnitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo sdkKey:(NSString*)sdkKey alSize:(CGSize)alSize{
-    self = [super initWithUnitID:unitID customInfo:customInfo];
+-(instancetype) initWithUnitID:(NSString *)unitID serverInfo:(NSDictionary *)serverInfo localInfo:(NSDictionary *)localInfo sdkKey:(NSString*)sdkKey alSize:(CGSize)alSize{
+    self = [super initWithInfo:serverInfo localInfo:localInfo];
     if (self != nil) {
         _sdkKey = sdkKey;
         _alSize = alSize;
@@ -30,14 +30,13 @@
 
 - (void)adService:(id<ATALAdService>)adService didLoadAd:(id<ATALAd>)ad {
     [ATLogger logMessage:@"ApplovinBanner::adService:didLoadAd:" type:ATLogTypeExternal];
-    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:_alAdView, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, ad, kAdAssetsCustomObjectKey, nil];
-    if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
-    [self handleAssets:assets];
+    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:ad, kAdAssetsCustomObjectKey, nil];
+    [self trackBannerAdLoaded:_alAdView adExtra:assets];
 }
 
 - (void)adService:(id<ATALAdService>)adService didFailToLoadAdWithError:(int)code {
     [ATLogger logMessage:[NSString stringWithFormat:@"ApplovinBanner::adService:didFailToLoadAdWithError:%d", code] type:ATLogTypeExternal];
-    [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.ApplovinBannerr" code:code userInfo:@{NSLocalizedDescriptionKey:@"ATSDK has failed to load banner.", NSLocalizedFailureReasonErrorKey:@"Applovin has failed to load banner."}]];
+    [self trackBannerAdLoadFailed:[NSError errorWithDomain:@"com.anythink.ApplovinBannerr" code:code userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:@"Applovin has failed to load banner."}]];
 }
 
 - (void)ad:(id<ATALAd>)ad wasDisplayedIn:(UIView *)view {
@@ -47,7 +46,7 @@
 - (void)ad:(id<ATALAd>)ad wasHiddenIn:(UIView *)view {
     [ATLogger logMessage:@"ApplovinBanner::ad:wasHiddenIn:" type:ATLogTypeExternal];
     [self.bannerView loadNextWithoutRefresh];
-    [self handleClose];
+    [self trackBannerAdClosed];
 }
 
 - (void)ad:(id<ATALAd>)ad wasClickedIn:(UIView *)view {
@@ -68,10 +67,7 @@
 
 - (void)ad:(id<ATALAd>)ad willLeaveApplicationForAdView:(id<ATALAdView>)adView {
     [ATLogger logMessage:@"ApplovinBanner::ad:willLeaveApplicationForAdView:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackBannerAdClick];
 }
 
 - (void)ad:(id<ATALAd>)ad didReturnToApplicationForAdView:(id<ATALAdView>)adView {
@@ -82,9 +78,13 @@
     [ATLogger logMessage:[NSString stringWithFormat:@"ApplovinBanner::ad:didFailToDisplayInAdView:withError:%d", (int)code] type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"zone_id"] != nil ? self.banner.unitGroup.content[@"zone_id"] : @"";
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"zone_id"] != nil ? self.serverInfo[@"zone_id"] : @"";
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"zone_id"] != nil ? self.banner.unitGroup.content[@"zone_id"] : @"";
+//    return extra;
+//}
 @end

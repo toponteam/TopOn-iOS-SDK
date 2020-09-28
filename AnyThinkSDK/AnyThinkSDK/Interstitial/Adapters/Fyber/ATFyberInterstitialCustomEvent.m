@@ -21,10 +21,7 @@
 //点击
 - (void)IAAdDidReceiveClick:(id<IAUnitController>)unitController {
     [ATLogger logMessage:@"FyberInterstitial::IAAdDidReceiveClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-        [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdClick];
 }
 
 //展示
@@ -44,13 +41,8 @@
 //成功展示全屏
 - (void)IAUnitControllerDidPresentFullscreen:(id<IAUnitController>)unitController {
     [ATLogger logMessage:@"FyberInterstitial::IAUnitControllerDidPresentFullscreen:" type:ATLogTypeExternal];
-    [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
-    [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidStartPlayingVideoForPlacementID:extra:)]) {
-        [self.delegate interstitialDidStartPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdShow];
+    [self trackInterstitialAdVideoStart];
 }
 
 - (void)IAUnitControllerWillDismissFullscreen:(id<IAUnitController>)unitController {
@@ -60,10 +52,7 @@
 //退出全屏展示
 - (void)IAUnitControllerDidDismissFullscreen:(id<IAUnitController>)unitController {
     [ATLogger logMessage:@"FyberInterstitial::IAUnitControllerDidDismissFullscreen:" type:ATLogTypeExternal];
-    [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdClose];
 }
 
 //跳转外链时
@@ -74,18 +63,13 @@
 //视频播放完成
 - (void)IAVideoCompleted:(id<ATIAVideoContentController>)contentController {
     [ATLogger logMessage:@"FyberInterstitial::IAVideoCompleted:" type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidEndPlayingVideoForPlacementID:extra:)]) {
-        [self.delegate interstitialDidEndPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdVideoEnd];
 }
 
 //视频播放中断
 - (void)IAVideoContentController:(id<ATIAVideoContentController>)contentController videoInterruptedWithError:(NSError * _Nonnull)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"FyberInterstitial::IAVideoContentController:videoInterruptedWithError:%@", error] type:ATLogTypeExternal];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidFailToPlayVideoForPlacementID:error:extra:)]) {
-        [self.delegate interstitialDidFailToPlayVideoForPlacementID:self.interstitial.placementModel.placementID error:error extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdDidFailToPlayVideo:error];
 }
 
 //更新视频时长
@@ -95,14 +79,17 @@
 
 //播放进度更新
 - (void)IAVideoContentController:(id<ATIAVideoContentController>)contentController videoProgressUpdatedWithCurrentTime:(NSTimeInterval)currentTime totalTime:(NSTimeInterval)totalTime {
-//    [ATLogger logMessage:[NSString stringWithFormat:@"FyberInterstitial::IAVideoContentController:videoProgressUpdatedWithCurrentTime:%f totalTime:%f", currentTime, totalTime] type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"position_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"position_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"position_id"];
+//    return extra;
+//}
 
 
 @end

@@ -3,15 +3,17 @@
 
 import subprocess
 import os
+import shutil
+import glob
 
 # 执行流程说明：
 # 1、xcodebuild执行生成指定的target
 # 2、copy target到指定目录
 # 3、copy文档到指定目录
-# 4、打成zip包 
+# 4、打成zip包
 
 #configuration for iOS build setting
-AnyThink_VERSION = "5.5.9"
+AnyThink_VERSION = "5.6.8"
 CONFIGURATION = "Release"
 EXPORT_OPTIONS_PLIST = "exportOptions.plist"
 # 保存发布包的路径
@@ -25,20 +27,18 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkBanner'
                        , 'AnyThinkInterstitial'
                        , 'AnyThinkSplash'
-                       # Header Bidding
-                       , 'AnyThinkHeaderBidding'
                        # My Offer
-                       ,'AnyThinkMyOffer'
+                       , 'AnyThinkMyOffer'
                        # Native Adapters
                        , 'AnyThinkGDTNativeAdapter'
                        , 'AnyThinkMopubNativeAdapter'
-                       , 'AnyThinkFlurryNativeAdapter'
+#                       , 'AnyThinkFlurryNativeAdapter'
                        , 'AnyThinkAdmobNativeAdapter'
                        , 'AnyThinkFacebookNativeAdapter'
                        , 'AnyThinkInmobiNativeAdapter'
                        , 'AnyThinkApplovinNativeAdapter'
                        , 'AnyThinkMintegralNativeAdapter'
-                       , 'AnyThinkYeahmobiNativeAdapter'
+#                       , 'AnyThinkYeahmobiNativeAdapter'
                        , 'AnyThinkAppnextNativeAdapter'
 #                       , 'AnyThinkMobPowerNativeAdapter'
                        , 'AnyThinkTTNativeAdapter'
@@ -46,7 +46,7 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkBaiduNativeAdapter'
                        , 'AnyThinkKSNativeAdapter'
                        # Rewarded Video Adapters
-                       , 'AnyThinkOnewayRewardedVideoAdapter'
+#                       , 'AnyThinkOnewayRewardedVideoAdapter'
                        , 'AnyThinkKSRewardedVideoAdapter'
                        , 'AnyThinkTTRewardedVideoAdapter'
                        , 'AnyThinkFacebookRewardedVideoAdapter'
@@ -56,42 +56,41 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkGDTRewardedVideoAdapter'
                        , 'AnyThinkAdmobRewardedVideoAdapter'
                        , 'AnyThinkMintegralRewardedVideoAdapter'
-                       , 'AnyThinkFlurryRewardedVideoAdapter'
+#                       , 'AnyThinkFlurryRewardedVideoAdapter'
                        , 'AnyThinkApplovinRewardedVideoAdapter'
                        , 'AnyThinkVungleRewardedVideoAdapter'
                        , 'AnyThinkIronSourceRewardedVideoAdapter'
                        , 'AnyThinkInmobiRewardedVideoAdapter'
                        , 'AnyThinkAdColonyRewardedVideoAdapter'
                        , 'AnyThinkUnityAdsRewardedVideoAdapter'
-                       , 'AnyThinkYeahmobiRewardedVideoAdapter'
+#                       , 'AnyThinkYeahmobiRewardedVideoAdapter'
                        , 'AnyThinkAppnextRewardedVideoAdapter'
                        , 'AnyThinkBaiduRewardedVideoAdapter'
                        , 'AnyThinkNendRewardedVideoAdapter'
                        , 'AnyThinkMaioRewardedVideoAdapter'
                        , 'AnyThinkSigmobRewardedVideoAdapter'
-                       , 'AnyThinkMyOfferRewardedVideoAdapter'
                        , 'AnyThinkOguryRewardedVideoAdapter'
                        , 'AnyThinkStartAppRewardedVideoAdapter'
                        , 'AnyThinkFyberRewardedVideoAdapter'
                        # Banner Adapters
                        , 'AnyThinkInmobiBannerAdapter'
-                       , 'AnyThinkFlurryBannerAdapter'
-                       ,'AnyThinkMintegralBannerAdapter'
+#                       , 'AnyThinkFlurryBannerAdapter'
+                       , 'AnyThinkMintegralBannerAdapter'
                        , 'AnyThinkMopubBannerAdapter'
                        , 'AnyThinkFacebookBannerAdapter'
                        , 'AnyThinkApplovinBannerAdapter'
                        , 'AnyThinkGDTBannerAdapter'
                        , 'AnyThinkAdmobBannerAdapter'
                        , 'AnyThinkTTBannerAdapter'
-                       , 'AnyThinkYeahmobiBannerAdapter'
+#                       , 'AnyThinkYeahmobiBannerAdapter'
                        , 'AnyThinkAppnextBannerAdapter'
                        , 'AnyThinkBaiduBannerAdapter'
                        , 'AnyThinkNendBannerAdapter'
                        , 'AnyThinkFyberBannerAdapter'
-                       ,'AnyThinkStartAppBannerAdapter'
-                       ,'AnyThinkVungleBannerAdapter'
-                       ,'AnyThinkAdColonyBannerAdapter'
-                       ,'AnyThinkChartboostBannerAdapter'
+                       , 'AnyThinkStartAppBannerAdapter'
+                       , 'AnyThinkVungleBannerAdapter'
+                       , 'AnyThinkAdColonyBannerAdapter'
+                       , 'AnyThinkChartboostBannerAdapter'
                        # Interstitial Adapters
                        , 'AnyThinkAdColonyInterstitialAdapter'
                        , 'AnyThinkKSInterstitialAdapter'
@@ -100,23 +99,22 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkTapjoyInterstitialAdapter'
                        , 'AnyThinkChartboostInterstitialAdapter'
                        , 'AnyThinkMopubInterstitialAdapter'
-                       , 'AnyThinkFlurryInterstitialAdapter'
+#                       , 'AnyThinkFlurryInterstitialAdapter'
                        , 'AnyThinkInmobiInterstitialAdapter'
-                       , 'AnyThinkOnewayInterstitialAdapter'
+#                       , 'AnyThinkOnewayInterstitialAdapter'
                        , 'AnyThinkFacebookInterstitialAdapter'
                        , 'AnyThinkApplovinInterstitialAdapter'
                        , 'AnyThinkMintegralInterstitialAdapter'
                        , 'AnyThinkAdmobInterstitialAdapter'
                        , 'AnyThinkTTInterstitialAdapter'
                        , 'AnyThinkGDTInterstitialAdapter'
-                       , 'AnyThinkYeahmobiInterstitialAdapter'
+#                       , 'AnyThinkYeahmobiInterstitialAdapter'
                        , 'AnyThinkAppnextInterstitialAdapter'
                        , 'AnyThinkBaiduInterstitialAdapter'
                        , 'AnyThinkUnityAdsInterstitialAdapter'
                        , 'AnyThinkMaioInterstitialAdapter'
                        , 'AnyThinkNendInterstitialAdapter'
                        , 'AnyThinkSigmobInterstitialAdapter'
-                       , 'AnyThinkMyOfferInterstitialAdapter'
                        , 'AnyThinkOguryInterstitialAdapter'
                        , 'AnyThinkStartAppInterstitialAdapter'
                        , 'AnyThinkFyberInterstitialAdapter'
@@ -125,7 +123,7 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkGDTSplashAdapter'
                        , 'AnyThinkTTSplashAdapter'
                        , 'AnyThinkSigmobSplashAdapter'
-                       ,'AnyThinkMintegralSplashAdapter'
+                       , 'AnyThinkMintegralSplashAdapter'
                        #TraminiSDK
                        ,'TraminiSDK']
 #EXPORT_TARGETS_LIST = ['AnyThinkSDK']
@@ -326,17 +324,60 @@ def buildReleaseZipFile():
     process.wait()
     print "buildReleaseZipFile success, file:" + exportZipFile
 
+def outputSdkWithFrameWork():
+  print "outputSdkWithFrameWork"
+  targe = os.getcwd()[:-11]
+  os.chdir(targe)
+  print os.getcwd()
+
+  if os.path.exists(os.getcwd() + '/release_shell'):
+    shutil.rmtree(os.getcwd() + '/release_shell')
+
+  shutil.copytree(os.getcwd() + '/AnyThinkSDK/ThrirdPartySDK/',os.getcwd() + '/release_shell/SDK', symlinks=True)
+  shutil.copy(os.getcwd() + '/AnyThinkSDK/package.sh',os.getcwd() + '/release_shell')
+  shutil.rmtree(os.getcwd() + '/release_shell/SDK/oneway')
+
+  os.chdir(os.getcwd() + '/release/frameworks/')
+
+  print 'start copy frameworks'
+
+  sdklist = ["AdColony", "Admob", "Applovin", "Appnext", "Baidu",
+        "Chartboost", "Facebook", "GDT", "Inmobi", "IronSource",
+        "Maio", "Mintegral", "Nend", "Ogury", "Sigmob",
+        "StartApp", "Tapjoy", "UnityAds", "Vungle","Fyber"]
+
+  copytarget = os.getcwd()[:-18]
+  
+  for x in sdklist:
+    tempstr = "*" + x + "*.framework"
+    for y in glob.glob(tempstr):
+      shutil.copytree(os.getcwd()+'/'+ y,copytarget + 'release_shell/SDK/' + x.lower() + '/' + y)
+
+  for x in glob.glob('*TT*.framework'):
+    shutil.copytree(os.getcwd() +'/'+ x,copytarget + 'release_shell/SDK/pangle/' + x)
+
+  for x in glob.glob('*KS*.framework'):
+    shutil.copytree(os.getcwd() +'/'+ x,copytarget + 'release_shell/SDK/kuaishou/' + x)
+
+  corelist = ["AnyThinkBanner.framework", "AnyThinkHeaderBidding.framework",
+        "AnyThinkInterstitial.framework", "AnyThinkNative.framework", 
+        "AnyThinkRewardedVideo.framework",
+        "AnyThinkSDK.framework", "AnyThinkSplash.framework", 
+        "TraminiSDK.framework", "AnyThinkSDK.bundle", "*MyOffer*.framework"]
+  for x in corelist:
+    for y in glob.glob(x):
+      shutil.copytree(os.getcwd() +'/'+ y,copytarget + 'release_shell/SDK/Core/' + y)
 
 def main():
-    cleanLastReleaseFile()
-    # 1:os arch,2:simulator arch
-    buildSDKTarget(1)
-    copyFrameworks(1)
-    buildSDKTarget(2)
-    copyFrameworks(2)
-    mergeArchFrameworks()
-    buildReleaseZipFile()
-
+     cleanLastReleaseFile()
+     # 1:os arch,2:simulator arch
+     buildSDKTarget(1)
+     copyFrameworks(1)
+     buildSDKTarget(2)
+     copyFrameworks(2)
+     mergeArchFrameworks()
+     buildReleaseZipFile()
+     outputSdkWithFrameWork()
 
 if __name__ == '__main__':
     main()

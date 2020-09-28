@@ -6,21 +6,25 @@
 //  Copyright © 2018 Martin Lau. All rights reserved.
 //
 
-#import "ATAdCustomEvent.h"
+#import <AnyThinkSDK/AnyThinkSDK.h>
+//#import "ATAdCustomEvent.h"
 #import "ATRewardedVideoDelegate.h"
 #import "ATRewardedVideo.h"
 
 @interface ATRewardedVideoCustomEvent : ATAdCustomEvent
--(void) saveVideoPlayEventWithError:(NSError*)error;
--(void) saveVideoCloseEventRewarded:(BOOL)rewarded;
--(void) trackVideoStart;
--(void) trackVideoEnd;
--(void) trackClick;
--(void) trackShow;
+-(void) trackRewardedVideoAdPlayEventWithError:(NSError*)error;
+-(void) trackRewardedVideoAdCloseRewarded:(BOOL)rewarded;
+-(void) trackRewardedVideoAdVideoStart;
+-(void) trackRewardedVideoAdVideoEnd;
+-(void) trackRewardedVideoAdClick;
+-(void) trackRewardedVideoAdShow;
+-(void) trackRewardedVideoAdLoadFailed:(NSError*)error;
+-(void) trackRewardedVideoAdLoaded:(id)adObject adExtra:(NSDictionary *)adExtra;
+-(void) trackRewardedVideoAdRewarded;
 
 -(NSDictionary*)delegateExtra;
 
--(instancetype) initWithUnitID:(NSString*)unitID customInfo:(NSDictionary*)customInfo;
+-(instancetype) initWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary *)localInfo;
 @property(nonatomic, weak) id<ATRewardedVideoDelegate> delegate;
 @property(nonatomic, weak) ATRewardedVideo *rewardedVideo;
 @property(nonatomic, readonly) NSString *unitID;

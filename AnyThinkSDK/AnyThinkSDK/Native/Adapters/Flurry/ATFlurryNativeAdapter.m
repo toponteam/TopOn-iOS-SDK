@@ -25,7 +25,7 @@
     return [ATFlurryRenderer class];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         _nativeAds = [NSMutableArray<id<ATFlurryAdNative>> array];
@@ -39,31 +39,32 @@
                     [NSClassFromString(@"FlurryConsent") updateConsentInformation:consent];
                 } else {
                     BOOL set = NO;
-                    [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set && [[ATAPI sharedInstance].consentStrings count] > 0) {
                         id<ATFlurryConsent> consent = [[NSClassFromString(@"FlurryConsent") alloc] initWithGDPRScope:[[ATAPI sharedInstance] inDataProtectionArea] andConsentStrings:[ATAPI sharedInstance].consentStrings];
                         [NSClassFromString(@"FlurryConsent") updateConsentInformation:consent];
                     }
                 }
-                [NSClassFromString(@"Flurry") startSession:info[@"sdk_key"] withSessionBuilder:[[[NSClassFromString(@"FlurrySessionBuilder") new] withCrashReporting:YES] withLogLevel:ATFlurryLogLevelDebug]];
+                [NSClassFromString(@"Flurry") startSession:serverInfo[@"sdk_key"] withSessionBuilder:[[[NSClassFromString(@"FlurrySessionBuilder") new] withCrashReporting:YES] withLogLevel:ATFlurryLogLevelDebug]];
             }
         });
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
     _customEvent = [ATFlurryCustomEvent new];
-    _customEvent.unitID = info[@"ad_space"];
+    _customEvent.unitID = serverInfo[@"ad_space"];
     _customEvent.requestCompletionBlock = completion;
-    _customEvent.requestNumber = [info[@"request_num"] longValue];
-    NSDictionary *extraInfo = info[kAdapterCustomInfoExtraKey];
+    _customEvent.requestNumber = [serverInfo[@"request_num"] longValue];
+    NSDictionary *extraInfo = localInfo;
     _customEvent.requestExtra = extraInfo;
-    for (NSInteger i = 0; i < [info[@"request_num"] integerValue]; i++) {
-        id<ATFlurryAdNative> nativeAd = [[NSClassFromString(@"FlurryAdNative") alloc] initWithSpace:info[@"ad_space"]];
+    for (NSInteger i = 0; i < [serverInfo[@"request_num"] integerValue]; i++) {
+        id<ATFlurryAdNative> nativeAd = [[NSClassFromString(@"FlurryAdNative") alloc] initWithSpace:serverInfo[@"ad_space"]];
         nativeAd.adDelegate = _customEvent;
         [nativeAd fetchAd];
-        [_nativeAds addObject:nativeAd];
+//        [_nativeAds addObject:nativeAd];
     }
 }
 @end

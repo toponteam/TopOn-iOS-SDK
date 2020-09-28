@@ -180,7 +180,7 @@ NSString *const kATExtraNativeImageSizeKey = @"native_image_size";
 
 -(void) willMoveToWindow:(UIWindow *)newWindow {
     if (newWindow != nil) {
-        if (_currentOffer != nil) {
+        if (_currentOffer != nil && _currentOffer.showTimes < 1) {
             [_renderer renderOffer:_currentOffer];
             [self doADShowingHousekeeping:NO];
         }
@@ -204,14 +204,16 @@ NSString *const kATExtraNativeImageSizeKey = @"native_image_size";
         [[ATCapsManager sharedManager] setLastShowTimeWithPlacementID:_placementID unitGroupID:_currentOffer.unitGroup.unitGroupID];
         
         //Tracking
-        [self.customEvent trackShow:refresh];
+        [self.customEvent trackNativeAdShow:refresh];
         
         //Notify delegate
-        if ([_delegate respondsToSelector:@selector(didShowNativeAdInAdView:placementID:extra:)]) {
-            [_delegate didShowNativeAdInAdView:[self embededAdView] placementID:_placementID extra:[self.customEvent delegateExtra]];
+        if ([self.delegate respondsToSelector:@selector(didShowNativeAdInAdView:placementID:extra:)]) {
+          [_delegate didShowNativeAdInAdView:[self embededAdView] placementID:_placementID extra:[self.customEvent delegateExtra]];
         }
+        
+        // remove Native offer
+        [[ATNativeADOfferManager sharedManager] removeCahceForPlacementID:_placementID unitGroupModel:_currentOffer.unitGroup];
     }
-   
 }
 
 -(NSArray<UIView*>*)clickableViews {
@@ -223,7 +225,6 @@ NSString *const kATExtraNativeImageSizeKey = @"native_image_size";
     if ([self.delegate respondsToSelector:@selector(didClickNativeAdInAdView:placementID:extra:)]) {
         [self.delegate didClickNativeAdInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
-
 }
 
 -(void) notifyCloseButtonTapped {
@@ -236,28 +237,24 @@ NSString *const kATExtraNativeImageSizeKey = @"native_image_size";
     if ([self.delegate respondsToSelector:@selector(didStartPlayingVideoInAdView:placementID:extra:)]) {
         [self.delegate didStartPlayingVideoInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
-
 }
 
 -(void) notifyVideoEnd {
     if ([self.delegate respondsToSelector:@selector(didEndPlayingVideoInAdView:placementID:extra:)]) {
         [self.delegate didEndPlayingVideoInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
-
-    
 }
 
 -(void) notifyVideoEnterFullScreen {
     if ([self.delegate respondsToSelector:@selector(didEnterFullScreenVideoInAdView:placementID: extra:)]) {
         [self.delegate didEnterFullScreenVideoInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
-
 }
 
 -(void) notifyVideoExitFullScreen {
     if ([self.delegate respondsToSelector:@selector(didExitFullScreenVideoInAdView:placementID:extra:)]) {
         [self.delegate didExitFullScreenVideoInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
-
 }
+
 @end

@@ -34,51 +34,50 @@ NSString *const kKSNativeAdIsVideoFlag = @"ks_nativeAd_isVideo_flag";
     return [ATKSNativeRenderer class];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameKS]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameKS];
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"KSAdSDKManager") SDKVersion] forNetwork:kNetworkNameKS];
-            [NSClassFromString(@"KSAdSDKManager") setAppId:info[@"app_id"]];
+            [NSClassFromString(@"KSAdSDKManager") setAppId:serverInfo[@"app_id"]];
 
         }
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     //暂时放这两个条件
     if (NSClassFromString(@"KSNativeAd") != nil && NSClassFromString(@"KSFeedAd") != nil) {
         _customEvent = [ATKSNativeCustomEvent new];
-        _customEvent.unitID = info[@"position_id"];
+        _customEvent.unitID = serverInfo[@"position_id"];
         _customEvent.requestCompletionBlock = completion;
-        NSDictionary *extraInfo = info[kAdapterCustomInfoExtraKey];
+        NSDictionary *extraInfo = localInfo;
         _customEvent.requestExtra = extraInfo;
-        _customEvent.videoSoundEnable = [info[@"video_sound"]boolValue];
+        _customEvent.videoSoundEnable = [serverInfo[@"video_sound"]boolValue];
         
-        if ([info[@"layout_type"] integerValue] == 1) {
+        if ([serverInfo[@"layout_type"] integerValue] == 1) {
             CGSize size = CGSizeMake(CGRectGetWidth([UIScreen mainScreen].bounds) - 30.0f, 200.0f);
             if ([extraInfo[kExtraInfoNativeAdSizeKey] respondsToSelector:@selector(CGSizeValue)]) { size = [extraInfo[kExtraInfoNativeAdSizeKey] CGSizeValue]; }
-            _feedAdsManager = [[NSClassFromString(@"KSFeedAdsManager") alloc]initWithPosId:info[@"position_id"] size:size];
+            _feedAdsManager = [[NSClassFromString(@"KSFeedAdsManager") alloc]initWithPosId:serverInfo[@"position_id"] size:size];
             _feedAdsManager.delegate = _customEvent;
-            [_feedAdsManager loadAdDataWithCount:[info[@"request_num"] integerValue]];
-        } else if ([info[@"unit_type"] integerValue] == 1) {
-            _drawAdsManager = [[NSClassFromString(@"KSDrawAdsManager") alloc]initWithPosId:info[@"position_id"]];
+            [_feedAdsManager loadAdDataWithCount:[serverInfo[@"request_num"] integerValue]];
+        } else if ([serverInfo[@"unit_type"] integerValue] == 1) {
+            _drawAdsManager = [[NSClassFromString(@"KSDrawAdsManager") alloc]initWithPosId:serverInfo[@"position_id"]];
             _drawAdsManager.delegate = _customEvent;
-            if ([info[@"request_num"]integerValue] > 5) {
+            if ([serverInfo[@"request_num"]integerValue] > 5) {
                 [_drawAdsManager loadAdDataWithCount:5];
             } else {
-                [_drawAdsManager loadAdDataWithCount:[info[@"request_num"]integerValue]];
+                [_drawAdsManager loadAdDataWithCount:[serverInfo[@"request_num"]integerValue]];
             }
         } else {
-            _nativeAdsManagger = [[NSClassFromString(@"KSNativeAdsManager") alloc]initWithPosId:info[@"position_id"]];
+            _nativeAdsManagger = [[NSClassFromString(@"KSNativeAdsManager") alloc]initWithPosId:serverInfo[@"position_id"]];
             _nativeAdsManagger.delegate = _customEvent;
-            _customEvent.isVideo = [info[@"is_video"] boolValue];
-            [_nativeAdsManagger loadAdDataWithCount:[info[@"request_num"] integerValue]];
+            [_nativeAdsManagger loadAdDataWithCount:[serverInfo[@"request_num"] integerValue]];
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load native ad.", NSLocalizedFailureReasonErrorKey:@"This might be due to KS SDK not being imported or it's imported but a unsupported version is being used."}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadNativeADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason,@"KS"]}]);
     }
 }
 @end

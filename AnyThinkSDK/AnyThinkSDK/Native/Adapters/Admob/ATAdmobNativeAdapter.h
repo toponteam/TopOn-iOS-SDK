@@ -8,25 +8,28 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import "ATAdmobNativeCommon.h"
+
+
 typedef NS_ENUM(NSInteger, ATPACConsentStatus) {
     ATPACConsentStatusUnknown = 0,          ///< Unknown consent status.
     ATPACConsentStatusNonPersonalized = 1,  ///< User consented to non-personalized ads.
     ATPACConsentStatusPersonalized = 2,     ///< User consented to personalized ads.
 };
 
-extern NSString *const kATGADAdLoaderAdTypeUnifiedNative;
-
-extern NSString * const ATGADUnifiedNativeHeadlineAsset;
-extern NSString * const ATGADUnifiedNativeCallToActionAsset;
-extern NSString * const ATGADUnifiedNativeIconAsset;
-extern NSString * const ATGADUnifiedNativeBodyAsset;
-extern NSString * const ATGADUnifiedNativeStoreAsset;
-extern NSString * const ATGADUnifiedNativePriceAsset;
-extern NSString * const ATGADUnifiedNativeImageAsset;
-extern NSString * const ATGADUnifiedNativeStarRatingAsset;
-extern NSString * const ATGADUnifiedNativeAdvertiserAsset;
-extern NSString * const ATGADUnifiedNativeMediaViewAsset;
-extern NSString * const ATGADUnifiedNativeAdChoicesViewAsset;
+//extern NSString *const kATGADAdLoaderAdTypeUnifiedNative;
+//
+//extern NSString * const ATGADUnifiedNativeHeadlineAsset;
+//extern NSString * const ATGADUnifiedNativeCallToActionAsset;
+//extern NSString * const ATGADUnifiedNativeIconAsset;
+//extern NSString * const ATGADUnifiedNativeBodyAsset;
+//extern NSString * const ATGADUnifiedNativeStoreAsset;
+//extern NSString * const ATGADUnifiedNativePriceAsset;
+//extern NSString * const ATGADUnifiedNativeImageAsset;
+//extern NSString * const ATGADUnifiedNativeStarRatingAsset;
+//extern NSString * const ATGADUnifiedNativeAdvertiserAsset;
+//extern NSString * const ATGADUnifiedNativeMediaViewAsset;
+//extern NSString * const ATGADUnifiedNativeAdChoicesViewAsset;
 
 @interface ATAdmobNativeAdapter : NSObject
 @end
@@ -70,6 +73,8 @@ extern NSString * const ATGADUnifiedNativeAdChoicesViewAsset;
 @end
 
 @protocol ATGADMobileAds<NSObject>
++ (id<ATGADMobileAds>)sharedInstance;
+@property(nonatomic, nonnull, readonly) NSString *sdkVersion;
 + (void)configureWithApplicationID:(NSString *)applicationID;
 @end
 

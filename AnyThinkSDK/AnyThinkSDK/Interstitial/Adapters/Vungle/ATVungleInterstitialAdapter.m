@@ -94,25 +94,26 @@ static NSString *const kVungleSDKClassName = @"VungleSDK";
     if (error != nil) [(ATVungleInterstitialCustomEvent*)interstitial.customEvent handlerPlayError:error];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
-        _placementID = info[kPlacementIDKey];
+        _placementID = serverInfo[kPlacementIDKey];
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameVungle];
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameVungle]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameVungle];
                 if ([[ATAPI sharedInstance].networkConsentInfo containsObjectForKey:kNetworkNameVungle]) {
-                    [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameVungle] integerValue] consentMessageVersion:@"6.5.4"];
+                    [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameVungle] integerValue] consentMessageVersion:@"6.4.6"];
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set) {
                         /*
                         ConsentStatus: 1 Personalized, 2 Nonpersonalized
                         */
-                        [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.5.4"];
+                        [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.4.6"];
                     }
                 }
             }
@@ -121,21 +122,21 @@ static NSString *const kVungleSDKClassName = @"VungleSDK";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kVungleSDKClassName) != nil) {
-        _customEvent = [[ATVungleInterstitialCustomEvent alloc] initWithUnitID:info[kPlacementIDKey] customInfo:info adapter:self];
+        _customEvent = [[ATVungleInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo adapter:self];
         _customEvent.requestCompletionBlock = completion;
         if (!((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]).isInitialized) {
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleInitNotification:) name:kVungleInterstitialInitializationNotification object:nil];
             NSError *error = nil;
             ((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]).delegate = [ATVungleDelegate_Interstitial sharedDelegate];
-            [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) startWithAppId:info[@"app_id"] error:&error];
+            [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) startWithAppId:serverInfo[@"app_id"] error:&error];
             if (error != nil) { [_customEvent handleLoadingFailure:error]; }
         } else {
             [self startLoad];
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Vungle"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Vungle"]}]);
     }
 }
 

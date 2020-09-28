@@ -12,6 +12,9 @@
 #import "Utilities.h"
 #import "ATMyOfferProgressHud.h"
 #import "ATAppSettingManager.h"
+#import "ATStoreProductViewController.h"
+#import "ATAgentEvent.h"
+
 NSString *const kATMyOfferTrackerExtraLifeCircleID = @"life_circle_id";
 NSString *const kATMyOfferTrackerExtraScene = @"scene";
 #pragma mark - redirector
@@ -58,6 +61,9 @@ NSString *const kATMyOfferTrackerExtraScene = @"scene";
 @property(nonatomic, readonly) ATThreadSafeAccessor *failedEventStorageAccessor;
 @property(nonatomic, readonly) NSMutableArray<ATMyOfferSessionRedirector*> *redirectors;
 @property(nonatomic, readonly) ATThreadSafeAccessor *redirectorsAccessor;
+@property(nonatomic, readonly) ATThreadSafeAccessor *storekitStorageAccessor;
+@property(nonatomic, readonly) NSMutableDictionary *preloadStorekitDict;
+
 @end
 static NSString *kFailedEventStorageAddressKey = @"address";
 static NSString *kFailedEventStorageParametersKey = @"parameters";
@@ -78,6 +84,8 @@ static NSString *kFailedEventStorageParametersKey = @"parameters";
         _failedEventStorageAccessor = [ATThreadSafeAccessor new];
         _redirectors = [NSMutableArray<ATMyOfferSessionRedirector*> array];
         _redirectorsAccessor = [ATThreadSafeAccessor new];
+        _storekitStorageAccessor = [ATThreadSafeAccessor new];
+        _preloadStorekitDict = [NSMutableDictionary dictionary];
         [self sendArchivedEvents];
     }
     return self;
@@ -143,7 +151,7 @@ NSString* RetrieveTKURL(ATMyOfferOfferModel *offerModel, ATMyOfferTrackerEvent e
              @(ATMyOfferTrackerEventClick):offerModel.clickTKURL != nil ? offerModel.clickTKURL : @"",
              @(ATMyOfferTrackerEventEndCardShow):offerModel.endCardShowTKURL != nil ? offerModel.endCardShowTKURL : @"",
              @(ATMyOfferTrackerEventEndCardClose):offerModel.endCardCloseTKURL != nil ? offerModel.endCardCloseTKURL : @""
-             }[@(event)];
+    }[@(event)];
 }
 
 -(void) trackEvent:(ATMyOfferTrackerEvent)event offerModel:(ATMyOfferOfferModel*)offerModel extra:(NSDictionary*)extra {
@@ -185,7 +193,11 @@ NSString *AppendLifeCircleIDToURL(NSString *URL, NSString *lifeCircleID) {
     }
 }
 
--(void) clickOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel extra:(NSDictionary*)extra {
+-(void) clickOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting *)setting extra:(NSDictionary*)extra {
+    [self clickOfferWithOfferModel:offerModel setting:setting extra:extra skDelegate:nil viewController:nil circleId:nil];
+}
+
+-(void) clickOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting *)setting extra:(NSDictionary*)extra skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *)viewController circleId:(NSString *) circleId{
     if (offerModel.clickURL != nil) {
         if (offerModel.jumpType == ATMyOfferJumpTypeSafari) {
             dispatch_async(dispatch_get_main_queue(), ^{ [[UIApplication sharedApplication] openURL:[NSURL URLWithString:AppendLifeCircleIDToURL(offerModel.clickURL, extra[kATMyOfferTrackerExtraLifeCircleID])]]; });
@@ -193,18 +205,42 @@ NSString *AppendLifeCircleIDToURL(NSString *URL, NSString *lifeCircleID) {
             if (validateFinalURL([NSURL URLWithString:offerModel.clickURL])) {
                 dispatch_async(dispatch_get_main_queue(), ^{ [[UIApplication sharedApplication] openURL:[NSURL URLWithString:AppendLifeCircleIDToURL(offerModel.clickURL, extra[kATMyOfferTrackerExtraLifeCircleID])]]; });
             } else {
-                if (offerModel.performsAsynchronousRedirection && offerModel.storeURL != nil) { dispatch_async(dispatch_get_main_queue(), ^{ [[UIApplication sharedApplication] openURL:[NSURL URLWithString:offerModel.storeURL]]; }); }
+                if (offerModel.performsAsynchronousRedirection && offerModel.storeURL != nil) { dispatch_async(dispatch_get_main_queue(), ^{
+                    if(setting.storekitTime != 2 && offerModel.pkgName != nil && [Utilities higherThanIOS13]){
+                        [self presentStorekitViewControllerWithCircleId:circleId pkgName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID skDelegate:skDelegate viewController:viewController];
+                    }else{
+                        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:offerModel.storeURL]];
+                    }
+                }); }
                 __weak typeof(self) weakSelf = self;
                 [_redirectorsAccessor writeWithBlock:^{
                     if (!offerModel.performsAsynchronousRedirection) { dispatch_async(dispatch_get_main_queue(), ^{ [ATMyOfferProgressHud showProgressHud:[UIApplication sharedApplication].keyWindow]; }); }
                     __weak __block ATMyOfferSessionRedirector *weakRedirector = nil;
                     __block ATMyOfferSessionRedirector *redirector = [ATMyOfferSessionRedirector redirectorWithURL:[NSURL URLWithString:AppendLifeCircleIDToURL(offerModel.clickURL, extra[kATMyOfferTrackerExtraLifeCircleID])] completion:^(NSURL *finalURL, NSError *error) {
-                       if (!offerModel.performsAsynchronousRedirection) { dispatch_async(dispatch_get_main_queue(), ^{ [ATMyOfferProgressHud hideProgressHud:[UIApplication sharedApplication].keyWindow]; }); }
-                        if (error == nil) {
+                        if (!offerModel.performsAsynchronousRedirection) { dispatch_async(dispatch_get_main_queue(), ^{ [ATMyOfferProgressHud hideProgressHud:[UIApplication sharedApplication].keyWindow]; }); }
+                        if (error == nil || validateFinalURL(finalURL)) {
                             [weakSelf.redirectorsAccessor writeWithBlock:^{ [weakSelf.redirectors removeObject:weakRedirector]; }];
-                            if (!offerModel.performsAsynchronousRedirection && validateFinalURL(finalURL)) { dispatch_async(dispatch_get_main_queue(), ^{ [[UIApplication sharedApplication] openURL:finalURL]; }); }
+                            if (!offerModel.performsAsynchronousRedirection && validateFinalURL(finalURL)) { dispatch_async(dispatch_get_main_queue(), ^{
+                                if(setting.storekitTime != 2 && offerModel.pkgName != nil  && [Utilities higherThanIOS13]){
+                                    [self presentStorekitViewControllerWithCircleId:circleId pkgName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID skDelegate:skDelegate viewController:viewController];
+                                }else{
+                                    [[UIApplication sharedApplication] openURL:finalURL];
+                                }
+                            }); }
                         } else {
-                            if (!offerModel.performsAsynchronousRedirection && offerModel.storeURL != nil) { dispatch_async(dispatch_get_main_queue(), ^{ [[UIApplication sharedApplication] openURL:[NSURL URLWithString:offerModel.storeURL]]; }); }
+                            if (!offerModel.performsAsynchronousRedirection && offerModel.storeURL != nil) {
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    if(setting.storekitTime != 2 && offerModel.pkgName != nil  && [Utilities higherThanIOS13]){
+                                        [self presentStorekitViewControllerWithCircleId:circleId pkgName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID skDelegate:skDelegate viewController:viewController];
+                                    }else{
+                                        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:offerModel.storeURL]];
+                                    }
+                                    
+                                });
+                            }
+                            //agent event for click failed
+                            [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyClickRedirectFailedKey placementID:setting.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoMyOfferOfferIDKey:offerModel.offerID, kAgentEventExtraInfoAdTypeKey:@1, kAgentEventExtraInfoAdClickUrlKey:offerModel.clickURL != nil ? [offerModel.clickURL stringUrlEncode] : @"", kAgentEventExtraInfoAdLastUrlKey:finalURL != nil? [finalURL.absoluteString stringUrlEncode]:@"",  kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@(error.code)}];
+                            
                         }
                     }];
                     weakRedirector = redirector;
@@ -217,5 +253,56 @@ NSString *AppendLifeCircleIDToURL(NSString *URL, NSString *lifeCircleID) {
 
 BOOL validateFinalURL(NSURL *URL) {
     return [URL isKindOfClass:[NSURL class]] && ([[ATAppSettingManager sharedManager].trackingSetting.tcHosts containsObject:URL.host]);
+}
+
+-(void)preloadStorekitForOfferModel:(ATMyOfferOfferModel *)offerModel setting:(ATMyOfferSetting *) setting viewController:(UIViewController *)viewController circleId:(NSString *) circleId  skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate {
+    
+    if(setting != nil && setting.storekitTime == 0 && [Utilities higherThanIOS13]){
+        //TODO preload storekit
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if(offerModel != nil && offerModel.pkgName != nil){
+               
+                __block ATStoreProductViewController* storekitVC = [ATStoreProductViewController storekitWithPackageName:offerModel.pkgName skDelegate:skDelegate];
+                [storekitVC atLoadProductWithPackageName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID pkgName:offerModel.pkgName finished:^(BOOL result, NSError *error, NSTimeInterval loadTime) {
+                    
+                    if(result){
+                        [ATLogger logMessage:@"ATMyOfferBannerView::atLoadProductWithPackageName:finished success!" type:ATLogTypeInternal];
+                        [self setStorekitViewControllerWithPkgName:offerModel.pkgName storekitVC:storekitVC];
+                    }
+                    
+                }];
+            }
+        });
+    }
+    
+    
+    
+}
+
+-(void)presentStorekitViewControllerWithCircleId:(NSString *) circleId pkgName:(NSString *) pkgName placementID:(NSString *)placementID offerID:(NSString *)offerID  skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *)viewController {
+    ATStoreProductViewController* storekitVC = [self getStorekitViewControllerWithPkgName:pkgName skDelegate:skDelegate parentVC:viewController];
+    storekitVC.skDelegate = skDelegate;
+    [ATStoreProductViewController at_presentStorekit:storekitVC presenting:viewController];
+    if(!storekitVC.loadSuccessed){
+        [storekitVC atLoadProductWithPackageName:pkgName placementID:placementID offerID:offerID pkgName:pkgName finished:nil];
+    }
+}
+
+-(ATStoreProductViewController *)getStorekitViewControllerWithPkgName:(NSString *) pkgName skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate parentVC:(UIViewController *) parentVC {
+    return [_storekitStorageAccessor readWithBlock:^id {
+        if(_preloadStorekitDict[pkgName] != nil && (((ATStoreProductViewController*)_preloadStorekitDict[pkgName]).parentVC == nil || [((ATStoreProductViewController*)_preloadStorekitDict[pkgName]).parentVC isEqual:parentVC])){
+            return _preloadStorekitDict[pkgName];
+        }else{
+            ATStoreProductViewController* storekitVC = [ATStoreProductViewController storekitWithPackageName:pkgName skDelegate:skDelegate];
+            return storekitVC;
+        }
+        
+    }];
+}
+
+-(void )setStorekitViewControllerWithPkgName:(NSString *) pkgName storekitVC:(ATStoreProductViewController *) storekitVC{
+    [_storekitStorageAccessor writeWithBlock:^ {
+        _preloadStorekitDict[pkgName] = storekitVC;
+    }];
 }
 @end

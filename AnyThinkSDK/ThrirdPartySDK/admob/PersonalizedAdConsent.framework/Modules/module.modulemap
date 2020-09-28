@@ -1,6 +1,0 @@
-framework module PersonalizedAdConsent {
-  umbrella header "PersonalizedAdConsent.h"
-
-  export *
-  module * { export * }
-}

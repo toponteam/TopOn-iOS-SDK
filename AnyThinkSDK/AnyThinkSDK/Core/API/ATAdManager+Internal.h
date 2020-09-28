@@ -46,6 +46,7 @@ extern NSString *const kAdStorageExtraUnitGroupInfoNetworkFirmIDKey;
 extern NSString *const kAdStorageExtraUnitGroupInfoUnitIDKey;
 extern NSString *const kAdStorageExtraUnitGroupInfoNetworkSDKVersionKey;
 extern NSString *const kAdStorageExtraUnitGroupInfoReadyFlagKey;
+extern NSString *const kAdStorageExtraFinalWaterfallKey;
 
 typedef NS_ENUM(NSInteger, ATAdManagerReadyAPICaller) {
     ATAdManagerReadyAPICallerReady = 0,
@@ -96,7 +97,7 @@ typedef NS_ENUM(NSInteger, ATAdManagerReadyAPICaller) {
 -(NSDictionary*)extraInfoForPlacementID:(NSString*)placementID requestID:(NSString*)requestID;
 -(void) setExtraInfo:(NSDictionary*)extraInfo forPlacementID:(NSString*)placementID requestID:(NSString*)requestID;
 -(void) removeExtraInfoForPlacementID:(NSString*)placementID requestID:(NSString*)requestID;
-
+-(NSDictionary*)lastExtraInfoForPlacementID:(NSString*)placementID;
 -(void) clearCacheWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel;
 
 -(void) setAdBeingShownFlagForPlacementID:(NSString*)placementID;

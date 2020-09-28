@@ -9,11 +9,18 @@
 #import <UIKit/UIKit.h>
 #import "ATAd.h"
 #import "ATTracker.h"
+
+extern NSString *const kATSDKFailedToLoadSplashADMsg;
+extern NSString *const kATSDKFailedToLoadBannerADMsg;
+extern NSString *const kATSDKFailedToLoadInterstitialADMsg;
+extern NSString *const kATSDKFailedToLoadNativeADMsg;
+extern NSString *const kATSDKFailedToLoadRewardedVideoADMsg;
+extern NSString *const kATSDKSplashADTooLongToLoadPlacementSettingMsg;
 extern NSString *const kSDKImportIssueErrorReason;
 extern NSString *const kATAdAssetsAppIDKey;
 @interface ATAdCustomEvent : NSObject
 +(NSDictionary*)customInfoWithUnitGroupModel:(ATUnitGroupModel*)unitGroupModel extra:(NSDictionary*)extra;
--(instancetype) initWithUnitID:(NSString*)unitID customInfo:(NSDictionary*)customInfo;
+-(instancetype) initWithUnitID:(NSString*)unitID serverInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo;
 -(void) handleAssets:(NSDictionary*)assets;
 -(void) handleLoadingFailure:(NSError*)error;
 -(void) handleClose;
@@ -30,7 +37,8 @@ extern NSString *const kATAdAssetsAppIDKey;
  */
 @property(nonatomic) NSInteger numberOfFinishedRequests;
 @property(nonatomic, readonly) NSMutableArray<NSDictionary*>* assets;
-@property(nonatomic, readonly) NSDictionary *customInfo;
+@property(nonatomic, readonly) NSDictionary *serverInfo;
+@property(nonatomic, readonly) NSDictionary *localInfo;
 @property(nonatomic) BOOL rewardGranted;
 
 -(void) saveShowAPIContext;
@@ -38,4 +46,7 @@ extern NSString *const kATAdAssetsAppIDKey;
 @property(nonatomic, readonly) NSString *psIDOnShow;
 
 +(NSInteger) calculateAdPriority:(id<ATAd>)ad;
+
+@property (nonatomic, assign) NSString *networkUnitId;
+
 @end

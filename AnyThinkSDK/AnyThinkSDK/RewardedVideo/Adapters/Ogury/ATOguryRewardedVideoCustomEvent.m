@@ -21,13 +21,12 @@
     NSString *desc = @"oguryAdsOptinVideoAdNotAvailable";
     NSError *error = [NSError errorWithDomain:desc code:0 userInfo:nil];
     [ATLogger logError:[NSString stringWithFormat:@"OguryInterstitial::oguryAdsOptinVideoAdNotAvailable:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackRewardedVideoAdLoadFailed:error];
 }
 
 -(void)oguryAdsOptinVideoAdLoaded {
     [ATLogger logMessage:@"OguryRewardedVideo::oguryAdsOptinVideoAdLoaded:" type:ATLogTypeExternal];
-    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithDictionary:@{kRewardedVideoAssetsUnitIDKey:self.unitID, kAdAssetsCustomObjectKey:self.OguryAd, kRewardedVideoAssetsCustomEventKey:self}];
-    [self handleAssets:assets];
+    [self trackRewardedVideoAdLoaded:self.OguryAd adExtra:nil];
 }
 
 -(void)oguryAdsOptinVideoAdNotLoaded {
@@ -36,38 +35,25 @@
 
 -(void)oguryAdsOptinVideoAdDisplayed {
     [ATLogger logMessage:@"OguryRewardedVideo::oguryAdsOptinVideoAdDisplayed:" type:ATLogTypeExternal];
-    [self trackShow];
-    [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdShow];
+    [self trackRewardedVideoAdVideoStart];
 }
 
 -(void)oguryAdsOptinVideoAdClosed {
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdVideoEnd];
     [ATLogger logMessage:@"OguryRewardedVideo::oguryAdsOptinVideoAdClosed:" type:ATLogTypeExternal];
-    [self handleClose];
-    [self saveVideoCloseEventRewarded:self.rewardGranted];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdCloseRewarded:self.rewardGranted];
 }
 
 -(void)oguryAdsOptinVideoAdRewarded:(id<ATOGARewardItem>)item {
-    self.rewardGranted = YES;
-    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-        [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdRewarded];
 }
 
 -(void)oguryAdsOptinVideoAdError:(ATOguryAdsErrorType)errorType {
     NSString *desc = OguryRVStatusTypeStringMap[errorType];
     NSError *error = [NSError errorWithDomain:desc code:errorType userInfo:nil];
     [ATLogger logError:[NSString stringWithFormat:@"OguryInterstitial::oguryAdsInterstitialAdError:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackRewardedVideoAdLoadFailed:error];
 }
 
 NSString *OguryRVStatusTypeStringMap[] = {
@@ -79,10 +65,14 @@ NSString *OguryRVStatusTypeStringMap[] = {
     [OguryAdsErrorSdkInitNotCalled] = @"OguryAdsErrorSdkInitNotCalled"
 };
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unit_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unit_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 
 @end

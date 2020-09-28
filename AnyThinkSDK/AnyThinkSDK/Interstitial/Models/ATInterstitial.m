@@ -16,7 +16,7 @@
 
 @end
 @implementation ATInterstitial
--(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup {
+-(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
     self = [super init];
     if (self != nil) {
         _priority = priority;
@@ -34,6 +34,9 @@
         _customEvent.ad = self;
         _appID = assets[kATAdAssetsAppIDKey];
         _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? ([ATAdCustomEvent calculateAdPriority:self] / _placementModel.maxConcurrentRequestCount) + 1 : 1;
+        _price = unitGroup.headerBidding ? [assets[kAdAssetsPriceKey] doubleValue] : unitGroup.price;
+        _finalWaterfall = finalWaterfall;
+        if ([assets[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { _autoReqType = 5; }
     }
     return self;
 }
@@ -50,11 +53,11 @@
 }
 
 -(BOOL) filledByReady {
-    NSDictionary *extra = [_customEvent.customInfo[kAdapterCustomInfoExtraKey] isKindOfClass:[NSDictionary class]] ? _customEvent.customInfo[kAdapterCustomInfoExtraKey] : nil;
+    NSDictionary *extra = [_customEvent.localInfo isKindOfClass:[NSDictionary class]] ? _customEvent.localInfo : nil;
     return [extra[kAdLoadingExtraFilledByReadyFlagKey] boolValue];
 }
 -(BOOL) filledByAutoloadOnClose {
-    NSDictionary *extra = [_customEvent.customInfo[kAdapterCustomInfoExtraKey] isKindOfClass:[NSDictionary class]] ? _customEvent.customInfo[kAdapterCustomInfoExtraKey] : nil;
+    NSDictionary *extra = [_customEvent.localInfo isKindOfClass:[NSDictionary class]] ? _customEvent.localInfo : nil;
     return [extra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue];
 }
 

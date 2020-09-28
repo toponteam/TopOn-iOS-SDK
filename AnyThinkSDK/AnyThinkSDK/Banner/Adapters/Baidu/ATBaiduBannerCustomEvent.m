@@ -10,17 +10,18 @@
 #import "Utilities.h"
 #import "ATBannerManager.h"
 #import "ATBannerView+Internal.h"
+
 @interface ATBaiduBannerCustomEvent()
 @property(nonatomic, readonly) id baiduBannerView;
 @property(nonatomic, readonly) NSString *appID;
 @property(nonatomic, readonly) BOOL impressed;
 @end
 @implementation ATBaiduBannerCustomEvent
--(instancetype) initWithUnitID:(NSString*)unitID customInfo:(NSDictionary*)customInfo bannerView:(id)bannerView {
-    self = [super initWithUnitID:unitID customInfo:customInfo];
+-(instancetype) initWithUnitID:(NSString*)unitID serverInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo bannerView:(id)bannerView {
+    self = [super initWithInfo:serverInfo localInfo:localInfo];
     if (self != nil) {
         _baiduBannerView = bannerView;
-        _appID = customInfo[@"app_id"];
+        _appID = serverInfo[@"app_id"];
     }
     return self;
 }
@@ -41,25 +42,20 @@
 
 - (void)failedDisplayAd:(NSInteger)reason {
     [ATLogger logMessage:[NSString stringWithFormat:@"BaiduBanner::failedDisplayAd:%ld", (long)reason] type:ATLogTypeExternal];
-    [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.BaiduBanner" code:reason userInfo:@{NSLocalizedDescriptionKey:@"ATSDK has failed to load banner.", NSLocalizedFailureReasonErrorKey:@"BaiduSDK has failed to load banner."}]];
+    [self trackBannerAdLoadFailed:[NSError errorWithDomain:@"com.anythink.BaiduBanner" code:reason userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:@"BaiduSDK has failed to load banner."}]];
 }
 
 - (void)didAdImpressed {
     [ATLogger logMessage:@"BaiduBanner::didAdImpressed" type:ATLogTypeExternal];
     if (!_impressed) {
         _impressed = YES;
-        NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:_baiduBannerView, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, nil];
-        if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
-        [self handleAssets:assets];
+        [self trackBannerAdLoaded:_baiduBannerView adExtra:nil];
     }
 }
 
 - (void)didAdClicked {
     [ATLogger logMessage:@"BaiduBanner::didAdClicked" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackBannerAdClick];
 }
 
 - (void)didDismissLandingPage {
@@ -69,15 +65,19 @@
 - (void)didAdClose {
     [ATLogger logMessage:@"BaiduBanner::didAdClose" type:ATLogTypeExternal];
     [self.bannerView loadNextWithoutRefresh];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didTapCloseButtonWithPlacementID:extra:)]) {
-        [self.delegate bannerView:self.bannerView didTapCloseButtonWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
-    [self handleClose];
+//    if ([self.delegate respondsToSelector:@selector(bannerView:didTapCloseButtonWithPlacementID:extra:)]) {
+//        [self.delegate bannerView:self.bannerView didTapCloseButtonWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
+//    }
+    [self trackBannerAdClosed];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"ad_place_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"ad_place_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"ad_place_id"];
+//    return extra;
+//}
 @end

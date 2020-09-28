@@ -13,35 +13,85 @@
 #import "ATInterstitialManager.h"
 #import <objc/runtime.h>
 #import "ATAppSettingManager.h"
+NSString *const kATUnityAdsInterstitialLoadedNotification = @"com.anythink.UnityAdsFullScreenAdLoaded";
+NSString *const kATUnityAdsInterstitialFailedToLoadNotification = @"com.anythink.UnityAdsFullScreenAdFailedToLoad";
+NSString *const kATUnityAdsInterstitialPlayStartNotification = @"com.anythink.UnityAdsFullScreenAdPlayStart";
+NSString *const kATUnityAdsInterstitialClickNotification = @"com.anythink.UnityAdsFullScreenAdClick";
+NSString *const kATUnityAdsInterstitialCloseNotification = @"com.anythink.UnityAdsFullScreenAdClose";
+NSString *const kATUnityAdsInterstitialNotificationUserInfoPlacementIDKey = @"placement_id";
+NSString *const kATUnityAdsInterstitialNotificationUserInfoErrorKey = @"error";
 
-NSString *const kUnityMonetizationInitFlagKey = @"unity_monetization_init_flag";
+@interface ATUnityAdsInterstitialDelegate:NSObject<UnityAdsDelegate, UnityAdsExtendedDelegate>
+@end
+@implementation ATUnityAdsInterstitialDelegate
++(instancetype) sharedDelegate {
+    static ATUnityAdsInterstitialDelegate *sharedDelegate = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedDelegate = [[ATUnityAdsInterstitialDelegate alloc] init];
+    });
+    return sharedDelegate;
+}
+
+- (void)unityAdsDidError:(NSInteger)error withMessage:(NSString *)message {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::unityAdsDidError:%ld withMessage:%@", error, message] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsInterstitialFailedToLoadNotification object:nil userInfo:@{kATUnityAdsInterstitialNotificationUserInfoErrorKey:[NSError errorWithDomain:@"com.anythink.UnityAdsInterstitialLoad" code:error userInfo:@{NSLocalizedDescriptionKey:@"anythinkSDK has failed to load interstitial.", NSLocalizedFailureReasonErrorKey:[message length] > 0 ? message : @"UnityAds SDK has failed to load interstitial." }]}];
+}
+
+- (void)unityAdsPlacementStateChanged:(NSString *)placementId oldState:(NSInteger)oldState newState:(NSInteger)newState {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::unityAdsPlacementStateChanged:%@ oldState:%ld newState:%ld", placementId, oldState, newState] type:ATLogTypeExternal];
+    if (newState == 0) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsInterstitialLoadedNotification object:nil userInfo:@{kATUnityAdsInterstitialNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @""}];
+    }
+}
+
+-(void)unityAdsDidStart:(NSString*)placementId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::unityAdsDidStart:%@", placementId] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsInterstitialPlayStartNotification object:nil userInfo:@{kATUnityAdsInterstitialNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @""}];
+}
+
+-(void)unityAdsDidFinish:(NSString*)placementId withFinishState:(NSInteger)finishState {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::unityAdsDidFinish:%@ withFinishState:%ld", placementId, finishState] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsInterstitialCloseNotification object:nil userInfo:@{kATUnityAdsInterstitialNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @""}];
+}
+
+- (void)unityAdsReady:(NSString *)placementId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::unityAdsReady:%@", placementId] type:ATLogTypeExternal];
+}
+
+- (void)unityAdsDidClick:(NSString *)placementId {
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsInterstitial::unityAdsDidClick:%@", placementId] type:ATLogTypeExternal];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsInterstitialClickNotification object:nil userInfo:@{kATUnityAdsInterstitialNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @""}];
+}
+
+@end
+
 @interface ATUnityAdsInterstitialAdapter()
 @property(nonatomic, readonly) ATUnityAdsInterstitialCustomEvent *customEvent;
 @end
 @implementation ATUnityAdsInterstitialAdapter
-+(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup {
-    ATUnityAdsInterstitialCustomEvent *customEvent = [[ATUnityAdsInterstitialCustomEvent alloc] initWithUnitID:unitGroup.content[@"placement_id"] customInfo:[ATAdCustomEvent customInfoWithUnitGroupModel:unitGroup extra:nil]];
-    id<UMONShowAdPlacementContent> placementContent = [[NSClassFromString(@"UMONShowAdPlacementContent") alloc] initWithPlacementId:unitGroup.content[@"placement_id"] withParams:nil];
-    ATInterstitial *ad = [[ATInterstitial alloc] initWithPriority:priority placementModel:placementModel requestID:requestID assets:@{kInterstitialAssetsCustomEventKey:customEvent, kInterstitialAssetsUnitIDKey:[customEvent.unitID length] > 0 ? customEvent.unitID : @"", kAdAssetsCustomObjectKey:placementContent} unitGroup:unitGroup];
++(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall {
+    ATUnityAdsInterstitialCustomEvent *customEvent = [[ATUnityAdsInterstitialCustomEvent alloc] initWithInfo:[ATAdCustomEvent customInfoWithUnitGroupModel:unitGroup extra:nil] localInfo:nil];
+    ATInterstitial *ad = [[ATInterstitial alloc] initWithPriority:priority placementModel:placementModel requestID:requestID assets:@{kInterstitialAssetsCustomEventKey:customEvent, kInterstitialAssetsUnitIDKey:[customEvent.unitID length] > 0 ? customEvent.unitID : @"", kAdAssetsCustomObjectKey:unitGroup.content[@"placement_id"]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
     return ad;
 }
 
 +(BOOL) adReadyForInfo:(NSDictionary*)info {
-    return [NSClassFromString(@"UnityMonetization") isReady:info[@"placement_id"]];
+    return [NSClassFromString(@"UnityAds") isReady:info[@"placement_id"]];
 }
 
 +(BOOL) adReadyWithCustomObject:(id<UMONShowAdPlacementContent>)customObject info:(NSDictionary*)info {
-    return [NSClassFromString(@"UnityMonetization") isReady:info[@"placement_id"]];
+    return [NSClassFromString(@"UnityAds") isReady:info[@"placement_id"]];
 }
 
 +(void) showInterstitial:(ATInterstitial*)interstitial inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate {
     interstitial.customEvent.delegate = delegate;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [interstitial.customObject show:viewController withDelegate:(ATUnityAdsInterstitialCustomEvent*)interstitial.customEvent];
+        [NSClassFromString(@"UnityAds") show:viewController placementId:interstitial.customEvent.serverInfo[@"placement_id"]];
     });
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameUnityAds]) {
@@ -52,7 +102,8 @@ NSString *const kUnityMonetizationInitFlagKey = @"unity_monetization_init_flag";
                 [playerMetaData set:@"gdpr.consent" value:[ATAPI sharedInstance].networkConsentInfo[kNetworkNameUnityAds]];
             } else {
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) {
                     /*
                      value: 1 Personalize, 0 Nonpersonalized
@@ -66,18 +117,22 @@ NSString *const kUnityMonetizationInitFlagKey = @"unity_monetization_init_flag";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
-    if (NSClassFromString(@"UnityMonetization") != nil) {
-        _customEvent = [[ATUnityAdsInterstitialCustomEvent alloc] initWithUnitID:info[@"placement_id"] customInfo:info];
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+    if (NSClassFromString(@"UnityAds") != nil) {
+        _customEvent = [[ATUnityAdsInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        if ([NSClassFromString(@"UnityMonetization") isReady:info[@"placement_id"]]) {
-            id<UMONShowAdPlacementContent> placementContent = [[NSClassFromString(@"UMONShowAdPlacementContent") alloc] initWithPlacementId:info[@"placement_id"] withParams:nil];
-            [_customEvent handleAssets:@{kInterstitialAssetsCustomEventKey:_customEvent, kInterstitialAssetsUnitIDKey:[_customEvent.unitID length] > 0 ? _customEvent.unitID : @"", kAdAssetsCustomObjectKey:placementContent}];
+        if ([NSClassFromString(@"UnityAds") isReady:serverInfo[@"placement_id"]]) {
+            [NSClassFromString(@"UnityAds") removeDelegate:[ATUnityAdsInterstitialDelegate sharedDelegate]];
+            [NSClassFromString(@"UnityAds") addDelegate:[ATUnityAdsInterstitialDelegate sharedDelegate]];
+            [_customEvent trackInterstitialAdLoaded:serverInfo[@"placement_id"] adExtra:nil];
         } else {
-            [NSClassFromString(@"UnityMonetization") initialize:info[@"game_id"] delegate:_customEvent];
+            if (![NSClassFromString(@"UnityAds") isInitialized]) {
+                [NSClassFromString(@"UnityAds") initialize:serverInfo[@"game_id"]];
+                [NSClassFromString(@"UnityAds") addDelegate:[ATUnityAdsInterstitialDelegate sharedDelegate]];
+            }
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"UnityAds"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"UnityAds"]}]);
     }
 }
 @end

@@ -28,9 +28,9 @@ static NSString *const kConnectFailureNotification = @"TJC_Connect_Failed";
 static NSString *const kTapjoyClassName = @"Tapjoy";
 static NSString *const kPlacementNameKey = @"placement_name";
 @implementation ATTapjoyRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:kPlacementNameKey} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:kPlacementNameKey} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id<ATTJPlacement>)customObject info:(NSDictionary*)info {
     return customObject.isContentReady;
@@ -44,10 +44,10 @@ static NSString *const kPlacementNameKey = @"placement_name";
     [((id<ATTJPlacement>)rewardedVideo.customObject) showContentWithViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
-        _info = info;
+        _info = serverInfo;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"Tapjoy") getVersion] forNetwork:kNetworkNameTapjoy];
@@ -58,7 +58,8 @@ static NSString *const kPlacementNameKey = @"placement_name";
                     [NSClassFromString(kTapjoyClassName) subjectToGDPR:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameTapjoy][kTapjoyGDPRSubjectionKey] boolValue]];
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set) {
                         [NSClassFromString(kTapjoyClassName) setUserConsent:limit ? @"0" : @"1"];
                         [NSClassFromString(kTapjoyClassName) subjectToGDPR:[[ATAPI sharedInstance] inDataProtectionArea]];
@@ -70,9 +71,9 @@ static NSString *const kPlacementNameKey = @"placement_name";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kTapjoyClassName)) {
-        _customEvent = [[ATTapjoyRewardedVideoCustomEvent alloc] initWithUnitID:info[kPlacementNameKey] customInfo:info];
+        _customEvent = [[ATTapjoyRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
         if ([NSClassFromString(kTapjoyClassName) isConnected]) {
@@ -88,11 +89,11 @@ static NSString *const kPlacementNameKey = @"placement_name";
                                                      selector:@selector(tjcConnectFail:)
                                                          name:kConnectFailureNotification
                                                        object:nil];
-            [NSClassFromString(kTapjoyClassName) connect:info[@"sdk_key"]];
+            [NSClassFromString(kTapjoyClassName) connect:serverInfo[@"sdk_key"]];
         }
     } else {
         [ATLogger logError:@"Tapjoy: Failed to load, Tapjoy class not found." type:ATLogTypeExternal];
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kTapjoyClassName]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kTapjoyClassName]}]);
     }
 }
 

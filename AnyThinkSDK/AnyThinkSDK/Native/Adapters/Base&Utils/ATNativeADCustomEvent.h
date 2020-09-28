@@ -7,22 +7,27 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AnyThinkSDK/AnyThinkSDK.h>
+
 #import "ATNativeADView.h"
-#import "ATTracker.h"
+//#import "ATTracker.h"
 #import "ATNativeADDelegate.h"
+//#import "ATAdCustomEvent.h"
+
 @class ATNativeADCache;
-@interface ATNativeADCustomEvent : NSObject
--(void) handleAssets:(NSDictionary*)assets;
--(void) handleLoadingFailure:(NSError*)error;
+@interface ATNativeADCustomEvent : ATAdCustomEvent
+-(void) trackNativeAdLoaded:(NSDictionary*)assets;
+-(void) trackNativeAdLoadFailed:(NSError*)error;
 -(void) didAttachMediaView;
 -(void) willDetachOffer:(ATNativeADCache*)offer fromAdView:(ATNativeADView*)adView;
 /**
  *@para refresh: whether the show is trigered by a ad refresh.
  */
--(void) trackShow:(BOOL)refresh;
--(void) trackClick;
--(void) trackVideoStart;
--(void) trackVideoEnd;
+-(void) trackNativeAdShow:(BOOL)refresh;
+-(void) trackNativeAdClick;
+-(void) trackNativeAdVideoStart;
+-(void) trackNativeAdVideoEnd;
+-(void) trackNativeAdClosed;
 -(NSDictionary*)delegateExtra;
 -(ATNativeADSourceType) sourceType;
 @property(nonatomic, copy) void(^requestCompletionBlock)(NSArray<NSDictionary*> *assets, NSError *error);

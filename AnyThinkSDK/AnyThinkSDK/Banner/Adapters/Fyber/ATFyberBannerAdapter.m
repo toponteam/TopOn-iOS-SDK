@@ -25,7 +25,7 @@
     customEvent.viewUnitController.adView.center = view.center;
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -33,16 +33,16 @@
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameFyber]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameFyber];
                 [[ATAPI sharedInstance] setVersion:((id<ATIASDKCore>)[NSClassFromString(@"IASDKCore") sharedInstance]).version forNetwork:kNetworkNameFyber];
-                [[NSClassFromString(@"IASDKCore") sharedInstance] initWithAppID:info[@"app_id"]];
+                [[NSClassFromString(@"IASDKCore") sharedInstance] initWithAppID:serverInfo[@"app_id"]];
             }
         });
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"IAAdRequest") != nil && NSClassFromString(@"IAAdSpot") != nil && NSClassFromString(@"IAViewUnitController") != nil) {
-        _customEvent = [[ATFyberBannerCustomEvent alloc] initWithUnitID:info[@"spot_id"] customInfo:info];
+        _customEvent = [[ATFyberBannerCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         
         
@@ -57,7 +57,7 @@
         
         id<ATIAAdRequest> request = [NSClassFromString(@"IAAdRequest") build:^(id<IAAdRequestBuilder>  _Nonnull builder) {
             builder.useSecureConnections = NO;
-            builder.spotID = info[@"spot_id"];
+            builder.spotID = serverInfo[@"spot_id"];
         }];
         
         _spot = [NSClassFromString(@"IAAdSpot") build:^(id<IAAdSpotBuilder>  _Nonnull builder) {
@@ -67,16 +67,17 @@
         
         [_spot fetchAdWithCompletion:^(id<ATIAAdSpot>  _Nullable adSpot, id  _Nullable adModel, NSError * _Nullable error) {
             if (error != nil) {
-                [self->_customEvent handleLoadingFailure:error];
+                [self->_customEvent trackBannerAdLoadFailed:error];
             } else {
                 self->_customEvent.spot = self->_spot;
                 self->_customEvent.MRAIDContentController = self->_MRAIDContentController;
                 self->_customEvent.viewUnitController = self->_viewUnitController;
-                [self->_customEvent handleAssets:@{kBannerAssetsCustomEventKey:self->_customEvent, kBannerAssetsUnitIDKey:info[@"spot_id"]}];
+                [self->_customEvent trackBannerAdLoaded:nil adExtra:nil];
+//                [self->_customEvent handleAssets:@{kBannerAssetsCustomEventKey:self->_customEvent, kBannerAssetsUnitIDKey:serverInfo[@"spot_id"]}];
             }
         }];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load banner.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Fyber"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Fyber"]}]);
     }
 }
 @end

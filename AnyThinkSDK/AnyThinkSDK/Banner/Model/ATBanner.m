@@ -18,7 +18,7 @@
 
 @end
 @implementation ATBanner
--(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup {
+-(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
     self = [super init];
     if (self != nil) {
         _priority = priority;
@@ -36,6 +36,9 @@
         _customEvent.banner = self;
         _customObject = assets[kAdAssetsCustomObjectKey];
         _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? ([ATAdCustomEvent calculateAdPriority:self] / _placementModel.maxConcurrentRequestCount) + 1 : 1;
+        _price = unitGroup.headerBidding ? [assets[kAdAssetsPriceKey] doubleValue] : unitGroup.price;
+        _finalWaterfall = finalWaterfall;
+        if ([assets[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { _autoReqType = 5; }
     }
     return self;
 }
@@ -56,7 +59,7 @@
 }
 
 -(BOOL) fillByAutorefresh {
-    return [_customEvent.customInfo[kAdapterCustomInfoExtraKey][kAdLoadingExtraRefreshFlagKey] boolValue];
+    return [_customEvent.localInfo[kAdLoadingExtraRefreshFlagKey] boolValue];
 }
 
 -(void) dealloc {

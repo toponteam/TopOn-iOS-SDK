@@ -10,6 +10,7 @@
 #import "Utilities.h"
 #import "ATBannerManager.h"
 #import "ATAPI.h"
+
 @implementation ATMopubBannerCustomEvent
 - (UIViewController *)viewControllerForPresentingModalView {
     [ATLogger logMessage:@"MopubBanner::viewControllerForPresentingModalView" type:ATLogTypeExternal];
@@ -18,14 +19,13 @@
 
 - (void)adViewDidLoadAd:(id<ATMPAdView>)view {
     [ATLogger logMessage:@"MopubBanner::adViewDidLoadAd:" type:ATLogTypeExternal];
-    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:view, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, nil];
-    if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
-    [self handleAssets:assets];
+
+    [self trackBannerAdLoaded:view adExtra:nil];
 }
 
 - (void)adViewDidFailToLoadAd:(id<ATMPAdView>)view {
     [ATLogger logMessage:@"MopubBanner::adViewDidFailToLoadAd:" type:ATLogTypeExternal];
-    [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.MopubBannerr" code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"ATSDK has failed to load banner.", NSLocalizedFailureReasonErrorKey:@"Mopub has failed to load banner."}]];
+    [self trackBannerAdLoadFailed:[NSError errorWithDomain:@"com.anythink.MopubBannerr" code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:@"Mopub has failed to load banner."}]];
 }
 
 - (void)willPresentModalViewForAd:(id<ATMPAdView>)view {
@@ -33,10 +33,7 @@
     NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
     if (self.banner.requestID != nil) { userInfo[kBannerNotificationUserInfoRequestIDKey] = self.banner.requestID; }
     [[NSNotificationCenter defaultCenter] postNotificationName:kBannerPresentModalViewControllerNotification object:nil userInfo:userInfo];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackBannerAdClick];
 }
 
 - (void)didDismissModalViewForAd:(id<ATMPAdView>)view {
@@ -50,9 +47,13 @@
     [ATLogger logMessage:@"MopubBanner::willLeaveApplicationFromAd:" type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"unitid"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unitid"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"unitid"];
+//    return extra;
+//}
 @end

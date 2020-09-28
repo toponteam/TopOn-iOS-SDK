@@ -23,6 +23,12 @@
 
 @property(nonatomic, readonly) ATThreadSafeAccessor *showFlagsStorageAccessor;
 @property(nonatomic, readonly) NSMutableDictionary<NSString*, NSNumber*> *showFlagsStorage;
+
+@property(nonatomic, readonly) ATThreadSafeAccessor *showRecordsAccessor;
+@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSMutableDictionary<NSString*, NSMutableArray<NSString*>*>*>*showRecords;
+
+@property(nonatomic, readonly) ATThreadSafeAccessor *loadCapsAccessor;
+@property(nonatomic, readonly) NSMutableDictionary *loadCaps;
 @end
 
 static NSString *const kCapsInfoFileName = @"capsInfo.anythink.com";
@@ -49,7 +55,7 @@ static NSString *const kShowTimeInfoName = @"showTime.anythink.com";
         }
         
         _showTimeStorageAccessor = [ATThreadSafeAccessor new];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:[ATCapsManager capsInfoPath]]) {
+        if ([[NSFileManager defaultManager] fileExistsAtPath:[ATCapsManager showTimeInfoPath]]) {
             _showTimeStorage = [[NSMutableDictionary alloc] initWithContentsOfFile:[ATCapsManager showTimeInfoPath]];
         } else {
             _showTimeStorage = [NSMutableDictionary dictionary];
@@ -57,8 +63,22 @@ static NSString *const kShowTimeInfoName = @"showTime.anythink.com";
         
         _showFlagsStorage = [NSMutableDictionary<NSString*, NSNumber*> dictionary];
         _showFlagsStorageAccessor = [ATThreadSafeAccessor new];
+        
+        _showRecords = [NSMutableDictionary<NSString*, NSMutableDictionary<NSString*, NSMutableArray<NSString*>*>*> dictionary];
+        _showRecordsAccessor = [ATThreadSafeAccessor new];
+        
+        _loadCapsAccessor = [ATThreadSafeAccessor new];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:[ATCapsManager loadCapsInfoPath]]) {
+            _loadCaps = [[NSMutableDictionary alloc] initWithContentsOfFile:[ATCapsManager loadCapsInfoPath]];
+        } else {
+            _loadCaps = [NSMutableDictionary dictionary];
+        }
     }
     return self;
+}
+
++(NSString*)loadCapsInfoPath {
+    return [[Utilities documentsPath] stringByAppendingPathComponent:@"loadCapsInfo.anythink.com"];
 }
 
 +(NSString*)capsInfoPath {
@@ -317,6 +337,86 @@ static NSString *const kUnitGroupLastShowTimesKey = @"unit_group_last_show_times
 
 +(NSString*)showFlagKeyForPlacementID:(NSString*)placementID requestID:(NSString*)requestID {
     return [NSString stringWithFormat:@"%@_%@", placementID, requestID].md5;
+}
+
+/**
+ {
+     placement_id:{
+         request_id:[unit_id]
+     }
+ }
+ */
+-(void) recordShowForPlacementID:(NSString*)placementID unitGroupUnitID:(NSString*)unitID requestID:(NSString*)requestID {
+    if (placementID != nil && unitID != nil && requestID != nil) {
+        __weak typeof(self) weakSelf = self;
+        [_showRecordsAccessor writeWithBlock:^{
+            NSMutableDictionary<NSString*, NSMutableArray<NSString*>*> *placementEntry = weakSelf.showRecords[placementID];
+            NSMutableArray<NSString*>* requestIDEntry = placementEntry[requestID];
+            if (placementEntry == nil) {
+                requestIDEntry = [NSMutableArray<NSString*> array];
+                placementEntry = [NSMutableDictionary<NSString*, NSMutableArray<NSString*>*> dictionaryWithObject:requestIDEntry forKey:requestID];
+            } else {
+                if (requestIDEntry == nil) {
+                    requestIDEntry = [NSMutableArray<NSString*> array];
+                    placementEntry[requestID] = requestIDEntry;
+                }
+            }
+            [requestIDEntry addObject:unitID];
+        }];
+    }
+}
+
+-(NSArray<NSString*>*)showRecordsForPlacementID:(NSString*)placementID requestID:(NSString*)requestID {
+    __weak typeof(self) weakSelf = self;
+    return [_showRecordsAccessor readWithBlock:^id{
+        NSArray *records = weakSelf.showRecords[placementID][requestID];
+        if ([records count] > 0) {
+            return [NSArray arrayWithArray:records];
+        } else {
+            return nil;
+        }
+    }];
+}
+
+#pragma mark - load caps
+/**
+ {
+     placement_id:{
+         date:2020-06-18 17:58:00
+         cap:5
+     }
+ }
+ */
+static NSString const* kLoadCapsDateKey = @"date";
+static NSString const* kLoadCapsCapKey = @"cap";
+static NSString *const kUserDefaultsLoadCapsKey = @"com.anythink.UserDefaultsLoadCaps";
+-(BOOL)validateLoadCapsForPlacementID:(NSString*)placementID cap:(NSInteger)cap duration:(NSTimeInterval)duration {
+    return [[_loadCapsAccessor readWithBlock:^id{
+        BOOL ret = YES;
+        NSDictionary *entry = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"%@_%@",kUserDefaultsLoadCapsKey,placementID]];
+        if (entry != nil) { ret = [[NSDate date] timeIntervalSinceDate:entry[kLoadCapsDateKey]] > duration || (cap <= 0 || [entry[kLoadCapsCapKey] integerValue] < cap); }
+        return @(ret);
+    }] boolValue];
+}
+
+-(void)increaseCapWithPlacementID:(NSString*)placementID duration:(NSTimeInterval)duration {
+    __weak typeof(self) weakSelf = self;
+    [_loadCapsAccessor writeWithBlock:^{
+        NSString *userDefaultsLoadCapsKey = [NSString stringWithFormat:@"%@_%@",kUserDefaultsLoadCapsKey,placementID];
+        NSDictionary *entry = [[NSUserDefaults standardUserDefaults] objectForKey:userDefaultsLoadCapsKey];
+        if (entry != nil) {
+            NSTimeInterval date = [[NSDate date] timeIntervalSinceDate:entry[kLoadCapsDateKey]];
+            if (date > duration) {
+                weakSelf.loadCaps[placementID] = @{kLoadCapsCapKey:@1, kLoadCapsDateKey:[NSDate date]};
+            } else {
+                weakSelf.loadCaps[placementID] = @{kLoadCapsCapKey:@([entry[kLoadCapsCapKey] integerValue] + 1), kLoadCapsDateKey:entry[kLoadCapsDateKey]};
+            }
+        } else {
+            weakSelf.loadCaps[placementID] = @{kLoadCapsCapKey:@1, kLoadCapsDateKey:[NSDate date]};
+        }
+        [[NSUserDefaults standardUserDefaults] setObject:weakSelf.loadCaps[placementID] forKey:userDefaultsLoadCapsKey];
+        [[NSUserDefaults standardUserDefaults] synchronize];
+    }];
 }
 @end
 

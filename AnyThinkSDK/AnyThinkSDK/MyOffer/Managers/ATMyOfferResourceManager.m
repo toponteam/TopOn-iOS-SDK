@@ -115,10 +115,16 @@
     if ([offerModel.offerID isKindOfClass:[NSString class]] && [offerModel.offerID length] > 0 && [URL isKindOfClass:[NSString class]] && [URL length] > 0) {
         __weak typeof(self) weakSelf = self;
         return [_resourceStorageAccessor readWithBlock:^id{
-            return [weakSelf.resourceStorage[offerModel.resourceID] resourcePathForURL:URL];
+            return [weakSelf.resourceStorage[offerModel.localResourceID] resourcePathForURL:URL];
         }];
     } else {
         return nil;
     }
 }
+
+-(UIImage *) imageForOfferModel:(ATMyOfferOfferModel*)offerModel resourceURL:(NSString*)URL {
+    NSString * path = [[ATMyOfferResourceManager sharedManager]resourcePathForOfferModel:offerModel resourceURL:URL];
+    return path != nil ? [UIImage imageWithData:[NSData dataWithContentsOfFile:path]] : nil;
+}
+
 @end

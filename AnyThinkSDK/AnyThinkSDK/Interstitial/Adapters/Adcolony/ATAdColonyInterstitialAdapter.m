@@ -38,21 +38,21 @@ static NSString *const kAdColonyRewardedSuccess = @"com.topon.adColony_rewarded_
     [acInterstitial showWithPresentingViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(kAdColonyClassName) getSDKVersion] forNetwork:kNetworkNameAdColony];
         });
-        _info = info;
+        _info = serverInfo;
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kAdColonyClassName) != nil) {
-        _customEvent = [[ATAdColonyInterstitialCustomEvent alloc] initWithUnitID:info[kZoneIDKey] customInfo:info];
+        _customEvent = [[ATAdColonyInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         __weak typeof(self) weakSelf = self;
         
@@ -64,7 +64,8 @@ static NSString *const kAdColonyRewardedSuccess = @"com.topon.adColony_rewarded_
                     options.gdprConsentString = [ATAPI sharedInstance].networkConsentInfo[kNetworkNameAdColony][kAdColonyGDPRConsentStringKey];
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set) {
                         /**
                          gdprConsentString: @"0" Nonpersonalized, @"1" Personalized
@@ -73,7 +74,7 @@ static NSString *const kAdColonyRewardedSuccess = @"com.topon.adColony_rewarded_
                         options.gdprRequired = [[ATAPI sharedInstance] inDataProtectionArea];
                     }
                 }
-                [NSClassFromString(kAdColonyClassName) configureWithAppID:info[@"app_id"] zoneIDs:info[@"zone_ids"] options:options completion:^(NSArray<id<ATAdColonyZone>> *zones) {
+                [NSClassFromString(kAdColonyClassName) configureWithAppID:serverInfo[@"app_id"] zoneIDs:serverInfo[@"zone_ids"] options:options completion:^(NSArray<id<ATAdColonyZone>> *zones) {
                     [zones enumerateObjectsUsingBlock:^(id<ATAdColonyZone>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                         if (obj.rewarded) {
                             [obj setReward:^(BOOL success, NSString *name, int amount) {
@@ -84,7 +85,7 @@ static NSString *const kAdColonyRewardedSuccess = @"com.topon.adColony_rewarded_
                         }
                     }];
                     [[NSNotificationCenter defaultCenter] postNotificationName:kAdColonyIVConfig object:nil userInfo:nil];
-                    [NSClassFromString(kAdColonyClassName) requestInterstitialInZone:info[kZoneIDKey] options:options andDelegate:weakSelf.customEvent];
+                    [NSClassFromString(kAdColonyClassName) requestInterstitialInZone:serverInfo[kZoneIDKey] options:options andDelegate:weakSelf.customEvent];
                     [[ATAPI sharedInstance] setInitFlag:ATInterstitialAdColonyInitStateInited forNetwork:kNetworkNameAdColony];
                 }];
                 return ATInterstitialAdColonyInitStateIniting;
@@ -92,13 +93,13 @@ static NSString *const kAdColonyRewardedSuccess = @"com.topon.adColony_rewarded_
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleConfigurationFinishedNotification:) name:kAdColonyIVConfig object:nil];
                 return currentValue;
             } else if (currentValue == ATInterstitialAdColonyInitStateInited) {
-                [NSClassFromString(kAdColonyClassName) requestInterstitialInZone:info[kZoneIDKey] options:nil andDelegate:weakSelf.customEvent];
+                [NSClassFromString(kAdColonyClassName) requestInterstitialInZone:serverInfo[kZoneIDKey] options:nil andDelegate:weakSelf.customEvent];
                 return currentValue;
             }
             return currentValue;
         }];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kAdColonyClassName]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kAdColonyClassName]}]);
     }
 }
 

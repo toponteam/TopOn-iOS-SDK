@@ -10,8 +10,9 @@
 #define ATAd_h
 #import "ATPlacementModel.h"
 #import "ATUnitGroupModel.h"
+@class ATWaterfall;
 @protocol ATAd<NSObject>
--(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup;
+-(instancetype) initWithPriority:(NSInteger) priority placementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID assets:(NSDictionary*)assets unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall;
 -(void) renewAdWithPriority:(NSInteger)priority placementModel:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID;
 @property(nonatomic, readonly) ATPlacementModel *placementModel;
 @property(nonatomic, readonly) ATUnitGroupModel *unitGroup;
@@ -40,6 +41,9 @@
 @property(nonatomic, readonly) BOOL fillByAutorefresh;
 @property(nonatomic) BOOL defaultPlayIfRequired;
 @property(nonatomic, readonly) BOOL renewed;
+@property(nonatomic, readonly) double price;
+@property(nonatomic, readonly, weak) ATWaterfall *finalWaterfall;
+@property(nonatomic, readonly) NSInteger autoReqType;
 @end
 
 #endif /* ATAd_h */

@@ -16,6 +16,7 @@
 #import "ATUnitGroupModel.h"
 #import "ATSplashCustomEvent.h"
 #import "ATSplashDelegate.h"
+#import "ATWaterfallManager.h"
 NSString *const kATSplashExtraContainerViewKey = @"container_view";
 NSString *const kATSplashExtraWindowKey = @"window";
 NSString *const kATSplashExtraWindowSceneKey = @"windowScene";
@@ -59,10 +60,11 @@ NSString *const kATSplashExtraLoadingStartDateKey = @"loading_start_date";
  */
 static NSString *const kStorageRequestIDKey = @"request_id";
 static NSString *const kStorageSplashKey = @"splash";
--(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID {
+-(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID {
     __weak typeof(self) weakSelf = self;
-    ATSplash *splash = [[ATSplash alloc] initWithPriority:[placementModel.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup];
+    ATSplash *splash = [[ATSplash alloc] initWithPriority:[finalWaterfall.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup finalWaterfall:finalWaterfall];
     splash.showTimes = 1;
+    //track show to avoid error for generate custom event ad object async
     [splash.customEvent trackShow];
     [_storageAccessor writeWithBlock:^{ weakSelf.storage[placementModel.placementID] = @{kStorageRequestIDKey:requestID, kStorageSplashKey:splash}; }];
 }

@@ -8,6 +8,7 @@
 
 #import "ATSigmobInterstitialRewardedVideoDelegate.h"
 #import "Utilities.h"
+#import "ATAPI.h"
 
 static NSString *const kATSigmobRVDataLoadedNotification = @"com.anythink.SigmobRewardAdDataLoaded";
 static NSString *const kATSigmobRVLoadedNotification = @"com.anythink.SigmobRewardAdLoaded";
@@ -21,6 +22,7 @@ static NSString *const kATSigmobRVNotificationUserInfoPlacementIDKey = @"placeme
 static NSString *const kATSigmobRVNotificationUserInfoErrorKey = @"error";
 static NSString *const kATSigmobRVNotificationUserInfoRewardedFlag = @"reward";
 
+//sigmob代理为单例，所以当此代理比激励视频先注册，后续激励视频那边的sigmob回调都会在这边接收，因此需要发通知给激励视频去处理回调。
 @implementation ATSigmobInterstitialRewardedVideoDelegate
 +(instancetype) sharedDelegate {
     static ATSigmobInterstitialRewardedVideoDelegate *sharedDelegate = nil;
@@ -40,9 +42,9 @@ static NSString *const kATSigmobRVNotificationUserInfoRewardedFlag = @"reward";
 
 - (void)onVideoError:(NSError *)error placementId:(NSString * _Nullable)placementId {
     [ATLogger logMessage:[NSString stringWithFormat:@"SigmobRewardedVideo::onVideoError::%@ placementId:%@",error, placementId] type:ATLogTypeExternal];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kATSigmobInterstitialFailedToLoadNotification object:nil userInfo:@{kATSigmobInterstitialNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @"", kATSigmobInterstitialNotificationUserInfoErrorKey:error != nil ? error : [NSError errorWithDomain:@"com.anythink.SigmobRVLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load ad", NSLocalizedFailureReasonErrorKey:@"Sigmob has failed to load ad"}]}];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATSigmobInterstitialFailedToLoadNotification object:nil userInfo:@{kATSigmobInterstitialNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @"", kATSigmobInterstitialNotificationUserInfoErrorKey:error != nil ? error : [NSError errorWithDomain:@"com.anythink.SigmobRVLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"Sigmob has failed to load ad"}]}];
     
-    [[NSNotificationCenter defaultCenter] postNotificationName:kATSigmobRVFailedToLoadNotification object:nil userInfo:@{kATSigmobRVNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @"", kATSigmobRVNotificationUserInfoErrorKey:error != nil ? error : [NSError errorWithDomain:@"com.anythink.SigmobRVLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load ad", NSLocalizedFailureReasonErrorKey:@"Sigmob has failed to load ad"}]}];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATSigmobRVFailedToLoadNotification object:nil userInfo:@{kATSigmobRVNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @"", kATSigmobRVNotificationUserInfoErrorKey:error != nil ? error : [NSError errorWithDomain:@"com.anythink.SigmobRVLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"Sigmob has failed to load ad"}]}];
 }
 
 - (void)onVideoAdClosedWithInfo:(id<ATWindRewardInfo>)info placementId:(NSString * _Nullable)placementId {
@@ -87,6 +89,6 @@ static NSString *const kATSigmobRVNotificationUserInfoRewardedFlag = @"reward";
 
 - (void)onVideoAdServerDidFail:(NSString *)placementId {
     [ATLogger logMessage:[NSString stringWithFormat:@"SigmobRewardedVideo::onVideoAdServerDidFail:%@", placementId] type:ATLogTypeExternal];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kATSigmobRVFailedToLoadNotification object:nil userInfo:@{kATSigmobRVNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @"", kATSigmobRVNotificationUserInfoErrorKey:[NSError errorWithDomain:@"com.anythink.SigmobRVLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load ad", NSLocalizedFailureReasonErrorKey:@"Sigmob has failed to load ad"}]}];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kATSigmobRVFailedToLoadNotification object:nil userInfo:@{kATSigmobRVNotificationUserInfoPlacementIDKey:placementId != nil ? placementId : @"", kATSigmobRVNotificationUserInfoErrorKey:[NSError errorWithDomain:@"com.anythink.SigmobRVLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"Sigmob has failed to load ad"}]}];
 }
 @end

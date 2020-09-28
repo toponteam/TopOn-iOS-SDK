@@ -41,6 +41,7 @@
     if ([self.ADView respondsToSelector:@selector(textLabel)]) [self.ADView textLabel].text = offer.mainText;
     if ([self.ADView respondsToSelector:@selector(iconImageView)]) [self.ADView iconImageView].image = offer.icon;
     if ([self.ADView respondsToSelector:@selector(mainImageView)]) [self.ADView mainImageView].image = offer.mainImage;
+    if ([self.ADView respondsToSelector:@selector(logoImageView)]) [self.ADView logoImageView].image = offer.logo;
     if ([self.ADView respondsToSelector:@selector(sponsorImageView)]) [self.ADView sponsorImageView].image = offer.sponsorImage;
     if ([self.ADView respondsToSelector:@selector(ctaLabel)]) [self.ADView ctaLabel].text = offer.ctaText;
     if ([self.ADView respondsToSelector:@selector(ratingLabel)]) [self.ADView ratingLabel].text = offer.rating != nil ? [NSString stringWithFormat:@"%@", offer.rating] : @"";

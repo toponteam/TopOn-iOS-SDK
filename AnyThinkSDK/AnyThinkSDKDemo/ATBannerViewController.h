@@ -36,7 +36,8 @@ extern NSString *const kStartAppPlacement;
 extern NSString *const kChartboostPlacementName;
 extern NSString *const kVunglePlacementName;
 extern NSString *const kAdcolonyPlacementName;
-
+extern NSString *const kGAMPlacement;
+extern NSString *const kMyOfferPlacement;
 
 @interface ATBannerViewController : UIViewController
 -(instancetype) initWithPlacementName:(NSString*)name;

@@ -14,6 +14,7 @@
 #import "ATAdAdapter.h"
 #import "ATLogger.h"
 #import "ATAgentEvent.h"
+#import "ATKeychain.h"
 
 NSString *const kATAppSettingGDPAFlag = @"gdpr_ia";
 NSString *const kATAppSettingGDPRPolicyURLKey = @"gdpr_nu";
@@ -27,6 +28,10 @@ static NSString *const kATAppSettingThirdPartySDKConsentDefaultFlagKey = @"nw_eu
 
 static NSString *const kUserDefaultsATIDKey = @"com.anythink.data.up_id";
 static NSString *const kUserDefaultsGDPRFlagKey = @"com.anythink.data.gdpr_flag";
+
+static NSString *const kUserDefaultsSYSIDKey = @"com.exc.7BEDD788.sys";
+static NSString *const kUserDefaultsBKUPIDKey = @"com.exc.C43EB5CC.bk";
+
 @interface ATAppSettingManager()
 @property(nonatomic, readonly) ATThreadSafeAccessor *settingAccessor;
 @property(nonatomic) NSDictionary *currentSetting_impl;
@@ -73,22 +78,16 @@ static NSString *const kSettingArchiveExpireDateKey = @"expire_date";
             _currentSetting_impl = currentSetting_impl;
             _trackingSetting_impl = [_currentSetting_impl[@"logger"] isKindOfClass:[NSDictionary class]] ? [[ATTrackingSetting alloc] initWithDictionary:_currentSetting_impl[@"logger"]] : [ATTrackingSetting defaultSetting];
             
-            if ([_currentSetting_impl[@"n_l"] isKindOfClass:[NSString class]]) {
-                _notifications = [NSJSONSerialization JSONObjectWithData:[_currentSetting_impl[@"n_l"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil];
-            }
+            if ([_currentSetting_impl[@"n_l"] isKindOfClass:[NSString class]]) { _notifications = [NSJSONSerialization JSONObjectWithData:[_currentSetting_impl[@"n_l"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
             [self preinitFilterAdapter:_currentSetting_impl[@"preinit"]];
-            [ATLogger logMessage:[NSString stringWithFormat:@"AppSetting read from archive:%@", archivedSettingInfo] type:ATLogTypeInternal];
+            
             _currentSettingExpireDate = archivedSettingInfo[kSettingArchiveExpireDateKey];
             if ([_currentSettingExpireDate isKindOfClass:[NSDate class]]) {
                 NSTimeInterval interval = [_currentSettingExpireDate timeIntervalSinceDate:[NSDate date]];
-                if (interval > 0) {
-                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(interval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                        [self requestAppSettingCompletion:^(NSDictionary *setting, NSError *error) {
-                            //
-                        }];
-                    });
-                }
+                if (interval > 0) { dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(interval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ [self requestAppSettingCompletion:^(NSDictionary *setting, NSError *error) { }]; }); }
             }
+            
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkAppSetting:) name:kATADLoadingStartLoadNotification object:nil];
         });
         
     }
@@ -112,20 +111,17 @@ static NSString *const kSettingArchiveExpireDateKey = @"expire_date";
         
         if ([_currentSetting_impl[@"logger"] isKindOfClass:[NSDictionary class]]) { _trackingSetting_impl = [[ATTrackingSetting alloc] initWithDictionary:_currentSetting_impl[@"logger"]]; }
         _currentSettingExpireDate = [NSDate dateWithTimeIntervalSinceNow:[_currentSetting_impl[kATAppSettingExpireIntervalKey] floatValue] / 1000.0f];
-        if ([_currentSetting_impl[@"n_l"] isKindOfClass:[NSString class]]) {
-            _notifications = [NSJSONSerialization JSONObjectWithData:[_currentSetting_impl[@"n_l"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil];
-        }
+        if ([_currentSetting_impl[@"n_l"] isKindOfClass:[NSString class]]) { _notifications = [NSJSONSerialization JSONObjectWithData:[_currentSetting_impl[@"n_l"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
         [self preinitFilterAdapter:_currentSetting_impl[@"preinit"]];
-        NSDictionary *settingToSave = @{kSettingArchiveSettingKey:_currentSetting_impl,
-                                        kSettingArchiveExpireDateKey:_currentSettingExpireDate
-                                        };
+        NSDictionary *settingToSave = @{kSettingArchiveSettingKey:_currentSetting_impl, kSettingArchiveExpireDateKey:_currentSettingExpireDate};
         [settingToSave writeToFile:[ATAppSettingManager appSettingFilePath] atomically:YES];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)([_currentSetting_impl[kATAppSettingExpireIntervalKey] floatValue] / 1000.0f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self requestAppSettingCompletion:^(NSDictionary *setting, NSError *error) {
-                //
-            }];
-        });
+        if ([currentSetting count] > 0) { [self scheduleSettingUpdate:_currentSetting_impl]; }
     }];
+}
+
+-(void) scheduleSettingUpdate:(NSDictionary*)setting {
+    NSTimeInterval expireInterval = [setting[kATAppSettingDefaultFlagKey] boolValue] ? 1800000.0f : [setting[kATAppSettingExpireIntervalKey] doubleValue];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(expireInterval / 1000.0f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ [self requestAppSettingCompletion:^(NSDictionary *setting, NSError *error) { }]; });
 }
 
 -(ATTrackingSetting*) trackingSetting {
@@ -165,7 +161,7 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
 
 //return value: whether limit third party sdk data collection
 //setThirdPartySDK whether invoke third party sdk data collection API
--(BOOL) limitThirdPartySDKDataCollectionWithAgentEventExtra:(NSDictionary**)extra setThirdPartySDK:(BOOL*)setThirdPartySDK {
+-(BOOL) limitThirdPartySDKDataCollectionWithAgentEventExtra:(NSDictionary**)extra setThirdPartySDK:(BOOL*)setThirdPartySDK networkFirmID:(NSInteger)networkFirmID {
     BOOL limit = NO;
     BOOL set = NO;
     NSDictionary *appSetting = self.currentSetting;
@@ -182,6 +178,7 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
                     extraInfo[kAgentEventExtraInfoGDPRThirdPartySDKLevelKey] = @1;
                     extraInfo[kAgentEventExtraInfoGDPRDevConsentKey] = @(ConvertDevDataConsentSet([ATAPI sharedInstance].dataConsentSet));
                     extraInfo[kAgentEventExtraInfoServerGDPRIAValueKey] = appSetting[kATAppSettingGDPAFlag];
+                    if (networkFirmID != 0) { extraInfo[kAgentEventExtraInfoNetworkFirmIDKey] = @(networkFirmID); }
                 }
             }
         } else {
@@ -202,6 +199,7 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
                         extraInfo[kAgentEventExtraInfoGDPRThirdPartySDKLevelKey] = @2;
                         extraInfo[kAgentEventExtraInfoGDPRDevConsentKey] = @(ConvertDevDataConsentSet([ATAPI sharedInstance].dataConsentSet));
                         extraInfo[kAgentEventExtraInfoServerGDPRIAValueKey] = appSetting[kATAppSettingGDPAFlag];
+                        if (networkFirmID != 0) { extraInfo[kAgentEventExtraInfoNetworkFirmIDKey] = @(networkFirmID); }
                         [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyGDPRLevelKey placementID:nil unitGroupModel:nil extraInfo:extraInfo];
                     }
                 } else {
@@ -216,11 +214,11 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
     return limit;
 }
 
--(BOOL)limitThirdPartySDKDataCollection:(BOOL*)setThirdPartySDK {
+-(BOOL)limitThirdPartySDKDataCollection:(BOOL*)setThirdPartySDK networkFirmID:(NSInteger)networkFirmID {
 //    NSLog(@"Marvin -- 限制敏感信息上报（1为限制）:%d",[self limitThirdPartySDKDataCollectionWithAgentEventExtra:nil setThirdPartySDK:setThirdPartySDK]);
 //    NSLog(@"Marvin -- set是否设置第三方network:%d",*setThirdPartySDK);
 
-    return [self limitThirdPartySDKDataCollectionWithAgentEventExtra:nil setThirdPartySDK:setThirdPartySDK];
+    return [self limitThirdPartySDKDataCollectionWithAgentEventExtra:nil setThirdPartySDK:setThirdPartySDK networkFirmID:networkFirmID];
 }
 
 -(BOOL) usesServerDataConsentSet {
@@ -235,9 +233,9 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
     ATDataConsentSet dataConsent = [ATAPI sharedInstance].dataConsentSet;
     if (dataConsent == 2) {
         return 1;
-    }else if (dataConsent == 1) {
+    } else if (dataConsent == 1) {
         return 0;
-    }else {
+    } else {
         return 2;
     }
 }
@@ -278,7 +276,7 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
 
 -(void) preInitNetwrok:(NSString *)adapter withContent:(NSDictionary *)content {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        id<ATAdAdapter> adapterPreInit = [[NSClassFromString(adapter) alloc] initWithNetworkCustomInfo:content];
+        id<ATAdAdapter> adapterPreInit = [[NSClassFromString(adapter) alloc] initWithNetworkCustomInfo:content localInfo:nil];
     });
 }
 
@@ -286,7 +284,17 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
  Default setting
  */
 -(NSDictionary*)defaultSetting {
-    return @{kATAppSettingGDPRPolicyURLKey:@"http://img.toponad.com/gdpr/PrivacyPolicySetting.html", kATAppSettingDataProtectedArea :_GDPRAreas, @"gdpr_so":@0, @"gdpr_sdcs":@0, @"n_psid_tm":@30000, kATAppSettingDefaultFlagKey:@YES};
+    return @{kATAppSettingGDPRPolicyURLKey:@"https://img.anythinktech.com/gdpr/PrivacyPolicySetting.html", kATAppSettingDataProtectedArea :_GDPRAreas, @"gdpr_so":@0, @"gdpr_sdcs":@0, @"n_psid_tm":@30000, kATAppSettingDefaultFlagKey:@YES};
+}
+
+/**
+ check appsetting
+ */
+-(void) checkAppSetting:(NSNotification*)noti {
+    if ([[ATAppSettingManager sharedManager] currentSettingExpired]) {
+        [[ATAppSettingManager sharedManager] requestAppSettingCompletion:^(NSDictionary *setting, NSError *error) {
+        }];
+    }
 }
 
 -(BOOL) currentSettingExpired {
@@ -307,7 +315,7 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
 #ifdef UNDER_DEVELOPMENT
         NSString *host = @"http://test.aa.toponad.com/v1/open/eu";
 #else
-        NSString *host = @"https://aa.toponad.com/v1/open/eu";
+        NSString *host = @"https://api.anythinktech.com/v1/open/eu";
 #endif
         
         NSString *address = [NSString stringWithFormat:@"%@?t=%@&sign=%@", host, timestamp, [NSString stringWithFormat:@"%@", timestamp].md5];
@@ -340,21 +348,82 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
             if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsATIDKey]) {
                 UPID = [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsATIDKey];
             } else {
-                if ([[ATAPI sharedInstance] inDataProtectionArea] && [ATAPI sharedInstance].dataConsentSet != ATDataConsentSetPersonalized) {
-                    UPID = [NSString stringWithFormat:@"%@%@",[Utilities idfv],@"topon123xyz"].md5;
+                if ([Utilities advertisingIdentifier] && [[Utilities advertisingIdentifier] length] > 0 && [Utilities validateDeviceId:[Utilities advertisingIdentifier]]) {
+                    UPID = [Utilities advertisingIdentifier].md5;
+//                        NSLog(@"generate upid by idfa string, upid:%@", UPID);
                 } else {
-                    if ([Utilities advertisingIdentifier] && [[Utilities advertisingIdentifier] length] > 0) {
-                        UPID = [Utilities advertisingIdentifier].md5;
-                    } else {
-                        UPID = [Utilities idfv].md5;
-                    }
+                    NSString *tmpId = [Utilities validateDeviceId:[Utilities idfv]]?[Utilities idfv]:[NSString stringWithFormat:@"%@&%@&%d", [Utilities userAgent], [Utilities normalizedTimeStamp], arc4random_uniform(10000)];
+                    UPID = tmpId.md5;
+//                        NSLog(@"generate upid by idfv string, upid:%@", UPID);
                 }
                 [[NSUserDefaults standardUserDefaults] setObject:UPID forKey:kUserDefaultsATIDKey];
                 [[NSUserDefaults standardUserDefaults] synchronize];
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{ [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyPSIDSessionIDGeneration placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoGeneratedIDTypeKey:@3}]; });
             }
         }
     });
     return UPID != nil ? UPID : [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsATIDKey];
+}
+
+-(NSString*) SYSID {
+    __block NSString *SYSID;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        //get sysid from app settings
+        if (_currentSetting_impl[@"sy_id"]) {
+            SYSID = _currentSetting_impl[@"sy_id"];
+            if (![[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey] || [ATKeychain searchDateWithService:kUserDefaultsSYSIDKey] == nil) {
+                // save to keychain again
+                [ATKeychain saveData:SYSID withService:kUserDefaultsSYSIDKey];
+                // save to user default again
+                [[NSUserDefaults standardUserDefaults] setObject:SYSID forKey:kUserDefaultsSYSIDKey];
+                [[NSUserDefaults standardUserDefaults] synchronize];
+            }
+        }else{
+            // first check system_id on user default storage.
+            if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey]) {
+                SYSID = [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey];
+            }else {
+                // then check system_id on keychain storage.
+                SYSID = [ATKeychain searchDateWithService:kUserDefaultsSYSIDKey];
+                if (SYSID != nil) {
+                    // save to user default again
+                    [[NSUserDefaults standardUserDefaults] setObject:SYSID forKey:kUserDefaultsSYSIDKey];
+                    [[NSUserDefaults standardUserDefaults] synchronize];
+                }
+            }
+        }
+    });
+    return SYSID != nil ? SYSID : ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey]!=nil ? [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey]:@"");
+}
+
+-(NSString*) BKUPID {
+    __block NSString *BKUPID;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // first check system_id on user default storage.
+        if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsBKUPIDKey]) {
+            BKUPID = [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsBKUPIDKey];
+        }else {
+            // BKUPID nil
+            // then check system_id on keychain storage.
+            BKUPID = [ATKeychain searchDateWithService:kUserDefaultsBKUPIDKey];
+            if (BKUPID == nil) {
+                BKUPID = [self ATID];
+                // save to keychain again
+                [ATKeychain saveData:BKUPID withService:kUserDefaultsBKUPIDKey];
+                // save to user default again
+                [[NSUserDefaults standardUserDefaults] setObject:BKUPID forKey:kUserDefaultsBKUPIDKey];
+                [[NSUserDefaults standardUserDefaults] synchronize];
+            }
+           
+        }
+    });
+    return BKUPID != nil ? BKUPID : [self ATID];
+}
+
+-(NSString*)ABTestID {
+    return [self currentSetting][@"abtest_id"];
 }
 
 -(NSDictionary*)currentSetting {
@@ -381,11 +450,7 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
             if ([responseObject isKindOfClass:[NSDictionary class]] && responseObject[@"data"] != nil && [responseObject[@"data"] isKindOfClass:[NSDictionary class]]) {
                 weakSelf.currentSetting = responseObject[@"data"];
                 NSDictionary *agentEventExtraInfo = nil;
-                if ([weakSelf limitThirdPartySDKDataCollectionWithAgentEventExtra:&agentEventExtraInfo setThirdPartySDK:NULL]) {
-                    if (agentEventExtraInfo != nil) {
-                        [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyGDPRLevelKey placementID:nil unitGroupModel:nil extraInfo:agentEventExtraInfo];
-                    }
-                }
+                if ([weakSelf limitThirdPartySDKDataCollectionWithAgentEventExtra:&agentEventExtraInfo setThirdPartySDK:NULL networkFirmID:0]) { if (agentEventExtraInfo != nil) { [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyGDPRLevelKey placementID:nil unitGroupModel:nil extraInfo:agentEventExtraInfo]; } }
                 [ATAgentEvent saveRequestAPIName:@"app" requestDate:requestTimestamp responseDate:[Utilities normalizedTimeStamp] extra:nil];
                 completion(responseObject[@"data"], nil);
             } else {
@@ -397,6 +462,7 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
                                                                                                                                       kAgentEventExtraInfoTKHostKey:@"aa.toponad.com"
                                                                                                                                                 }];
                 completion(nil, error);
+                [self scheduleSettingUpdate:[self currentSetting]];
             }
             weakSelf.loading = NO;
         }];
@@ -420,7 +486,9 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
                             @"timezone":[Utilities timezone],
                             @"screen":[Utilities screenResolution],
                             @"ua":[Utilities userAgent],
-                            @"upid":[[ATAppSettingManager sharedManager].ATID length] > 0 ? [ATAppSettingManager sharedManager].ATID : @""};
+                            @"upid":[[ATAppSettingManager sharedManager].ATID length] > 0 ? [ATAppSettingManager sharedManager].ATID : @"",
+                            @"sy_id":[[ATAppSettingManager sharedManager].SYSID length] > 0 ? [ATAppSettingManager sharedManager].SYSID : @"",
+                            @"bk_id":[[ATAppSettingManager sharedManager].BKUPID length] > 0 ? [ATAppSettingManager sharedManager].BKUPID : @""};
     } else {
         protectedFields = @{@"os_vn":@"",
                             @"os_vc":@"",
@@ -451,6 +519,8 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
     if ([[ATAPI sharedInstance].psID length] > 0) { parameters[@"ps_id"] = [ATAPI sharedInstance].psID; }
     if ([[ATAPI sharedInstance].channel length] > 0) { parameters[@"channel"] = [ATAPI sharedInstance].channel; }
     if ([[ATAPI sharedInstance].subchannel length] > 0) { parameters[@"sub_channel"] = [ATAPI sharedInstance].subchannel; }
+    parameters[@"first_init_time"] = @((NSUInteger)([[ATAPI firstLaunchDate] timeIntervalSince1970] * 1000.0f));
+    parameters[@"days_from_first_init"] = @([[NSDate date] numberOfDaysSinceDate:[ATAPI firstLaunchDate]]);
     return parameters;
 }
 
@@ -473,8 +543,8 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
 
 @implementation ATTrackingSetting
 +(instancetype) defaultSetting {
-    return [[self alloc] initWithDictionary:@{@"tk_address":@"https://tt.toponad.com/v1/open/tk", @"tk_max_amount":@8, @"tk_interval":@10000,
-                                              @"da_address":@"https://dd.toponad.com/v1/open/da", @"da_max_amount":@8, @"da_interval":@1800000,
+    return [[self alloc] initWithDictionary:@{@"tk_address":@"https://tk.anythinktech.com/v1/open/tk", @"tk_max_amount":@8, @"tk_interval":@10000,
+                                              @"da_address":@"https://da.anythinktech.com/v1/open/da", @"da_max_amount":@8, @"da_interval":@1800000,
                                               kATAppSettingDefaultFlagKey:@YES
                                               }];
 }
@@ -490,6 +560,12 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
         _agentEventAddress = dictionary[@"da_address"];
         _agentEventNumberThreadhold = _trackerNumberThreadhold;
         _agentEventInterval = _trackerInterval;
+        
+        //TCP
+        _trackerTCPAddress = dictionary[@"tcp_domain"];
+        _trackerTCPPort = [dictionary[@"tcp_port"] integerValue];
+        _trackerTCPType = [dictionary[@"tcp_tk_da_type"] integerValue];
+        _trackerTCPRate = dictionary[@"tcp_rate"];
         
         NSString *key = @"da_not_keys_ft";
         if ([dictionary[key] isKindOfClass:[NSString class]] && [dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] != nil) { _agentEventDropFormats = [NSJSONSerialization JSONObjectWithData:[dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }

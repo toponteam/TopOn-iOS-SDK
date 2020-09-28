@@ -18,64 +18,37 @@
 @implementation ATAdmobRewardedVideoCustomEvent
 - (void)rewardedAd:(nonnull id<ATGADRewardedAd>)rewardedAd userDidEarnReward:(id)reward {
     [ATLogger logMessage:@"AdmobRewardedVideo::rewardedAd:userDidEarnReward:" type:ATLogTypeExternal];
-    self.rewardGranted = YES;
-    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-        [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdRewarded];
 }
 
 - (void)rewardedAd:(nonnull id<ATGADRewardedAd>)rewardedAd didFailToPresentWithError:(nonnull NSError *)error {
-    [ATLogger logMessage:[NSString stringWithFormat:@"AdmobRewardedVideo::rewardedAd:didFailToPresentWithError:%@(code:%@)", error, [ATAdmobRewardedVideoCustomEvent errorMessageWithError:error]] type:ATLogTypeExternal];
-    [self saveVideoPlayEventWithError:error];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidFailToPlayForPlacementID:error:extra:)]) { [self.delegate rewardedVideoDidFailToPlayForPlacementID:self.rewardedVideo.placementModel.placementID error:error extra:[self delegateExtra]]; }
+    [ATLogger logMessage:[NSString stringWithFormat:@"AdmobRewardedVideo::rewardedAd:didFailToPresentWithError:%@", error] type:ATLogTypeExternal];
+    [self trackRewardedVideoAdPlayEventWithError:error];
 }
 
 - (void)rewardedAdDidPresent:(nonnull id<ATGADRewardedAd>)rewardedAd {
     [ATLogger logMessage:@"AdmobRewardedVideo::rewardedAdDidPresent:" type:ATLogTypeExternal];
-    [self trackShow];
-    [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdShow];
+    [self trackRewardedVideoAdVideoStart];
+   
 }
 
 - (void)rewardedAdDidDismiss:(nonnull id<ATGADRewardedAd>)rewardedAd {
     [ATLogger logMessage:@"AdmobRewardedVideo::rewardedAdDidDismiss:" type:ATLogTypeExternal];
-    [self handleClose];
     if (self.rewardGranted) {
-        [self trackVideoEnd];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-            [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-        }
+        [self trackRewardedVideoAdVideoEnd];
     }
-    [self saveVideoCloseEventRewarded:self.rewardGranted];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdCloseRewarded:self.rewardGranted];
+    
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unit_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unit_id"];
 }
 
-+(NSString*) errorMessageWithError:(NSError*)error {
-    NSDictionary *errorMsgMap = @{@0:@"kGADErrorInvalidRequest",
-                                  @1:@"kGADErrorNoFill",
-                                  @2:@"kGADErrorNetworkError",
-                                  @3:@"kGADErrorServerError",
-                                  @5:@"kGADErrorTimeout",
-                                  @7:@"kGADErrorMediationDataError",
-                                  @8:@"kGADErrorMediationAdapterError",
-                                  @10:@"kGADErrorMediationInvalidAdSize",
-                                  @11:@"kGADErrorInternalError",
-                                  @12:@"kGADErrorInvalidArgument",
-                                  @13:@"kGADErrorReceivedInvalidResponse",
-                                  @9:@"kGADErrorMediationNoFill",
-                                  @19:@"kGADErrorAdAlreadyUsed",
-                                  @20:@"kGADErrorApplicationIdentifierMissing"
-    };
-    return errorMsgMap[@(error.code)] != nil ? errorMsgMap[@(error.code)] : @"Undefined Error";
-}
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

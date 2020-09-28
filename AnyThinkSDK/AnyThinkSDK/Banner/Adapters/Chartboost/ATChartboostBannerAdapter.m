@@ -17,6 +17,7 @@
 @property(nonatomic, readonly) id<ATCHBBanner> bannerAd;
 @property(nonatomic, readonly) ATChartboostBannerCustomEvent *customEvent;
 @property(nonatomic, readonly) NSDictionary *info;
+@property(nonatomic, readonly) NSDictionary *localInfo;
 @property(nonatomic, readonly) void (^LoadCompletionBlock)(NSArray<NSDictionary *> *, NSError *);
 @end
 static NSString *const kChartboostClassName = @"Chartboost";
@@ -30,7 +31,7 @@ static NSString *const kATChartboostInitNotification = @"com.anythink.Chartboost
     [(id<ATCHBBanner>)(((id<ATCHBCacheEvent>)(banner.customObject)).ad) showFromViewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:banner.placementModel.placementID requestID:banner.requestID]];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -39,44 +40,45 @@ static NSString *const kATChartboostInitNotification = @"com.anythink.Chartboost
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"CHBBanner") != nil && NSClassFromString(@"Chartboost") != nil) {
         [[ATAPI sharedInstance] inspectInitFlagForNetwork:kNetworkNameChartboost usingBlock:^NSInteger(NSInteger currentValue) {
             if (currentValue == 0) {
-                [NSClassFromString(@"Chartboost") startWithAppId:info[@"app_id"] appSignature:info[@"app_signature"] completion:^(BOOL success) {
+                [NSClassFromString(@"Chartboost") startWithAppId:serverInfo[@"app_id"] appSignature:serverInfo[@"app_signature"] completion:^(BOOL success) {
                     if (success) {
                         [[ATAPI sharedInstance] setInitFlag:2 forNetwork:kNetworkNameChartboost];
                         [[NSNotificationCenter defaultCenter] postNotificationName:kATChartboostInitNotification object:nil];
-                        [self loadAdUsingInfo:info completion:completion];
+                        [self loadAdUsingInfo:serverInfo localInfo:localInfo completion:completion];
                     }
                 }];
                 return 1;
             } else if (currentValue == 1) {
-                self->_info = info;
+                self->_info = serverInfo;
+                self->_localInfo= localInfo;
                 self->_LoadCompletionBlock = completion;
                 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleInitNotification:) name:kATChartboostInitNotification object:nil];
                 return currentValue;
             } else if (currentValue == 2) {
-                [self loadAdUsingInfo:info completion:completion];
+                [self loadAdUsingInfo:serverInfo localInfo:localInfo completion:completion];
                 return currentValue;
             }
             return currentValue;
         }];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load banner.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Chartboost"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Chartboost"]}]);
     }
 }
 
--(void) loadAdUsingInfo:(NSDictionary*)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
-    _customEvent = [[ATChartboostBannerCustomEvent alloc] initWithUnitID:info[kLocationKey] customInfo:info];
+-(void) loadAdUsingInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+    _customEvent = [[ATChartboostBannerCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
     _customEvent.requestCompletionBlock = completion;
-    ATUnitGroupModel *ug = info[kAdapterCustomInfoUnitGroupModelKey];
+    ATUnitGroupModel *ug = serverInfo[kAdapterCustomInfoUnitGroupModelKey];
     dispatch_async(dispatch_get_main_queue(), ^{
-        self->_bannerAd = [[NSClassFromString(@"CHBBanner") alloc] initWithSize:ug.adSize location:info[kLocationKey] != nil ? info[kLocationKey] : @"Main Menu" delegate:self->_customEvent];
-        if ([info[@"nw_rft"] integerValue] == 0) { self->_bannerAd.automaticallyRefreshesContent = NO; }
+        self->_bannerAd = [[NSClassFromString(@"CHBBanner") alloc] initWithSize:ug.adSize location:serverInfo[kLocationKey] != nil ? serverInfo[kLocationKey] : @"Main Menu" delegate:self->_customEvent];
+        if ([serverInfo[@"nw_rft"] integerValue] == 0) { self->_bannerAd.automaticallyRefreshesContent = NO; }
         [self->_bannerAd cache];
     });
 }
 
--(void) handleInitNotification:(NSNotification*)notification { [self loadAdUsingInfo:_info completion:_LoadCompletionBlock]; }
+-(void) handleInitNotification:(NSNotification*)notification { [self loadAdUsingInfo:_info localInfo:_localInfo completion:_LoadCompletionBlock]; }
 @end

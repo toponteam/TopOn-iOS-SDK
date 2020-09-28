@@ -10,6 +10,7 @@
 #import "ATMaioInterstitialAdapter.h"
 #import "Utilities.h"
 #import "ATInterstitialManager.h"
+
 @implementation ATMaioInterstitialCustomEvent
 - (void)maioDidInitialize {
     [ATLogger logMessage:@"MaioInterstitial::maioDidInitialize" type:ATLogTypeExternal];
@@ -17,14 +18,16 @@
 
 - (void)maioDidChangeCanShow:(NSString *)zoneId newValue:(BOOL)newValue {
     [ATLogger logMessage:[NSString stringWithFormat:@"MaioInterstitial::maioDidChangeCanShow:%@ newValue:%@", zoneId, newValue ? @"yes" : @"no"] type:ATLogTypeExternal];
-    if ([zoneId isEqualToString:self.unitID] && newValue) { [self handleAssets:@{kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:self.unitID != nil ? self.unitID : @""}]; }
+    if ([zoneId isEqualToString:self.unitID] && newValue) {
+//        [self handleAssets:@{kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:self.unitID != nil ? self.unitID : @""}];
+        [self trackInterstitialAdLoaded:self.unitID adExtra:nil];
+    }
 }
 
 - (void)maioWillStartAd:(NSString *)zoneId {
     [ATLogger logMessage:[NSString stringWithFormat:@"MaioInterstitial::maioWillStartAd:%@", zoneId] type:ATLogTypeExternal];
     if ([zoneId isEqualToString:self.unitID]) {
-        [self trackShow];
-        if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+        [self trackInterstitialAdShow];
     }
 }
 - (void)maioDidFinishAd:(NSString *)zoneId playtime:(NSInteger)playtime skipped:(BOOL)skipped rewardParam:(NSString *)rewardParam {
@@ -34,10 +37,7 @@
 - (void)maioDidClickAd:(NSString *)zoneId {
     [ATLogger logMessage:[NSString stringWithFormat:@"MaioInterstitial::maioDidClickAd:%@", zoneId] type:ATLogTypeExternal];
     if ([zoneId isEqualToString:self.unitID]) {
-        [self trackClick];
-        if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-            [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-        }
+        [self trackInterstitialAdClick];
     }
 }
 
@@ -45,24 +45,25 @@
     [ATLogger logMessage:[NSString stringWithFormat:@"MaioInterstitial::maioDidCloseAd:%@", zoneId] type:ATLogTypeExternal];
     if ([zoneId isEqualToString:self.unitID]) {
         [NSClassFromString(@"Maio") removeDelegateObject:self];
-        [self handleClose];
-        if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-            [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-        }
+        [self trackInterstitialAdClose];
     }
 }
 
 - (void)maioDidFail:(NSString *)zoneId reason:(NSInteger)reason {
     [ATLogger logMessage:[NSString stringWithFormat:@"MaioInterstitial::maioDidFail:%@ reason:%ld", zoneId, reason] type:ATLogTypeExternal];
     if ([zoneId isEqualToString:self.unitID]) {
-        [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.MaioInterstitialLoading" code:reason userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load interstitial ad for Maio", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"Maio interstitial ad load has failed with reason:%ld", reason]}]];
+        [self trackInterstitialAdLoadFailed:[NSError errorWithDomain:@"com.anythink.MaioInterstitialLoading" code:reason userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load interstitial ad for Maio", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"Maio interstitial ad load has failed with reason:%ld", reason]}]];
         [NSClassFromString(@"Maio") removeDelegateObject:self];
     }
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"zone_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"zone_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"zone_id"];
+//    return extra;
+//}
 @end

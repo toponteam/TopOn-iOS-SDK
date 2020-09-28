@@ -102,15 +102,7 @@ static CGFloat kStarDimension = 12.0f;
 }
 @end
 
-@protocol ATNativeCustomEventInterface<NSObject>
--(NSDictionary*)delegateExtra;
-@end
-@protocol ATNativeAdViewExtra_NativeBanner<NSObject>
-@optional
-@property(nonatomic, readonly) id<ATNativeCustomEventInterface> customEvent;
-@end
-
-@interface ATNativeBannerInternalNativeView:ATNativeADView<ATNativeAdViewExtra_NativeBanner>
+@interface ATNativeBannerInternalNativeView:ATNativeADView
 @property(nonatomic, readonly) ATStarRatingView *starRatingView;
 @property(nonatomic, readonly) UILabel *advertiserLabel;
 @property(nonatomic, readonly) UILabel *textLabel;
@@ -316,7 +308,7 @@ static CGFloat kStarDimension = 12.0f;
 }
 
 -(void) closeButtonTapped {
-    if ([_delegate respondsToSelector:@selector(didClickCloseButtonInNativeBannerAdView:placementID:extra:)]) { [_delegate didClickCloseButtonInNativeBannerAdView:self placementID:_placementID extra:[self.internalNativeAdView.customEvent delegateExtra]]; }
+    if ([_delegate respondsToSelector:@selector(didClickCloseButtonInNativeBannerAdView:placementID:)]) { [_delegate didClickCloseButtonInNativeBannerAdView:self placementID:_placementID]; }
 }
 
 -(void) attachNewInternalNativeAdView {

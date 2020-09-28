@@ -150,6 +150,19 @@ static NSString *kOriginalBase64Table = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkl
 +(NSString*)stringWithData:(NSData*)data usingEncoding:(NSStringEncoding)encoding {
     return [[NSString alloc] initWithData:data encoding:encoding];
 }
+
+
+-(NSString*)stringUrlEncode {
+    NSString *url = self;
+    url = [url stringByAddingPercentEncodingWithAllowedCharacters:NSCharacterSet.URLQueryAllowedCharacterSet];
+    return url;
+}
+-(NSString*)stringUrlDecode {
+    NSString *url = self;
+    url = [url stringByRemovingPercentEncoding];
+    return url;
+}
+
 @end
 
 @implementation NSData(AES256)

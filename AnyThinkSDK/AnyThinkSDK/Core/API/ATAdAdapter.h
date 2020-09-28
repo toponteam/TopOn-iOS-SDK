@@ -17,16 +17,21 @@ extern NSString *const kAdapterCustomInfoExtraKey;
 @class ATPlacementModel;
 @class ATUnitGroupModel;
 @class ATMyOfferOfferModel;
+@class ATBidInfo;
+@class ATWaterfall;
 @protocol ATAdAdapter<NSObject>
+@property (nonatomic,copy) void (^metaDataDidLoadedBlock)(void);
 /*
  * Create a rewarded instance for download event and FOR DOWNLOAD EVENT ONLY.
  */
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup;
-+(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup;
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall;
++(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall;
 +(ATMyOfferOfferModel*) resourceReadyMyOfferForPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel info:(NSDictionary*)info;
 +(BOOL) adReadyForInfo:(NSDictionary*)info;
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info;
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion;
-@property (nonatomic,copy) void (^metaDataDidLoadedBlock)(void);
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary *)serverInfo localInfo:(NSDictionary *)localInfo;
+-(void) loadADWithInfo:(NSDictionary *)serverInfo localInfo:(NSDictionary *)localInfo completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion;
++(void) bidRequestWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel info:(NSDictionary*)info completion:(void(^)(ATBidInfo *bidInfo, NSError *error))completion;
+@optional
++(NSDictionary*)headerBiddingParametersWithUnitGroupModel:(ATUnitGroupModel*)model;
 @end
 #endif /* ATAdAdapter_h */

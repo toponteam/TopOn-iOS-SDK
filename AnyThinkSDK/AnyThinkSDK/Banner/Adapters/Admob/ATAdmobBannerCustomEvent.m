@@ -17,14 +17,12 @@
 @implementation ATAdmobBannerCustomEvent
 - (void)adViewDidReceiveAd:(id<ATGADBannerView>)bannerView {
     [ATLogger logMessage:@"ADMobBanner::adViewDidReceiveAd:" type:ATLogTypeExternal];
-    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:bannerView, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, nil];
-    if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
-    [self handleAssets:assets];
+    [self trackBannerAdLoaded:bannerView adExtra:nil];
 }
 
 - (void)adView:(id<ATGADBannerView>)bannerView didFailToReceiveAdWithError:(NSError*)error {
-    [ATLogger logMessage:[NSString stringWithFormat:@"ADMobBanner::adView:didFailToReceiveAdWithError:%@(code:%@)", error, [ATAdmobBannerCustomEvent errorMessageWithError:error]] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [ATLogger logMessage:[NSString stringWithFormat:@"ADMobBanner::adView:didFailToReceiveAdWithError:%@", error] type:ATLogTypeExternal];
+    [self trackBannerAdLoadFailed:error];
 }
 
 - (void)adViewWillPresentScreen:(id<ATGADBannerView>)bannerView {
@@ -32,11 +30,12 @@
     NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
     if (self.banner.requestID != nil) { userInfo[kBannerNotificationUserInfoRequestIDKey] = self.banner.requestID; }
     [[NSNotificationCenter defaultCenter] postNotificationName:kBannerPresentModalViewControllerNotification object:nil userInfo:userInfo];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) { [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]]; }
-    [self trackClick];
+    [self trackBannerAdClick];
 }
 
-- (void)adViewWillDismissScreen:(id<ATGADBannerView>)bannerView { [ATLogger logMessage:@"ADMobBanner::adViewWillDismissScreen:" type:ATLogTypeExternal]; }
+- (void)adViewWillDismissScreen:(id<ATGADBannerView>)bannerView {
+    [ATLogger logMessage:@"ADMobBanner::adViewWillDismissScreen:" type:ATLogTypeExternal];
+}
 
 - (void)adViewDidDismissScreen:(id<ATGADBannerView>)bannerView {
     [ATLogger logMessage:@"ADMobBanner::adViewDidDismissScreen:" type:ATLogTypeExternal];
@@ -47,32 +46,16 @@
 
 - (void)adViewWillLeaveApplication:(id<ATGADBannerView>)bannerView {
     [ATLogger logMessage:@"ADMobBanner::adViewWillLeaveApplication:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) { [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackBannerAdClick];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"unit_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unit_id"];
 }
 
-+(NSString*) errorMessageWithError:(NSError*)error {
-    NSDictionary *errorMsgMap = @{@0:@"kGADErrorInvalidRequest",
-                                  @1:@"kGADErrorNoFill",
-                                  @2:@"kGADErrorNetworkError",
-                                  @3:@"kGADErrorServerError",
-                                  @5:@"kGADErrorTimeout",
-                                  @7:@"kGADErrorMediationDataError",
-                                  @8:@"kGADErrorMediationAdapterError",
-                                  @10:@"kGADErrorMediationInvalidAdSize",
-                                  @11:@"kGADErrorInternalError",
-                                  @12:@"kGADErrorInvalidArgument",
-                                  @13:@"kGADErrorReceivedInvalidResponse",
-                                  @9:@"kGADErrorMediationNoFill",
-                                  @19:@"kGADErrorAdAlreadyUsed",
-                                  @20:@"kGADErrorApplicationIdentifierMissing"
-    };
-    return errorMsgMap[@(error.code)] != nil ? errorMsgMap[@(error.code)] : @"Undefined Error";
-}
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

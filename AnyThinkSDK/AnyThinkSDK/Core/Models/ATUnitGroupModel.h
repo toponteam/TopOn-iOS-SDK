@@ -22,6 +22,7 @@
 @property(nonatomic, readonly) NSTimeInterval networkDataTimeout; //  5.1.0 双回调数据超时
 @property(nonatomic, readonly) NSTimeInterval networkTimeout;
 @property(nonatomic, readonly) NSTimeInterval skipIntervalAfterLastLoadingFailure;
+@property(nonatomic, readonly) NSTimeInterval skipIntervalAfterLastBiddingFailure;
 @property(nonatomic, readonly) NSString *unitGroupID;
 @property(nonatomic, readonly) NSString *unitID;
 @property(nonatomic, readonly) NSDictionary *content;
@@ -41,19 +42,4 @@
 @property(nonatomic, readonly) BOOL postsNotificationOnShow;
 @property(nonatomic, readonly) BOOL postsNotificationOnClick;
 @property(nonatomic, readonly) NSString *precision;
-/*
- {
- request_id_1:{
- bid_token: bidToken1,
- price:1},
- request_id_2:{
- bid_token: bidToken2,
- price:1}
- }
- */
--(NSString*)bidTokenWithRequestID:(NSString*)requestID;
--(double) bidPriceWithRequestID:(NSString*)requestID;
--(NSDictionary*)latestBidInfo;
--(void) updateBidInfoForRequestID:(NSString *)requestID;
--(void) setBidTokenUsedFlagForRequestID:(NSString*)requestID;
 @end

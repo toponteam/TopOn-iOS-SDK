@@ -56,6 +56,10 @@ typedef NS_ENUM(NSInteger,ATMTGBannerSizeType) {
 +(CGSize)getSizeBySizeType:(ATMTGBannerSizeType)sizeType;
 @end
 
+@protocol ATMTGBiddingSDK<NSObject>
++ (NSString *)buyerUID;
+@end
+
 @protocol ATMTGSDK<NSObject>
 +(instancetype) sharedInstance;
 +(NSString *)sdkVersion;
@@ -73,11 +77,6 @@ typedef NS_ENUM(NSInteger,ATMTGBannerSizeType) {
 @property (nonatomic,weak,nullable) id <ATMTGBannerAdViewDelegate> delegate;
 @property (nonatomic, weak) UIViewController * _Nullable  viewController;
 
-- (nonnull instancetype)initBannerAdViewWithAdSize:(CGSize)adSize
-                                            unitId:(nonnull NSString *) unitId
-                                rootViewController:(nullable UIViewController *)rootViewController;
-
-
 - (nonnull instancetype)initBannerAdViewWithBannerSizeType:(ATMTGBannerSizeType)bannerSizeType
        placementId:(nullable NSString *)placementId
             unitId:(nonnull NSString *) unitId
@@ -88,9 +87,41 @@ rootViewController:(nullable UIViewController *)rootViewController;
 @end
 
 @protocol ATMTGBannerAdViewDelegate <NSObject>
+
+- (void)adViewLoadSuccess:(id<ATMTGBannerAdView>)adView;
+- (void)adViewLoadFailedWithError:(NSError *)error adView:(id<ATMTGBannerAdView>)adView;
+- (void)adViewWillLogImpression:(id<ATMTGBannerAdView>)adView;
+- (void)adViewDidClicked:(id<ATMTGBannerAdView>)adView;
+- (void)adViewWillLeaveApplication:(id<ATMTGBannerAdView>)adView;
+- (void)adViewWillOpenFullScreen:(id<ATMTGBannerAdView>)adView;
+- (void)adViewCloseFullScreen:(id<ATMTGBannerAdView>)adView;
+- (void)adViewClosed:(id<ATMTGBannerAdView>)adView;
 @end
 
 @protocol ATBannerMTGAdCustomConfig<NSObject>
 +(instancetype)sharedInstance;
 -(void)setCustomInfo:(NSString*)customInfo type:(NSInteger)type unitId:(NSString*)unitID;
+@end
+
+@protocol ATMTGBiddingResponse<NSObject>
+@property (nonatomic,strong,readonly) NSError *error;
+@property (nonatomic,assign,readonly) BOOL success;
+@property (nonatomic,assign,readonly) double price;
+@property (nonatomic,copy,readonly) NSString *currency;
+@property (nonatomic,copy,readonly) NSString *bidToken;
+-(void)notifyWin;
+-(void)notifyLoss:(NSInteger)reasonCode;
+@end
+
+@protocol ATMTGBiddingBannerRequestParameter <NSObject>
+@property(nonatomic,copy,readonly)NSString *unitId;
+@property(nonatomic,readonly)NSNumber *basePrice;
+- (instancetype)initWithPlacementId:(nullable NSString *)placementId
+        unitId:(nonnull NSString *) unitId
+     basePrice:(nullable NSNumber *)basePrice
+bannerSizeType:(ATMTGBannerSizeType)bannerSizeType;
+@end
+
+@protocol ATMTGBiddingRequest<NSObject>
++(void)getBidWithRequestParameter:(__kindof id<ATMTGBiddingBannerRequestParameter>)requestParameter completionHandler:(void(^)(id<ATMTGBiddingResponse> bidResponse))completionHandler;
 @end

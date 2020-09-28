@@ -39,6 +39,11 @@ extern NSString *const kATTrackerExtraCustomObjectKey;
 extern NSString *const kATTrackerExtraAdObjectKey;
 extern NSString *const kATTrackerExtraAdShowSceneKey;
 extern NSString *const kATTrackerExtraAdShowSDKTimeKey;
+extern NSString *const kATTrackerExtraTrafficGroupIDKey;
+extern NSString *const kATTrackerExtraUGUnitIDKey;
+extern NSString *const kATTrackerExtraASIDKey;
+extern NSString *const kATTrackerExtraFormatKey;
+extern NSString *const kATTrackerExtraRequestExpectedOfferNumberFlagKey;
 
 typedef NS_ENUM(NSInteger, ATNativeADTrackType) {
     ATNativeADTrackTypeADRequest = 1,
@@ -71,7 +76,7 @@ typedef NS_ENUM(NSInteger, ATNativeADSourceType) {
 /*
  * For header bidding
  */
-+(nullable NSDictionary*)headerBiddingTrackingExtraWithUnitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID;
++(nullable NSDictionary*)headerBiddingTrackingExtraWithAd:(id<ATAd>)ad requestID:(NSString*)requestID;
 
 +(nullable NSDictionary*)dataElementWithPlacementID:(NSString*)placementID requestID:(NSString*)requestID trackType:(ATNativeADTrackType)trackType extra:(NSDictionary*)extra;
 +(nullable NSDictionary*)commonParameters;

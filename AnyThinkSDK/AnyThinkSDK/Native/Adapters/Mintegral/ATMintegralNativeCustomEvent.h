@@ -14,4 +14,5 @@ extern NSString *const kMTGAssetsNativeAdManagerKey;
 @interface ATMintegralNativeCustomEvent : ATNativeADCustomEvent<ATMTGNativeAdManagerDelegate, ATMTGMediaViewDelegate, MTGBidNativeAdManagerDelegate, MTGNativeAdvancedAdDelegate>
 @property(nonatomic) id<ATMTGNativeAdManager> nativeAdManager;
 @property(nonatomic) id<ATMTGBidNativeAdManager> bidNativeAdManager;
+@property(nonatomic) double price;
 @end

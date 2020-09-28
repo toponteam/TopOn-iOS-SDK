@@ -30,7 +30,7 @@ NSString *const kATAdStarRatingKey = @"starrating";
     return [ATMopubRenderer class];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -42,18 +42,18 @@ NSString *const kATAdStarRatingKey = @"starrating";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary*> *assets, NSError *error))completion {
     void(^Load)(void) = ^{
         dispatch_group_t ads_loading_queue = dispatch_group_create();
         NSMutableArray<NSDictionary*>* offers = [NSMutableArray<NSDictionary*> array];
         
-        for (NSInteger i = 0; i < [info[@"request_num"] integerValue]; i++) {
+        for (NSInteger i = 0; i < [serverInfo[@"request_num"] integerValue]; i++) {
             dispatch_group_enter(ads_loading_queue);
             ATMopubRenderSettings *settings = [ATMopubRenderSettings new];
-            id<ATMPNativeAdRequest> request = [NSClassFromString(@"MPNativeAdRequest") requestWithAdUnitIdentifier:info[@"unitid"] rendererConfigurations:@[[NSClassFromString(@"ATMopubRenderer") rendererConfigurationWithRendererSettings:settings]]];
+            id<ATMPNativeAdRequest> request = [NSClassFromString(@"MPNativeAdRequest") requestWithAdUnitIdentifier:serverInfo[@"unitid"] rendererConfigurations:@[[NSClassFromString(@"ATMopubRenderer") rendererConfigurationWithRendererSettings:settings]]];
             [request startWithCompletionHandler:^(id<ATMPNativeAdRequest> request, id<ATMPNativeAd> response, NSError *error) {
                 if (error == nil) {
-                    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:info[@"unitid"], kNativeADAssetsUnitIDKey, nil];
+                    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:serverInfo[@"unitid"], kNativeADAssetsUnitIDKey, nil];
                     assets[kAdAssetsCustomObjectKey] = response;
                     if ([response.properties containsObjectForKey:kATAdTitleKey]) {
                         assets[kNativeADAssetsMainTitleKey] = response.properties[kATAdTitleKey];
@@ -71,20 +71,24 @@ NSString *const kATAdStarRatingKey = @"starrating";
                     //Load images
                     dispatch_group_t image_loading_group = dispatch_group_create();
                     if ([response.properties containsObjectForKey:kATAdIconImageKey]) {
-                        assets[kNativeADAssetsIconURLKey] = response.properties[kATAdIconImageKey];
-                        dispatch_group_enter(image_loading_group);
-                        [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:response.properties[kATAdIconImageKey]] completion:^(UIImage *image, NSError *error) {
-                            if (image != nil) assets[kNativeADAssetsIconImageKey] = image;
-                            dispatch_group_leave(image_loading_group);
-                        }];
+                        if ([response.properties[kATAdIconImageKey] length] > 0) {
+                            assets[kNativeADAssetsIconURLKey] = response.properties[kATAdIconImageKey];
+                            dispatch_group_enter(image_loading_group);
+                            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:response.properties[kATAdIconImageKey]] completion:^(UIImage *image, NSError *error) {
+                                if (image != nil) assets[kNativeADAssetsIconImageKey] = image;
+                                dispatch_group_leave(image_loading_group);
+                            }];
+                        }
                     }
                     if ([response.properties containsObjectForKey:kATAdMainImageKey]) {
-                        assets[kNativeADAssetsImageURLKey] = response.properties[kATAdMainImageKey];
-                        dispatch_group_enter(image_loading_group);
-                        [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:response.properties[kATAdMainImageKey]] completion:^(UIImage *image, NSError *error) {
-                            if (image != nil) assets[kNativeADAssetsMainImageKey] = image;
-                            dispatch_group_leave(image_loading_group);
-                        }];
+                        if ([response.properties[kATAdMainImageKey] length] > 0) {
+                            assets[kNativeADAssetsImageURLKey] = response.properties[kATAdMainImageKey];
+                            dispatch_group_enter(image_loading_group);
+                            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:response.properties[kATAdMainImageKey]] completion:^(UIImage *image, NSError *error) {
+                                if (image != nil) assets[kNativeADAssetsMainImageKey] = image;
+                                dispatch_group_leave(image_loading_group);
+                            }];
+                        }
                     }
                     dispatch_group_notify(image_loading_group, dispatch_get_main_queue(), ^{
                         [offers addObject:assets];
@@ -112,7 +116,8 @@ NSString *const kATAdStarRatingKey = @"starrating";
                 }
             } else {
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) {
                     if (limit) {
                         [mopub revokeConsent];
@@ -122,7 +127,7 @@ NSString *const kATAdStarRatingKey = @"starrating";
                 }
             }
         }
-        [mopub initializeSdkWithConfiguration:[[NSClassFromString(@"MPMoPubConfiguration") alloc] initWithAdUnitIdForAppInitialization:info[@"unitid"]] completion:^{
+        [mopub initializeSdkWithConfiguration:[[NSClassFromString(@"MPMoPubConfiguration") alloc] initWithAdUnitIdForAppInitialization:serverInfo[@"unitid"]] completion:^{
             Load();
         }];
     } else {

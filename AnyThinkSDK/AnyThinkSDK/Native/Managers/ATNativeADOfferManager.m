@@ -15,6 +15,7 @@
 #import "ATAPI+Internal.h"
 #import "ATCapsManager.h"
 #import "ATAdStorageUtility.h"
+#import "ATWaterfallManager.h"
 
 @interface ATNativeADOfferManager()
 @property(nonatomic, readonly) ATSerialThreadSafeAccessor *offerCacheAccessor;
@@ -51,11 +52,11 @@
     return [[_offerCacheAccessor readWithBlock:^id{ return @([ATAdStorageUtility lastOfferShownForPlacementID:placementID unitGroupID:unitGroupID inStorage:_offers]);}] integerValue];
 }
 
--(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID {
-    ATNativeADCache *offerCache = [[ATNativeADCache alloc] initWithPriority:[placementModel.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup];
+-(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID {
+    ATNativeADCache *offerCache = [[ATNativeADCache alloc] initWithPriority:[finalWaterfall.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup finalWaterfall:finalWaterfall];
     __weak typeof(self) weakSelf = self;
     [_offerCacheAccessor writeWithBlock:^{
-        NSDictionary *__block discardedOffers = [ATAdStorageUtility saveAd:offerCache toStorage:weakSelf.offers requestID:offerCache.requestID];
+        NSDictionary *__block discardedOffers = [ATAdStorageUtility saveAd:offerCache finalWaterfall:finalWaterfall toStorage:weakSelf.offers requestID:offerCache.requestID];
         [ATAdStorageUtility saveAd:offerCache toStatusStorage:weakSelf.statusStorage];
         dispatch_async(dispatch_get_main_queue(), ^{
             discardedOffers = nil;
@@ -63,11 +64,11 @@
     }];
 }
 
--(BOOL) inspectAdSourceStatusWithPlacementModel:(ATPlacementModel*)placementModel activeUnitGroups:(NSArray<ATUnitGroupModel*>*)activeUnitGroups unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo {
+-(BOOL) inspectAdSourceStatusWithPlacementModel:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo {
     __weak typeof(self) weakSelf = self;
     return [[_offerCacheAccessor readWithBlock:^id{
         BOOL status = [ATAdStorageUtility adSourceStatusInStorage:weakSelf.statusStorage placementModel:placementModel unitGroup:unitGroup];
-        if (status) { [ATAdStorageUtility renewOffersWithPlacementModel:placementModel activeUnitGroups:activeUnitGroups requestID:requestID inStatusStorage:weakSelf.statusStorage offerStorate:weakSelf.offers extraInfo:extraInfo]; }
+        if (status) { [ATAdStorageUtility renewOffersWithPlacementModel:placementModel finalWaterfall:finalWaterfall requestID:requestID inStatusStorage:weakSelf.statusStorage offerStorate:weakSelf.offers extraInfo:extraInfo]; }
         return @(status);
     }] boolValue];
 }
@@ -113,12 +114,12 @@
     [_offerCacheAccessor writeWithBlock:^{ [ATAdStorageUtility removeAdForPlacementID:placementID unitGroupID:unitGroupID inStorage:_offers]; }];
 }
 
+-(void) removeCahceForPlacementID:(NSString*)placementID unitGroupModel:(ATUnitGroupModel*)unitGroupModel {
+    [_offerCacheAccessor writeWithBlock:^{ [ATAdStorageUtility removeAdForPlacementID:placementID unitGroupModel:unitGroupModel inStorage:_offers statusStorage:_statusStorage]; }];
+}
+
 -(void) clearCache {
     __weak typeof(self) weakSelf = self;
     [_offerCacheAccessor writeWithBlock:^{ [weakSelf.offers removeAllObjects]; }];
-}
-
--(void) removeCahceForPlacementID:(NSString*)placementID unitGroupModel:(ATUnitGroupModel*)unitGroupModel {
-    [_offerCacheAccessor writeWithBlock:^{ [ATAdStorageUtility removeAdForPlacementID:placementID unitGroupModel:unitGroupModel inStorage:_offers statusStorage:_statusStorage]; }];
 }
 @end

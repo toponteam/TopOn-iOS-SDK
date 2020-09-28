@@ -13,6 +13,7 @@
 #import "ATCapsManager.h"
 #import "Utilities.h"
 #import "ATAdStorageUtility.h"
+#import "ATWaterfallManager.h"
 NSString *const kBannerAssetsUnitIDKey = @"unit_id";
 NSString *const kBannerAssetsBannerViewKey = @"banner_view";
 NSString *const kBannerAssetsCustomEventKey = @"custom_event";
@@ -63,11 +64,11 @@ NSString *const kBannerNotificationUserInfoRequestIDKey = @"request_id";
  */
 
 static NSString *const kBannerStorageRequestIDKey = @"request_id";
--(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID {
-    ATBanner *banner = [[ATBanner alloc] initWithPriority:[placementModel.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup];
+-(void) addAdWithADAssets:(NSDictionary*)assets withPlacementSetting:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID {
+    ATBanner *banner = [[ATBanner alloc] initWithPriority:[finalWaterfall.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup finalWaterfall:finalWaterfall];
     __weak typeof(self) weakSelf = self;
     [_bannerStorageAccessor writeWithBlock:^{
-        [ATAdStorageUtility saveAd:banner toStorage:weakSelf.bannerStorage requestID:banner.requestID];
+        [ATAdStorageUtility saveAd:banner finalWaterfall:finalWaterfall toStorage:weakSelf.bannerStorage requestID:banner.requestID];
         [ATAdStorageUtility saveAd:banner toStatusStorage:weakSelf.statusStorage];
     }];
 }
@@ -81,11 +82,11 @@ static NSString *const kBannerStorageRequestIDKey = @"request_id";
     }];
 }
 
--(BOOL) inspectAdSourceStatusWithPlacementModel:(ATPlacementModel*)placementModel activeUnitGroups:(NSArray<ATUnitGroupModel*>*)activeUnitGroups unitGroup:(ATUnitGroupModel*)unitGroup requestID:(NSString*)requestID extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo {
+-(BOOL) inspectAdSourceStatusWithPlacementModel:(ATPlacementModel*)placementModel unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall requestID:(NSString*)requestID extraInfo:(NSArray<NSDictionary*>*__autoreleasing*)extraInfo {
     __weak typeof(self) weakSelf = self;
     return [[_bannerStorageAccessor readWithBlock:^id{
         BOOL status = [ATAdStorageUtility adSourceStatusInStorage:weakSelf.statusStorage placementModel:placementModel unitGroup:unitGroup];
-        if (status) { [ATAdStorageUtility renewOffersWithPlacementModel:placementModel activeUnitGroups:activeUnitGroups requestID:requestID inStatusStorage:weakSelf.statusStorage offerStorate:weakSelf.bannerStorage extraInfo:extraInfo]; }
+        if (status) { [ATAdStorageUtility renewOffersWithPlacementModel:placementModel finalWaterfall:finalWaterfall requestID:requestID inStatusStorage:weakSelf.statusStorage offerStorate:weakSelf.bannerStorage extraInfo:extraInfo]; }
         return @(status);
     }] boolValue];
 }
@@ -112,7 +113,11 @@ static NSString *const kBannerStorageRequestIDKey = @"request_id";
 
 -(void) removeCacheContainingBanner:(ATBanner *)banner {
     __weak typeof(self) weakSelf = self;
-    [_bannerStorageAccessor writeWithBlock:^{ [ATAdStorageUtility clearPlacementContainingAd:banner fromStorage:weakSelf.bannerStorage]; }];
+    [_bannerStorageAccessor writeWithBlock:^{
+        [ATAdStorageUtility removeAdForPlacementID:banner.placementModel.placementID unitGroupID:banner.unitGroup.unitGroupID inStorage:weakSelf.bannerStorage];
+//        [ATAdStorageUtility clearPlacementContainingAd:banner fromStorage:weakSelf.bannerStorage];
+        
+    }];
 }
 
 -(void) clearCahceForPlacementID:(NSString *)placementID {

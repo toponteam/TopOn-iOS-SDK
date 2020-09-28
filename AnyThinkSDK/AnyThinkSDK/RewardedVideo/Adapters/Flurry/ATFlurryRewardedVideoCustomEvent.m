@@ -18,27 +18,22 @@
 - (void) adInterstitialDidFetchAd:(id<ATFlurryAdInterstitial>)interstitialAd {
     [ATLogger logMessage:@"Flurry: adInterstitialDidFetchAd" type:ATLogTypeExternal];
     objc_setAssociatedObject(interstitialAd, (__bridge_retained void*)kFlurryRVAssetsCustomEventKey, self, OBJC_ASSOCIATION_RETAIN);
-    [self handleAssets:@{kRewardedVideoAssetsUnitIDKey:self.unitID, kAdAssetsCustomObjectKey:interstitialAd}];
+    [self trackRewardedVideoAdLoaded:interstitialAd adExtra:nil];
 }
 
 - (void) adInterstitial:(id<ATFlurryAdInterstitial>) interstitialAd adError:(ATFlurryAdError) adError errorDescription:(NSError*) errorDescription {
     [ATLogger logError:[NSString stringWithFormat:@"Flurry failed to load rewarded video, error code:%u, error:%@", adError, errorDescription] type:ATLogTypeExternal];
     if (adError == AT_FLURRY_AD_ERROR_DID_FAIL_TO_FETCH_AD) {
-        [self handleLoadingFailure:errorDescription];
+        [self trackRewardedVideoAdLoadFailed:errorDescription];
     } else if (adError == AT_FLURRY_AD_ERROR_DID_FAIL_TO_RENDER) {
-        [self saveVideoPlayEventWithError:errorDescription];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidFailToPlayForPlacementID:error:extra:)]) { [self.delegate rewardedVideoDidFailToPlayForPlacementID:self.rewardedVideo.placementModel.placementID error:errorDescription extra:[self delegateExtra]]; }
+        [self trackRewardedVideoAdPlayEventWithError:errorDescription];
     }
 }
 
 - (void) adInterstitialDidRender:(id<ATFlurryAdInterstitial>)interstitialAd {
     [ATLogger logMessage:@"Flurry: adInterstitialDidRender" type:ATLogTypeExternal];
-    [self trackShow];
-    [self trackVideoStart];
-
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdShow];
+    [self trackRewardedVideoAdVideoStart];
 }
 
 - (void) adInterstitialWillPresent:(id<ATFlurryAdInterstitial>)interstitialAd {
@@ -55,35 +50,29 @@
 
 - (void) adInterstitialDidDismiss:(id<ATFlurryAdInterstitial>)interstitialAd {
     [ATLogger logMessage:@"Flurry: adInterstitialDidDismiss" type:ATLogTypeExternal];
-    [self handleClose];
-    [self saveVideoCloseEventRewarded:_rewarded];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdCloseRewarded:_rewarded];
 }
 
 - (void) adInterstitialDidReceiveClick:(id<ATFlurryAdInterstitial>)interstitialAd {
     [ATLogger logMessage:@"Flurry: adInterstitialDidReceiveClick" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) { [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackRewardedVideoAdClick];
 }
 
 - (void) adInterstitialVideoDidFinish:(id<ATFlurryAdInterstitial>)interstitialAd {
     [ATLogger logMessage:@"Flurry: adInterstitialVideoDidFinish" type:ATLogTypeExternal];
     _rewarded = YES;
-    self.rewardGranted = YES;
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
-    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-        [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdVideoEnd];
+    [self trackRewardedVideoAdRewarded];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"ad_space"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"ad_space"];
 }
+
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"ad_space"];
+//    return extra;
+//}
 @end

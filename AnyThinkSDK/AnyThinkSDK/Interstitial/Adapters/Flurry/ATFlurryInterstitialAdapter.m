@@ -11,6 +11,7 @@
 #import "Utilities.h"
 #import "ATAPI+Internal.h"
 #import "ATAppSettingManager.h"
+
 @interface ATFlurryInterstitialAdapter()
 @property(nonatomic, readonly) ATFlurryInterstitialCustomEvent *customEvent;
 @property(nonatomic, readonly) id<ATFlurryAdInterstitial> interstitial;
@@ -28,7 +29,7 @@ static NSString *const kSpaceKey = @"ad_space";
     });
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -41,7 +42,8 @@ static NSString *const kSpaceKey = @"ad_space";
                     [NSClassFromString(@"FlurryConsent") updateConsentInformation:consent];
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set && [[ATAPI sharedInstance].consentStrings count] > 0) {
                         /**
                         GDPRScope: 0 Nonpersonalized, 1 Personalized
@@ -50,22 +52,22 @@ static NSString *const kSpaceKey = @"ad_space";
                         [NSClassFromString(@"FlurryConsent") updateConsentInformation:consent];
                     }
                 }
-                [NSClassFromString(@"Flurry") startSession:info[@"sdk_key"] withSessionBuilder:[[[NSClassFromString(@"FlurrySessionBuilder") new] withCrashReporting:YES] withLogLevel:ATFlurryLogLevelAll]];
+                [NSClassFromString(@"Flurry") startSession:serverInfo[@"sdk_key"] withSessionBuilder:[[[NSClassFromString(@"FlurrySessionBuilder") new] withCrashReporting:YES] withLogLevel:ATFlurryLogLevelAll]];
             }
         });
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"FlurryAdInterstitial")) {
-        _customEvent = [[ATFlurryInterstitialCustomEvent alloc] initWithUnitID:info[kSpaceKey] customInfo:info];
+        _customEvent = [[ATFlurryInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        _interstitial = [[NSClassFromString(@"FlurryAdInterstitial") alloc] initWithSpace:info[kSpaceKey]];
+        _interstitial = [[NSClassFromString(@"FlurryAdInterstitial") alloc] initWithSpace:serverInfo[kSpaceKey]];
         _interstitial.adDelegate = _customEvent;
         [_interstitial fetchAd];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Flurry"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Flurry"]}]);
     }
 }
 @end

@@ -37,6 +37,11 @@ typedef NS_ENUM(NSInteger, ATPACConsentStatus) {
 @protocol GADAdSizeDelegate<NSObject>
 @end
 
+@protocol ATGADMobileAds<NSObject>
++ (id<ATGADMobileAds>)sharedInstance;
+@property(nonatomic, nonnull, readonly) NSString *sdkVersion;
+@end
+
 @protocol ATGADRequest<NSObject>
 + (NSString *)sdkVersion;
 + (instancetype)request;
@@ -48,6 +53,7 @@ struct GADAdSize {
     CGSize size;       ///< The ad size. Don't modify this value directly.
     NSUInteger flags;  ///< Reserved.
 };
+
 @protocol ATGADBannerView<NSObject>
 #pragma mark Initialization
 - (instancetype)initWithAdSize:(GADAdSize)adSize origin:(CGPoint)origin;

@@ -19,10 +19,10 @@ static NSString *const kMaioClassName = @"Maio";
 static NSString *const kMediaIDKey = @"media_id";
 static NSString *const kZoneIDKey = @"zone_id";
 @implementation ATMaioInterstitialAdapter
-+(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup {
-    ATMaioInterstitialCustomEvent *customEvent = [[ATMaioInterstitialCustomEvent alloc] initWithUnitID:unitGroup.content[kZoneIDKey] customInfo:[ATAdCustomEvent customInfoWithUnitGroupModel:unitGroup extra:nil]];
++(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall {
+    ATMaioInterstitialCustomEvent *customEvent = [[ATMaioInterstitialCustomEvent alloc] initWithInfo:[ATAdCustomEvent customInfoWithUnitGroupModel:unitGroup extra:nil] localInfo:nil];
     [NSClassFromString(kMaioClassName) addDelegateObject:customEvent];
-    ATInterstitial *ad = [[ATInterstitial alloc] initWithPriority:priority placementModel:placementModel requestID:requestID assets:@{kInterstitialAssetsUnitIDKey:[customEvent.unitID length] > 0 ? customEvent.unitID : @"", kInterstitialAssetsCustomEventKey:customEvent, kAdAssetsCustomObjectKey:customEvent.unitID != nil ? customEvent.unitID : @""} unitGroup:unitGroup];
+    ATInterstitial *ad = [[ATInterstitial alloc] initWithPriority:priority placementModel:placementModel requestID:requestID assets:@{kInterstitialAssetsUnitIDKey:[customEvent.unitID length] > 0 ? customEvent.unitID : @"", kInterstitialAssetsCustomEventKey:customEvent, kAdAssetsCustomObjectKey:customEvent.unitID != nil ? customEvent.unitID : @""} unitGroup:unitGroup finalWaterfall:finalWaterfall];
     return ad;
 }
 
@@ -41,7 +41,7 @@ static NSString *const kZoneIDKey = @"zone_id";
     });
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameMaio]) {
@@ -52,18 +52,18 @@ static NSString *const kZoneIDKey = @"zone_id";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kMaioClassName) != nil) {
-        _customEvent = [[ATMaioInterstitialCustomEvent alloc] initWithUnitID:info[kZoneIDKey] customInfo:info];
+        _customEvent = [[ATMaioInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        if ([NSClassFromString(kMaioClassName) canShowAtZoneId:info[kZoneIDKey]]) {
+        if ([NSClassFromString(kMaioClassName) canShowAtZoneId:serverInfo[kZoneIDKey]]) {
             [NSClassFromString(kMaioClassName) addDelegateObject:_customEvent];
             [_customEvent handleAssets:@{kInterstitialAssetsUnitIDKey:[_customEvent.unitID length] > 0 ? _customEvent.unitID : @"", kInterstitialAssetsCustomEventKey:_customEvent, kAdAssetsCustomObjectKey:_customEvent.unitID != nil ? _customEvent.unitID : @""}];
         } else {
-            [NSClassFromString(kMaioClassName) startWithMediaId:info[kMediaIDKey] delegate:_customEvent];
+            [NSClassFromString(kMaioClassName) startWithMediaId:serverInfo[kMediaIDKey] delegate:_customEvent];
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Maio"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Maio"]}]);
     }
 }
 @end

@@ -10,6 +10,7 @@
 #import "ATAppnextInterstitialCustomEvent.h"
 #import "ATAPI+Internal.h"
 #import "Utilities.h"
+
 @interface ATAppnextInterstitialAdapter()
 @property(nonatomic, readonly) ATAppnextInterstitialCustomEvent *customEvent;
 @property(nonatomic, readonly) id<ATAppnextAd> interstitial;
@@ -24,7 +25,7 @@
     [interstitial.customObject showAd];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -38,16 +39,16 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"AppnextInterstitialAd") != nil) {
-        _customEvent = [[ATAppnextInterstitialCustomEvent alloc] initWithUnitID:info[@"placement_id"] customInfo:info];
+        _customEvent = [[ATAppnextInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         
-        _interstitial = [[NSClassFromString(@"AppnextInterstitialAd") alloc] initWithPlacementID:info[@"placement_id"]];
+        _interstitial = [[NSClassFromString(@"AppnextInterstitialAd") alloc] initWithPlacementID:serverInfo[@"placement_id"]];
         _interstitial.delegate = _customEvent;
         [_interstitial loadAd];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Appnext"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Appnext"]}]);
     }
 }
 @end

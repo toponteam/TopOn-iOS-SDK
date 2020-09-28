@@ -25,13 +25,15 @@
     NSString *desc = @"oguryAdsInterstitialAdNotAvailable";
     NSError *error = [NSError errorWithDomain:desc code:0 userInfo:nil];
     [ATLogger logError:[NSString stringWithFormat:@"OguryInterstitial::oguryAdsInterstitialAdNotAvailable:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+//    [self handleLoadingFailure:error];
+    [self trackInterstitialAdLoadFailed:error];
 }
 
 -(void)oguryAdsInterstitialAdLoaded {
     [ATLogger logMessage:@"OguryInterstitial::oguryAdsInterstitialAdLoaded:" type:ATLogTypeExternal];
-    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithDictionary:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:self.oguryAds, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
-    [self handleAssets:assets];
+//    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithDictionary:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:self.oguryAds, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
+//    [self handleAssets:assets];
+    [self trackInterstitialAdLoaded:self.oguryAds adExtra:nil];
 }
 
 -(void)oguryAdsInterstitialAdNotLoaded {
@@ -40,20 +42,13 @@
 
 -(void)oguryAdsInterstitialAdDisplayed {
     [ATLogger logMessage:@"OguryInterstitial::oguryAdsInterstitialAdDisplayed:" type:ATLogTypeExternal];
-    [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackInterstitialAdShow];
 }
 
 -(void)oguryAdsInterstitialAdClosed {
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidEndPlayingVideoForPlacementID:extra:)]) {
-        [self.delegate interstitialDidEndPlayingVideoForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
     [ATLogger logMessage:@"OguryInterstitial::oguryAdsInterstitialAdClosed:" type:ATLogTypeExternal];
-    [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdVideoEnd];
+    [self trackInterstitialAdClose];
 }
 
 -(void)oguryAdsInterstitialAdError:(ATOguryAdsErrorType)errorType {
@@ -61,7 +56,7 @@
     NSError *error = [NSError errorWithDomain:desc code:errorType userInfo:nil];
     [ATLogger logError:[NSString stringWithFormat:@"OguryInterstitial::oguryAdsInterstitialAdError:%@", error] type:ATLogTypeExternal];
 
-    [self handleLoadingFailure:error];
+    [self trackInterstitialAdLoadFailed:error];
 }
 
 NSString *OguryIVStatusTypeStringMap[] = {
@@ -73,9 +68,13 @@ NSString *OguryIVStatusTypeStringMap[] = {
     [OguryAdsErrorSdkInitNotCalled] = @"OguryAdsErrorSdkInitNotCalled"
 };
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"unit_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unit_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

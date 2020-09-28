@@ -14,12 +14,14 @@ extern NSString *const kNativeADAssetsMainTextKey;
 extern NSString *const kNativeADAssetsMainTitleKey;
 extern NSString *const kNativeADAssetsMainImageKey;
 extern NSString *const kNativeADAssetsIconImageKey;
+extern NSString *const kNativeADAssetsLogoImageKey;
 extern NSString *const kNativeADAssetsCTATextKey;
 extern NSString *const kNativeADAssetsRatingKey;
 extern NSString *const kNativeADAssetsContainsVideoFlag;
 extern NSString *const kNativeADAssetsUnitIDKey;
 extern NSString *const kNativeADAssetsIconURLKey;
 extern NSString *const kNativeADAssetsImageURLKey;
+extern NSString *const kNativeADAssetsLogoURLKey;
 extern NSString *const kNativeADAssetsSponsoredImageKey;
 
 extern NSString *const kAdAssetsCustomObjectKey;
@@ -46,7 +48,7 @@ extern NSString *const kATADLoadingNotificationUserInfoExtraKey;
  
  @param info contains the info specific to the network. Keys used to retrive the value in the info dictionary are pre-defined by the SDK
  */
--(instancetype) initWithNetworkCustomInfo:(NSDictionary*)info;
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo;
 
 /**
  Adopter should implement this method to load network offers.
@@ -55,7 +57,7 @@ extern NSString *const kATADLoadingNotificationUserInfoExtraKey;
  @param completion might need to be stored and invoked after ad's succeffully loaded.
  Parameters passed to the completion block include a dictionary and an error objects. The error object encapsulates the error info if loading request failed somehow; the dictionary contains all publicly accessible assets (such as title and text) for the native ad, which should be stored using the keys predefined by the SDK.
  */
--(void) loadADWithInfo:(id)info completion:(void(^)(NSArray<NSDictionary*>* assets, NSError *error))completion;
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void(^)(NSArray<NSDictionary*>* assets, NSError *error))completion;
 @property (nonatomic,copy) void (^metaDataDidLoadedBlock)(void);
 @end
 

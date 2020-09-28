@@ -43,11 +43,15 @@ extern NSString *const kATMintegralNativeAssetCustomEvent;
 
 @end
 
+@protocol ATMTGBiddingSDK<NSObject>
++ (NSString *)buyerUID;
+@end
+
 @protocol ATMTGSDK<NSObject>
 +(instancetype) sharedInstance;
 +(NSString *)sdkVersion;
 - (void)setUserPrivateInfoType:(ATMTGUserPrivateType)type agree:(BOOL)agree;
-- (void)setAppID:(NSString *)appID ApiKey:( NSString *)apiKey;
+- (void)setAppID:(NSString *)appID ApiKey:(NSString *)apiKey;
 @property (nonatomic, assign) BOOL consentStatus;
 @end
 
@@ -59,12 +63,12 @@ extern NSString *const kATMintegralNativeAssetCustomEvent;
 @protocol ATMTGCampaign;
 @protocol ATMTGNativeAdManager<NSObject>
 - (instancetype)initWithPlacementId:(NSString *)placementId
-                  unitID:(NSString *)unitId
-           fbPlacementId:(NSString *)fbPlacementId
-      supportedTemplates:(NSArray *)templates
-          autoCacheImage:(BOOL)autoCacheImage
-              adCategory:(NSInteger)adCategory
-                   presentingViewController:(UIViewController *)viewController;
+            unitID:(NSString *)unitId
+     fbPlacementId:(NSString *)fbPlacementId
+supportedTemplates:(NSArray *)templates
+    autoCacheImage:(BOOL)autoCacheImage
+        adCategory:(NSInteger)adCategory
+             presentingViewController:(UIViewController *)viewController;
 - (void)registerViewForInteraction:(UIView *)view
                 withClickableViews:(NSArray *)clickableViews
                       withCampaign:(id<ATMTGCampaign>)campaign;
@@ -96,6 +100,8 @@ extern NSString *const kATMintegralNativeAssetCustomEvent;
 @end
 
 @protocol ATMTGMediaViewDelegate <NSObject>
+- (void)nativeAdImpressionWithType:(ATMTGAdSourceType)type mediaView:(id<ATMTGMediaView>)mediaView;
+- (void)nativeAdDidClick:(id<ATMTGCampaign>)nativeAd;
 @end
 
 @protocol MTGBidNativeAdManagerDelegate;
@@ -104,7 +110,10 @@ extern NSString *const kATMintegralNativeAssetCustomEvent;
 @property (nonatomic, assign) BOOL showLoadingView;
 @property (nonatomic, readonly) NSString *currentUnitId;
 @property (nonatomic, weak) UIViewController *viewController;
-- (instancetype)initWithPlacementId:(NSString *)placementId unitID:(NSString *)unitId presentingViewController:(UIViewController *)viewController;
+- (instancetype)initWithPlacementId:(NSString *)placementId
+                       unitID:(NSString *)unitId
+presentingViewController:(UIViewController *)viewController;
+- (instancetype)initWithUnitID:(NSString *)unitId autoCacheImage:(BOOL)autoCacheImage presentingViewController:(UIViewController *)viewController;
 - (void)loadWithBidToken:(NSString *)bidToken;
 - (void)registerViewForInteraction:(UIView *)view withCampaign:(id<ATMTGCampaign>)campaign;
 - (void)unregisterView:(UIView *)view;
@@ -123,6 +132,26 @@ extern NSString *const kATMintegralNativeAssetCustomEvent;
 -(void)setCustomInfo:(NSString*)customInfo type:(NSInteger)type unitId:(NSString*)unitID;
 @end
 
+@protocol ATMTGBiddingResponse<NSObject>
+@property (nonatomic,strong,readonly) NSError *error;
+@property (nonatomic,assign,readonly) BOOL success;
+@property (nonatomic,assign,readonly) double price;
+@property (nonatomic,copy,readonly) NSString *currency;
+@property (nonatomic,copy,readonly) NSString *bidToken;
+-(void)notifyWin;
+-(void)notifyLoss:(NSInteger)reasonCode;
+@end
+
+@protocol ATMTGBiddingRequestParameter <NSObject>
+@property(nonatomic,copy,readonly)NSString *unitId;
+@property(nonatomic,readonly)NSNumber *basePrice;
+- (instancetype)initWithPlacementId:(NSString *)placementId
+   unitId:(NSString *) unitId
+basePrice:(NSNumber *)basePrice;
+@end
+@protocol ATMTGBiddingRequest<NSObject>
++(void)getBidWithRequestParameter:(__kindof id<ATMTGBiddingRequestParameter>)requestParameter completionHandler:(void(^)(id<ATMTGBiddingResponse> bidResponse))completionHandler;
+@end
 
 @protocol MTGNativeAdvancedAdDelegate <NSObject>
 @end

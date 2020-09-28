@@ -26,6 +26,7 @@ extern NSString *const kGDTNativeAssetsImgList;
 @protocol ATGDTSDKConfig<NSObject>
 + (BOOL)registerAppId:(NSString *)appId;
 + (NSString *)sdkVersion;
++ (void)enableDefaultAudioSessionSetting:(BOOL)enabled;
 @end
 
 @protocol ATGDTNativeExpressAdView<NSObject>
@@ -58,6 +59,7 @@ typedef NS_ENUM(NSUInteger, GDTMediaPlayerStatus) {
 @property (nonatomic, weak) id<GDTNativeExpressAdDelegete> delegate;
 @property (nonatomic, assign) BOOL videoAutoPlayOnWWAN;
 @property (nonatomic, assign) BOOL videoMuted;
+@property (nonatomic) NSInteger maxVideoDuration;
 - (instancetype)initWithAppId:(NSString *)appId placementId:(NSString *)placementId adSize:(CGSize)size;
 - (void)loadAd:(NSInteger)count;
 @end
@@ -102,6 +104,7 @@ typedef NS_ENUM(NSUInteger, GDTMediaPlayerStatus) {
 - (void)clickAd:(id<ATGDTNativeAdData>)nativeAdData;
 @end
 
+@protocol ATGDTVideoConfig;
 @protocol ATGDTUnifiedNativeAdDataObject<NSObject>
 @property (nonatomic, copy, readonly) NSString *title;
 @property (nonatomic, copy, readonly) NSString *desc;
@@ -113,6 +116,7 @@ typedef NS_ENUM(NSUInteger, GDTMediaPlayerStatus) {
 @property (nonatomic, readonly) BOOL isAppAd;
 @property (nonatomic, readonly) BOOL isVideoAd;
 @property (nonatomic, readonly) BOOL isThreeImgsAd;
+@property (nonatomic, strong) id<ATGDTVideoConfig> videoConfig;
 - (BOOL) equlasAdData:(id<ATGDTUnifiedNativeAdDataObject>)dataObject;
 @end
 
@@ -122,6 +126,7 @@ typedef NS_ENUM(NSUInteger, GDTMediaPlayerStatus) {
 
 @protocol ATGDTUnifiedNativeAd<NSObject>
 @property (nonatomic, weak) id<GDTUnifiedNativeAdDelegate> delegate;
+@property (nonatomic) NSInteger maxVideoDuration;
 - (instancetype)initWithPlacementId:(NSString *)placementId;
 - (void)loadAd;
 - (void)loadAdWithAdCount:(int)adCount;
@@ -156,4 +161,12 @@ typedef NS_ENUM(NSUInteger, GDTMediaPlayerStatus) {
             clickableViews:(NSArray<UIView *> *)clickableViews;
 @end
 
-
+typedef NS_ENUM(NSInteger, GDTVideoAutoPlayPolicy) {
+    GDTVideoAutoPlayPolicyWIFI = 0, // WIFI 下自动播放
+    GDTVideoAutoPlayPolicyAlways = 1, // 总是自动播放，无论网络条件
+    GDTVideoAutoPlayPolicyNever = 2, // 从不自动播放，无论网络条件
+};
+@protocol ATGDTVideoConfig<NSObject>
+@property (nonatomic, assign) GDTVideoAutoPlayPolicy autoPlayPolicy;
+@property (nonatomic, assign) BOOL videoMuted;
+@end

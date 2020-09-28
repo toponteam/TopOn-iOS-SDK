@@ -7,12 +7,40 @@
 //
 
 #import <UIKit/UIKit.h>
-extern NSString *const kUnityMonetizationInitFlagKey;
+
+extern NSString *const kATUnityAdsInterstitialLoadedNotification;
+extern NSString *const kATUnityAdsInterstitialFailedToLoadNotification;
+extern NSString *const kATUnityAdsInterstitialPlayStartNotification;
+extern NSString *const kATUnityAdsInterstitialClickNotification;
+extern NSString *const kATUnityAdsInterstitialCloseNotification;
+extern NSString *const kATUnityAdsInterstitialNotificationUserInfoPlacementIDKey;
+extern NSString *const kATUnityAdsInterstitialNotificationUserInfoErrorKey;
+
+
 @interface ATUnityAdsInterstitialAdapter : NSObject
+@end
+
+@protocol UnityAdsDelegate <NSObject>
+- (void)unityAdsReady:(NSString *)placementId;
+- (void)unityAdsDidError:(NSInteger)error withMessage:(NSString *)message;
+- (void)unityAdsDidStart:(NSString *)placementId;
+- (void)unityAdsDidFinish:(NSString *)placementId
+          withFinishState:(NSInteger)state;
+@end
+
+@protocol UnityAdsExtendedDelegate <UnityAdsDelegate>
+- (void)unityAdsDidClick:(NSString *)placementId;
+- (void)unityAdsPlacementStateChanged:(NSString *)placementId oldState:(NSInteger)oldState newState:(NSInteger)newState;
 @end
 
 @protocol ATUnityAds<NSObject>
 + (NSString *)getVersion;
++ (BOOL)isInitialized;
++ (void)initialize:(NSString *)gameId;
++ (void)addDelegate:(__nullable id<UnityAdsDelegate>)delegate;
++ (void)removeDelegate:(id<UnityAdsDelegate>)delegate;
++ (BOOL)isReady:(NSString *)placementId;
++ (void)show:(UIViewController *)viewController placementId:(NSString *)placementId;
 @end
 
 @protocol UADSPlayerMetaData<NSObject>

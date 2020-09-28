@@ -19,6 +19,7 @@
 #import "ATPlacementModel.h"
 #import "ATLogger.h"
 #import <objc/runtime.h>
+
 static NSString *const kGestureRecognizerKey = @"gesture_recognizer";
 
 @interface ATInmobiCustomEvent()
@@ -35,7 +36,7 @@ static NSString *const kGestureRecognizerKey = @"gesture_recognizer";
     if ([native.adCtaText length] > 0) { assets[kNativeADAssetsCTATextKey] = native.adCtaText; }
     if ([native.adRating length] > 0) { assets[kNativeADAssetsRatingKey] = [NSNumber numberWithDouble:[native.adRating doubleValue]]; }
     
-    [self handleAssets:assets];
+    [self trackNativeAdLoaded:assets];
 }
 
 -(void)native:(id<ATIMNative>)native didFailToLoadWithError:(NSError*)error {
@@ -83,8 +84,7 @@ static NSString *const kGestureRecognizerKey = @"gesture_recognizer";
 
 - (void)nativeDidFinishPlayingMedia:(id<ATIMNative>)native {
     [ATLogger logMessage:@"InmobiNative::nativeDidFinishPlayingMedia" type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    [self.adView notifyVideoEnd];
+    [self trackNativeAdVideoEnd];
 }
 
 - (void)nativeDidPresentScreen:(id<ATIMNative>)native {
@@ -117,15 +117,19 @@ static NSString *const kGestureRecognizerKey = @"gesture_recognizer";
 
 -(void) handleClick {
     if (!_interacted || !_clickHandled) {
-        [self trackClick];
-        [self.adView notifyNativeAdClick];
+        [self trackNativeAdClick];
     }
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unit_id"];
-    return extra;
+    return cache.unitGroup.content[@"unit_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

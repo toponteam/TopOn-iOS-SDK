@@ -10,64 +10,60 @@
 #import "Utilities.h"
 #import "ATSplashManager.h"
 #import "ATSplashDelegate.h"
+
 @implementation ATGDTSplashCustomEvent
-- (void)splashAdDidLoad:(id<ATGDTSplashAd>)splashAd {
-    [ATLogger logMessage:@"ATGDTSplash::splashAdDidLoad:" type:ATLogTypeExternal];
-    [self handleAssets:@{kAdAssetsCustomObjectKey:splashAd, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
-    if ([[NSDate date] timeIntervalSinceDate:_loadStartDate] < _timeout) {
-        [splashAd showAdInWindow:_window withBottomView:_bottomView skipView:_skipView];
-    } else {
-        [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.GDTSplashAdLoading" code:1 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load splash ad", NSLocalizedFailureReasonErrorKey:@"GDTSDK has failed to fetch splash ad within the specified time limit."}]];
-    }
-}
-
-- (void)splashAdSuccessPresentScreen:(id)splashAd {
+- (void)splashAdSuccessPresentScreen:(id<ATGDTSplashAd>)splashAd {
     [ATLogger logMessage:@"ATGDTSplash::splashAdSuccessPresentScreen:" type:ATLogTypeExternal];
-}
-
-- (void)splashAdFailToPresent:(id)splashAd withError:(NSError *)error {
-    [ATLogger logMessage:[NSString stringWithFormat:@"ATGDTSplash::splashAdFailToPresent:withError:%@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error != nil ? error : [NSError errorWithDomain:@"com.anythink.GDTSplashAdLoading" code:0 userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to load splash ad", NSLocalizedFailureReasonErrorKey:@"GDTSDK has failed to fetch splash ad"}]];
-}
-
-- (void)splashAdApplicationWillEnterBackground:(id)splashAd {
-    [ATLogger logMessage:@"ATGDTSplash::splashAdApplicationWillEnterBackground:" type:ATLogTypeExternal];
-}
-
-- (void)splashAdExposured:(id)splashAd {
-    [ATLogger logMessage:@"ATGDTSplash::splashAdExposured:" type:ATLogTypeExternal];
-    if ([self.delegate respondsToSelector:@selector(splashDidShowForPlacementID:extra:)]) { [self.delegate splashDidShowForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
+    [_backgroundImageView removeFromSuperview];
+    [self trackSplashAdLoaded:splashAd];
+//    [self handleAssets:@{kAdAssetsCustomObjectKey:splashAd, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
     //Custom event's trackShow will be invoked in ATSplashManager, after the assets has been handled.
 }
 
-- (void)splashAdClicked:(id)splashAd {
-    [ATLogger logMessage:@"ATGDTSplash::splashAdClicked:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(splashDidClickForPlacementID:extra:)]) { [self.delegate splashDidClickForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
+- (void)splashAdFailToPresent:(id<ATGDTSplashAd>)splashAd withError:(NSError *)error {
+    [ATLogger logMessage:[NSString stringWithFormat:@"ATGDTSplash::splashAdFailToPresent:withError:%@", error] type:ATLogTypeExternal];
+    [_backgroundImageView removeFromSuperview];
+    [self trackSplashAdLoadFailed:error];
 }
 
-- (void)splashAdWillClosed:(id)splashAd {
+- (void)splashAdApplicationWillEnterBackground:(id<ATGDTSplashAd>)splashAd {
+    [ATLogger logMessage:@"ATGDTSplash::splashAdApplicationWillEnterBackground:" type:ATLogTypeExternal];
+}
+
+- (void)splashAdExposured:(id<ATGDTSplashAd>)splashAd {
+    [ATLogger logMessage:@"ATGDTSplash::splashAdExposured:" type:ATLogTypeExternal];
+//    if (self.ad == nil) { if ([self.delegate respondsToSelector:@selector(splashDidShowForPlacementID:extra:)]) { [self.delegate splashDidShowForPlacementID:self.unitID extra:[self delegateExtra]]; } }
+    [self trackSplashAdShow];
+}
+
+- (void)splashAdClicked:(id<ATGDTSplashAd>)splashAd {
+    [ATLogger logMessage:@"ATGDTSplash::splashAdClicked:" type:ATLogTypeExternal];
+    [self trackSplashAdClick];
+}
+
+- (void)splashAdWillClosed:(id<ATGDTSplashAd>)splashAd {
     [ATLogger logMessage:@"ATGDTSplash::splashAdWillClosed:" type:ATLogTypeExternal];
 }
 
-- (void)splashAdClosed:(id)splashAd {
+- (void)splashAdClosed:(id<ATGDTSplashAd>)splashAd {
     [ATLogger logMessage:@"ATGDTSplash::splashAdClosed:" type:ATLogTypeExternal];
-    if ([self.delegate respondsToSelector:@selector(splashDidCloseForPlacementID:extra:)]) { [self.delegate splashDidCloseForPlacementID:self.ad.placementModel.placementID extra:[self delegateExtra]]; }
+    
+    [self trackSplashAdClosed];
 }
 
-- (void)splashAdWillPresentFullScreenModal:(id)splashAd {
+- (void)splashAdWillPresentFullScreenModal:(id<ATGDTSplashAd>)splashAd {
     [ATLogger logMessage:@"ATGDTSplash::splashAdWillPresentFullScreenModal:" type:ATLogTypeExternal];
 }
 
-- (void)splashAdDidPresentFullScreenModal:(id)splashAd {
+- (void)splashAdDidPresentFullScreenModal:(id<ATGDTSplashAd>)splashAd {
     [ATLogger logMessage:@"ATGDTSplash::splashAdDidPresentFullScreenModal:" type:ATLogTypeExternal];
 }
 
-- (void)splashAdWillDismissFullScreenModal:(id)splashAd {
+- (void)splashAdWillDismissFullScreenModal:(id<ATGDTSplashAd>)splashAd {
     [ATLogger logMessage:@"ATGDTSplash::splashAdWillDismissFullScreenModal:" type:ATLogTypeExternal];
 }
 
-- (void)splashAdDidDismissFullScreenModal:(id)splashAd {
+- (void)splashAdDidDismissFullScreenModal:(id<ATGDTSplashAd>)splashAd {
     [ATLogger logMessage:@"ATGDTSplash::splashAdDidDismissFullScreenModal:" type:ATLogTypeExternal];
 }
 
@@ -75,9 +71,13 @@
     [ATLogger logMessage:[NSString stringWithFormat:@"ATGDTSplash::splashAdLifeTime:%lu", (unsigned long)time] type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"unit_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unit_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.ad.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

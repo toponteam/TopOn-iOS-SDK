@@ -11,7 +11,7 @@ import os
 #4、打成zip包
 
 #configuration for iOS build setting
-AnyThink_VERSION = "5.5.9"
+AnyThink_VERSION = "5.6.8"
 CONFIGURATION = "Release"
 EXPORT_OPTIONS_PLIST = "exportOptions.plist"
 #保存发布包的路径
@@ -25,8 +25,6 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        ,'AnyThinkBanner'
                        ,'AnyThinkInterstitial'
                        ,'AnyThinkSplash'
-                       #Header Bidding
-                       ,'AnyThinkHeaderBidding'
                        #Native Adapters
                        ,'AnyThinkGDTNativeAdapter'
                        ,'AnyThinkMopubNativeAdapter'
@@ -42,7 +40,7 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        ,'AnyThinkTTNativeAdapter'
                        ,'AnyThinkNendNativeAdapter'
                        ,'AnyThinkBaiduNativeAdapter'
-                       ,'AnyThinkKSNativeAdapter'
+                       , 'AnyThinkKSNativeAdapter'
                        #Rewarded Video Adapters
                        ,'AnyThinkOnewayRewardedVideoAdapter'
                        ,'AnyThinkKSRewardedVideoAdapter'
@@ -86,9 +84,6 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        ,'AnyThinkNendBannerAdapter'
                        ,'AnyThinkFyberBannerAdapter'
                        ,'AnyThinkStartAppBannerAdapter'
-                       ,'AnyThinkVungleBannerAdapter'
-                       ,'AnyThinkAdColonyBannerAdapter'
-                       ,'AnyThinkChartboostBannerAdapter'
                        #Interstitial Adapters
                        ,'AnyThinkAdColonyInterstitialAdapter'
                        ,'AnyThinkKSInterstitialAdapter'
@@ -121,7 +116,6 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        ,'AnyThinkGDTSplashAdapter'
                        ,'AnyThinkTTSplashAdapter'
                        ,'AnyThinkSigmobSplashAdapter'
-                       ,'AnyThinkMintegralSplashAdapter'
                        #TraminiSDK
                        ,'TraminiSDK'
                        ]

@@ -11,12 +11,14 @@
 #import "ATBannerManager.h"
 #import "ATAgentEvent.h"
 #import "ATBannerView+Internal.h"
+
 @implementation ATTTBannerCustomEvent
 - (void)bannerAdViewDidLoad:(id<ATBUBannerAdView>)bannerAdView WithAdmodel:(id<ATBUNativeAd>)nativeAd {
     [ATLogger logMessage:@"TTBanner::bannerAdViewDidLoad:WithAdmodel:" type:ATLogTypeExternal];
     NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:bannerAdView, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, nil];
     if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
-    [self handleAssets:assets];
+//    [self handleAssets:assets];
+    [self trackBannerAdLoaded:bannerAdView adExtra:assets];
 }
 
 - (void)bannerAdViewDidBecomVisible:(id<ATBUBannerAdView>)bannerAdView WithAdmodel:(id<ATBUNativeAd>)nativeAd {
@@ -25,10 +27,7 @@
 
 - (void)bannerAdViewDidClick:(id<ATBUBannerAdView>)bannerAdView WithAdmodel:(id<ATBUNativeAd>)nativeAd {
     [ATLogger logMessage:@"TTBanner::bannerAdViewDidClick:WithAdmodel:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackBannerAdClick];
 }
 
 - (void)bannerAdView:(id<ATBUBannerAdView>)bannerAdView didLoadFailWithError:(NSError *_Nullable)error {
@@ -39,10 +38,7 @@
 - (void)bannerAdView:(id<ATBUBannerAdView>)bannerAdView dislikeWithReason:(NSArray *_Nullable)filterwords {
     [ATLogger logMessage:@"TTBanner::bannerAdView:dislikeWithReason:" type:ATLogTypeExternal];
     [self.bannerView loadNextWithoutRefresh];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didTapCloseButtonWithPlacementID:extra:)]) {
-        [self.delegate bannerView:self.bannerView didTapCloseButtonWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
-    [self handleClose];
+    [self trackBannerAdClosed];
 }
 
 #pragma mark - express banner view delegate
@@ -60,15 +56,14 @@
 
 - (void)nativeExpressBannerAdViewRenderSuccess:(id<ATBUNativeExpressBannerView>)bannerAdView {
     [ATLogger logMessage:@"TTBanner::nativeExpressBannerAdViewRenderSuccess:" type:ATLogTypeExternal];
-    NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:bannerAdView, kBannerAssetsBannerViewKey, self, kBannerAssetsCustomEventKey, nil];
-    if ([self.unitID length] > 0) assets[kBannerAssetsUnitIDKey] = self.unitID;
-    [self handleAssets:assets];
+
+    [self trackBannerAdLoaded:bannerAdView adExtra:nil];
 }
 
 - (void)nativeExpressBannerAdViewRenderFail:(id<ATBUNativeExpressBannerView>)bannerAdView error:(NSError * __nullable)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"TTBanner::nativeExpressBannerAdViewRenderFail:error:%@", error] type:ATLogTypeExternal];
     if (!_isFailed) {
-        [self handleLoadingFailure:error];
+        [self trackBannerAdLoadFailed:error];
         _isFailed = true;
     }
 }
@@ -79,24 +74,25 @@
 
 - (void)nativeExpressBannerAdViewDidClick:(id<ATBUNativeExpressBannerView>)bannerAdView {
     [ATLogger logMessage:@"TTBanner::nativeExpressBannerAdViewDidClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
-        [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackBannerAdClick];
 }
 
 - (void)nativeExpressBannerAdView:(id<ATBUNativeExpressBannerView>)bannerAdView dislikeWithReason:(NSArray *_Nullable)filterwords {
     [ATLogger logMessage:@"TTBanner::nativeExpressBannerAdView:dislikeWithReason:" type:ATLogTypeExternal];
     [self.bannerView loadNextWithoutRefresh];
-    if ([self.delegate respondsToSelector:@selector(bannerView:didTapCloseButtonWithPlacementID:extra:)]) {
-        [self.delegate bannerView:self.bannerView didTapCloseButtonWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
-    }
-    [self handleClose];
+//    if ([self.delegate respondsToSelector:@selector(bannerView:didTapCloseButtonWithPlacementID:extra:)]) {
+//        [self.delegate bannerView:self.bannerView didTapCloseButtonWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
+//    }
+    [self trackBannerAdClosed];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"slot_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"slot_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.banner.unitGroup.content[@"slot_id"];
+//    return extra;
+//}
 @end

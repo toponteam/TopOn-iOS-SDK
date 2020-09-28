@@ -24,7 +24,7 @@
     [ATLogger logMessage:@"GDTRewardedVideo::gdt_rewardVideoAdVideoDidLoad:" type:ATLogTypeExternal];
     if (!_loaded) {
         _loaded = YES;
-        [self handleAssets:@{kRewardedVideoAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kRewardedVideoAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:rewardedVideoAd}];
+        [self trackRewardedVideoAdLoaded:rewardedVideoAd adExtra:nil];
     }
 }
 
@@ -34,62 +34,49 @@
 
 - (void)gdt_rewardVideoAdDidExposed:(id<ATGDTRewardVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:@"GDTRewardedVideo::gdt_rewardVideoAdDidExposed:" type:ATLogTypeExternal];
-    [self trackShow];
-    [self trackVideoStart];
-    
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdShow];
+    [self trackRewardedVideoAdVideoStart];
 }
 
 - (void)gdt_rewardVideoAdDidClose:(id<ATGDTRewardVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:@"GDTRewardedVideo::gdt_rewardVideoAdDidClose:" type:ATLogTypeExternal];
-    [self handleClose];
-    [self saveVideoCloseEventRewarded:_rewarded];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdCloseRewarded:_rewarded];
 }
 
 - (void)gdt_rewardVideoAdDidClicked:(id<ATGDTRewardVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:@"GDTRewardedVideo::gdt_rewardVideoAdDidClicked:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdClick];
 }
 
 - (void)gdt_rewardVideoAd:(id<ATGDTRewardVideoAd>)rewardedVideoAd didFailWithError:(NSError *)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"GDTRewardedVideo::gdt_rewardVideoAd:didFailWithError:%@", error] type:ATLogTypeExternal];
     if (_loaded) {
         NSError *playError = [error isKindOfClass:[NSError class]] ? error : [NSError errorWithDomain:@"com.anythink.RewardedVideo" code:100001 userInfo:@{NSLocalizedDescriptionKey:@"AT SDK has failed to play rewarded video", NSLocalizedFailureReasonErrorKey:@"GDT rewarded video has failed to play"}];
-        [self saveVideoPlayEventWithError:error];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidFailToPlayForPlacementID:error:extra:)]) { [self.delegate rewardedVideoDidFailToPlayForPlacementID:self.rewardedVideo.placementModel.placementID error:playError extra:[self delegateExtra]]; }
+        [self trackRewardedVideoAdPlayEventWithError:error];
     } else {
-        [self handleLoadingFailure:error];
+        [self trackRewardedVideoAdLoadFailed:error];
     }
 }
 
 - (void)gdt_rewardVideoAdDidRewardEffective:(id<ATGDTRewardVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:@"GDTRewardedVideo::gdt_rewardVideoAdDidRewardEffective:" type:ATLogTypeExternal];
-    self.rewardGranted = YES;
     _rewarded = YES;
-    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-        [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdRewarded];
 }
 
 - (void)gdt_rewardVideoAdDidPlayFinish:(id<ATGDTRewardVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:@"GDTRewardedVideo::gdt_rewardVideoAdDidPlayFinish:" type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdVideoEnd];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unit_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unit_id"];
 }
+
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

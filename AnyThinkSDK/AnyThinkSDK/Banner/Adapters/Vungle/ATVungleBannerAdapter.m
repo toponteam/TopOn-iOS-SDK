@@ -84,36 +84,37 @@ static NSString *const kVungleSDKClassName = @"VungleSDK";
     if (![((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) addAdViewToView:renderingView withOptions:@{} placementID:banner.unitGroup.content[kPlacementIDKey] error:&error]) { [ATLogger logError:[NSString stringWithFormat:@"VungleBanner::AnyThinkSDK has failed to show banner for Vungle; error:%@", error] type:ATLogTypeExternal]; }
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameVungle];
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameVungle]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameVungle];
             BOOL set = NO;
-            BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+            ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+            BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
             if (set) { [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.5.4"]; }
         }
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kVungleSDKClassName) != nil) {
-        _info = info;
-        _customEvent = [[ATVungleBannerCustomEvent alloc] initWithUnitID:info[kPlacementIDKey] customInfo:info];
+        _info = serverInfo;
+        _customEvent = [[ATVungleBannerCustomEvent alloc] initWithUnitID:serverInfo[kPlacementIDKey] serverInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         if (!((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]).isInitialized) {
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleInitNotification:) name:kVungleSDKInitializationNotification object:nil];
             NSError *error = nil;
             ((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]).delegate = [ATVungleDelegate_Banner sharedDelegate];
-            [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) startWithAppId:info[@"app_id"] error:&error];
+            [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) startWithAppId:serverInfo[@"app_id"] error:&error];
             if (error != nil) { [_customEvent handleLoadingFailure:error]; }
         } else {
             [self startLoad];
         }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Vungle"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Vungle"]}]);
     }
 }
 
@@ -135,6 +136,6 @@ static NSString *const kVungleSDKClassName = @"VungleSDK";
         [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) loadPlacementWithID:_info[kPlacementIDKey] error:&error];
     }
     
-    if (error != nil) [_customEvent handleLoadingFailure:error];
+    if (error != nil) [_customEvent trackBannerAdLoadFailed:error];
 }
 @end

@@ -20,13 +20,13 @@
 @property(nonatomic, readonly) id<ATGADBannerView> bannerView;
 @end
 @implementation ATAdmobBannerAdapter
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             dispatch_async(dispatch_get_main_queue(), ^{
-                [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"GADRequest") sdkVersion] forNetwork:kNetworkNameAdmob];
+                [[ATAPI sharedInstance] setVersion:[[NSClassFromString(@"GADMobileAds") sharedInstance] sdkVersion] forNetwork:kNetworkNameAdmob];
                 if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameAdmob]) {
                     [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameAdmob];
                     id<ATPACConsentInformation> consentInfo = [NSClassFromString(@"PACConsentInformation") sharedInstance];
@@ -35,7 +35,8 @@
                         consentInfo.tagForUnderAgeOfConsent = [[ATAPI sharedInstance].networkConsentInfo[kNetworkNameAdmob][kAdmobUnderAgeKey] boolValue];
                     } else {
                         BOOL set = NO;
-                        BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                        BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                         if (set) { consentInfo.consentStatus = limit ? ATPACConsentStatusNonPersonalized : ATPACConsentStatusPersonalized; }
                     }
                 }
@@ -45,21 +46,32 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"GADBannerView") != nil && NSClassFromString(@"GADRequest") != nil) {
-        _customEvent = [[ATAdmobBannerCustomEvent alloc] initWithUnitID:info[@"unit_id"] customInfo:info];
+        _customEvent = [[ATAdmobBannerCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        CGSize unitGroupSize = ((ATUnitGroupModel*)info[kAdapterCustomInfoUnitGroupModelKey]).adSize;
+        CGSize unitGroupSize = ((ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey]).adSize;
         dispatch_async(dispatch_get_main_queue(), ^{
-            self->_bannerView = [[NSClassFromString(@"GADBannerView") alloc] initWithAdSize:(GADAdSize){CGSizeMake(unitGroupSize.width, unitGroupSize.height), 0}];
-            self->_bannerView.adUnitID = info[@"unit_id"];
+            if (localInfo[kATAdLoadingExtraAdmobBannerSizeKey] != nil && localInfo[kATAdLoadingExtraAdmobAdSizeFlagsKey] != nil) {
+                CGSize size = [localInfo[kATAdLoadingExtraAdmobBannerSizeKey] respondsToSelector:@selector(CGSizeValue)] ? [localInfo[kATAdLoadingExtraAdmobBannerSizeKey] CGSizeValue] : CGSizeMake(unitGroupSize.width, unitGroupSize.height);
+                NSInteger flags = [localInfo[kATAdLoadingExtraAdmobAdSizeFlagsKey] integerValue];
+
+                self->_customEvent.admobAdSizeValue = localInfo[kATAdLoadingExtraAdmobBannerSizeKey];
+                self->_customEvent.admobAdSizeFlags = [localInfo[kATAdLoadingExtraAdmobAdSizeFlagsKey] integerValue];
+                self->_bannerView = [[NSClassFromString(@"GADBannerView") alloc] init];
+                self->_bannerView.adSize = (GADAdSize){size, flags};
+            }else {
+                self->_bannerView = [[NSClassFromString(@"GADBannerView") alloc] initWithAdSize:(GADAdSize){CGSizeMake(unitGroupSize.width, unitGroupSize.height), 0}];
+            }
+            
+            self->_bannerView.adUnitID = serverInfo[@"unit_id"];
             self->_bannerView.delegate = self->_customEvent;
             self->_bannerView.adSizeDelegate = self->_customEvent;
-            self->_bannerView.rootViewController = [ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]];
+            self->_bannerView.rootViewController = [ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey]).placementID requestID:serverInfo[kAdapterCustomInfoRequestIDKey]];
             [self->_bannerView loadRequest:[NSClassFromString(@"GADRequest") request]];
         });
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load banner.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Admob"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Admob"]}]);
     }
 }
 @end

@@ -16,7 +16,7 @@
 @property(nonatomic, readonly) id<ATFBAdView> adView;
 @end
 @implementation ATFacebookBannerAdapter
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameFacebook]) {
@@ -27,25 +27,19 @@
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"FBAdView") != nil) {
-        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)info[kAdapterCustomInfoUnitGroupModelKey];
-        _customEvent = [[ATFacebookBannerCustomEvent alloc] initWithUnitID:info[@"unit_id"] customInfo:info];
+        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+        _customEvent = [[ATFacebookBannerCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         dispatch_async(dispatch_get_main_queue(), ^{
-            self->_adView = [[NSClassFromString(@"FBAdView") alloc] initWithPlacementID:info[@"unit_id"] adSize:(struct FBAdSize){{-1, unitGroupModel.adSize.height}} rootViewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]]];
+            self->_adView = [[NSClassFromString(@"FBAdView") alloc] initWithPlacementID:serverInfo[@"unit_id"] adSize:(struct FBAdSize){{-1, unitGroupModel.adSize.height}} rootViewController:[ATBannerCustomEvent rootViewControllerWithPlacementID:((ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey]).placementID requestID:serverInfo[kAdapterCustomInfoRequestIDKey]]];
             self->_adView.frame = CGRectMake(0, 0, unitGroupModel.adSize.width, unitGroupModel.adSize.height);
             self->_adView.delegate = self->_customEvent;
-            NSString *requestID = info[kAdapterCustomInfoRequestIDKey];
-            if ([unitGroupModel bidTokenWithRequestID:requestID] != nil) {
-                [self->_adView loadAdWithBidPayload:[unitGroupModel bidTokenWithRequestID:requestID]];
-                [unitGroupModel setBidTokenUsedFlagForRequestID:requestID];
-            } else {
-                [self->_adView loadAd];
-            }
+            [self->_adView loadAd];
         });
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load banner.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Facebook"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Facebook"]}]);
     }
 }
 @end

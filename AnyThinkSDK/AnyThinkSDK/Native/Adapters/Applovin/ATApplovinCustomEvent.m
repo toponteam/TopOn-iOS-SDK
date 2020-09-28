@@ -18,7 +18,6 @@
 #import "ATLogger.h"
 #import "ATApplovinNativeAdapter.h"
 
-
 @implementation ATApplovinCustomEvent
 - (void)nativeAdService:(id<ATALNativeAdService>)service didLoadAds:(NSArray * /* of ALNativeAd */) ads {
     if ([ads count] > 0) {
@@ -40,24 +39,28 @@
         
         dispatch_group_t img_load_group = dispatch_group_create();
         
-        dispatch_group_enter(img_load_group);
-        [[ATImageLoader shareLoader] loadImageWithURL:nativeAD.imageURL completion:^(UIImage *image, NSError *error) {
-            if (image != nil) {
-                assets[kNativeADAssetsMainImageKey] = image;
-            }
-            dispatch_group_leave(img_load_group);
-        }];
+        if (nativeAD.imageURL != nil) {
+            dispatch_group_enter(img_load_group);
+            [[ATImageLoader shareLoader] loadImageWithURL:nativeAD.imageURL completion:^(UIImage *image, NSError *error) {
+                if (image != nil) {
+                    assets[kNativeADAssetsMainImageKey] = image;
+                }
+                dispatch_group_leave(img_load_group);
+            }];
+        }
         
-        dispatch_group_enter(img_load_group);
-        [[ATImageLoader shareLoader] loadImageWithURL:nativeAD.iconURL completion:^(UIImage *image, NSError *error) {
-            if (image != nil) {
-                assets[kNativeADAssetsIconImageKey] = image;
-            }
-            dispatch_group_leave(img_load_group);
-        }];
+        if (nativeAD.iconURL != nil) {
+            dispatch_group_enter(img_load_group);
+            [[ATImageLoader shareLoader] loadImageWithURL:nativeAD.iconURL completion:^(UIImage *image, NSError *error) {
+                if (image != nil) {
+                    assets[kNativeADAssetsIconImageKey] = image;
+                }
+                dispatch_group_leave(img_load_group);
+            }];
+        }
         
         dispatch_group_notify(img_load_group, dispatch_get_main_queue(), ^{
-            [self handleAssets:assets];
+            [self trackNativeAdLoaded:assets];
         });
     }
 }
@@ -68,7 +71,7 @@
 }
 
 -(void) trackShow:(BOOL)refresh {
-    [super trackShow:refresh];
+    [super trackNativeAdShow:refresh];
     id<ATALNativeAd> nativeAd = (id<ATALNativeAd>)((ATNativeADCache*)(self.adView.nativeAd)).customObject;
     [nativeAd trackImpression];
 }
@@ -77,15 +80,13 @@
     id<ATALNativeAd> nativeAd = (id<ATALNativeAd>)((ATNativeADCache*)(self.adView.nativeAd)).customObject;
     if ([nativeAd respondsToSelector:@selector(launchClickTarget)]) [nativeAd launchClickTarget];
     
-    [self trackClick];
-    [self.adView notifyNativeAdClick];
+    [self trackNativeAdClick];
 }
 
 -(void) videoDidFinishPlayingInVideoView:(ATVideoView *)videoView {
 //    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
 //    [[ATTracker sharedTracker] trackWithPlacementID:cache.placementModel.placementID unitGroupID:cache.unitGroup.unitGroupID requestID:cache.requestID network:cache.unitGroup.networkFirmID format:0 trackType:ATNativeADTrackTypeVideoPlayed resourceType:ATNativeADSourceTypeVideo progress:100 extra:nil];
-    [self trackVideoEnd];
-    [self.adView notifyVideoEnd];
+    [self trackNativeAdVideoEnd];
     id<ATALNativeAd> nativeAd = (id<ATALNativeAd>)((ATNativeADCache*)(self.adView.nativeAd)).customObject;
     [self trackURL:[nativeAd videoEndTrackingURL:100 firstPlay:YES]];
 }
@@ -93,8 +94,7 @@
 -(void) videoDidPlayInVideoView:(ATVideoView *)videoView {
 //    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
 //    [[ATTracker sharedTracker] trackWithPlacementID:cache.placementModel.placementID unitGroupID:cache.unitGroup.unitGroupID requestID:cache.requestID network:cache.unitGroup.networkFirmID format:0 trackType:ATNativeADTrackTypeVideoPlayed resourceType:ATNativeADSourceTypeVideo progress:0 extra:nil];
-    [self trackVideoStart];
-    [self.adView notifyVideoStart];
+    [self trackNativeAdVideoStart];
     id<ATALNativeAd> nativeAd = (id<ATALNativeAd>)((ATNativeADCache*)(self.adView.nativeAd)).customObject;
     [self trackURL:[nativeAd videoStartTrackingURL]];
 }
@@ -103,9 +103,13 @@
     [[[NSURLSession sharedSession] dataTaskWithURL:URL] resume];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = @"";
-    return extra;
+- (NSString *)networkUnitId {
+    return @"";
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = @"";
+//    return extra;
+//}
 @end

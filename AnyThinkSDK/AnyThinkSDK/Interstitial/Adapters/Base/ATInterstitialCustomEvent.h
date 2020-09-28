@@ -6,16 +6,23 @@
 //  Copyright © 2018 Martin Lau. All rights reserved.
 //
 
-#import "ATAdCustomEvent.h"
 #import "ATInterstitial.h"
 #import "ATInterstitialDelegate.h"
-#import "ATTracker.h"
+#import <AnyThinkSDK/AnyThinkSDK.h>
 @interface ATInterstitialCustomEvent : ATAdCustomEvent
--(void) trackVideoStart;
--(void) trackVideoEnd;
+-(void) trackInterstitialAdLoaded:(id)interstitialAd adExtra:(NSDictionary *)adExtra;
+-(void) trackInterstitialAdLoadFailed:(NSError*)error;
+-(void) trackInterstitialAdShow;
+-(void) trackInterstitialAdShowFailed:(NSError*)error;
+-(void) trackInterstitialAdVideoStart;
+-(void) trackInterstitialAdVideoEnd;
+-(void) trackInterstitialAdDidFailToPlayVideo:(NSError*)error;
+-(void) trackInterstitialAdClick;
+-(void) trackInterstitialAdClose;
+
 -(NSDictionary*)delegateExtra;
 -(ATNativeADSourceType) adSourceType;
--(instancetype) initWithUnitID:(NSString*)unitID customInfo:(NSDictionary*)customInfo;
+-(instancetype) initWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo ;
 @property(nonatomic, weak) id<ATInterstitialDelegate> delegate;
 @property(nonatomic, weak) ATInterstitial *interstitial;
 @property(nonatomic, readonly) NSString *unitID;

@@ -16,6 +16,10 @@
 #import "ATLogger.h"
 #import "ATAppSettingManager.h"
 #import "ATAgentEvent.h"
+#import "ATAdManager+Internal.h"
+
+NSString *const kATPlacementManagerPlacementUpdateNotification = @"com.anythink.PlacementUpdateNotification";
+NSString *const kATPlacementManagerPlacementUpdateNotificationUserInfoPlacementModelKey = @"placement_model";
 @interface ATPlacementSettingManager()
 @property(nonatomic, readonly) ATThreadSafeAccessor *placementSettingsAccessor;
 @property(nonatomic, readonly) NSMutableDictionary<NSString*, ATPlacementModel*>* placementSettings;
@@ -62,7 +66,7 @@
 @property(nonatomic, readonly) ATThreadSafeAccessor *customDataStorageAccessor;
 @end
 
-static NSString *const kPlacementStegatryLoadingErrorDescription = @"AT SDK has failed to load placement stragety.";
+static NSString *const kPlacementStegatryLoadingErrorDescription = @"AT SDK has failed to load placement setting.";
 static NSString *const kBase64Table1 = @"dMWnhbeyKr0J+IvLNOx3BFkEuml92/5fjSqGT7R8pZVciPHAstC4UXa6QDw1gozY";
 static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyNgb9P1OIKmCEuq8sw/XMeBAT2F";
 @implementation ATPlacementSettingManager
@@ -329,11 +333,12 @@ static NSInteger errorCodeDuration = 20 * 60;
 /**
  PSID will be retrived if it does not expire
  */
--(void) requestPlacementSettingWithPlacementID:(NSString*)placementID customData:(NSDictionary*)customData completion:(void(^)(ATPlacementModel *placementModel, NSError *error))completion {
+-(void) requestPlacementSettingWithPlacementID:(NSString*)placementID customData:(NSDictionary*)customData extra:(NSDictionary*)extra completion:(void(^)(ATPlacementModel *placementModel, NSError *error))completion {
+    ATPlacementModel *historyPlacementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
     NSString *appID = [ATAPI sharedInstance].appID;
     NSString *appKey = [ATAPI sharedInstance].appKey;
     if ([self errorCodeForAppID:appID appKey:appKey placementID:placementID] == errorCodeSuccess) {
-        NSString *pStr = [[[ATPlacementSettingManager parametersWithPlacementID:placementID customData:customData] jsonString_anythink] stringByBase64Encoding_anythink];
+        NSString *pStr = [[[ATPlacementSettingManager parametersWithPlacementID:placementID customData:customData extra:extra] jsonString_anythink] stringByBase64Encoding_anythink];
         NSString *p2Str = [[[ATPlacementSettingManager parameters2] jsonString_anythink] stringByBase64Encoding_anythink];
         NSMutableDictionary *para = [NSMutableDictionary dictionaryWithObjectsAndKeys:pStr, @"p", p2Str, @"p2", @"1.0", @"api_ver", nil];
         para[@"sign"] = [Utilities computeSignWithParameters:para];
@@ -359,6 +364,8 @@ static NSInteger errorCodeDuration = 20 * 60;
                         if (placement.cachesPlacementSetting) { [ATPlacementSettingManager savePlacementSettings:responseObject[@"data"] associatedCustomData:customData forPlacementID:placementID]; }
                         [ATAgentEvent saveRequestAPIName:@"placement" requestDate:requestTime responseDate:[Utilities normalizedTimeStamp] extra:placementID != nil ?  @{kAgentEventExtraInfoPlacementIDKey:placementID} : nil];
                         completion(placement, nil);
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kATPlacementManagerPlacementUpdateNotification object:nil userInfo:@{kATPlacementManagerPlacementUpdateNotificationUserInfoPlacementModelKey:placement}];
+                        if (![historyPlacementModel.asid isEqualToString:placement.asid]) { [[ATPlacementSettingManager sharedManager] setStatus:NO forPlacementID:placementID]; } 
                     } else {
                         error = error != nil ? error : [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodePlacementStrategyInvalidResponse userInfo:@{NSLocalizedDescriptionKey:kPlacementStegatryLoadingErrorDescription, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"Server returns invalid response, code:%ld, msg:%@", [responseObject[@"code"] integerValue], responseObject[@"msg"]]}];
                         [ATPlacementSettingManager saveAPIErrorWithPlacementID:placementID error:error];
@@ -403,7 +410,7 @@ static NSInteger errorCodeDuration = 20 * 60;
     }
 }
 
-+(NSDictionary*)parametersWithPlacementID:(NSString*)placementID customData:(NSDictionary*)customData {
++(NSDictionary*)parametersWithPlacementID:(NSString*)placementID customData:(NSDictionary*)customData extra:(NSDictionary*)extra {
     NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
     NSDictionary *protectedFields = nil;
     if ([[ATAppSettingManager sharedManager] shouldUploadProtectedFields]) {
@@ -418,7 +425,9 @@ static NSInteger errorCodeDuration = 20 * 60;
                             @"timezone":[Utilities timezone],
                             @"screen":[Utilities screenResolution],
                             @"ua":[Utilities userAgent],
-                            @"upid":[[ATAppSettingManager sharedManager].ATID length] > 0 ? [ATAppSettingManager sharedManager].ATID : @""};
+                            @"upid":[[ATAppSettingManager sharedManager].ATID length] > 0 ? [ATAppSettingManager sharedManager].ATID : @"",
+                            @"sy_id":[[ATAppSettingManager sharedManager].SYSID length] > 0 ? [ATAppSettingManager sharedManager].SYSID : @"",
+                            @"bk_id":[[ATAppSettingManager sharedManager].BKUPID length] > 0 ? [ATAppSettingManager sharedManager].BKUPID : @""};
     } else {
         protectedFields = @{@"os_vn":@"",
                             @"os_vc":@"",
@@ -452,8 +461,15 @@ static NSInteger errorCodeDuration = 20 * 60;
     [parameters addEntriesFromDictionary:protectedFields];
     if ([[ATAPI sharedInstance].channel length] > 0) { parameters[@"channel"] = [ATAPI sharedInstance].channel; }
     if ([[ATAPI sharedInstance].subchannel length] > 0) { parameters[@"sub_channel"] = [ATAPI sharedInstance].subchannel; }
+    parameters[@"first_init_time"] = @((NSUInteger)([[ATAPI firstLaunchDate] timeIntervalSince1970] * 1000.0f));
+    parameters[@"days_from_first_init"] = @([[NSDate date] numberOfDaysSinceDate:[ATAPI firstLaunchDate]]);
+    if ([extra isKindOfClass:[NSDictionary class]] && [extra[kATAdLoadingExtraExcludedBundleIDListKey] isKindOfClass:[NSArray<NSString*> class]]) { parameters[@"ecpoffer"] = extra[kATAdLoadingExtraExcludedBundleIDListKey]; }
+    
     NSArray *cappedMyOfferIDs = [NSArray arrayWithArray:[ATPlacementSettingManager excludeMyOfferID]];
     if (cappedMyOfferIDs.count > 0) { parameters[@"exclude_myofferid"] = cappedMyOfferIDs; }
+    
+    NSString *ABTestID = [ATAppSettingManager sharedManager].ABTestID;
+    if (ABTestID != nil) { parameters[@"abtest_id"] = ABTestID; }
     return parameters;
 
 }
@@ -520,9 +536,12 @@ static NSString *expireDate = @"expire_date";
 -(void) setStatus:(BOOL)status forPlacementID:(NSString*)placementID {
     __weak typeof(self) weakSelf = self;
     ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
-    [_placementStatusStorageAccessor writeWithBlock:^{
-        weakSelf.placementStatusStorage[placementID] = @{statusKey:@(status), expireDate:[[NSDate date] dateByAddingTimeInterval:placementModel.statusValidDuration / 1000.0f]};
-    }];
+    if(placementModel != nil){
+        [_placementStatusStorageAccessor writeWithBlock:^{
+              weakSelf.placementStatusStorage[placementID] = @{statusKey:@(status), expireDate:[[NSDate date] dateByAddingTimeInterval:placementModel.statusValidDuration / 1000.0f]};
+          }];
+    }
+  
 }
 
 -(void) clearAllStatus {

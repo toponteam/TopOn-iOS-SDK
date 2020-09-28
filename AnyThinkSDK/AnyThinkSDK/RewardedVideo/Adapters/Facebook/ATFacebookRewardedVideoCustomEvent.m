@@ -10,30 +10,24 @@
 #import "Utilities.h"
 #import <objc/runtime.h>
 #import "ATRewardedVideoManager.h"
+
 @interface ATFacebookRewardedVideoCustomEvent()
 @end
-@implementation ATFacebookRewardedVideoCustomEvent
 
+@implementation ATFacebookRewardedVideoCustomEvent
 - (void)rewardedVideoAdDidClick:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:@"FacebookRewardedVideo::rewardedVideoAdDidClick:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdClick];
 }
 
 - (void)rewardedVideoAdDidLoad:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:@"FacebookRewardedVideo::rewardedVideoAdDidLoad:" type:ATLogTypeExternal];
-    [self handleAssets:@{kRewardedVideoAssetsUnitIDKey:self.unitID, kAdAssetsCustomObjectKey:rewardedVideoAd, kRewardedVideoAssetsCustomEventKey:self}];
+    [self trackRewardedVideoAdLoaded:rewardedVideoAd adExtra:nil];
 }
 
 - (void)rewardedVideoAdDidClose:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:@"FacebookRewardedVideo::rewardedVideoAdDidClose:" type:ATLogTypeExternal];
-    [self handleClose];
-    [self saveVideoCloseEventRewarded:self.rewardGranted];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-        [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdCloseRewarded:self.rewardGranted];
 }
 
 - (void)rewardedVideoAdWillClose:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
@@ -42,25 +36,20 @@
 
 - (void)rewardedVideoAd:(id<ATFBRewardedVideoAd>)rewardedVideoAd didFailWithError:(NSError *)error {
     [ATLogger logError:[NSString stringWithFormat:@"FacebookRewardedVideo::rewardedVideoAd:didFailWithError: %@", error] type:ATLogTypeExternal];
-    [self handleLoadingFailure:error];
+    [self trackRewardedVideoAdLoadFailed:error];
 }
 
 - (void)rewardedVideoAdVideoComplete:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:[NSString stringWithFormat:@"FacebookRewardedVideo::rewardedVideoAdVideoComplete:"] type:ATLogTypeExternal];
-    [self trackVideoEnd];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) { [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackRewardedVideoAdVideoEnd];
     
-    self.rewardGranted = YES;
-    if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]) { [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackRewardedVideoAdRewarded];
 }
 
 - (void)rewardedVideoAdWillLogImpression:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
     [ATLogger logMessage:[NSString stringWithFormat:@"FacebookRewardedVideo::rewardedVideoAdWillLogImpression:"] type:ATLogTypeExternal];
-    [self trackShow];
-    [self trackVideoStart];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-        [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackRewardedVideoAdShow];
+    [self trackRewardedVideoAdVideoStart];
 }
 
 - (void)rewardedVideoAdServerRewardDidSucceed:(id<ATFBRewardedVideoAd>)rewardedVideoAd {
@@ -71,10 +60,13 @@
     [ATLogger logError:[NSString stringWithFormat:@"FacebookRewardedVideo::rewardedVideoAdServerRewardDidFail:"] type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unit_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"unit_id"];
 }
 
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"unit_id"];
+//    return extra;
+//}
 @end

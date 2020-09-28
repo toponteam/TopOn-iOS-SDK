@@ -10,9 +10,10 @@
 #import "Utilities.h"
 #import "ATAPI.h"
 #import "ATInterstitialManager.h"
+
 @implementation ATBaiduInterstitialCustomEvent
 - (NSString *)publisherId {
-    return self.customInfo[@"app_id"];
+    return self.serverInfo[@"app_id"];
 }
 
 - (BOOL) enableLocation {
@@ -22,18 +23,18 @@
 
 - (void)interstitialSuccessToLoadAd:(id<ATBaiduMobAdInterstitial>)interstitial {
     [ATLogger logMessage:@"BaiduInterstitial::interstitialSuccessToLoadAd:" type:ATLogTypeExternal];
-    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:interstitial}];
+//    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:interstitial}];
+    [self trackInterstitialAdLoaded:interstitial adExtra:nil];
 }
 
 - (void)interstitialFailToLoadAd:(id<ATBaiduMobAdInterstitial>)interstitial {
     [ATLogger logMessage:@"BaiduInterstitial::interstitialFailToLoadAd:" type:ATLogTypeExternal];
-    [self handleLoadingFailure:[NSError errorWithDomain:@"com.anythink.BaiduInterstitial" code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:@"ATSDK has failed to load interstitial.", NSLocalizedFailureReasonErrorKey:@"BaiduSDK has failed to load interstitial."}]];
+    [self trackInterstitialAdLoadFailed:[NSError errorWithDomain:@"com.anythink.BaiduInterstitial" code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:@"BaiduSDK has failed to load interstitial."}]];
 }
 
 - (void)interstitialWillPresentScreen:(id<ATBaiduMobAdInterstitial>)interstitial {
     [ATLogger logMessage:@"BaiduInterstitial::interstitialWillPresentScreen:" type:ATLogTypeExternal];
-    [self trackShow];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidShowForPlacementID:extra:)]) { [self.delegate interstitialDidShowForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]]; }
+    [self trackInterstitialAdShow];
 }
 
 - (void)interstitialSuccessPresentScreen:(id<ATBaiduMobAdInterstitial>)interstitial {
@@ -46,18 +47,12 @@
 
 - (void)interstitialDidAdClicked:(id<ATBaiduMobAdInterstitial>)interstitial {
     [ATLogger logMessage:@"BaiduInterstitial::interstitialDidAdClicked:" type:ATLogTypeExternal];
-    [self trackClick];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidClickForPlacementID:extra:)]) {
-        [self.delegate interstitialDidClickForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdClick];
 }
 
 - (void)interstitialDidDismissScreen:(id<ATBaiduMobAdInterstitial>)interstitial {
     [ATLogger logMessage:@"BaiduInterstitial::interstitialDidDismissScreen:" type:ATLogTypeExternal];
-    [self handleClose];
-    if ([self.delegate respondsToSelector:@selector(interstitialDidCloseForPlacementID:extra:)]) {
-        [self.delegate interstitialDidCloseForPlacementID:self.interstitial.placementModel.placementID extra:[self delegateExtra]];
-    }
+    [self trackInterstitialAdClose];
     interstitial.delegate = nil;
     self.delegate = nil;
 }
@@ -66,9 +61,13 @@
     [ATLogger logMessage:@"BaiduInterstitial::interstitialDidDismissLandingPage:" type:ATLogTypeExternal];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"ad_place_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"ad_place_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"ad_place_id"];
+//    return extra;
+//}
 @end

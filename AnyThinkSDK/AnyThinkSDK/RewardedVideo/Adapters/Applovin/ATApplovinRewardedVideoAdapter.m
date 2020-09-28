@@ -25,9 +25,9 @@
 
 static NSString *const kZoneIDKey = @"zone_id";
 @implementation ATApplovinRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kZoneIDKey]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kZoneIDKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(ATApplovinRewardedVideoCustomEvent*)customObject info:(NSDictionary*)info {
     return [customObject.incentivizedInterstitialAd isReadyForDisplay];
@@ -42,7 +42,7 @@ static NSString *const kZoneIDKey = @"zone_id";
     [incentivizedInterstitialAd showAndNotify:customEvent];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameApplovin]) {
@@ -53,7 +53,8 @@ static NSString *const kZoneIDKey = @"zone_id";
                 [NSClassFromString(@"ALPrivacySettings") setIsAgeRestrictedUser:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameApplovin][kApplovinUnderAgeKey] boolValue]];
             } else {
                 BOOL set = NO;
-                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                 if (set) { [NSClassFromString(@"ALPrivacySettings") setHasUserConsent:!limit]; }
             }
         }
@@ -61,16 +62,16 @@ static NSString *const kZoneIDKey = @"zone_id";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"ALIncentivizedInterstitialAd") != nil) {
-        _customEvent = [[ATApplovinRewardedVideoCustomEvent alloc] initWithUnitID:info[kZoneIDKey] customInfo:info];
-        _customEvent.requestNumber = [info[@"request_num"] longValue];
+        _customEvent = [[ATApplovinRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
+        _customEvent.requestNumber = [serverInfo[@"request_num"] longValue];
         _customEvent.requestCompletionBlock = completion;
-        _incentivizedInterstitialAd = [[NSClassFromString(@"ALIncentivizedInterstitialAd") alloc] initWithZoneIdentifier:info[kZoneIDKey] sdk:[NSClassFromString(@"ALSdk") sharedWithKey:info[@"sdkkey"]]];
+        _incentivizedInterstitialAd = [[NSClassFromString(@"ALIncentivizedInterstitialAd") alloc] initWithZoneIdentifier:serverInfo[kZoneIDKey] sdk:[NSClassFromString(@"ALSdk") sharedWithKey:serverInfo[@"sdkkey"]]];
         _customEvent.incentivizedInterstitialAd = _incentivizedInterstitialAd;
-        for (NSInteger i = 0; i < [info[@"request_num"] integerValue]; i++) { [_incentivizedInterstitialAd preloadAndNotify:_customEvent]; }
+        for (NSInteger i = 0; i < [serverInfo[@"request_num"] integerValue]; i++) { [_incentivizedInterstitialAd preloadAndNotify:_customEvent]; }
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Applovin"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Applovin"]}]);
     }
 }
 @end

@@ -24,9 +24,9 @@ NSString *const kFlurryRVAssetsCustomEventKey = @"flurry_custom_event";
 @end
 static NSString *const kSpaceKey = @"ad_space";
 @implementation ATFlurryRewardedVideoAdapter
-+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup {
-    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kSpaceKey]} unitGroup:unitGroup];
-}
+//+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
+//    return [[ATRewardedVideo alloc] initWithPriority:0 placementModel:placementModel requestID:requestID assets:@{kRewardedVideoAssetsUnitIDKey:unitGroup.content[kSpaceKey]} unitGroup:unitGroup finalWaterfall:finalWaterfall];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id<ATFlurryAdInterstitial>)customObject info:(NSDictionary*)info {
     return customObject.ready;
@@ -40,7 +40,7 @@ static NSString *const kSpaceKey = @"ad_space";
     });
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -53,30 +53,31 @@ static NSString *const kSpaceKey = @"ad_space";
                     [NSClassFromString(@"FlurryConsent") updateConsentInformation:consent];
                 } else {
                     BOOL set = NO;
-                    [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set && [[ATAPI sharedInstance].consentStrings count] > 0) {
                         id<ATFlurryConsent> consent = [[NSClassFromString(@"FlurryConsent") alloc] initWithGDPRScope:[[ATAPI sharedInstance] inDataProtectionArea] andConsentStrings:[ATAPI sharedInstance].consentStrings];
                         [NSClassFromString(@"FlurryConsent") updateConsentInformation:consent];
                     }
                 }
-                [NSClassFromString(@"Flurry") startSession:info[@"sdk_key"] withSessionBuilder:[[[NSClassFromString(@"FlurrySessionBuilder") new] withCrashReporting:YES] withLogLevel:ATFlurryLogLevelAll]];
-                [NSClassFromString(@"Flurry") setUserID:[[ATAdManager sharedManager] extraInfoForPlacementID:((ATPlacementModel*)info[kAdapterCustomInfoPlacementModelKey]).placementID requestID:info[kAdapterCustomInfoRequestIDKey]][kATAdLoadingExtraUserIDKey]];
+                [NSClassFromString(@"Flurry") startSession:serverInfo[@"sdk_key"] withSessionBuilder:[[[NSClassFromString(@"FlurrySessionBuilder") new] withCrashReporting:YES] withLogLevel:ATFlurryLogLevelAll]];
+                [NSClassFromString(@"Flurry") setUserID:[[ATAdManager sharedManager] extraInfoForPlacementID:((ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey]).placementID requestID:serverInfo[kAdapterCustomInfoRequestIDKey]][kATAdLoadingExtraUserIDKey]];
             }
         });
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"FlurryAdInterstitial")) {
-        _customEvent = [[ATFlurryRewardedVideoCustomEvent alloc] initWithUnitID:info[kSpaceKey] customInfo:info];
-        _customEvent.requestNumber = [info[@"request_num"] longValue];
+        _customEvent = [[ATFlurryRewardedVideoCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
+        _customEvent.requestNumber = [serverInfo[@"request_num"] longValue];
         _customEvent.requestCompletionBlock = completion;
-        _interstitial = [[NSClassFromString(@"FlurryAdInterstitial") alloc] initWithSpace:info[kSpaceKey]];
+        _interstitial = [[NSClassFromString(@"FlurryAdInterstitial") alloc] initWithSpace:serverInfo[kSpaceKey]];
         _interstitial.adDelegate = _customEvent;
-        for (NSInteger i = 0; i < [info[@"request_num"] integerValue]; i++) [_interstitial fetchAd];
+        for (NSInteger i = 0; i < [serverInfo[@"request_num"] integerValue]; i++) [_interstitial fetchAd];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Flurry"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Flurry"]}]);
     }
 }
 @end

@@ -32,10 +32,10 @@ static NSString *const kPlacementNameKey = @"placement_name";
     [((id<ATTJPlacement>)interstitial.customObject) showContentWithViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
-        _info = info;
+        _info = serverInfo;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"Tapjoy") getVersion] forNetwork:kNetworkNameTapjoy];
@@ -46,7 +46,8 @@ static NSString *const kPlacementNameKey = @"placement_name";
                     [NSClassFromString(kTapjoyClassName) subjectToGDPR:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameTapjoy][kTapjoyGDPRSubjectionKey] boolValue]];
                 } else {
                     BOOL set = NO;
-                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set];
+                    ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+                    BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
                     if (set) {
                         /*
                         setUserConsent: 1 Personalized, 0 Nonpersonalized
@@ -61,9 +62,9 @@ static NSString *const kPlacementNameKey = @"placement_name";
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(kTapjoyClassName)) {
-        _customEvent = [[ATTapjoyInterstitialCustomEvent alloc] initWithUnitID:info[kPlacementNameKey] customInfo:info];
+        _customEvent = [[ATTapjoyInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
         if ([NSClassFromString(kTapjoyClassName) isConnected]) {
@@ -79,11 +80,11 @@ static NSString *const kPlacementNameKey = @"placement_name";
                                                      selector:@selector(tjcConnectFail:)
                                                          name:kConnectFailureNotification
                                                        object:nil];
-            [NSClassFromString(kTapjoyClassName) connect:info[@"sdk_key"]];
+            [NSClassFromString(kTapjoyClassName) connect:serverInfo[@"sdk_key"]];
         }
     } else {
         [ATLogger logError:@"Tapjoy: Failed to load, Tapjoy class not found." type:ATLogTypeExternal];
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kTapjoyClassName]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, kTapjoyClassName]}]);
     }
 }
 

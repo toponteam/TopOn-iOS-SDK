@@ -13,13 +13,12 @@
 @implementation ATVungleRewardedVideoCustomEvent
 -(void) handlerPlayError:(NSError*)error {
     [ATLogger logError:[NSString stringWithFormat:@"VungleRewardedVideo::handlerPlayError:%@", error] type:ATLogTypeExternal];
-    [self saveVideoPlayEventWithError:error];
+    [self trackRewardedVideoAdPlayEventWithError:error];
     [[ATRewardedVideoManager sharedManager] removeCustomEventForKey:self.rewardedVideo.placementModel.placementID];
-    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidFailToPlayForPlacementID:error:extra:)]) { [self.delegate rewardedVideoDidFailToPlayForPlacementID:self.rewardedVideo.placementModel.placementID error:error extra:[self delegateExtra]]; }
 }
 
--(instancetype) initWithUnitID:(NSString *)unitID customInfo:(NSDictionary *)customInfo {
-    self = [super initWithUnitID:unitID customInfo:customInfo];
+-(instancetype) initWithUnitID:(NSString *)unitID serverInfo:(NSDictionary *)serverInfo localInfo:(NSDictionary *)localInfo {
+    self = [super initWithInfo:serverInfo localInfo:localInfo];
     if (self != nil) {
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadNotification:) name:kVungleRewardedVideoLoadNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleShowNotification:) name:kVungleRewardedVideoShowNotification object:nil];
@@ -31,7 +30,7 @@
 -(void) handleLoadNotification:(NSNotification*)notification {
     if ([notification.userInfo[kVungleRewardedVideoNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID]) {
         [ATLogger logMessage:@"VungleRewardedVideo::load" type:ATLogTypeExternal];
-        [self handleAssets:@{kRewardedVideoAssetsCustomEventKey:self, kRewardedVideoAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsCustomObjectKey:self.unitID}];
+        [self trackRewardedVideoAdLoaded:self.unitID adExtra:nil];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:kVungleRewardedVideoLoadNotification object:nil];
     }
 }
@@ -39,11 +38,8 @@
 -(void) handleShowNotification:(NSNotification*)notification {
     if ([notification.userInfo[kVungleRewardedVideoNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && self.rewardedVideo != nil) {
         [ATLogger logMessage:@"VungleRewardedVideo::show" type:ATLogTypeExternal];
-        [self trackShow];
-        [self trackVideoStart];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidStartPlayingForPlacementID:extra:)]) {
-            [self.delegate rewardedVideoDidStartPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-        }
+        [self trackRewardedVideoAdShow];
+        [self trackRewardedVideoAdVideoStart];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:kVungleRewardedVideoShowNotification object:nil];
     }
 }
@@ -52,26 +48,16 @@
     if ([notification.userInfo[kVungleRewardedVideoNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && self.rewardedVideo != nil) {
         [ATLogger logMessage:@"VungleRewardedVideo::close" type:ATLogTypeExternal];
         if ([notification.userInfo[kVungleRewardedVideoNotificationUserInfoClickFlagKey] boolValue]) {
-            [self trackClick];
-            if ([self.delegate respondsToSelector:@selector(rewardedVideoDidClickForPlacementID:extra:)]) {
-                [self.delegate rewardedVideoDidClickForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-            }
+            [self trackRewardedVideoAdClick];
         }
         if ([notification.userInfo[kVungleRewardedVideoNotificationUserInfoVideoCompletedFlagKey] boolValue]) {
-            [self trackVideoEnd];
-            if ([self.delegate respondsToSelector:@selector(rewardedVideoDidEndPlayingForPlacementID:extra:)]) {
-                [self.delegate rewardedVideoDidEndPlayingForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-            }
+            [self trackRewardedVideoAdVideoEnd];
             self.rewardGranted = YES;
             if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
                 [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
             }
         }
-        [self handleClose];
-        [self saveVideoCloseEventRewarded:self.rewardGranted];
-        if ([self.delegate respondsToSelector:@selector(rewardedVideoDidCloseForPlacementID:rewarded:extra:)]) {
-            [self.delegate rewardedVideoDidCloseForPlacementID:self.rewardedVideo.placementModel.placementID rewarded:self.rewardGranted extra:[self delegateExtra]];
-        }
+        [self trackRewardedVideoAdCloseRewarded:self.rewardGranted];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:kVungleRewardedVideoCloseNotification object:nil];
     }
 }
@@ -80,9 +66,13 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"placement_id"];
-    return extra;
+- (NSString *)networkUnitId {
+    return self.serverInfo[@"placement_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"placement_id"];
+//    return extra;
+//}
 @end

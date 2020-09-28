@@ -32,7 +32,7 @@ static NSString *const kKSInterstitialClassName = @"KSFullscreenVideoAd";
     [((id<ATKSFullscreenVideoAd>)interstitial.customObject) showAdFromRootViewController:viewController];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if(self != nil){
         static dispatch_once_t onceToken;
@@ -40,23 +40,23 @@ static NSString *const kKSInterstitialClassName = @"KSFullscreenVideoAd";
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameKS]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameKS];
                 [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"KSAdSDKManager") SDKVersion] forNetwork:kNetworkNameKS];
-                [NSClassFromString(@"KSAdSDKManager") setAppId:info[@"app_id"]];
+                [NSClassFromString(@"KSAdSDKManager") setAppId:serverInfo[@"app_id"]];
             }
         });
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if(NSClassFromString(kKSInterstitialClassName) != nil){
-        _customEvent = [[ATKSInterstitialCustomEvent alloc] initWithUnitID:info[@"position_id"] customInfo:info];
+        _customEvent = [[ATKSInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
-        _interstitial = [[NSClassFromString(kKSInterstitialClassName) alloc]initWithPosId:info[@"position_id"]];
+        _interstitial = [[NSClassFromString(kKSInterstitialClassName) alloc]initWithPosId:serverInfo[@"position_id"]];
         _interstitial.delegate = _customEvent;
         [_interstitial loadAdData];
     }else{
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load rewarded video ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"KS"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"KS"]}]);
 
     }
 }

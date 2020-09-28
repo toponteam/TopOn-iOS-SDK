@@ -17,7 +17,8 @@
 #import "ATInterstitialViewController.h"
 #import "ATNativeBannerViewController.h"
 #import "ATDrawViewController.h"
-#import <Chartboost/Chartboost.h>
+#import "Utilities.h"
+
 @import AnyThinkSplash;
 @import AnyThinkNative;
 @interface ViewController ()<UITableViewDelegate, UITableViewDataSource, ATSplashDelegate, ATNativeSplashDelegate>
@@ -62,17 +63,16 @@ static NSString *const kCellIdentifier = @"cell";
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self getProxyStatus];
-    NSLog(@"CHBBannerSizeStandard = %@, CHBBannerSizeMedium = %@, CHBBannerSizeLeaderboard = %@, CBLocationMainMenu = %@", NSStringFromCGSize(CHBBannerSizeStandard), NSStringFromCGSize(CHBBannerSizeMedium), NSStringFromCGSize(CHBBannerSizeLeaderboard), CBLocationMainMenu);
     
     /*
      extern const CGFloat FBAdOptionsViewWidth;
      extern const CGFloat FBAdOptionsViewHeight;
      */
-    _placementNames = @[@[kMintegralPlacement, kSigmobPlacement, kGDTPlacement, kBaiduPlacement, kTTPlacementName, kAllPlacementName],
-                        @[kStartAppPlacement, kStartAppVideoPlacement, kSigmobRVIntPlacement, kSigmobPlacement, kMyOfferPlacement, kOguryPlacement,kKSPlacement, kHeaderBiddingPlacement, kNendPlacement, kNendInterstitialVideoPlacement, kNendFullScreenInterstitialPlacement, kMaioPlacement, kUnityAdsPlacementName, kFacebookPlacement, kAdMobPlacement, kInmobiPlacement, kFlurryPlacement, kApplovinPlacement, kMintegralPlacement, kMintegralVideoPlacement, kMopubPlacementName, kGDTPlacement, kChartboostPlacementName, kTapjoyPlacementName, kIronsourcePlacementName, kVunglePlacementName, kAdcolonyPlacementName, kTTPlacementName, kTTVideoPlacement, kOnewayPlacementName, kYeahmobiPlacement, kAppnextPlacement, kBaiduPlacement, kFyberPlacement, kAllPlacementName],
-                        @[kChartboostPlacementName, kVunglePlacementName, kAdcolonyPlacementName, kFacebookPlacement, kStartAppPlacement, kHeaderBiddingPlacement,kNendPlacement, kMintegralPlacement,kAdMobPlacement, kInmobiPlacement, kFlurryPlacement, kApplovinPlacement, kGDTPlacement, kMopubPlacementName, kTTPlacementName, kYeahmobiPlacement, kAppnextPlacement, kBaiduPlacement, kFyberPlacement, kAllPlacementName],
-                        @[kFacebookPlacement, kStartAppPlacement, kSigmobPlacement, kMyOfferPlacement, kOguryPlacement,kKSPlacement, kHeaderBiddingPlacement, kNendPlacement, kMaioPlacement, kAdMobPlacement, kInmobiPlacement, kFlurryPlacement, kApplovinPlacement, kMintegralPlacement, kMopubPlacementName, kGDTPlacement, kChartboostPlacementName, kTapjoyPlacementName, kIronsourcePlacementName, kVunglePlacementName, kAdcolonyPlacementName, kUnityAdsPlacementName, kTTPlacementName, kOnewayPlacementName, kYeahmobiPlacement, kAppnextPlacement, kBaiduPlacement, kFyberPlacement, kAllPlacementName],
-                        @[kMintegralAdvancedPlacement, kHeaderBiddingPlacement, kNendPlacement, kNendVideoPlacement, kTTFeedPlacementName, kTTDrawPlacementName, kMPPlacement, kFacebookPlacement, kAdMobPlacement, kInmobiPlacement, kFlurryPlacement, kApplovinPlacement, kMintegralPlacement, kMopubPlacementName, kGDTPlacement, kGDTTemplatePlacement, kYeahmobiPlacement, kAppnextPlacement, kBaiduPlacement,kKSPlacement,kKSDrawPlacement, kAllPlacementName],
+    _placementNames = @[@[kMintegralPlacement, kSigmobPlacement, kGDTPlacement, kBaiduPlacement, kTTPlacementName, kAllPlacementName, kMyOfferPlacement],
+                        @[kGAMPlacement,kStartAppPlacement, kStartAppVideoPlacement, kSigmobRVIntPlacement, kSigmobPlacement, kMyOfferPlacement, kOguryPlacement,kKSPlacement, kHeaderBiddingPlacement, kNendPlacement, kNendInterstitialVideoPlacement, kNendFullScreenInterstitialPlacement, kMaioPlacement, kUnityAdsPlacementName, kFacebookPlacement, kAdMobPlacement, kInmobiPlacement, kFlurryPlacement, kApplovinPlacement, kMintegralPlacement, kMintegralVideoPlacement, kMopubPlacementName, kGDTPlacement, kChartboostPlacementName, kTapjoyPlacementName, kIronsourcePlacementName, kVunglePlacementName, kAdcolonyPlacementName, kTTPlacementName, kTTVideoPlacement, kOnewayPlacementName, kYeahmobiPlacement, kAppnextPlacement, kBaiduPlacement, kFyberPlacement, kAllPlacementName],
+                        @[kGAMPlacement,kChartboostPlacementName, kVunglePlacementName, kAdcolonyPlacementName, kStartAppPlacement, kHeaderBiddingPlacement,kNendPlacement, kFacebookPlacement, kMintegralPlacement,kAdMobPlacement, kInmobiPlacement, kFlurryPlacement, kApplovinPlacement, kGDTPlacement, kMopubPlacementName, kTTPlacementName, kYeahmobiPlacement, kAppnextPlacement, kBaiduPlacement, kFyberPlacement, kAllPlacementName,kMyOfferPlacement],
+                        @[kGAMPlacement,kStartAppPlacement, kSigmobPlacement, kMyOfferPlacement, kOguryPlacement,kKSPlacement, kHeaderBiddingPlacement, kNendPlacement, kMaioPlacement, kFacebookPlacement, kAdMobPlacement, kInmobiPlacement, kFlurryPlacement, kApplovinPlacement, kMintegralPlacement, kMopubPlacementName, kGDTPlacement, kChartboostPlacementName, kTapjoyPlacementName, kIronsourcePlacementName, kVunglePlacementName, kAdcolonyPlacementName, kUnityAdsPlacementName, kTTPlacementName, kOnewayPlacementName, kYeahmobiPlacement, kAppnextPlacement, kBaiduPlacement, kFyberPlacement, kAllPlacementName],
+                        @[kMyOfferPlacement, kGAMPlacement,kMintegralAdvancedPlacement, kHeaderBiddingPlacement, kNendPlacement, kNendVideoPlacement, kTTFeedPlacementName, kTTDrawPlacementName, kMPPlacement, kFacebookPlacement, kAdMobPlacement, kInmobiPlacement, kFlurryPlacement, kApplovinPlacement, kMintegralPlacement, kMopubPlacementName, kGDTPlacement, kGDTTemplatePlacement, kYeahmobiPlacement, kAppnextPlacement, kBaiduPlacement,kKSPlacement,kKSDrawPlacement, kAllPlacementName],
                         @[kFacebookNativeBannerPlacement, kKSPlacement,kNendPlacement, kTTFeedPlacementName, kTTDrawPlacementName, kMPPlacement, kFacebookPlacement, kAdMobPlacement, kInmobiPlacement, kFlurryPlacement, kApplovinPlacement, kMintegralPlacement, kMopubPlacementName, kGDTPlacement, kGDTTemplatePlacement, kYeahmobiPlacement, kAppnextPlacement, kAllPlacementName],
                         @[kKSPlacement,kTTFeedPlacementName, kMPPlacement, kFacebookPlacement, kAdMobPlacement, kApplovinPlacement, kMintegralPlacement, kGDTPlacement, kYeahmobiPlacement, kAppnextPlacement, kAllPlacementName]];
     
@@ -103,6 +103,66 @@ static NSString *const kCellIdentifier = @"cell";
             NSLog(@"---------:dismissalCallback");
         }];
     }];
+}
+
+/**
+ extern NSString *const kATSplashExtraGDTAppID;
+ extern NSString *const kATSplashExtraGDTUnitID;
+ #pragma mark - TT
+ extern NSString *const kATSplashExtraAppID;
+ extern NSString *const kATSplashExtraSlotID;
+ extern NSString *const kATSplashExtraPersonalizedTemplateFlag;
+ #pragma mark - Baidu
+ extern NSString *const kATSplashExtraBaiduAppID;
+ extern NSString *const kATSplashExtraBaiduAdPlaceID;
+ #pragma mark - Sibmob
+ extern NSString *const kATSplashExtraSigmobAppKey;
+ extern NSString *const kATSplashExtraSigmobAppID;
+ extern NSString *const kATSplashExtraSigmobPlacementID;
+ */
+
+NSDictionary *SplashInfo(NSInteger row) {
+    NSTimeInterval tolerateTimeout = 5.0f;
+    return @{@0:@{kATSplashExtraNetworkFirmID:@6,
+                  kATSplashExtraAdSourceIDKey:@"72004",
+                  kATSplashExtraMintegralAppID:@"104036",
+                  kATSplashExtraMintegralAppKey:@"ef13ef712aeb0f6eb3d698c4c08add96",
+                  kATSplashExtraMintegralUnitID:@"275050",
+                  kATSplashExtraTolerateTimeoutKey:@(tolerateTimeout)
+    },//mintegral
+             @1:@{kATSplashExtraNetworkFirmID:@29,
+                  kATSplashExtraAdSourceIDKey:@"72008",
+                  kATSplashExtraSigmobAppKey:@"c8bee8e83f296c2a",
+                  kATSplashExtraSigmobAppID:@"1830",
+                  kATSplashExtraSigmobPlacementID:@"e430bc36052",
+                  kATSplashExtraTolerateTimeoutKey:@(tolerateTimeout)
+             },//sigmob
+             @2:@{kATSplashExtraNetworkFirmID:@8,
+                  kATSplashExtraAdSourceIDKey:@"71998",
+                  kATSplashExtraGDTAppID:@"1105344611",
+                  kATSplashExtraGDTUnitID:@"9040714184494018",
+                  kATSplashExtraTolerateTimeoutKey:@(tolerateTimeout)
+             },//gdt
+             @3:@{kATSplashExtraNetworkFirmID:@22,
+                  kATSplashExtraAdSourceIDKey:@"72010",
+                  kATSplashExtraBaiduAppID:@"ccb60059",
+                  kATSplashExtraBaiduAdPlaceID:@"2058492",
+                  kATSplashExtraTolerateTimeoutKey:@(tolerateTimeout)
+             },//baidu
+             @4:@{kATSplashExtraNetworkFirmID:@15,
+                  kATSplashExtraAdSourceIDKey:@"71991",
+                  kATSplashExtraAppID:@"5015421",
+                  kATSplashExtraSlotID:@"815421339",
+                  kATSplashExtraTolerateTimeoutKey:@(tolerateTimeout)
+             },//tt
+             @5:@{kATSplashExtraNetworkFirmID:@6,
+                  kATSplashExtraAdSourceIDKey:@"72004",
+                  kATSplashExtraMintegralAppID:@"104036",
+                  kATSplashExtraMintegralAppKey:@"ef13ef712aeb0f6eb3d698c4c08add96",
+                  kATSplashExtraMintegralUnitID:@"275050",
+                  kATSplashExtraTolerateTimeoutKey:@(tolerateTimeout)
+             }
+    }[@(row)];
 }
 
 -(NSInteger) numberOfSectionsInTableView:(UITableView *)tableView {
@@ -138,7 +198,7 @@ static NSString *const kCellIdentifier = @"cell";
         [self.navigationController pushViewController:tVC animated:YES];
     } else if ([indexPath section] == 6) {
         _splashSelection = indexPath;
-        NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kExtraInfoNativeAdTypeKey:@(ATGDTNativeAdTypeSelfRendering), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds), 300.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388, kATNativeSplashShowingExtraCountdownIntervalKey:@3}];
+        NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kExtraInfoNativeAdTypeKey:@(ATGDTNativeAdTypeSelfRendering), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds), 300.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388, kATNativeSplashShowingExtraCountdownIntervalKey:@3, kATNatievSplashShowingExtraStyleKey:kATNativeSplashShowingExtraStyleLandscape}];
         [ATNativeSplashWrapper loadNativeSplashAdWithPlacementID:[ATNativeViewController nativePlacementIDs][_placementNames[[indexPath section]][[indexPath row]]] extra:extra customData:nil delegate:self];
     } else if ([indexPath section] == 5) {
         ATNativeBannerViewController *tVC = [[ATNativeBannerViewController alloc] initWithPlacementName: _placementNames[[indexPath section]][[indexPath row]]];
@@ -159,23 +219,30 @@ static NSString *const kCellIdentifier = @"cell";
         ATInterstitialViewController *tVC = [[ATInterstitialViewController alloc] initWithPlacementName:_placementNames[[indexPath section]][[indexPath row]]];
         [self.navigationController pushViewController:tVC animated:YES];
     } else if ([indexPath section] == 0) {
-        UILabel *label = [[UILabel alloc] initWithFrame:UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation]) ? CGRectMake(.0f, .0f, CGRectGetWidth([UIScreen mainScreen].bounds), 100.0f) : CGRectMake(.0f, .0f, CGRectGetWidth([UIScreen mainScreen].bounds) * .2f, CGRectGetHeight([UIScreen mainScreen].bounds))];
-        label.text = @"Splash Container View";
+        UILabel *label = nil;
+//        if([UIDevice currentDevice].orientation == UIDeviceOrientationPortrait){
+//            label = [[UILabel alloc] initWithFrame:CGRectMake(.0f, .0f, CGRectGetWidth([UIScreen mainScreen].bounds), 100.0f)];
+//        }else{
+//            label = [[UILabel alloc] initWithFrame:CGRectMake(.0f, .0f, 100.0f, CGRectGetWidth([UIScreen mainScreen].bounds))];
+//        }
+        label = [[UILabel alloc] initWithFrame:CGRectMake(.0f, .0f, CGRectGetWidth([UIScreen mainScreen].bounds), 100.0f)];
+        label.text = @"Container";
+        label.textColor = [UIColor redColor];
         label.backgroundColor = [UIColor whiteColor];
         label.textAlignment = NSTextAlignmentCenter;
 
-        UILabel *skipBtn = [[UILabel alloc] initWithFrame:CGRectMake(CGRectGetMidX(self.view.bounds) - 80.0f, CGRectGetMidY(self.view.bounds) - 40.0f, 160.0f, 80.0f)];
-        skipBtn.text = @"Skip Button";
-        skipBtn.backgroundColor = [UIColor blueColor];
-        skipBtn.textAlignment = NSTextAlignmentCenter;
+//        UILabel *skipBtn = [[UILabel alloc] initWithFrame:CGRectMake(CGRectGetMidX(self.view.bounds) - 80.0f, CGRectGetMidY(self.view.bounds) - 40.0f, 160.0f, 80.0f)];
+//        skipBtn.text = @"Skip Button";
+//        skipBtn.backgroundColor = [UIColor blueColor];
+//        skipBtn.textAlignment = NSTextAlignmentCenter;
         UIWindow *mainWindow = nil;
         if ( @available(iOS 13.0, *) ) {
            mainWindow = [UIApplication sharedApplication].windows.firstObject;
            [mainWindow makeKeyWindow];
-           [[ATAdManager sharedManager] loadADWithPlacementID:@[@"b5ee89f9859d05", @"b5d771f34bc73d", @"b5c1b0470c7e4a", @"b5c1b047a970fe", @"b5c1b048c498b9", @"b5c22f0e5cc7a0"][[indexPath row]] extra:@{kATSplashExtraTolerateTimeoutKey:@3.0f} customData:nil delegate:self window:mainWindow windowScene:mainWindow.windowScene containerView:label];
+            [[ATAdManager sharedManager] loadADWithPlacementID:@[@"b5ee89f9859d05", @"b5d771f34bc73d", @"b5c1b0470c7e4a", @"b5c1b047a970fe", @"b5c1b048c498b9", @"b5c22f0e5cc7a0", @"b5f33c33431ca0"][[indexPath row]] extra:SplashInfo(indexPath.row) customData:nil delegate:self window:mainWindow windowScene:mainWindow.windowScene containerView:label];
         } else {
             mainWindow = [UIApplication sharedApplication].keyWindow;
-            [[ATAdManager sharedManager] loadADWithPlacementID:@[@"b5ee89f9859d05", @"b5d771f34bc73d", @"b5c1b0470c7e4a", @"b5c1b047a970fe", @"b5c1b048c498b9", @"b5c22f0e5cc7a0"][[indexPath row]] extra:@{kATSplashExtraTolerateTimeoutKey:@3.0f} customData:nil delegate:self window:mainWindow containerView:label];
+            [[ATAdManager sharedManager] loadADWithPlacementID:@[@"b5ee89f9859d05", @"b5d771f34bc73d", @"b5c1b0470c7e4a", @"b5c1b047a970fe", @"b5c1b048c498b9", @"b5c22f0e5cc7a0", @"b5f33c33431ca0"][[indexPath row]] extra:SplashInfo(indexPath.row) customData:nil delegate:self window:mainWindow containerView:label];
         }
     }
 }

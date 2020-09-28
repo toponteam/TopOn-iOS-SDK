@@ -34,9 +34,6 @@ static NSString *const kNendPlacementID = @"b5cb96d44c0c5f";
 static NSString *const kMaioPlacementID = @"b5cb96d44c0c5f";
 static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
 
-
-
-
 @interface ATNativeBannerViewController ()<ATNativeBannerDelegate>
 @property(nonatomic, readonly) NSDictionary *placementIDs;
 @property(nonatomic, readonly) NSString *placementID;
@@ -58,8 +55,8 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
                           kMintegralPlacement:kMintegralPlacementID,
                           kAllPlacementName:kAllPlacementID,
                           kInmobiPlacement:kInmobiPlacementID,
-                          kFacebookNativeBannerPlacement:kFacebookNativePlacementID,
                           kFacebookPlacement:kFacebookPlacementID,
+                          kFacebookNativeBannerPlacement:kFacebookNativePlacementID,
                           kAdMobPlacement:kAdMobPlacementID,
                           kMopubPlacementName:kMopubPlacementID,
                           kMopubVideoPlacementName:kMopubVideoPlacementID,
@@ -72,7 +69,7 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
                           kTTFeedPlacementName:kTTFeedPlacementID,
                           kTTDrawPlacementName:kTTDrawPlacementID,
                           kNendPlacement:kNendPlacementID,
-                          kKSPlacement:kKSPlacementID,
+                          kKSPlacement:kKSPlacementID
                           };
         _placementID = _placementIDs[_name];
     }
@@ -172,7 +169,7 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
 }
 
 -(void) didClickCloseButtonInNativeBannerAdView:(ATNativeBannerView*)bannerView placementID:(NSString*)placementID extra:(NSDictionary *)extra{
-    NSLog(@"ATNativeBannerViewController::didClickCloseButtonInNativeBannerAdView:%@ placementID:%@ extra:%@", bannerView, placementID, extra);
+    NSLog(@"ATNativeBannerViewController::didClickCloseButtonInNativeBannerAdView:%@ placementID:%@", bannerView, placementID);
 }
 
 -(void) didAutorefreshNativeBannerAdInView:(ATNativeBannerView*)bannerView placementID:(NSString*)placementID extra:(NSDictionary *)extra{

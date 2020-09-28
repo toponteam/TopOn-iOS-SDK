@@ -25,17 +25,21 @@
         NSMutableDictionary *asset = [NSMutableDictionary dictionaryWithObjectsAndKeys:obj.title, kNativeADAssetsMainTitleKey, obj.desc, kNativeADAssetsMainTextKey, obj.buttonText, kNativeADAssetsCTATextKey, obj.urlImg, kNativeADAssetsIconURLKey, obj.urlImgWide, kNativeADAssetsImageURLKey, obj.storeRating, kNativeADAssetsRatingKey, obj, kAdAssetsCustomObjectKey, self.api, kAppnextNativeAssetsAPIObjectKey, nil];
         [assets addObject:asset];
         
-        dispatch_group_enter(image_loading_group);
-        [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.urlImg] completion:^(UIImage *image, NSError *error) {
-            if ([image isKindOfClass:[UIImage class]]) {asset[kNativeADAssetsIconImageKey] = image;}
-            dispatch_group_leave(image_loading_group);
-        }];
+        if ([obj.urlImg length] > 0) {
+            dispatch_group_enter(image_loading_group);
+            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.urlImg] completion:^(UIImage *image, NSError *error) {
+                if ([image isKindOfClass:[UIImage class]]) {asset[kNativeADAssetsIconImageKey] = image;}
+                dispatch_group_leave(image_loading_group);
+            }];
+        }
         
-        dispatch_group_enter(image_loading_group);
-        [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.urlImgWide] completion:^(UIImage *image, NSError *error) {
-            if ([image isKindOfClass:[UIImage class]]) {asset[kNativeADAssetsMainImageKey] = image;}
-            dispatch_group_leave(image_loading_group);
-        }];
+        if ([obj.urlImgWide length] > 0) {
+            dispatch_group_enter(image_loading_group);
+            [[ATImageLoader shareLoader] loadImageWithURL:[NSURL URLWithString:obj.urlImgWide] completion:^(UIImage *image, NSError *error) {
+                if ([image isKindOfClass:[UIImage class]]) {asset[kNativeADAssetsMainImageKey] = image;}
+                dispatch_group_leave(image_loading_group);
+            }];
+        }
     }];
     
     dispatch_group_notify(image_loading_group, dispatch_get_main_queue(), ^{
@@ -55,10 +59,16 @@
 - (void) onError:(NSString *)error forAdData:(id<ATAppnextAdData>)adData {
     [ATLogger logMessage:[NSString stringWithFormat:@"AppnextNative::onError%@:forAdData:", error] type:ATLogTypeExternal];
 }
--(NSDictionary*)delegateExtra {
-    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+
+- (NSString *)networkUnitId {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"placement_id"];
-    return extra;
+    return cache.unitGroup.content[@"placement_id"];
 }
+
+//-(NSDictionary*)delegateExtra {
+//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
+//    ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
+//    extra[kATADDelegateExtraNetworkPlacementIDKey] = cache.unitGroup.content[@"placement_id"];
+//    return extra;
+//}
 @end

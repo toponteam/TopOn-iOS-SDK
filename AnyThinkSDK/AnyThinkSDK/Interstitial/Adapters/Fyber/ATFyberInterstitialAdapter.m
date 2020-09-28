@@ -32,7 +32,7 @@
     [customEvent.fullscreenUnitController showAdAnimated:YES completion:nil];
 }
 
--(instancetype) initWithNetworkCustomInfo:(NSDictionary *)info {
+-(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
     if (self != nil) {
         static dispatch_once_t onceToken;
@@ -40,22 +40,22 @@
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameFyber]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameFyber];
                 [[ATAPI sharedInstance] setVersion:((id<ATIASDKCore>)[NSClassFromString(@"IASDKCore") sharedInstance]).version forNetwork:kNetworkNameFyber];
-                [[NSClassFromString(@"IASDKCore") sharedInstance] initWithAppID:info[@"app_id"]];
+                [[NSClassFromString(@"IASDKCore") sharedInstance] initWithAppID:serverInfo[@"app_id"]];
             }
         });
     }
     return self;
 }
 
--(void) loadADWithInfo:(id)info completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
+-(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
     if (NSClassFromString(@"IAAdRequest") != nil && NSClassFromString(@"IAVideoContentController") != nil && NSClassFromString(@"IAFullscreenUnitController") != nil && NSClassFromString(@"IAAdSpot") != nil) {
-        _customEvent = [[ATFyberInterstitialCustomEvent alloc] initWithUnitID:info[@"spot_id"] customInfo:info];
+        _customEvent = [[ATFyberInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         
         id<ATIAAdRequest> request = [NSClassFromString(@"IAAdRequest") build:^(id<IAAdRequestBuilder>  _Nonnull builder) {
             builder.useSecureConnections = NO;
-            builder.spotID = info[@"spot_id"];
-            builder.muteAudio = [info[@"video_muted"] boolValue];
+            builder.spotID = serverInfo[@"spot_id"];
+            builder.muteAudio = [serverInfo[@"video_muted"] boolValue];
         }];
         
         _videoContentController = [NSClassFromString(@"IAVideoContentController") build:^(id<IAVideoContentControllerBuilder>  _Nonnull builder) {
@@ -82,11 +82,12 @@
                 [self->_customEvent handleLoadingFailure:error];
             } else {
                 self->_customEvent.fullscreenUnitController = self->_fullscreenUnitController;
-                [self->_customEvent handleAssets:@{kInterstitialAssetsCustomEventKey:self->_customEvent, kInterstitialAssetsUnitIDKey:[info[@"spot_id"] length] > 0 ? info[@"spot_id"] : @"", kAdAssetsCustomObjectKey:self->_fullscreenUnitController}];
+//                [self->_customEvent handleAssets:@{kInterstitialAssetsCustomEventKey:self->_customEvent, kInterstitialAssetsUnitIDKey:[serverInfo[@"spot_id"] length] > 0 ? serverInfo[@"spot_id"] : @"", kAdAssetsCustomObjectKey:self->_fullscreenUnitController}];
+                [self->_customEvent trackInterstitialAdLoaded:self->_fullscreenUnitController adExtra:nil];
             }
         }];
     } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:@"AT has failed to load interstitial ad.", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Fyber"]}]);
+        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Fyber"]}]);
     }
 }
 
