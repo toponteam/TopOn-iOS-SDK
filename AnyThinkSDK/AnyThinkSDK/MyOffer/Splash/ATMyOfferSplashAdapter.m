@@ -24,12 +24,6 @@
 @implementation ATMyOfferSplashAdapter
 -(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
-    if (self != nil) {
-        if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameMyOffer]) {
-            [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameMyOffer];
-            [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameMyOffer];
-        }
-    }
     return self;
 }
 
@@ -42,7 +36,7 @@
     _customEvent.delegate = self.delegateToBePassed;
     __weak typeof(self) weakSelf = self;
     NSDate *startDate = [NSDate date];
-    [[ATMyOfferOfferManager sharedManager] loadOfferWithOfferModel:offerModel setting:placementModel.myOfferSetting extra:nil completion:^(NSError *error) {
+    [[ATMyOfferOfferManager sharedManager] loadOfferWithOfferModel:offerModel setting:placementModel.myOfferSetting extra:localInfo completion:^(NSError *error) {
         NSTimeInterval tolerateTimeout = [localInfo containsObjectForKey:kATSplashExtraTolerateTimeoutKey] ? [localInfo[kATSplashExtraTolerateTimeoutKey] doubleValue] : [[ATAppSettingManager sharedManager] splashTolerateTimeout];
         NSTimeInterval loadTime = [[NSDate date] timeIntervalSinceDate:startDate];
         if (error == nil && loadTime <= tolerateTimeout && offerModel != nil && offerModel.offerID != nil && weakSelf.customEvent != nil) {

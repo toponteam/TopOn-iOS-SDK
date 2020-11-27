@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol ATAd;
 
 extern NSString *const kATAPILoad;
+extern NSString *const kATAPICheckLoadStatus;
 extern NSString *const kATAPIIsReady;
 extern NSString *const kATAPIShow;
 @interface ATGeneralAdAgentEvent : NSObject<ATAgentEventDataStructure>
@@ -36,7 +37,7 @@ extern NSString *const kATAPIShow;
  */
 @property(nonatomic, readonly) id customObject;
 @property(nonatomic, readonly) NSString *unitID;
-@property(nonatomic, readonly) double price;
+@property(nonatomic, readonly) NSString *price;
 @property(nonatomic, readonly, weak) ATWaterfall *finalWaterfall;
 @end
 NS_ASSUME_NONNULL_END

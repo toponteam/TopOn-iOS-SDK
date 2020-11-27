@@ -9,6 +9,5 @@
 #import "ATBannerCustomEvent.h"
 #import "ATUnityAdsBannerAdapter.h"
 
-@interface ATUnityAdsBannerCustomEvent : ATBannerCustomEvent<UnityAdsBannerDelegate, UnityAdsDelegate>
-@property(nonatomic) UIView *bannerContainerView;
+@interface ATUnityAdsBannerCustomEvent : ATBannerCustomEvent<UADSBannerViewDelegate>
 @end

@@ -22,6 +22,8 @@
     if (self != nil) {
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadNotification:) name:kVungleRewardedVideoLoadNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleShowNotification:) name:kVungleRewardedVideoShowNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleClickNotification:) name:kVungleRewardedVideoClickNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleRewardNotification:) name:kVungleRewardedVideoRewardNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleCloseNotification:) name:kVungleRewardedVideoCloseNotification object:nil];
     }
     return self;
@@ -44,19 +46,26 @@
     }
 }
 
+-(void) handleClickNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kVungleRewardedVideoNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && self.rewardedVideo != nil) {
+        [ATLogger logMessage:@"VungleRewardedVideo::click" type:ATLogTypeExternal];
+        [self trackRewardedVideoAdClick];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kVungleRewardedVideoClickNotification object:nil];
+    }
+}
+
+-(void) handleRewardNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kVungleRewardedVideoNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && self.rewardedVideo != nil) {
+        [ATLogger logMessage:@"VungleRewardedVideo::reward" type:ATLogTypeExternal];
+        [self trackRewardedVideoAdRewarded];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kVungleRewardedVideoRewardNotification object:nil];
+    }
+}
+
 -(void) handleCloseNotification:(NSNotification*)notification {
     if ([notification.userInfo[kVungleRewardedVideoNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && self.rewardedVideo != nil) {
         [ATLogger logMessage:@"VungleRewardedVideo::close" type:ATLogTypeExternal];
-        if ([notification.userInfo[kVungleRewardedVideoNotificationUserInfoClickFlagKey] boolValue]) {
-            [self trackRewardedVideoAdClick];
-        }
-        if ([notification.userInfo[kVungleRewardedVideoNotificationUserInfoVideoCompletedFlagKey] boolValue]) {
-            [self trackRewardedVideoAdVideoEnd];
-            self.rewardGranted = YES;
-            if([self.delegate respondsToSelector:@selector(rewardedVideoDidRewardSuccessForPlacemenID:extra:)]){
-                [self.delegate rewardedVideoDidRewardSuccessForPlacemenID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra]];
-            }
-        }
+        [self trackRewardedVideoAdVideoEnd];
         [self trackRewardedVideoAdCloseRewarded:self.rewardGranted];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:kVungleRewardedVideoCloseNotification object:nil];
     }
@@ -70,9 +79,4 @@
     return self.serverInfo[@"placement_id"];
 }
 
-//-(NSDictionary*)delegateExtra {
-//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.rewardedVideo.unitGroup.content[@"placement_id"];
-//    return extra;
-//}
 @end

@@ -88,9 +88,9 @@ static NSString *const kPlacementIDKey = @"placement_id";
     return ad;
 }
 
-+(BOOL) adReadyForInfo:(NSDictionary*)info {
-    return [NSClassFromString(@"UnityAds") isReady:info[@"placement_id"]];
-}
+//+(BOOL) adReadyForInfo:(NSDictionary*)info {
+//    return [NSClassFromString(@"UnityAds") isReady:info[@"placement_id"]];
+//}
 
 +(BOOL) adReadyWithCustomObject:(id<UMONShowAdPlacementContent>)customObject info:(NSDictionary*)info {
     return [NSClassFromString(@"UnityAds") isReady:info[@"placement_id"]];

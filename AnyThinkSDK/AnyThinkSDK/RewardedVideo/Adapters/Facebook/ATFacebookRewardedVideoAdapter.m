@@ -47,6 +47,7 @@ static NSString *const kRewardedVideoClassName = @"FBRewardedVideoAd";
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameFacebook]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameFacebook];
                 [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameFacebook];
+                [NSClassFromString(@"FBAdSettings") setAdvertiserTrackingEnabled:YES];
             }
         });
     }

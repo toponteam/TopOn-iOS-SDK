@@ -73,6 +73,15 @@ static NSString *const kUnitIDKey = @"unit_id";
         _customEvent.requestNumber = [serverInfo[@"request_num"] integerValue];
         _customEvent.requestCompletionBlock = completion;
         _rewardedAd = [[NSClassFromString(@"GADRewardedAd") alloc] initWithAdUnitID:serverInfo[@"unit_id"]];
+        
+        id<ATGADServerSideVerificationOptions> options = [[NSClassFromString(@"GADServerSideVerificationOptions") alloc] init];
+        if (localInfo[kATAdLoadingExtraUserIDKey] != nil) {
+            options.userIdentifier = localInfo[kATAdLoadingExtraUserIDKey];
+        }
+        if (localInfo[kATAdLoadingExtraMediaExtraKey] != nil) {
+            options.customRewardString = localInfo[kATAdLoadingExtraMediaExtraKey];
+        }
+        _rewardedAd.serverSideVerificationOptions = options;
         __weak typeof(self) weakSelf = self;
         [_rewardedAd loadRequest:(id<ATGADRequest>)[NSClassFromString(@"GADRequest") request] completionHandler:^(NSError * _Nullable error) {
             if (error == nil) {

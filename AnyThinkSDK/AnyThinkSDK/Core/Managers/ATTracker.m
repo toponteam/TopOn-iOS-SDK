@@ -335,7 +335,7 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
                                                                                   @"platform":[Utilities platform],
                                                                                   @"package_name":[Utilities appBundleID] != nil ? [Utilities appBundleID] : @"not_known",
                                                                                   @"app_vn":[Utilities appBundleVersion] != nil ? [Utilities appBundleVersion] : @"not_known",
-                                                                                  @"app_vc":[Utilities appBundleVersion] != nil ? [Utilities appBundleVersion] : @"not_known",
+                                                                                  @"app_vc":[Utilities appBundleVersionCode] != nil ? [Utilities appBundleVersionCode] : @"not_known",
                                                                                   @"sdk_ver":[ATAPI sharedInstance].version != nil ? [ATAPI sharedInstance].version : @"not_known",
                                                                                   @"orient":[Utilities screenOrientation] != nil ? [Utilities screenOrientation] : @0,
                                                                                   @"gdpr_cs":[NSString stringWithFormat:@"%ld", [[ATAppSettingManager sharedManager] commonTkDataConsentSet]]
@@ -343,7 +343,7 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
     if ([[ATAPI sharedInstance].channel length] > 0) { common[@"channel"] = [ATAPI sharedInstance].channel; }
     if ([[ATAPI sharedInstance].subchannel length] > 0) { common[@"sub_channel"] = [ATAPI sharedInstance].subchannel; }
     if ([Utilities isBlankDictionary:[ATAPI sharedInstance].customData] == NO) {
-        common[@"custom"] = [ATAPI sharedInstance].customData;
+        common[@"custom"] = [[ATAPI sharedInstance].customData calculateObjectChangeStringForKey];
     }
     common[@"first_init_time"] = @((NSUInteger)([[ATAPI firstLaunchDate] timeIntervalSince1970] * 1000.0f));
     common[@"days_from_first_init"] = @([[NSDate date] numberOfDaysSinceDate:[ATAPI firstLaunchDate]]);
@@ -390,6 +390,6 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
 }
 
 +(NSDictionary*)headerBiddingTrackingExtraWithAd:(id<ATAd>)ad requestID:(NSString*)requestID {
-    return @{@"bidtype":@(ad.unitGroup.headerBidding ? 1 : 0), @"bidprice":@(ad.price)};
+    return @{@"bidtype":@(ad.unitGroup.headerBidding ? 1 : 0), @"bidprice":ad.price != nil ? ad.price : @"0"};
 }
 @end

@@ -15,9 +15,74 @@
 #import "ATBannerView+Internal.h"
 
 @interface ATGDTBannerCustomEvent()
+@property(nonatomic, readonly) BOOL loaded;
 @end
-
 @implementation ATGDTBannerCustomEvent
+- (void)bannerViewMemoryWarning {
+    [ATLogger logMessage:@"GDTBanner::bannerViewMemoryWarning" type:ATLogTypeExternal];
+}
+
+- (void)bannerViewDidReceived {
+    [ATLogger logMessage:@"GDTBanner::bannerViewDidReceived" type:ATLogTypeExternal];
+    if (!_loaded) {
+        _loaded = YES;
+        [self trackBannerAdLoaded:_gdtBannerView adExtra:nil];
+    }
+}
+
+- (void)bannerViewFailToReceived:(NSError *)error {
+    [ATLogger logMessage:[NSString stringWithFormat:@"GDTBanner::bannerViewFailToReceived:%@", error] type:ATLogTypeExternal];
+    [self trackBannerAdLoadFailed:error];
+}
+
+- (void)bannerViewWillLeaveApplication {
+    [ATLogger logMessage:@"GDTBanner::bannerViewWillLeaveApplication" type:ATLogTypeExternal];
+}
+
+- (void)bannerViewWillClose {
+    [ATLogger logMessage:@"GDTBanner::bannerViewWillClose" type:ATLogTypeExternal];
+    [self.bannerView removeFromSuperview];
+    if ([self.delegate respondsToSelector:@selector(bannerView:didCloseWithPlacementID:extra:)]) {
+        [self.delegate bannerView:self.bannerView didCloseWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
+    }
+}
+
+- (void)bannerViewWillExposure {
+    [ATLogger logMessage:@"GDTBanner::bannerViewWillExposure" type:ATLogTypeExternal];
+}
+
+- (void)bannerViewClicked {
+    [ATLogger logMessage:@"GDTBanner::bannerViewClicked" type:ATLogTypeExternal];
+    [self trackBannerAdClick];
+}
+
+- (void)bannerViewWillPresentFullScreenModal {
+    [ATLogger logMessage:@"GDTBanner::bannerViewWillPresentFullScreenModal" type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+    if (self.banner.requestID != nil) { userInfo[kBannerNotificationUserInfoRequestIDKey] = self.banner.requestID; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kBannerPresentModalViewControllerNotification object:nil userInfo:userInfo];
+}
+
+- (void)bannerViewDidPresentFullScreenModal {
+    [ATLogger logMessage:@"GDTBanner::bannerViewDidPresentFullScreenModal" type:ATLogTypeExternal];
+}
+
+- (void)bannerViewWillDismissFullScreenModal {
+    [ATLogger logMessage:@"GDTBanner::bannerViewWillDismissFullScreenModal" type:ATLogTypeExternal];
+}
+
+- (void)bannerViewDidDismissFullScreenModal {
+    [ATLogger logMessage:@"GDTBanner::bannerViewDidDismissFullScreenModal" type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+    if (self.banner.requestID != nil) { userInfo[kBannerNotificationUserInfoRequestIDKey] = self.banner.requestID; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kBannerDismissModalViewControllerNotification object:nil userInfo:userInfo];
+}
+
+#pragma mark -
+-(void) cleanup {
+    [super cleanup];
+    _gdtBannerView.delegate = nil;
+}
 
 #pragma mark - banner 2.0 delegate(s)
 - (void)unifiedBannerViewDidLoad:(id<GDTUnifiedBannerView>)unifiedBannerView {
@@ -70,6 +135,9 @@
 - (void)unifiedBannerViewWillClose:(id<GDTUnifiedBannerView>)unifiedBannerView {
     [ATLogger logMessage:@"GDTBanner::unifiedBannerViewWillClose:" type:ATLogTypeExternal];
     [self.bannerView loadNextWithoutRefresh];
+//    if ([self.delegate respondsToSelector:@selector(bannerView:didTapCloseButtonWithPlacementID:extra:)]) {
+//        [self.delegate bannerView:self.bannerView didTapCloseButtonWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
+//    }
     [self trackBannerAdClosed];
 }
 

@@ -10,26 +10,8 @@
 #import <UIKit/UIKit.h>
 #import "ATMyOfferOfferModel.h"
 #import "ATMyOfferSetting.h"
-
-@protocol ATMyOfferInterstitialDelegate<NSObject>
--(void) myOfferIntersititalFailToShowOffer:(ATMyOfferOfferModel*)offer error:(NSError*)error;
--(void) myOfferIntersititalShowOffer:(ATMyOfferOfferModel*)offer;
--(void) myOfferInterstitialVideoStartOffer:(ATMyOfferOfferModel*)offer;
--(void) myOfferInterstitialVideoEndOffer:(ATMyOfferOfferModel*)offer;
--(void) myOfferInterstitialClickOffer:(ATMyOfferOfferModel*)offer;
--(void) myOfferInterstitialCloseOffer:(ATMyOfferOfferModel*)offer;
--(NSString*) lifeCircleIDForOffer:(ATMyOfferOfferModel*)offer;
-@end
-
-@protocol  ATMyOfferOfferManager <NSObject>
-+(instancetype) sharedManager;
--(BOOL) resourceReadyForOfferModel:(ATMyOfferOfferModel*)offerModel;
--(BOOL) offerReadyForOfferModel:(ATMyOfferOfferModel*)offerModel;
--(BOOL) offerReadyForInterstitialOfferModel:(ATMyOfferOfferModel*)offerModel;
--(void) loadOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting*)setting extra:(NSDictionary*)extra completion:(void(^)(NSError *error))completion;
--(void) showInterstitialWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting*)setting viewController:(UIViewController*)viewController delegate:(id<ATMyOfferInterstitialDelegate>)delegate;
-
-@end
+#import "ATMyOfferOfferManager.h"
+#import "ATMyOfferInterstitialDelegate.h"
 
 @interface ATMyOfferInterstitialAdapter : NSObject
 

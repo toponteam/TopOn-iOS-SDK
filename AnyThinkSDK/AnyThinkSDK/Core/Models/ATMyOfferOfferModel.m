@@ -16,84 +16,85 @@
     self = [super initWithDictionary:dictionary];
     if (self != nil) {
         NSMutableArray<NSString*> *resourceURLs = [NSMutableArray<NSString*> array];
-        _offerID = dictionary[@"o_id"];
+        self.offerID = dictionary[@"o_id"];
         
-        _resourceID = dictionary[@"c_id"];
-        _title = dictionary[@"t"];
-        _text = dictionary[@"d"];
+        self.resourceID = dictionary[@"c_id"];
+        self.title = dictionary[@"t"];
+        self.text = dictionary[@"d"];
         
-        _iconURL = dictionary[@"ic_u"];
-        if (_iconURL != nil) { [resourceURLs addObject:_iconURL]; }
+        self.iconURL = dictionary[@"ic_u"];
+        if (self.iconURL != nil) { [resourceURLs addObject:self.iconURL]; }
         
         //        _mainImageURL = dictionary[@"im_u"];
         //        if (_mainImageURL != nil) { [resourceURLs addObject:_mainImageURL]; }
         
-        _fullScreenImageURL = dictionary[@"f_i_u"];
-        if (_fullScreenImageURL != nil) { [resourceURLs addObject:_fullScreenImageURL]; }
+        self.fullScreenImageURL = dictionary[@"f_i_u"];
+        if (self.fullScreenImageURL != nil) { [resourceURLs addObject:self.fullScreenImageURL]; }
         
-        _imageOrientation = [dictionary[@"f_i_o"] integerValue];
+        self.imageOrientation = [dictionary[@"f_i_o"] integerValue];
         
-        _logoURL = dictionary[@"a_c_u"];
-        if ([_logoURL isKindOfClass:[NSString class]] && [_logoURL length] > 0) { [resourceURLs addObject:_logoURL]; }
+        self.logoURL = dictionary[@"a_c_u"];
+        if ([self.logoURL isKindOfClass:[NSString class]] && [self.logoURL length] > 0) { [resourceURLs addObject:self.logoURL]; }
         
-        _CTA = dictionary[@"c_t"];
+        self.CTA = dictionary[@"c_t"];
         
-        _videoURL = dictionary[@"v_u"];
-        if (_videoURL != nil) { [resourceURLs addObject:_videoURL]; }
+        self.videoURL = dictionary[@"v_u"];
+        if (self.videoURL != nil) { [resourceURLs addObject:self.videoURL]; }
         
-        _interstitalType = [dictionary[@"unit_type"] integerValue];
-        _videoOrientation = [dictionary[@"v_o"] integerValue];
-        _storeURL = dictionary[@"p_u"];
-        _jumpType = [dictionary[@"l_t"] integerValue];
+        self.interstitalType = [dictionary[@"unit_type"] integerValue];
+        self.videoOrientation = [dictionary[@"v_o"] integerValue];
+        self.storeURL = dictionary[@"p_u"];
+        self.linkType = [dictionary[@"l_t"] integerValue];
         //        _deepLink = dictionary[@"dl"];
-        _performsAsynchronousRedirection = [dictionary[@"c_m"] boolValue];
+        self.performsAsynchronousRedirection = [dictionary[@"c_m"] integerValue] + 1;//add one to be the same with adx
         
-        _videoStartTKURL = dictionary[@"t_u"];//@"{sh}://{do}/video_start?p={p}&p2={p2}";//to do
-        _video25TKURL = dictionary[@"t_u_25"];//@"{sh}://{do}/video_25?p={p}&p2={p2}";//to do
-        _video50TKURL = dictionary[@"t_u_50"];//@"{sh}://{do}/video_50?p={p}&p2={p2}";//to do
-        _video75TKURL = dictionary[@"t_u_75"];//@"{sh}://{do}/video_75?p={p}&p2={p2}";//to do
-        _videoEndTKURL = dictionary[@"t_u_100"];//@"{sh}://{do}/video_end?p={p}&p2={p2}";//to do
-        _endCardShowTKURL = dictionary[@"s_e_c_t_u"];//@"{sh}://{do}/end_card_show?p={p}&p2={p2}";//to do
-        _endCardCloseTKURL = dictionary[@"c_t_u"];//@"{sh}://{do}/end_card_close?p={p}&p2={p2}";//to do
+        self.videoStartTKURL = dictionary[@"t_u"];//@"{sh}://{do}/video_start?p={p}&p2={p2}";//to do
+        self.video25TKURL = dictionary[@"t_u_25"];//@"{sh}://{do}/video_25?p={p}&p2={p2}";//to do
+        self.video50TKURL = dictionary[@"t_u_50"];//@"{sh}://{do}/video_50?p={p}&p2={p2}";//to do
+        self.video75TKURL = dictionary[@"t_u_75"];//@"{sh}://{do}/video_75?p={p}&p2={p2}";//to do
+        self.videoEndTKURL = dictionary[@"t_u_100"];//@"{sh}://{do}/video_end?p={p}&p2={p2}";//to do
+        self.endCardShowTKURL = dictionary[@"s_e_c_t_u"];//@"{sh}://{do}/end_card_show?p={p}&p2={p2}";//to do
+        self.endCardCloseTKURL = dictionary[@"c_t_u"];//@"{sh}://{do}/end_card_close?p={p}&p2={p2}";//to do
         
-        _clickURL = dictionary[@"c_u"];//@"https://imp_test_url?req_id={req_id}";//to do
-        _impURL = dictionary[@"ip_u"];//@"https://click_test_url?req_id={req_id}";//to do
+        self.clickURL = dictionary[@"c_u"];//@"https://imp_test_url?req_id={req_id}";//to do
+        self.impURL = dictionary[@"ip_u"];//@"https://click_test_url?req_id={req_id}";//to do
         
-        _impTKURL = dictionary[@"ip_n_u"];//@"{sh}://{do}/imp_tk?p={p}&p2={p2}";//to do
-        _clickTKURL = dictionary[@"c_n_u"];//@"{sh}://{do}/click_tk?p={p}&p2={p2}";//to do
+        self.impTKURL = dictionary[@"ip_n_u"];//@"{sh}://{do}/imp_tk?p={p}&p2={p2}";//to do
+        self.clickTKURL = dictionary[@"c_n_u"];//@"{sh}://{do}/click_tk?p={p}&p2={p2}";//to do
         
-        _dailyCap = [dictionary[@"o_a_d_c"] integerValue];
-        _pacing = [dictionary[@"o_a_p"] doubleValue] / 1000.0f;
+        self.dailyCap = [dictionary[@"o_a_d_c"] integerValue];
+        self.pacing = [dictionary[@"o_a_p"] doubleValue] / 1000.0f;
         
-        _placeholders = placeholders;
+        self.placeholders = placeholders;
         
         
         //v5.6.6
-        _bannerImageUrl = dictionary[@"ext_h_pic"];
-        if(_bannerImageUrl != nil && _bannerImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize320_50]){
-            [resourceURLs addObject:_bannerImageUrl];
+        self.bannerImageUrl = dictionary[@"ext_h_pic"];
+        if(self.bannerImageUrl != nil && self.bannerImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize320_50]){
+            [resourceURLs addObject:self.bannerImageUrl];
         }
-        _bannerBigImageUrl = dictionary[@"ext_big_h_pic"];
-        if(_bannerBigImageUrl != nil && _bannerBigImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize320_90]){
-            [resourceURLs addObject:_bannerBigImageUrl];
+        self.bannerBigImageUrl = dictionary[@"ext_big_h_pic"];
+        if(self.bannerBigImageUrl != nil && self.bannerBigImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize320_90]){
+            [resourceURLs addObject:self.bannerBigImageUrl];
         }
-        _rectangleImageUrl = dictionary[@"ext_rect_h_pic"];
-        if(_rectangleImageUrl != nil && _rectangleImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize300_250]){
-            [resourceURLs addObject:_rectangleImageUrl];
+        self.rectangleImageUrl = dictionary[@"ext_rect_h_pic"];
+        if(self.rectangleImageUrl != nil && self.rectangleImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize300_250]){
+            [resourceURLs addObject:self.rectangleImageUrl];
         }
-        _homeImageUrl = dictionary[@"ext_home_h_pic"];
-        if(_homeImageUrl != nil && _homeImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize728_90]){
-            [resourceURLs addObject:_homeImageUrl];
+        self.homeImageUrl = dictionary[@"ext_home_h_pic"];
+        if(self.homeImageUrl != nil && self.homeImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize728_90]){
+            [resourceURLs addObject:self.homeImageUrl];
         }
-        _pkgName = dictionary[@"p_g"];
-        if(_pkgName == nil || _pkgName.length == 0){
-            _pkgName = nil;
+        self.pkgName = dictionary[@"p_g"];
+        if(self.pkgName == nil || self.pkgName.length == 0){
+            self.pkgName = nil;
         }
 //        _pkgName = @"529479190";
-        _resourceURLs = resourceURLs;
+        self.resourceURLs = resourceURLs;
         
-        _localResourceID = [NSString stringWithFormat:@"%@%@", _resourceID, setting.placementID].md5;
+        self.localResourceID = [NSString stringWithFormat:@"%@%@", self.resourceID, setting.placementID].md5;
         
+        self.offerModelType = ATOfferModelMyOffer;
     }
     return self;
 }

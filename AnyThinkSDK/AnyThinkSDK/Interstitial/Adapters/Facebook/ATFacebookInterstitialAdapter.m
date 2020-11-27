@@ -30,6 +30,7 @@
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameFacebook]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameFacebook];
             [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameFacebook];
+            [NSClassFromString(@"FBAdSettings") setAdvertiserTrackingEnabled:YES];
         }
     }
     return self;

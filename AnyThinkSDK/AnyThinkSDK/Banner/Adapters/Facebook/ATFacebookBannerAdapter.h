@@ -12,6 +12,10 @@
 
 @end
 
+@protocol ATFBAdSettings <NSObject>
++ (void)setAdvertiserTrackingEnabled:(BOOL)advertiserTrackingEnabled;
+@end
+
 struct FBAdSize {
     CGSize size;
 };

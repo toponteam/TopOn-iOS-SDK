@@ -25,6 +25,8 @@
 -(NSString*)stringUrlEncode;
 -(NSString*)stringUrlDecode;
 
+- (NSString *)fixECPMLoseWithPrice;
+
 @end
 
 @interface NSData(AES256)

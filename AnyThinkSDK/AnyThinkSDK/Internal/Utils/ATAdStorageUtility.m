@@ -19,6 +19,7 @@
 #import "Utilities.h"
 #import "ATLoadingScheduler.h"
 #import "ATAdCustomEvent.h"
+#import "ATBidInfoManager.h"
 
 NSString *const kAdStorageExtraNotReadyReasonKey = @"reason";
 NSString *const kAdStorageExtraNeedReloadFlagKey = @"need_reload_flag";
@@ -241,6 +242,7 @@ static NSString *const kStatusStorageOfferKey = @"offer";
         NSMutableDictionary *unitGroupInfo = [NSMutableDictionary dictionaryWithDictionary:@{kAdStorageExtraUnitGroupInfoPriorityKey:@(idx), kAdStorageExtraUnitGroupInfoNetworkFirmIDKey:@(obj.networkFirmID), kAdStorageExtraUnitGroupInfoUnitIDKey:obj.unitID != nil ? obj.unitID : @"", kAdStorageExtraUnitGroupInfoNetworkSDKVersionKey:[[ATAPI sharedInstance] versionForNetworkFirmID:obj.networkFirmID] }];
         if ([self validateCapsForUnitGroup:obj placementID:placementID]) {
             if ([self validatePacingForUnitGroup:obj placementID:placementID]) {
+                
                 if ([adsInPlacement[obj.unitGroupID] count] > 0) {
                     [adsInPlacement[obj.unitGroupID] enumerateObjectsUsingBlock:^(id<ATAd>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                         if ([obj ready]) {
@@ -249,30 +251,39 @@ static NSString *const kStatusStorageOfferKey = @"offer";
                                 unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(0);
                                 firstExpiredPriority = firstExpiredPriority == [unitGroups count] ? obj.priority : firstExpiredPriority;
                             } else {
-                                if (obj.showTimes < 1) {
-                                    unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(1);
-                                    headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithAd:obj requestID:obj.requestID];
-                                    networkFirmID = obj.unitGroup.networkFirmID;
-                                    unitID = obj.unitGroup.unitID;
-                                    networkSDKVer = [[ATAPI sharedInstance] versionForNetworkFirmID:obj.unitGroup.networkFirmID];
-                                    priority = obj.priority;
-                                    ad = obj;
-                                    *stop = YES;
-                                } else {//offer's been shown
-                                    if (idx == [adsInPlacement[obj.unitGroup.unitGroupID] count] - 1) {
-                                        id<ATAd> filledAd = [self fillIfReadyWithPlacementModel:placementModel unitGroupModel:obj.unitGroup requestID:requestID priority:obj.priority storage:storage statusStorage:statusStorage finalWaterfall:finalWaterfall];
-                                        if (filledAd != nil) {
-                                            unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(1);
-                                            headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithAd:filledAd requestID:requestID];
-                                            networkFirmID = filledAd.unitGroup.networkFirmID;
-                                            unitID = filledAd.unitGroup.unitID;
-                                            networkSDKVer = [[ATAPI sharedInstance] versionForNetworkFirmID:filledAd.unitGroup.networkFirmID];
-                                            priority = filledAd.priority;
-                                            ad = filledAd;
-                                            *stop = YES;
-                                        }
-                                    }
+                                //if unitgroup is adx, check the token expire time first
+                                if(obj.unitGroup.networkFirmID == ATNetworkFirmIdADX && [self checkExpireForAdxUnitGroup:obj.unitGroup]){
+                                    unitGroupInfo[kAdStorageExtraNotReadyReasonKey] = @5;
+                                    unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(0);
+                                    firstExpiredPriority = firstExpiredPriority == [unitGroups count] ? obj.priority : firstExpiredPriority;
+                                }else{//adx is not expired or another type of offer
+                                    if (obj.showTimes < 1) {
+                                          unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(1);
+                                          headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithAd:obj requestID:obj.requestID];
+                                          networkFirmID = obj.unitGroup.networkFirmID;
+                                          unitID = obj.unitGroup.unitID;
+                                          networkSDKVer = [[ATAPI sharedInstance] versionForNetworkFirmID:obj.unitGroup.networkFirmID];
+                                          priority = obj.priority;
+                                          ad = obj;
+                                          *stop = YES;
+                                      } else {//offer's been shown
+                                          if (idx == [adsInPlacement[obj.unitGroup.unitGroupID] count] - 1) {
+                                              id<ATAd> filledAd = [self fillIfReadyWithPlacementModel:placementModel unitGroupModel:obj.unitGroup requestID:requestID priority:obj.priority storage:storage statusStorage:statusStorage finalWaterfall:finalWaterfall];
+                                              if (filledAd != nil) {
+                                                  unitGroupInfo[kAdStorageExtraUnitGroupInfoReadyFlagKey] = @(1);
+                                                  headerBiddingInfo = [ATTracker headerBiddingTrackingExtraWithAd:filledAd requestID:requestID];
+                                                  networkFirmID = filledAd.unitGroup.networkFirmID;
+                                                  unitID = filledAd.unitGroup.unitID;
+                                                  networkSDKVer = [[ATAPI sharedInstance] versionForNetworkFirmID:filledAd.unitGroup.networkFirmID];
+                                                  priority = filledAd.priority;
+                                                  ad = filledAd;
+                                                  *stop = YES;
+                                              }
+                                          }
+                                      }
                                 }
+                                
+  
                             }
                         } else {//Not ready
                             unitGroupInfo[kAdStorageExtraNotReadyReasonKey] = @0;
@@ -430,5 +441,9 @@ static NSString *const kStatusStorageOfferKey = @"offer";
 
 +(BOOL) validatePacingForUnitGroup:(ATUnitGroupModel*)unitGroup placementID:(NSString*)placementID {
     return unitGroup.showingInterval < 0 || [[ATCapsManager sharedManager] lastShowTimeOfPlacementID:placementID unitGroupID:unitGroup.unitGroupID] == nil || [[NSDate date] timeIntervalSinceDate:[[ATCapsManager sharedManager] lastShowTimeOfPlacementID:placementID unitGroupID:unitGroup.unitGroupID]] >= unitGroup.showingInterval / 1000.0f;
+}
+
++(BOOL) checkExpireForAdxUnitGroup:(ATUnitGroupModel*)unitGroup {
+    return [[ATBidInfoManager sharedManager] checkAdxBidInfoExpireForUnitGroupModel:unitGroup];
 }
 @end

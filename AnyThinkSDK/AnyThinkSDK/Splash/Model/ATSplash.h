@@ -27,7 +27,7 @@
 @property(nonatomic, readonly) NSString *unitID;
 @property(nonatomic, readonly) id customObject;
 @property(nonatomic, readonly) ATSplashCustomEvent *customEvent;
-@property(nonatomic, readonly) double price;
+@property(nonatomic, readonly) NSString *price;
 @property(nonatomic, readonly, weak) ATWaterfall *finalWaterfall;
 @property(nonatomic, readonly) NSInteger autoReqType;
 @end

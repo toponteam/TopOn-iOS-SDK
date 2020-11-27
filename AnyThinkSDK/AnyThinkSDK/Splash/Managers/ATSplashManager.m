@@ -65,6 +65,7 @@ static NSString *const kStorageSplashKey = @"splash";
     ATSplash *splash = [[ATSplash alloc] initWithPriority:[finalWaterfall.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup finalWaterfall:finalWaterfall];
     splash.showTimes = 1;
     //track show to avoid error for generate custom event ad object async
+    [splash.customEvent saveShowAPIContext];
     [splash.customEvent trackShow];
     [_storageAccessor writeWithBlock:^{ weakSelf.storage[placementModel.placementID] = @{kStorageRequestIDKey:requestID, kStorageSplashKey:splash}; }];
 }

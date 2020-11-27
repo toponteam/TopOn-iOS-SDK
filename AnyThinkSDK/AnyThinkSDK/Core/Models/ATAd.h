@@ -41,7 +41,7 @@
 @property(nonatomic, readonly) BOOL fillByAutorefresh;
 @property(nonatomic) BOOL defaultPlayIfRequired;
 @property(nonatomic, readonly) BOOL renewed;
-@property(nonatomic, readonly) double price;
+@property(nonatomic, readonly) NSString *price;
 @property(nonatomic, readonly, weak) ATWaterfall *finalWaterfall;
 @property(nonatomic, readonly) NSInteger autoReqType;
 @end

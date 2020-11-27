@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "ATMyOfferVideoViewController.h"
+#import "ATOfferVideoViewController.h"
 #import "ATMyOfferBannerDelegate.h"
 #import "ATMyOfferSetting.h"
 #import "ATMyOfferOfferModel.h"

@@ -12,6 +12,7 @@
 @end
 
 @protocol ATALSdk<NSObject>
+@property (nonatomic, copy, nullable) NSString *userIdentifier;
 - (void)initializeSdk;
 + (NSString *)version;
 +(NSUInteger)versionCode;

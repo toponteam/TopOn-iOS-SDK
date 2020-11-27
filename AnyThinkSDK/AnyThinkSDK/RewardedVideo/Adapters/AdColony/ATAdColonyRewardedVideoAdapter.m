@@ -82,6 +82,9 @@ static NSString *const kZoneIDKey = @"zone_id";
                         options.gdprRequired = [[ATAPI sharedInstance] inDataProtectionArea];
                     }
                 }
+                if (localInfo[kATAdLoadingExtraUserIDKey] != nil) {
+                    options.userID = localInfo[kATAdLoadingExtraUserIDKey];
+                }
                 [NSClassFromString(kAdColonyClassName) configureWithAppID:serverInfo[@"app_id"] zoneIDs:serverInfo[@"zone_ids"] options:options completion:^(NSArray<id<ATAdColonyZone>> *zones) {
                     [zones enumerateObjectsUsingBlock:^(id<ATAdColonyZone>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                         if (obj.rewarded) {

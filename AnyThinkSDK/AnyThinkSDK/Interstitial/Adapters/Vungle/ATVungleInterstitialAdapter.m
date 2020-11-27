@@ -15,11 +15,10 @@
 static NSString *const kVungleInterstitialInitializationNotification = @"com.anythink.VungleDelegateInit";
 NSString *const kVungleInterstitialLoadNotification = @"com.anythink.VungleDelegateLoaded";
 NSString *const kVungleInterstitialShowNotification = @"com.anythink.VungleDelegateShown";
+NSString *const kVungleInterstitialClickNotification = @"com.anythink.VungleDelegateClick";
 NSString *const kVungleInterstitialCloseNotification = @"com.anythink.VungleDelegateClose";
 NSString *const kVungleInterstitialNotificationUserInfoPlacementIDKey = @"placement_id";
 NSString *const kVungleInterstitialNotificationUserInfoErrorKey = @"error";
-NSString *const kVungleInterstitialNotificationUserInfoVideoCompletedFlagKey = @"video_completed";
-NSString *const kVungleInterstitialNotificationUserInfoClickFlagKey = @"clicked";
 @interface ATVungleDelegate_Interstitial:NSObject<ATVungleSDKDelegate>
 @end
 @implementation ATVungleDelegate_Interstitial
@@ -42,21 +41,27 @@ NSString *const kVungleInterstitialNotificationUserInfoClickFlagKey = @"clicked"
     }
 }
 
-- (void)vungleWillShowAdForPlacementID:(nullable NSString *)placementID {
-    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleWillShowAdForPlacementID:%@", placementID] type:ATLogTypeExternal];
+- (void)vungleDidShowAdForPlacementID:(nullable NSString *)placementID {
+    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleDidShowAdForPlacementID:%@", placementID] type:ATLogTypeExternal];
     NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
     if (placementID != nil) { userInfo[kVungleInterstitialNotificationUserInfoPlacementIDKey] = placementID; }
     [[NSNotificationCenter defaultCenter] postNotificationName:kVungleInterstitialShowNotification object:nil userInfo:userInfo];
 }
 
-- (void)vungleWillCloseAdWithViewInfo:(nonnull id<ATVungleViewInfo>)info placementID:(nonnull NSString *)placementID {
-    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleWillCloseAdWithViewInfo: placementID:%@", placementID] type:ATLogTypeExternal];
+- (void)vungleTrackClickForPlacementID:(nullable NSString *)placementID{
+    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleTrackClickForPlacementID:%@", placementID] type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
+    if (placementID != nil) { userInfo[kVungleInterstitialNotificationUserInfoPlacementIDKey] = placementID; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleInterstitialClickNotification object:nil userInfo:userInfo];
 }
 
-- (void)vungleDidCloseAdWithViewInfo:(nonnull id<ATVungleViewInfo>)info placementID:(nonnull NSString *)placementID {
+//- (void)vungleWillCloseAdWithViewInfo:(nonnull id<ATVungleViewInfo>)info placementID:(nonnull NSString *)placementID {
+//    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleWillCloseAdWithViewInfo: placementID:%@", placementID] type:ATLogTypeExternal];
+//}
+
+- (void)vungleDidCloseAdForPlacementID:(nonnull NSString *)placementID {
     [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleDidCloseAdWithViewInfo:placementID:%@", placementID] type:ATLogTypeExternal];
-    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:info.completedView, kVungleInterstitialNotificationUserInfoVideoCompletedFlagKey, info.didDownload, kVungleInterstitialNotificationUserInfoClickFlagKey, nil];
-    if (placementID != nil) { userInfo[kVungleInterstitialNotificationUserInfoPlacementIDKey] = placementID; }
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:placementID, kVungleInterstitialNotificationUserInfoPlacementIDKey, nil];
     [[NSNotificationCenter defaultCenter] postNotificationName:kVungleInterstitialCloseNotification object:nil userInfo:userInfo];
 }
 
@@ -104,7 +109,7 @@ static NSString *const kVungleSDKClassName = @"VungleSDK";
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameVungle]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameVungle];
                 if ([[ATAPI sharedInstance].networkConsentInfo containsObjectForKey:kNetworkNameVungle]) {
-                    [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameVungle] integerValue] consentMessageVersion:@"6.4.6"];
+                    [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:[[ATAPI sharedInstance].networkConsentInfo[kNetworkNameVungle] integerValue] consentMessageVersion:@"6.8.0"];
                 } else {
                     BOOL set = NO;
                     ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];

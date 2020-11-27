@@ -18,6 +18,7 @@
 #import "ATBidInfoManager.h"
 #import "ATNetworkingManager.h"
 
+static NSString *const kATMintegralPluginNumber = @"Y+H6DFttYrPQYcIeicKwJQKQYrN=";//topon的渠道号
 @interface ATMintegralInterstitialAdapter()
 @property(nonatomic, readonly) id<ATMTGInterstitialVideoAdManager> videoAdManager;
 @property(nonatomic, readonly) id<ATMTGInterstitialAdManager> interstitialAdManager;
@@ -25,7 +26,7 @@
 @property(nonatomic, readonly) ATMintegralInterstitialCustomEvent *customEvent;
 @end
 @implementation ATMintegralInterstitialAdapter
-+(NSDictionary*)headerBiddingParametersWithUnitGroupModel:(ATUnitGroupModel*)unitGroupModel {
++(NSDictionary*)headerBiddingParametersWithUnitGroupModel:(ATUnitGroupModel*)unitGroupModel extra:(NSDictionary *)extra {
     return @{@"display_manager_ver":@"6.2.0",
              @"unit_id":unitGroupModel.content[@"unitid"] != nil ? unitGroupModel.content[@"unitid"] : @"",
              @"app_id":unitGroupModel.content[@"appid"] != nil ? unitGroupModel.content[@"appid"] : @"",
@@ -40,6 +41,15 @@
         [[ATAPI sharedInstance] setVersion:[NSClassFromString(@"MTGSDK") sdkVersion] forNetwork:kNetworkNameMintegral];
         [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameMintegral];
         void(^blk)(void) = ^{
+            Class class = NSClassFromString(@"MTGSDK");
+            SEL selector = NSSelectorFromString(@"setChannelFlag:");
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                if ([class respondsToSelector:selector]) {
+                    [class performSelector:selector withObject:kATMintegralPluginNumber];
+                }
+            #pragma clang diagnostic pop
+            
             BOOL set = NO;
             BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
             if (set) { ((id<ATMTGSDK>)[NSClassFromString(@"MTGSDK") sharedInstance]).consentStatus = !limit; }
@@ -83,6 +93,15 @@
             if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameMintegral]) {
                 [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameMintegral];
                 void(^blk)(void) = ^{
+                    Class class = NSClassFromString(@"MTGSDK");
+                    SEL selector = NSSelectorFromString(@"setChannelFlag:");
+                    #pragma clang diagnostic push
+                    #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                        if ([class respondsToSelector:selector]) {
+                            [class performSelector:selector withObject:kATMintegralPluginNumber];
+                        }
+                    #pragma clang diagnostic pop
+                    
                     BOOL set = NO;
                     ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
                     BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
@@ -101,10 +120,10 @@
     if (NSClassFromString(@"MTGInterstitialVideoAdManager") != nil && NSClassFromString(@"MTGInterstitialAdManager") != nil) {
         _customEvent = [[ATMintegralInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
+        ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
+        ATPlacementModel *placementModel = (ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey];
         if ([serverInfo[@"is_video"] boolValue]) {
             _customEvent.customEventMetaDataDidLoadedBlock = self.metaDataDidLoadedBlock;
-            ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
-            ATPlacementModel *placementModel = (ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey];
             NSString *requestID = serverInfo[kAdapterCustomInfoRequestIDKey];
             ATBidInfo *bidInfo = [[ATBidInfoManager sharedManager] bidInfoForPlacementID:placementModel.placementID unitGroupModel:unitGroupModel requestID:requestID];
              if (bidInfo != nil) {
@@ -115,7 +134,7 @@
                  
                  _customEvent.price = bidInfo.price;
                  _bidInterstitialAdManager = [[NSClassFromString(@"MTGBidInterstitialVideoAdManager") alloc] initWithPlacementId:serverInfo[@"placement_id"] unitId:serverInfo[@"unitid"] delegate:_customEvent];
-                 [_bidInterstitialAdManager loadAdWithBidToken:bidInfo.token];
+                 [_bidInterstitialAdManager loadAdWithBidToken:bidInfo.bidId];
                  [[ATBidInfoManager sharedManager] invalidateBidInfoForPlacementID:placementModel.placementID unitGroupModel:unitGroupModel requestID:requestID];
             } else {
                 if (NSClassFromString(@"MTGAdCustomConfig") != nil && [NSClassFromString(@"MTGAdCustomConfig") respondsToSelector:@selector(sharedInstance)] && [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] respondsToSelector:@selector(setCustomInfo:type:unitId:)]) {
@@ -123,9 +142,11 @@
                 }
                 _videoAdManager = [[NSClassFromString(@"MTGInterstitialVideoAdManager") alloc] initWithPlacementId:serverInfo[@"placement_id"] unitId:serverInfo[@"unitid"] delegate:_customEvent];
                 _videoAdManager.delegate = _customEvent;
+                _customEvent.price = unitGroupModel.price;
                 [_videoAdManager loadAd];
             }
         } else {
+            _customEvent.price = unitGroupModel.price;
             if (NSClassFromString(@"MTGAdCustomConfig") != nil && [NSClassFromString(@"MTGAdCustomConfig") respondsToSelector:@selector(sharedInstance)] && [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] respondsToSelector:@selector(setCustomInfo:type:unitId:)]) {
                 [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] setCustomInfo:[serverInfo[kADapterCustomInfoStatisticsInfoKey] jsonString_anythink] type:0 unitId:serverInfo[@"unitid"]];
             }
@@ -135,6 +156,10 @@
     } else {
         completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Mintegral"]}]);
     }
+}
+
++(NSString*) adsourceRemoteKeyWithContent:(NSDictionary*)content unitGroupModel:(ATUnitGroupModel *)unitGroupModel {
+    return content[@"unitid"];
 }
 
 @end

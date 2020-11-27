@@ -14,6 +14,57 @@
 @property(nonatomic, readonly) BOOL fullScreenVideoStarted;
 @end
 @implementation ATGDTInterstitialCustomEvent
+- (void)interstitialSuccessToLoadAd:(id<ATGDTMobInterstitial>)interstitial {
+    [ATLogger logMessage:@"GDTInterstitial::interstitialSuccessToLoadAd" type:ATLogTypeExternal];
+//    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:interstitial, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @""}];
+    [self trackInterstitialAdLoaded:interstitial adExtra:nil];
+}
+
+- (void)interstitialFailToLoadAd:(id<ATGDTMobInterstitial>)interstitial error:(NSError *)error {
+    [ATLogger logMessage:[NSString stringWithFormat:@"GDTInterstitial::interstitialFailToLoadAd:error:%@", error] type:ATLogTypeExternal];
+    [self trackInterstitialAdLoadFailed:error];
+}
+
+- (void)interstitialWillPresentScreen:(id<ATGDTMobInterstitial>)interstitial {
+    [ATLogger logMessage:@"GDTInterstitial::interstitialWillPresentScreen" type:ATLogTypeExternal];
+}
+
+- (void)interstitialDidPresentScreen:(id<ATGDTMobInterstitial>)interstitial {
+    [ATLogger logMessage:@"GDTInterstitial::interstitialDidPresentScreen" type:ATLogTypeExternal];
+}
+
+- (void)interstitialDidDismissScreen:(id<ATGDTMobInterstitial>)interstitial {
+    [ATLogger logMessage:@"GDTInterstitial::interstitialDidDismissScreen" type:ATLogTypeExternal];
+    [self trackInterstitialAdClose];
+}
+
+- (void)interstitialApplicationWillEnterBackground:(id<ATGDTMobInterstitial>)interstitial {
+    [ATLogger logMessage:@"GDTInterstitial::interstitialApplicationWillEnterBackground" type:ATLogTypeExternal];
+}
+
+- (void)interstitialWillExposure:(id<ATGDTMobInterstitial>)interstitial {//will be called multiple times
+    [ATLogger logMessage:@"GDTInterstitial::interstitialWillExposure" type:ATLogTypeExternal];
+}
+
+- (void)interstitialClicked:(id<ATGDTMobInterstitial>)interstitial {
+    [ATLogger logMessage:@"GDTInterstitial::interstitialClicked" type:ATLogTypeExternal];
+    [self trackInterstitialAdClick];
+}
+
+- (void)interstitialAdWillPresentFullScreenModal:(id<ATGDTMobInterstitial>)interstitial {
+    [ATLogger logMessage:@"GDTInterstitial::interstitialAdWillPresentFullScreenModal" type:ATLogTypeExternal];
+}
+
+- (void)interstitialAdDidPresentFullScreenModal:(id<ATGDTMobInterstitial>)interstitial {
+    [ATLogger logMessage:@"GDTInterstitial::interstitialAdDidPresentFullScreenModal" type:ATLogTypeExternal];
+}
+- (void)interstitialAdWillDismissFullScreenModal:(id<ATGDTMobInterstitial>)interstitial {
+    [ATLogger logMessage:@"GDTInterstitial::interstitialAdWillDismissFullScreenModal" type:ATLogTypeExternal];
+}
+
+- (void)interstitialAdDidDismissFullScreenModal:(id<ATGDTMobInterstitial>)interstitial {
+    [ATLogger logMessage:@"GDTInterstitial::interstitialAdDidDismissFullScreenModal" type:ATLogTypeExternal];
+}
 
 #pragma mark - interstitial 2.0
 - (void)unifiedInterstitialSuccessToLoadAd:(id<ATGDTUnifiedInterstitialAd>)unifiedInterstitial {

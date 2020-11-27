@@ -7,7 +7,6 @@
 //
 
 #import "ATBannerViewController.h"
-//    need import Admob sdk
 //#import <GoogleMobileAds/GoogleMobileAds.h>
 @import AnyThinkSDK;
 @import AnyThinkBanner;
@@ -153,15 +152,13 @@ NSString *const kBannerLoadingFailedNotification = @"banner_failed_to_load";
 -(void) reloadADButtonTapped {
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
-//    need import Admob sdk
+    
     //GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth 自适应
     //GADPortraitAnchoredAdaptiveBannerAdSizeWithWidth 竖屏
     //GADLandscapeAnchoredAdaptiveBannerAdSizeWithWidth 横屏
 //    GADAdSize admobSize = GADLandscapeAnchoredAdaptiveBannerAdSizeWithWidth(CGRectGetWidth(self.view.bounds));
     
-//    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kATAdLoadingExtraBannerAdSizeKey:[NSValue valueWithCGSize:_adSize], kATAdLoadingExtraBannerSizeAdjustKey:@NO, kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"],kATAdLoadingExtraAdmobBannerSizeKey:[NSValue valueWithCGSize:admobSize.size],kATAdLoadingExtraAdmobAdSizeFlagsKey:@(admobSize.flags)} delegate:self];
-    
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kATAdLoadingExtraBannerAdSizeKey:[NSValue valueWithCGSize:_adSize], kATAdLoadingExtraBannerSizeAdjustKey:@NO, kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} delegate:self];
+    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kATAdLoadingExtraBannerAdSizeKey:[NSValue valueWithCGSize:_adSize], kATAdLoadingExtraBannerSizeAdjustKey:@NO} delegate:self];
 }
 
 -(void) removeAdButtonTapped {

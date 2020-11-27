@@ -49,17 +49,22 @@ NSString *const kATSplashExtraPersonalizedTemplateFlag = @"personalized_template
 #pragma mark - Baidu
 NSString *const kATSplashExtraBaiduAppID = @"app_id";
 NSString *const kATSplashExtraBaiduAdPlaceID = @"ad_place_id";
-#pragma mark - Sibmob
+#pragma mark - Sigmob
 NSString *const kATSplashExtraSigmobAppKey = @"app_key";
 NSString *const kATSplashExtraSigmobAppID = @"app_id";
 NSString *const kATSplashExtraSigmobPlacementID = @"placement_id";
+#pragma mark - Admob
+NSString *const kATSplashExtraAdmobAppID = @"app_id";
+NSString *const kATSplashExtraAdmobUnitID = @"unit_id";
+NSString *const kATSplashExtraAdmobOrientation = @"orientation";
 
 Class Splash_AdapterClcass(NSInteger networkFirmID) {
     return NSClassFromString(@{@29:@"ATSigmobSplashAdapter",
                                @15:@"ATTTSplashAdapter",
                                @22:@"ATBaiduSplashAdapter",
                                @8:@"ATGDTSplashAdapter",
-                               @6:@"ATMintegralSplashAdapter"
+                               @6:@"ATMintegralSplashAdapter",
+                               @2:@"ATAdmobSplashAdapter"
                              }[@(networkFirmID)]);
 }
 @implementation ATAdManager (Splash)
@@ -131,4 +136,42 @@ Class Splash_AdapterClcass(NSInteger networkFirmID) {
         }];
     }
 }
+
+/** check AdSource List */
+- (void)checkAdSourceList:(NSString *)placementID {
+    if ([ATAPI logEnabled]) {
+        NSDictionary *curCustomData = [[ATPlacementSettingManager sharedManager] calculateCustomDataForPlacementID:placementID];
+        [[ATPlacementSettingManager sharedManager] requestPlacementSettingWithPlacementID:placementID customData:curCustomData extra:nil completion:^(ATPlacementModel *placementModel, NSError *error) {
+            if (error == nil) {
+                if (placementModel.format == 4) {
+                    if (placementModel.unitGroups.count > 0) {
+                        NSMutableArray *adSourcelist = [NSMutableArray array];
+                        for (ATUnitGroupModel *unitGroupModel in placementModel.unitGroups) {
+                            NSMutableDictionary *info = [NSMutableDictionary dictionary];
+                            info[@"Network_Firm_id"] = @(unitGroupModel.networkFirmID);
+                            info[@"network"] = [self networkNameWithNetworkFirmID:unitGroupModel.networkFirmID];
+                            info[@"adsource_id"] = unitGroupModel.unitGroupID != nil ? unitGroupModel.unitGroupID : @"";
+                            info[@"network_unit_info"] = unitGroupModel.content;
+                            [adSourcelist addObject:info];
+                        }
+                        [ATLogger logMessage:[NSString stringWithFormat:@"\nGet Splash Config info:\n*****************************\n%@\n*****************************",adSourcelist] type:ATLogTypeExternal];
+                    }else {
+                        [ATLogger logMessage:[NSString stringWithFormat:@"\nGet Splash Config info:\n*****************************\nThis placement(%@) does not contain any unit group!\n*****************************",placementID] type:ATLogTypeExternal];
+                    }
+                }else {
+                    [ATLogger logMessage:[NSString stringWithFormat:@"\nGet Splash Config info:\n*****************************\nThis placement(%@) does not belong to Splash!\n*****************************",placementID] type:ATLogTypeExternal];
+                }
+            }else {
+                [ATLogger logMessage:[NSString stringWithFormat:@"\nGet Splash Config info:\n*****************************\nThis placement(%@) request error:%@ mode!\n*****************************",placementID,error] type:ATLogTypeExternal];
+            }
+        }];
+    }else {
+        NSLog(@"\n********************Get Splash Config Start******************\nThis API Only use in debug mode!\n********************Get Splash Config End********************");
+    }
+}
+
+- (NSString*)networkNameWithNetworkFirmID:(NSInteger)nwFirmID {
+    return [ATAPI networkNameMap][@(nwFirmID)] != nil ? [ATAPI networkNameMap][@(nwFirmID)] : @"";
+}
+
 @end

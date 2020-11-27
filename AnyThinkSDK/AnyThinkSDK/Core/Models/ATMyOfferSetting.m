@@ -11,21 +11,21 @@
 -(instancetype) initWithDictionary:(NSDictionary *)dictionary placementID:(NSString*)placementID {
     self = [super initWithDictionary:dictionary];
     if (self != nil) {
-        _placementID = placementID;
-        _format = [dictionary[@"f_t"] integerValue];
-        _videoAreaInteractionEnabled = [dictionary[@"v_c"] boolValue];
-        _bannerAppearanceInterval = [dictionary[@"s_b_t"] doubleValue];
-        _endCardClickable = [dictionary[@"e_c_a"] integerValue];
-        _mute = [dictionary[@"v_m"] boolValue];
-        _closeButtonAppearanceInterval = [dictionary[@"s_c_t"] doubleValue];
-        _resourceDownloadTimeout = [dictionary[@"m_t"] doubleValue] / 1000.0f;//to do: to be divided by 1000.0f
-        _resourceCacheTime = [dictionary[@"o_c_t"] doubleValue] / 1000.0f;
-        _bannerSize = dictionary[@"size"];
-        _splashCountDownTime = [dictionary[@"ctdown_time"] integerValue];
-        _skipable = ![dictionary[@"sk_able"] boolValue];
-        _splashOrientation = [dictionary[@"orient"] integerValue];
-        _storekitTime = [dictionary[@"skit_time"] integerValue];
-        _showBannerCloseBtn = ![dictionary[@"cl_btn"] boolValue];
+        self.placementID = placementID;
+        self.format = [dictionary[@"f_t"] integerValue];
+        self.videoClickable = [dictionary[@"v_c"] integerValue] + 1;//add one to be the same with adx
+        self.bannerAppearanceInterval = [dictionary[@"s_b_t"] doubleValue];
+        self.endCardClickable = [dictionary[@"e_c_a"] integerValue] + 1;//add one to be the same with adx
+        self.unMute = [dictionary[@"v_m"] boolValue];
+        self.closeButtonAppearanceInterval = [dictionary[@"s_c_t"] doubleValue];
+        self.resourceDownloadTimeout = [dictionary[@"m_t"] doubleValue] / 1000.0f;//to do: to be divided by 1000.0f
+        self.resourceCacheTime = [dictionary[@"o_c_t"] doubleValue] / 1000.0f;
+        self.bannerSize = dictionary[@"size"];
+        self.splashCountDownTime = [dictionary[@"ctdown_time"] integerValue];
+        self.skipable = ![dictionary[@"sk_able"] boolValue];
+        self.splashOrientation = [dictionary[@"orient"] integerValue];
+        self.storekitTime = [dictionary[@"skit_time"] integerValue] + 1;//add one to be the same with adx
+        self.showBannerCloseBtn = ![dictionary[@"cl_btn"] boolValue];
 
     }
     return self;
@@ -35,7 +35,7 @@
     return [[self alloc] initWithDictionary:@{@"f_t":@1,
                                               @"v_c":@YES,
                                               @"s_b_t":@(3.0f),
-                                              @"e_c_a":@(ATMyOfferEndCardClickableCTA),
+                                              @"e_c_a":@(ATEndCardClickableCTA),
                                               @"v_m":@NO,
                                               @"s_c_t":@3.0f,
                                               @"m_t":@5000.0f,

@@ -8,10 +8,12 @@
 
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
-#import "ATMyOfferVideoViewController.h"
-#import "ATMyOfferFullScreenPictureViewController.h"
+#import "ATOfferVideoViewController.h"
+#import "ATOfferFullScreenPictureViewController.h"
 #import "ATMyOfferInterstitialDelegate.h"
-@interface ATMyOfferInterstitialSharedDelegate : NSObject<ATMyOfferVideoDelegate,ATMyOfferFullScreenPictureDelegate , SKStoreProductViewControllerDelegate>
+#import "ATMyOfferOfferModel.h"
+#import "ATMyOfferSetting.h"
+@interface ATMyOfferInterstitialSharedDelegate : NSObject<ATOfferVideoDelegate,ATOfferFullScreenPictureDelegate , SKStoreProductViewControllerDelegate>
 +(instancetype) sharedDelegate;
 -(void) showInterstitialWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting*)setting viewController:(UIViewController*)viewController delegate:(id<ATMyOfferInterstitialDelegate>)delegate;
 @end

@@ -10,6 +10,7 @@
 #import "ATUnitGroupModel.h"
 #import "ATMyOfferOfferModel.h"
 #import "ATMyOfferSetting.h"
+#import "ATADXPlacementSetting.h"
 #import <UIKit/UIKit.h>
 typedef NS_ENUM(NSInteger, ATADShowType) {
     /**
@@ -109,6 +110,9 @@ extern NSString *const kPlacementModelCustomDataKey;
 @property(nonatomic, readonly) BOOL preloadMyOffer;
 //extra
 @property(nonatomic, readonly) NSDictionary *callback;
+
+@property(nonatomic, readonly) NSDictionary* adxSettingDict;
+@property(nonatomic, readonly) NSArray<ATUnitGroupModel*>* adxUnitGroups;
 
 
 -(Class) adManagerClass;

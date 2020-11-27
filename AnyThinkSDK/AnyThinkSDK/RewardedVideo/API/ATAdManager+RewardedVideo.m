@@ -48,6 +48,24 @@ NSString *const kATRewardedVideoCallbackExtraPriority = @"adsource_index";
     }];
 }
 
+- (ATCheckLoadModel*)checkRewardedVideoLoadStatusForPlacementID:(NSString *)placementID {
+    ATRewardedVideo *rewardedVideo = nil;
+    ATCheckLoadModel *checkLoadModel = [[ATCheckLoadModel alloc] init];
+    if ([[ATWaterfallManager sharedManager] loadingAdForPlacementID:placementID]) {
+        checkLoadModel.isLoading = YES;
+    }
+    if ([self rewardedVideoReadyForPlacementID:placementID scene:nil caller:ATAdManagerReadyAPICallerReady rewardedVidel:&rewardedVideo]) {
+        checkLoadModel.isReady = YES;
+        NSMutableDictionary *delegateExtra = [NSMutableDictionary dictionaryWithDictionary:[rewardedVideo.customEvent delegateExtra]];
+        if ([delegateExtra containsObjectForKey:kATADDelegateExtraIDKey]) { [delegateExtra removeObjectForKey:kATADDelegateExtraIDKey]; }
+        checkLoadModel.adOfferInfo = delegateExtra;
+    }
+    NSMutableDictionary *info = [NSMutableDictionary dictionaryWithDictionary:[ATGeneralAdAgentEvent apiLogInfoWithPlacementID:placementID format:ATAdFormatInterstitial api:kATAPICheckLoadStatus]];
+    info[@"result"] = @{@"isLoading":checkLoadModel.isLoading ? @"YES" : @"NO", @"isReady":checkLoadModel.isReady ? @"YES" : @"NO", @"adOfferInfo":![Utilities isBlankDictionary:checkLoadModel.adOfferInfo] ? checkLoadModel.adOfferInfo : @{}};
+    [ATLogger logMessage:[NSString stringWithFormat:@"\nAPI invocation info:\n*****************************\n%@ \n*****************************", info] type:ATLogTypeTemporary];
+    return checkLoadModel;
+}
+
 -(void) showRewardedVideoWithPlacementID:(NSString*)placementID scene:(NSString*)scene inViewController:(UIViewController*)viewController delegate:(id<ATRewardedVideoDelegate>)delegate {
     [ATLogger logMessage:[NSString stringWithFormat:@"\nAPI invocation info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent apiLogInfoWithPlacementID:placementID format:1 api:kATAPIShow]] type:ATLogTypeTemporary];
     NSString *showingScene = nil;
@@ -61,9 +79,9 @@ NSString *const kATRewardedVideoCallbackExtraPriority = @"adsource_index";
     if ([self rewardedVideoReadyForPlacementID:placementID scene:showingScene caller:ATAdManagerReadyAPICallerShow rewardedVidel:&rewardedVideo]) {
         rewardedVideo.scene = showingScene;
         viewController.ad = rewardedVideo;
+        [rewardedVideo.customEvent saveShowAPIContext];
         [rewardedVideo.unitGroup.adapterClass showRewardedVideo:rewardedVideo inViewController:viewController delegate:delegate];
         rewardedVideo.showTimes++;
-        [rewardedVideo.customEvent saveShowAPIContext];
         [[ATCapsManager sharedManager] setShowFlagForPlacementID:placementID requestID:rewardedVideo.requestID];
         [[ATPlacementSettingManager sharedManager] setStatus:NO forPlacementID:rewardedVideo.placementModel.placementID];
     } else {
@@ -71,7 +89,7 @@ NSString *const kATRewardedVideoCallbackExtraPriority = @"adsource_index";
     }
     if (error != nil) {
         if ([delegate respondsToSelector:@selector(rewardedVideoDidFailToPlayForPlacementID:error:extra:)]) {
-            [delegate rewardedVideoDidFailToPlayForPlacementID:placementID error:error extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:rewardedVideo.unitGroup.unitID != nil ? rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(rewardedVideo.priority),kATRewardedVideoCallbackExtraPrice:@(rewardedVideo.unitGroup.headerBidding ? rewardedVideo.unitGroup.bidPrice:rewardedVideo.unitGroup.price)}];
+            [delegate rewardedVideoDidFailToPlayForPlacementID:placementID error:error extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:rewardedVideo.unitGroup.unitID != nil ? rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(rewardedVideo.priority),kATRewardedVideoCallbackExtraPrice:rewardedVideo != nil ? (rewardedVideo.unitGroup.headerBidding ? @([rewardedVideo.unitGroup.bidPrice doubleValue]):@([rewardedVideo.unitGroup.price doubleValue])) : @(0)}];
         }
     }
 }

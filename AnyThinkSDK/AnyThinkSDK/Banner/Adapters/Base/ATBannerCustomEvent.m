@@ -31,16 +31,16 @@
 }
 
 -(NSDictionary*)delegateExtra {
-    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.priorityIndex),kATBannerDelegateExtraPrice:@(self.banner.price), kATADDelegateExtraECPMLevelKey:@(self.banner.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.banner.placementModel.groupID)}];
+    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.priorityIndex),kATBannerDelegateExtraPrice:@([self.banner.price doubleValue]), kATADDelegateExtraECPMLevelKey:@(self.banner.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.banner.placementModel.groupID)}];
     NSString *channel = [ATAPI sharedInstance].channel;
     if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
     NSString *subchannel = [ATAPI sharedInstance].subchannel;
     if (subchannel != nil) { extra[kATADDelegateExtraSubChannelKey] = subchannel; }
     if ([self.banner.placementModel.associatedCustomData count] > 0) { extra[kATADDelegateExtraCustomRuleKey] = self.banner.placementModel.associatedCustomData; }
-    NSString *extraID = [NSString stringWithFormat:@"%@%@%@",self.banner.requestID,self.banner.unitGroup.unitID,self.sdkTime];
-    extra[kATADDelegateExtraIDKey] = [extraID md5];
+    NSString *extraID = [NSString stringWithFormat:@"%@_%@_%@",self.banner.requestID,self.banner.unitGroup.unitID,self.sdkTime];
+    extra[kATADDelegateExtraIDKey] = extraID;
     extra[kATADDelegateExtraAdunitIDKey] = self.banner.placementModel.placementID;
-    extra[kATADDelegateExtraPublisherRevenueKey] = @(self.banner.price / 1000.0f);
+    extra[kATADDelegateExtraPublisherRevenueKey] = @([self.banner.price doubleValue] / 1000.f);
     extra[kATADDelegateExtraCurrencyKey] = self.banner.placementModel.callback[@"currency"];
     extra[kATADDelegateExtraCountryKey] = self.banner.placementModel.callback[@"cc"];
     extra[kATADDelegateExtraFormatKey] = @"Banner";

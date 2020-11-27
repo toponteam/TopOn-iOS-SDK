@@ -125,6 +125,9 @@ static NSString *const kPlacementNameKey = @"placement_name";
         _customEvent = [[ATIronSourceRewardedVideoCustomEvent alloc] initWithUnitID:serverInfo[@"instance_id"] serverInfo:serverInfo localInfo:localInfo];
         _customEvent.requestNumber = [serverInfo[@"request_num"] integerValue];
         _customEvent.requestCompletionBlock = completion;
+        if (localInfo[kATAdLoadingExtraUserIDKey] != nil) {
+            [NSClassFromString(kIronSourceClassName) setDynamicUserId:localInfo[kATAdLoadingExtraUserIDKey]];
+        }
         [NSClassFromString(kIronSourceClassName) setISDemandOnlyRewardedVideoDelegate:[ATIronSrouceRewardedVideoDelegate sharedDelegateWithAppKey:serverInfo[@"app_key"]]];
         [NSClassFromString(kIronSourceClassName) loadISDemandOnlyRewardedVideo:serverInfo[@"instance_id"]];
     } else {

@@ -22,6 +22,7 @@ extern NSString *const kATInterstitialExtraAdSize600_600;
 extern NSString *const kATInterstitialExtraAdSize600_900;
 @interface ATAdManager (Interstitial)
 -(BOOL) interstitialReadyForPlacementID:(NSString*)placementID;
+-(ATCheckLoadModel*) checkInterstitialLoadStatusForPlacementID:(NSString*)placementID;
 -(void) showInterstitialWithPlacementID:(NSString*)placementID inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate;
 -(void) showInterstitialWithPlacementID:(NSString*)placementID scene:(NSString*)scene inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate;
 @end

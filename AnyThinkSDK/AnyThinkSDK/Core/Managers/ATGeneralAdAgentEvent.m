@@ -27,6 +27,7 @@ NSString *const kGeneralAdAgentEventExtraInfoSDKNotCalledReasonKey = @"sdk_not_c
 NSString *const kGeneralAdAgentEventExtraInfoRewardedFlagKey = @"rewarded_flag";
 NSString *const kGeneralAdAgentEventExtraInfoDefaultLoadFlagKey = @"default_load";
 NSString *const kATAPILoad = @"load";
+NSString *const kATAPICheckLoadStatus = @"checkLoadStatus";
 NSString *const kATAPIIsReady = @"isReady";
 NSString *const kATAPIShow = @"show";
 static NSString *kEventKey = @"1004620";

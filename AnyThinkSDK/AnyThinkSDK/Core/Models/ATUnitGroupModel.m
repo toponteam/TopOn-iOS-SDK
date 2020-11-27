@@ -21,7 +21,7 @@ extern NSString *const kUnitGroupBidInfoBidTokenUsedFlagKey;
 -(instancetype) initWithDictionary:(NSDictionary *)dictionary {
     self = [super initWithDictionary:dictionary];
     if (self != nil) {
-        _adapterClassString = dictionary[@"adapter_class"];
+        _adapterClassString = dictionary[@"adapter_class"];//@"ATAdmobSplashAdapter"
         _adapterClass = NSClassFromString(_adapterClassString);
         _capByDay = [dictionary[@"caps_d"] integerValue] == -1 ? NSIntegerMax : [dictionary[@"caps_d"] integerValue];
         _capByHour = [dictionary[@"caps_h"] integerValue] == -1 ? NSIntegerMax : [dictionary[@"caps_h"] integerValue];
@@ -35,9 +35,9 @@ extern NSString *const kUnitGroupBidInfoBidTokenUsedFlagKey;
         _showingInterval = [dictionary[@"pacing"] doubleValue];
         _unitGroupID = [NSString stringWithFormat:@"%@", dictionary[@"ug_id"]];
         _unitID = [NSString stringWithFormat:@"%@", dictionary[@"unit_id"]];
-        _price = [dictionary[@"ecpm"] doubleValue];
+        _price = [[NSDecimalNumber decimalNumberWithString:[NSString stringWithFormat:@"%lf",[[NSString stringWithFormat:@"%@",dictionary[@"ecpm"]] doubleValue]]] stringValue];
         _ecpmLevel = [dictionary[@"ecpm_level"] integerValue];
-        _content = [NSJSONSerialization JSONObjectWithData:[dictionary[@"content"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil];
+        _content = [NSJSONSerialization JSONObjectWithData:[dictionary[@"content"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil];//@{@"unit_id":@"ca-app-pub-3940256099942544/1033173712",@"orientation":@(2)}
         _adSize = [Utilities sizeFromString:[_content[@"size"] length] > 0 ? _content[@"size"] : [ATUnitGroupModel defaultSizeWithNetworkFirmID:_networkFirmID]];
         _headerBiddingRequestTimeout = [dictionary[@"hb_timeout"] doubleValue];
         _bidTokenTime = [dictionary[@"hb_t_c_t"] doubleValue] / 1000.0f;
@@ -65,6 +65,6 @@ extern NSString *const kUnitGroupBidInfoBidTokenUsedFlagKey;
 }
 
 -(NSString*)description {
-    return [NSString stringWithFormat:@"%@", @{@"unit_group_id":_unitGroupID != nil ? _unitGroupID : @"", @"network_firm_id":@(_networkFirmID), @"adapter_class":_adapterClassString, @"ad_source_id":_unitID, @"price":@(_price)}];
+    return [NSString stringWithFormat:@"%@", @{@"unit_group_id":_unitGroupID != nil ? _unitGroupID : @"", @"network_firm_id":@(_networkFirmID), @"adapter_class":_adapterClassString, @"ad_source_id":_unitID, @"price":_price}];
 }
 @end

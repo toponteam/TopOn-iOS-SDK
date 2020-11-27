@@ -89,7 +89,14 @@
 }
 
 -(void) insertUnitGroups:(NSArray<ATUnitGroupModel*>*)unitGrous {
-    [unitGrous enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { [self insertUnitGroup:obj price:obj.price]; }];
+//    [unitGrous enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { [self insertUnitGroup:obj price:obj.price]; }];
+    [_unitGroups addObjectsFromArray:unitGrous];
+    NSArray<ATUnitGroupModel*> *array = [_unitGroups sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        NSString *lhs = [self priceForUnitGroup:obj1];
+        NSString *rhs = [self priceForUnitGroup:obj2];
+        return [rhs compare:lhs options:NSNumericSearch];
+    }];
+    _unitGroups = array.mutableCopy;
 }
 
 -(void) removeUnitGroupWithUnitID:(NSString*)unitID {
@@ -107,10 +114,11 @@
     RemoveUnitGroup(_timeoutUnitGroups, unitID);
 }
 
--(void) insertUnitGroup:(ATUnitGroupModel*)unitGroup price:(double)price {
+-(void) insertUnitGroup:(ATUnitGroupModel*)unitGroup price:(NSString *)price {
     __block NSUInteger indexToInsert = [_unitGroups count];
     [_unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (price > [ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID]) {
+        NSString *innerPrice = [ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID];
+        if ([price compare: innerPrice options:NSNumericSearch] == NSOrderedDescending) {
             indexToInsert = idx;
             *stop = YES;
         }
@@ -121,9 +129,20 @@
 -(ATUnitGroupModel*)unitGroupWithMaximumPrice {
     NSMutableArray<ATUnitGroupModel*> *unitGroups = [NSMutableArray<ATUnitGroupModel*> arrayWithArray:_unitGroups];
     [unitGroups removeObjectsInArray:_requestSentUnitGroups];
-    __block ATUnitGroupModel *unitGroup = [unitGroups firstObject];
-    [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { if ([ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID] > [ATBidInfoManager priceForUnitGroup:unitGroup placementID:_placementID requestID:_requestID]) { unitGroup = obj; } }];
-    return unitGroup;
+//    __block ATUnitGroupModel *unitGroup = [unitGroups firstObject];
+//    [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { if ([ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID] > [ATBidInfoManager priceForUnitGroup:unitGroup placementID:_placementID requestID:_requestID]) { unitGroup = obj; } }];
+//    return unitGroup;
+    if (unitGroups.count <= 1) {
+        return unitGroups.firstObject;
+    }
+    NSArray<ATUnitGroupModel *> *array = [unitGroups sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        
+        NSString *lhs = [self priceForUnitGroup:obj1];
+        NSString *rhs = [self priceForUnitGroup:obj2];
+        return [rhs compare:lhs options:NSNumericSearch];
+    }];
+    return array.firstObject;
+    
 }
 
 -(ATUnitGroupModel*) unitGroupWithUnitID:(NSString*)unitID {
@@ -140,13 +159,27 @@
 }
 
 -(ATUnitGroupModel*)unitGroupWithMinimumPrice {
-    __block ATUnitGroupModel *minimumUG = [_requestSentUnitGroups firstObject];
-    [_requestSentUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { if ([ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID] < [ATBidInfoManager priceForUnitGroup:minimumUG placementID:_placementID requestID:_requestID]) { minimumUG = obj; } }];
-    return minimumUG;
+//    __block ATUnitGroupModel *minimumUG = [_requestSentUnitGroups firstObject];
+//    [_requestSentUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { if ([ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID] < [ATBidInfoManager priceForUnitGroup:minimumUG placementID:_placementID requestID:_requestID]) { minimumUG = obj; } }];
+//    return minimumUG;
+    if (_requestSentUnitGroups.count <= 1) {
+        return _requestSentUnitGroups.firstObject;
+    }
+    NSArray<ATUnitGroupModel *> *array = [_requestSentUnitGroups sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        
+        NSString *lhs = [self priceForUnitGroup:obj1];
+        NSString *rhs = [self priceForUnitGroup:obj2];
+        return [lhs compare:rhs options:NSNumericSearch];
+    }];
+    return array.firstObject;
 }
 
 -(void) enumerateTimeoutUnitGroupWithBlock:(void(^)(ATUnitGroupModel*unitGroup))block {
     [_timeoutUnitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { block(obj); }];
+}
+
+- (NSString *)priceForUnitGroup:(ATUnitGroupModel *)model {
+    return [ATBidInfoManager priceForUnitGroup:model placementID:_placementID requestID:_requestID];
 }
 @end
 
@@ -195,8 +228,24 @@
     
     NSArray<NSString*>* shownUGIDs = [[ATCapsManager sharedManager] showRecordsForPlacementID:_placementID requestID:_requestID];
     __block ATUnitGroupModel *maxUG = [finishedUGs firstObject];
-    [finishedUGs enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { if (![shownUGIDs containsObject:obj.unitID] && [ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID] > [ATBidInfoManager priceForUnitGroup:maxUG placementID:_placementID requestID:_requestID]) { maxUG = obj; } }];
+    [finishedUGs enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        
+        NSString * objPrice = [ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID];
+        NSString * ugPrice = [ATBidInfoManager priceForUnitGroup:maxUG placementID:_placementID requestID:_requestID];
+
+        if (![shownUGIDs containsObject:obj.unitID] &&
+            [objPrice compare:ugPrice options:NSNumericSearch] == NSOrderedDescending) {
+            maxUG = obj;
+        }
+    }];
     return maxUG;
+//    NSArray<ATUnitGroupModel *> *array = [shownUGIDs sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+//
+//        NSString *lhs = [ATBidInfoManager priceForUnitGroup:obj1 placementID:_placementID requestID:_requestID];
+//        NSString *rhs = [ATBidInfoManager priceForUnitGroup:obj2 placementID:_placementID requestID:_requestID];
+//        return [rhs compare:lhs options:NSNumericSearch];
+//    }];
+//    return array.firstObject;
 }
 
 -(void) finish {

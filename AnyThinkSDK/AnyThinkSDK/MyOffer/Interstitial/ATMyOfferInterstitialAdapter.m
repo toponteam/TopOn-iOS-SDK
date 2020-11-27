@@ -15,8 +15,6 @@
 #import "ATAdAdapter.h"
 #import "ATAdManager+Interstitial.h"
 
-static NSString *const kMyOfferClassName = @"ATMyOfferOfferManager";
-
 @interface ATMyOfferInterstitialAdapter()
 @property(nonatomic, readonly) ATMyOfferInterstitialCustomEvent *customEvent;
 @end
@@ -24,7 +22,7 @@ static NSString *const kMyOfferClassName = @"ATMyOfferOfferManager";
 @implementation ATMyOfferInterstitialAdapter
 +(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall {
     ATMyOfferOfferModel *offerModel = Interstitial_FindMyOfferModel(placementModel.offers, unitGroup.content[@"my_oid"]);
-    if (offerModel != nil && [[NSClassFromString(kMyOfferClassName) sharedManager] resourceReadyForOfferModel:offerModel]) {
+    if (offerModel != nil && ![[ATMyOfferOfferManager sharedManager] checkExcludedWithOfferModel:offerModel] && [[ATMyOfferOfferManager sharedManager] resourceReadyForOfferModel:offerModel]) {
         ATMyOfferInterstitialCustomEvent *customEvent = [[ATMyOfferInterstitialCustomEvent alloc] initWithInfo:[ATAdCustomEvent customInfoWithUnitGroupModel:unitGroup extra:nil] localInfo:nil];
         ATInterstitial *ad = [[ATInterstitial alloc] initWithPriority:priority placementModel:placementModel requestID:requestID assets:@{kInterstitialAssetsUnitIDKey:offerModel.offerID, kInterstitialAssetsCustomEventKey:customEvent, kAdAssetsCustomObjectKey:offerModel} unitGroup:unitGroup finalWaterfall:finalWaterfall];
         return ad;
@@ -38,12 +36,12 @@ static NSString *const kMyOfferClassName = @"ATMyOfferOfferManager";
 }
 
 +(BOOL) adReadyWithCustomObject:(ATMyOfferOfferModel*)customObject info:(NSDictionary*)info {
-    return [[NSClassFromString(kMyOfferClassName) sharedManager] offerReadyForInterstitialOfferModel:customObject];
+    return [[ATMyOfferOfferManager sharedManager] offerReadyForInterstitialOfferModel:customObject];
 }
 
 +(ATMyOfferOfferModel*) resourceReadyMyOfferForPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel info:(NSDictionary*)info {
     ATMyOfferOfferModel *offerModel = Interstitial_FindMyOfferModel(placementModel.offers, unitGroupModel.content[@"my_oid"]);
-    return [[NSClassFromString(kMyOfferClassName) sharedManager] resourceReadyForOfferModel:offerModel] ? offerModel : nil;
+    return [[ATMyOfferOfferManager sharedManager] resourceReadyForOfferModel:offerModel] ? offerModel : nil;
 }
 
 +(void) showInterstitial:(ATInterstitial*)interstitial inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate {
@@ -51,17 +49,11 @@ static NSString *const kMyOfferClassName = @"ATMyOfferOfferManager";
     customEvent.delegate = delegate;
     customEvent.interstitial = interstitial;
     interstitial.customEvent.delegate = delegate;
-    [[NSClassFromString(kMyOfferClassName) sharedManager] showInterstitialWithOfferModel:interstitial.customObject setting:interstitial.placementModel.myOfferSetting viewController:viewController delegate:customEvent];
+    [[ATMyOfferOfferManager sharedManager] showInterstitialWithOfferModel:interstitial.customObject setting:interstitial.placementModel.myOfferSetting viewController:viewController delegate:customEvent];
 }
 
 -(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
-    if (self != nil) {
-        if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameMyOffer]) {
-            [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameMyOffer];
-            if (NSClassFromString(kMyOfferClassName) != nil) { [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameMyOffer]; }
-        }
-    }
     return self;
 }
 
@@ -77,26 +69,21 @@ ATMyOfferOfferModel* Interstitial_FindMyOfferModel(NSArray<ATMyOfferOfferModel*>
 }
 
 -(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
-    if (NSClassFromString(kMyOfferClassName) != nil) {
-        ATPlacementModel *placementModel = (ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey];
-        ATMyOfferOfferModel *offerModel = Interstitial_FindMyOfferModel(placementModel.offers, serverInfo[@"my_oid"]);
-        
-        _customEvent = [[ATMyOfferInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
-        _customEvent.requestCompletionBlock = completion;
-        __weak typeof(self) weakSelf = self;
-        [[NSClassFromString(kMyOfferClassName) sharedManager]loadOfferWithOfferModel:offerModel setting:placementModel.myOfferSetting extra:nil completion:^(NSError *error) {
-            if (error == nil) {
-                if (offerModel != nil && offerModel.offerID != nil && weakSelf.customEvent != nil) {
-                    [weakSelf.customEvent trackInterstitialAdLoaded:offerModel adExtra:nil];
-                }
-            }else{
-                [weakSelf.customEvent trackInterstitialAdLoadFailed:error];
+    ATPlacementModel *placementModel = (ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey];
+    ATMyOfferOfferModel *offerModel = Interstitial_FindMyOfferModel(placementModel.offers, serverInfo[@"my_oid"]);
+    
+    _customEvent = [[ATMyOfferInterstitialCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
+    _customEvent.requestCompletionBlock = completion;
+    __weak typeof(self) weakSelf = self;
+    [[ATMyOfferOfferManager sharedManager]loadOfferWithOfferModel:offerModel setting:placementModel.myOfferSetting extra:localInfo completion:^(NSError *error) {
+        if (error == nil) {
+            if (offerModel != nil && offerModel.offerID != nil && weakSelf.customEvent != nil) {
+                [weakSelf.customEvent trackInterstitialAdLoaded:offerModel adExtra:nil];
             }
-        }];
-        
-    } else {
-        completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"MyOffer"]}]);
-    }
+        }else{
+            [weakSelf.customEvent trackInterstitialAdLoadFailed:error];
+        }
+    }];
 }
 
 @end

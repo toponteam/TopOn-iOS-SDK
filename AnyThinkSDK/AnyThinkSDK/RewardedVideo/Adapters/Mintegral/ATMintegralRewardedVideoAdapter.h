@@ -90,7 +90,7 @@ viewController:(nonnull UIViewController*)viewController;
 @protocol ATMTGBiddingResponse<NSObject>
 @property (nonatomic,strong,readonly) NSError *error;
 @property (nonatomic,assign,readonly) BOOL success;
-@property (nonatomic,assign,readonly) double price;
+@property (nonatomic,assign,readonly) NSString *price;
 @property (nonatomic,copy,readonly) NSString *currency;
 @property (nonatomic,copy,readonly) NSString *bidToken;
 -(void)notifyWin;

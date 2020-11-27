@@ -80,6 +80,8 @@ NSInteger const ATADLoadingErrorCodeUnitGroupsFilteredOut = 1018;
 NSInteger const ATADLoadingErrorCodeFailureTooFrequent = 1019;
 NSInteger const ATADLoadingErrorCodeLoadCapsExceeded = 1020;
 
+NSInteger const ATADLoadingADXFailedCode = 3001;
+
 NSString *const ATSDKInitErrorDomain = @"com.anythink.AnyThinkSDKInitErrorDomain";
 NSInteger const ATSDKInitErrorCodeDataConsentNotSet = 2001;
 NSInteger const ATSDKInitErrorCodeDataConsentForbidden = 2002;
@@ -111,7 +113,7 @@ NSString *const kNetworkNameIronSource = @"ironsource";
 NSString *const kNetworkNameVungle = @"vungle";
 NSString *const kNetworkNameAdColony = @"adcolony";
 NSString *const kNetworkNameUnityAds = @"unityads";
-NSString *const kNetworkNameTT = @"tt";
+NSString *const kNetworkNameTT = @"pangle";
 NSString *const kNetworkNameOneway = @"oneway";
 NSString *const kNetworkNameAppnext = @"appnext";
 NSString *const kNetworkNameYeahmobi = @"yeahmobi";
@@ -126,6 +128,8 @@ NSString *const kNetworkNameOgury = @"Ogury";
 NSString *const kNetworkNameStartApp = @"StartApp";
 NSString *const kNetworkNameFyber = @"Fyber";
 NSString *const kNetworkNameGoogleAdManager = @"GoogleAdManager";
+NSString *const kNetworkNameADX = @"Adx";
+NSString *const kNetworkNameHelium = @"Helium";
 
 NSString *const kInmobiGDPRStringKey = @"gdpr";
 NSString *const kInmobiConsentStringKey = @"consent_string";
@@ -158,6 +162,24 @@ NSString *const kATCustomDataChannelKey = @"channel";//string
 NSString *const kATCustomDataSubchannelKey = @"sub_channel";//string
 NSString *const kATCustomDataSegmentIDKey = @"segment_id";//int
 
+NSString *const kATDeviceDataInfoOSVersionNameKey = @"os_vn";
+NSString *const kATDeviceDataInfoOSVersionCodeKey = @"os_vc";
+NSString *const kATDeviceDataInfoPackageNameKey = @"package_name";
+NSString *const kATDeviceDataInfoAppVersionNameKey = @"app_vn";
+NSString *const kATDeviceDataInfoAppVersionCodeKey = @"app_vc";
+NSString *const kATDeviceDataInfoBrandKey = @"brand";
+NSString *const kATDeviceDataInfoModelKey = @"model";
+NSString *const kATDeviceDataInfoScreenKey = @"screen";
+NSString *const kATDeviceDataInfoNetworkTypeKey = @"network_type";
+NSString *const kATDeviceDataInfoMNCKey = @"mnc";
+NSString *const kATDeviceDataInfoMCCKey = @"mcc";
+NSString *const kATDeviceDataInfoLanguageKey = @"language";
+NSString *const kATDeviceDataInfoTimeZoneKey = @"timezone";
+NSString *const kATDeviceDataInfoUserAgentKey = @"ua";
+NSString *const kATDeviceDataInfoOrientKey = @"orient";
+NSString *const kATDeviceDataInfoIDFAKey = @"idfa";
+NSString *const kATDeviceDataInfoIDFVKey = @"idfv";
+
 static NSString *kUserDefaultConsentInfoKey = @"com.anythink.dataConsentInfo";
 static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
 
@@ -180,6 +202,13 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
 @property(nonatomic) NSString *userAgent_impl;
 @property(nonatomic) WKWebView *webView;
 @property(atomic) NSDate *lastEnterBackgroundDate;
+
+@property(nonatomic, readonly) ATThreadSafeAccessor *exludeAppleIdListAccessor;
+@property(nonatomic, readwrite) NSArray<NSString*> *exludeAppleIdList;
+
+@property(nonatomic, readonly) ATThreadSafeAccessor *deniedUploadInfoListAccessor;
+@property(nonatomic, readwrite) NSArray<NSString*> *deniedUploadInfoList;
+
 @end
 
 @implementation ATAPI
@@ -194,7 +223,7 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
 }
 
 +(NSDictionary<NSNumber*, NSString*>*)networkNameMap {
-    return @{@1:kNetworkNameFacebook, @2:kNetworkNameAdmob, @3:kNetworkNameInmobi, @4:kNetworkNameFlurry, @5:kNetworkNameApplovin, @6:kNetworkNameMintegral, @7:kNetworkNameMopub, @8:kNetworkNameGDT, @9:kNetworkNameChartboost, @10:kNetworkNameTapjoy, @11:kNetworkNameIronSource, @12:kNetworkNameUnityAds, @13:kNetworkNameVungle, @14:kNetworkNameAdColony, @15:kNetworkNameTT, @17:kNetworkNameOneway, @18:kNetworkNameMobPower, @20:kNetworkNameYeahmobi, @21:kNetworkNameAppnext, @22:kNetworkNameBaidu, @23:kNetworkNameNend, @24:kNetworkNameMaio, @25:kNetworkNameStartApp, @28:kNetworkNameKS, @29:kNetworkNameSigmob, @33:kNetworkNameGoogleAdManager,@35:kNetworkNameMyOffer, @36:kNetworkNameOgury, @37:kNetworkNameFyber};
+    return @{@1:kNetworkNameFacebook, @2:kNetworkNameAdmob, @3:kNetworkNameInmobi, @4:kNetworkNameFlurry, @5:kNetworkNameApplovin, @6:kNetworkNameMintegral, @7:kNetworkNameMopub, @8:kNetworkNameGDT, @9:kNetworkNameChartboost, @10:kNetworkNameTapjoy, @11:kNetworkNameIronSource, @12:kNetworkNameUnityAds, @13:kNetworkNameVungle, @14:kNetworkNameAdColony, @15:kNetworkNameTT, @17:kNetworkNameOneway, @18:kNetworkNameMobPower, @20:kNetworkNameYeahmobi, @21:kNetworkNameAppnext, @22:kNetworkNameBaidu, @23:kNetworkNameNend, @24:kNetworkNameMaio, @25:kNetworkNameStartApp, @28:kNetworkNameKS, @29:kNetworkNameSigmob, @33:kNetworkNameGoogleAdManager,@35:kNetworkNameMyOffer, @36:kNetworkNameOgury, @37:kNetworkNameFyber, @66:kNetworkNameADX, @40:kNetworkNameHelium};
 }
 
 +(NSDate*)firstLaunchDate {
@@ -285,6 +314,10 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
                 dependenciesKey:@{@"AnyThinkChartboostRewardedVideoAdapter":@[@"Chartboost"],
                                   @"AnyThinkChartboostInterstitialAdapter":@[@"Chartboost"] },
                 frameworksKey:@[@"Chartboost.framework"]},
+        @"Helium":@{
+                dependenciesKey:@{@"AnyThinkChartboostRewardedVideoAdapter":@[@"HeliumSdk"],
+                                  @"AnyThinkChartboostInterstitialAdapter":@[@"HeliumSdk"] },
+                frameworksKey:@[@"Chartboost.framework",@"HeliumSdk.framework",@"HeliumAdapterChartboost.framework"]},
         @"TikTok":@{dependenciesKey:@{@"AnyThinkTTNativeAdapter":@[@"BUNativeAdsManager", @"BUAdSlot", @"BUNativeAd"],
                                       @"AnyThinkTTRewardedVideoAdapter":@[@"BURewardedVideoModel", @"BURewardedVideoAd"],
                                       @"AnyThinkTTBannerAdapter":@[@"BUBannerAdView", @"BUSize", @"BUNativeExpressBannerView"],
@@ -475,6 +508,9 @@ static NSString *const UAInfoUAKey = @"ua";
         
         _psIDAccessor = [ATThreadSafeAccessor new];
         
+        _exludeAppleIdListAccessor = [ATThreadSafeAccessor new];
+        _deniedUploadInfoListAccessor = [ATThreadSafeAccessor new];
+        
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleApplicationWillResignActiveNotification:) name:UIApplicationWillResignActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleApplicationDidBecomeActiveNotification:) name:UIApplicationDidBecomeActiveNotification object:nil];
     }
@@ -501,8 +537,8 @@ static NSString *const UAInfoUAKey = @"ua";
                 
                 [webView evaluateJavaScript:@"navigator.userAgent" completionHandler:^(id __nullable userAgent, NSError * __nullable error) {
                     if ([userAgent isKindOfClass:[NSString class]]) {
-                        [_userAgentAccessor writeWithBlock:^{
-                            _userAgent_impl = userAgent;
+                        [self->_userAgentAccessor writeWithBlock:^{
+                            self->_userAgent_impl = userAgent;
                             [[NSUserDefaults standardUserDefaults] setObject:@{UAInfoSystemVersionKey:system, UAInfoUAKey:userAgent} forKey:UAInfoKey];
                         }];
                     }
@@ -719,7 +755,7 @@ static NSString *const psIDInfoIDKey = @"id";
 }
 
 -(NSString*)version {
-    return @"UA_5.6.8";
+    return @"UA_5.7.3";
 }
 
 -(void) setDataConsentSet:(ATDataConsentSet)dataConsentSet consentString:(NSDictionary<NSString *,NSString *> *)consentString {
@@ -808,4 +844,38 @@ static NSString *const psIDInfoIDKey = @"id";
         weakSelf.networkInitFlags[networkName] = @(newValue);
     }];
 }
+
+-(void) setExludeAppleIdArray:(NSArray *)appleIdArray {
+    [_exludeAppleIdListAccessor writeWithBlock:^{
+        self->_exludeAppleIdList = appleIdArray;
+    }];
+    
+}
+-(NSArray*) exludeAppleIdArray {
+    return [_exludeAppleIdListAccessor readWithBlock:^{ return self->_exludeAppleIdList; }];
+}
+
+-(void) setDeniedUploadInfoArray:(NSArray *)uploadInfoArray {
+    __weak typeof(self) weakSelf = self;
+    [_deniedUploadInfoListAccessor writeWithBlock:^{
+        weakSelf.deniedUploadInfoList = uploadInfoArray;
+    }];
+}
+
+-(NSArray*) deniedUploadInfoArray {
+    __weak typeof(self) weakSelf = self;
+    return [_deniedUploadInfoListAccessor readWithBlock:^{ return weakSelf.deniedUploadInfoList; }];
+}
+
+-(BOOL) isContainsForDeniedUploadInfoArray:(NSString *)key {
+    __weak typeof(self) weakSelf = self;
+    return [[_deniedUploadInfoListAccessor readWithBlock:^{
+        BOOL result = NO;
+        if (weakSelf.deniedUploadInfoList != nil) {
+            result = [weakSelf.deniedUploadInfoList containsObject:key];
+        }
+        return @(result);
+    }] boolValue];
+}
+
 @end

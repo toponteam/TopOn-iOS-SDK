@@ -24,7 +24,7 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
     [nativeAds enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         dispatch_group_enter(ads_loading_group);
         __weak id<ATMTGCampaign> campaign = obj;
-        NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:campaign, kAdAssetsCustomObjectKey, self.unitID, kNativeADAssetsUnitIDKey, self, kATMintegralNativeAssetCustomEvent, @(_price), kAdAssetsPriceKey, nil];
+        NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:campaign, kAdAssetsCustomObjectKey, self.unitID, kNativeADAssetsUnitIDKey, self, kATMintegralNativeAssetCustomEvent, _price, kAdAssetsPriceKey, nil];
         assets[kMTGAssetsNativeAdManagerKey] = _nativeAdManager;
         if ([campaign.appName length] > 0) {
             assets[kNativeADAssetsMainTitleKey] = campaign.appName;
@@ -92,7 +92,7 @@ NSString *const kMTGAssetsNativeAdManagerKey = @"ad_manager";
     [nativeAds enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         dispatch_group_enter(ads_loading_group);
         __weak id<ATMTGCampaign> campaign = obj;
-        NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:campaign, kAdAssetsCustomObjectKey, self.unitID, kNativeADAssetsUnitIDKey, self, kATMintegralNativeAssetCustomEvent, nil];
+        NSMutableDictionary *assets = [NSMutableDictionary dictionaryWithObjectsAndKeys:campaign, kAdAssetsCustomObjectKey, self.unitID, kNativeADAssetsUnitIDKey, self, kATMintegralNativeAssetCustomEvent, _price, kAdAssetsPriceKey, nil];
         assets[kMTGAssetsNativeAdManagerKey] = _bidNativeAdManager;
         if ([campaign.appName length] > 0) {
             assets[kNativeADAssetsMainTitleKey] = campaign.appName;

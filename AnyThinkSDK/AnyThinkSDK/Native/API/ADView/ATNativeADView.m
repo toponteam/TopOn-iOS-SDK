@@ -195,6 +195,8 @@ NSString *const kATExtraNativeImageSizeKey = @"native_image_size";
     if (_currentOffer != nil && ![self.previousImpressionID isEqualToString:[self impressionIDWithOffer:_currentOffer]]) {
         self.previousImpressionID = [self impressionIDWithOffer:_currentOffer];
         _currentOffer.showTimes++;
+
+        [self.customEvent saveShowAPIContext];
         
         if ([[ATNativeADOfferManager sharedManager] offerExhaustedInPlacementID:_currentOffer.placementModel.placementID unitGroupID:_currentOffer.unitGroup.unitGroupID]) {
             [[ATPlacementSettingManager sharedManager] setStatus:NO forPlacementID:_currentOffer.placementModel.placementID];

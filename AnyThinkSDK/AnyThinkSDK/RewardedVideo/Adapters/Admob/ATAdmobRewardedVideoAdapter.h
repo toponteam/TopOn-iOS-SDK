@@ -36,12 +36,14 @@ typedef NS_ENUM(NSInteger, ATPACConsentStatus) {
 
 typedef void (^ATGADRewardedAdLoadCompletionHandler)(NSError *_Nullable error);
 @protocol GADRewardedAdDelegate;
+@protocol ATGADServerSideVerificationOptions;
 @protocol ATGADRewardedAd<NSObject>
 @property(nonatomic, readonly) id<ATGADRewardedAd> rewardedAd;
 @property(nonatomic, readonly) id <ATGADRewardedAd> GADAd;
 @property(nonatomic, readonly) NSArray<id<ATGADRewardedAd>> *monitors;
 @property(nonatomic, readonly) id<ATGADRewardedAd> clickProtection;
 @property(nonatomic, readonly) NSString *debugDialogString;
+@property(nonatomic, nullable) id<ATGADServerSideVerificationOptions> serverSideVerificationOptions;
 - (nonnull instancetype)initWithAdUnitID:(nonnull NSString *)adUnitID;
 - (void)loadRequest:(nullable id<ATGADRequest>)request completionHandler:(nullable ATGADRewardedAdLoadCompletionHandler)completionHandler;
 @property(nonatomic, readonly, getter=isReady) BOOL ready;
@@ -56,4 +58,9 @@ typedef void (^ATGADRewardedAdLoadCompletionHandler)(NSError *_Nullable error);
 - (void)rewardedAdDidPresent:(nonnull id<ATGADRewardedAd>)rewardedAd;
 - (void)rewardedAdDidDismiss:(nonnull id<ATGADRewardedAd>)rewardedAd;
 
+@end
+
+@protocol ATGADServerSideVerificationOptions<NSObject>
+@property(nonatomic, copy, nullable) NSString *userIdentifier;
+@property(nonatomic, copy, nullable) NSString *customRewardString;
 @end

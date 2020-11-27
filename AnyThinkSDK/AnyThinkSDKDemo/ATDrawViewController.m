@@ -96,7 +96,7 @@ static NSString *const kCallbackKey = @"request";
         [_loadingView startAnimating];
         [self.view addSubview:_loadingView];
         [self increaseLoad];
-        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:self.view.bounds.size], kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} delegate:self];
+        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:self.view.bounds.size]} delegate:self];
     }
 
 }
@@ -107,7 +107,7 @@ static NSString *const kCallbackKey = @"request";
 - (void) loadADButtonTapped {
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:self.view.bounds.size], kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} delegate:self];
+    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:self.view.bounds.size]} delegate:self];
     
 }
 - (void) showAD {

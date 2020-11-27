@@ -39,6 +39,7 @@ extern NSString *const kOguryPlacement;
 extern NSString *const kStartAppPlacement;
 extern NSString *const kFyberPlacement;
 extern NSString *const kGAMPlacement;
+extern NSString *const kHeliumPlacement;
 
 
 @interface ATRewardedVideoVideoViewController : UIViewController

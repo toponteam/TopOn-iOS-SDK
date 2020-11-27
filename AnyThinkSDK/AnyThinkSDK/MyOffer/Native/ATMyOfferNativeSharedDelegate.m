@@ -13,7 +13,7 @@
 #import "ATMyOfferTracker.h"
 #import "ATMyOfferCapsManager.h"
 #import "ATPlacementSettingManager.h"
-#import "ATMyOfferResourceManager.h"
+#import "ATOfferResourceManager.h"
 @interface ATMyOfferNativeSharedDelegate()
 @property(nonatomic, readonly) NSMutableDictionary<NSString*, id<ATMyOfferNativeDelegate>> *delegates;
 @property(nonatomic, readonly) ATThreadSafeAccessor *delegateStorageAccessor;
@@ -76,7 +76,7 @@
 - (void)registerViewForInteraction:(UIViewController *)viewController clickableViews:(NSArray<UIView *> *)clickableViews offerModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting*)setting delegate:(id<ATMyOfferNativeDelegate>)delegate {
     _offerModel = offerModel;
     _setting = setting;
-    if ([[ATMyOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID]) {
+    if ([[ATOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID]) {
         __weak typeof(self) weakSelf = self;
         weakSelf.viewController = viewController;
         [_delegateStorageAccessor writeWithBlock:^{
@@ -95,7 +95,7 @@
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:weakSelf.offerModel] : @"";
         [[ATMyOfferTracker sharedTracker] preloadStorekitForOfferModel:_offerModel setting:_setting viewController:_viewController circleId:lifeCircleID skDelegate:self];
         
-        [[ATMyOfferResourceManager sharedManager] updateLastUseDateForResourceWithResourceID:offerModel.localResourceID];
+        [[ATOfferResourceManager sharedManager] updateLastUseDateForResourceWithResourceID:offerModel.localResourceID];
         [[ATMyOfferCapsManager shareManager] increaseCapForOfferModel:offerModel];
         if ([[ATMyOfferCapsManager shareManager] validateCapsForOfferModel:offerModel]) {
             [[ATPlacementSettingManager sharedManager] removeCappedMyOfferID:offerModel.offerID];

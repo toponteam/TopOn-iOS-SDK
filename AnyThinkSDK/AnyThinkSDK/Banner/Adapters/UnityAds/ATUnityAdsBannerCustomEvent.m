@@ -13,28 +13,26 @@
 
 
 @implementation ATUnityAdsBannerCustomEvent
--(instancetype) initWithUnitID:(NSString *)unitID serverInfo:(NSDictionary *)serverInfo localInfo:(NSDictionary *)localInfo {
-    self = [super initWithInfo:serverInfo localInfo:localInfo];
-    if (self != nil) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loaded:) name:kATUnityAdsBannerNotificationLoaded object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(clicked:) name:kATUnityAdsBannerNotificationClick object:nil];
-    }
-     return self;
+
+#pragma mark : UADSBannerViewDelegate
+- (void)bannerViewDidLoad:(id<UADSBannerView>)bannerView {
+    [ATLogger logMessage:@"UnityAdsBanner::bannerViewDidLoad:" type:ATLogTypeExternal];
+    [self trackBannerAdLoaded:bannerView adExtra:nil];
 }
 
--(void) dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+- (void)bannerViewDidClick:(id<UADSBannerView>)bannerView {
+    [ATLogger logMessage:@"UnityAdsBanner::bannerViewDidClick:" type:ATLogTypeExternal];
+    [self trackBannerAdClick];
 }
 
--(void) loaded:(NSNotification*)notification {
-    if ([notification.userInfo[kATUnityAdsBannerNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && notification.userInfo[kATUnityAdsBannerNotificationUserInfoViewKey] != nil) {
-        [self trackBannerAdLoaded:notification.userInfo[kATUnityAdsBannerNotificationUserInfoViewKey] adExtra:@{kAdAssetsCustomObjectKey:notification.userInfo[kATUnityAdsBannerNotificationUserInfoViewKey]}];
-    }
+- (void)bannerViewDidLeaveApplication:(id<UADSBannerView>)bannerView {
+    [ATLogger logMessage:@"UnityAdsBanner::bannerViewDidLoad:" type:ATLogTypeExternal];
 }
 
--(void) clicked:(NSNotification*)notification {
-    if ([notification.userInfo[kATUnityAdsBannerNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID]) {
-        [self trackBannerAdClick];
+- (void)bannerViewDidError:(id<UADSBannerView>)bannerView error:(NSError *)error{
+    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsBanner::bannerViewDidError::error::%@",error] type:ATLogTypeExternal];
+    if (error.code == 3) {
+        [self trackBannerAdLoadFailed:error];
     }
 }
 

@@ -10,11 +10,12 @@
 #import "Utilities.h"
 #import "ATThreadSafeAccessor.h"
 #import "ATMyOfferOfferManager.h"
-#import "ATMyOfferVideoViewController.h"
+#import "ATOfferVideoViewController.h"
 #import "ATMyOfferTracker.h"
 #import "ATMyOfferCapsManager.h"
 #import "ATPlacementSettingManager.h"
-#import "ATMyOfferResourceManager.h"
+#import "ATOfferResourceManager.h"
+#import "ATModel.h"
 @interface ATMyOfferRewardedVideoSharedDelegate()
 @property(nonatomic, readonly) NSMutableDictionary<NSString*, id<ATMyOfferRewardedVideoDelegate>> *delegateStorage;
 @property(nonatomic, readonly) ATThreadSafeAccessor *delegateStorageAccessor;
@@ -43,15 +44,15 @@
 }
 
 -(void) showRewardedVideoWithOfferModel:(ATMyOfferOfferModel *)offerModel setting:(ATMyOfferSetting*)setting viewController:(UIViewController*)viewController delegate:(id<ATMyOfferRewardedVideoDelegate>)delegate {
-    if ([[ATMyOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID]) {
-        if ([[ATMyOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.videoURL] != nil) {
+    if ([[ATOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID]) {
+        if ([[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.videoURL] != nil) {
             _offerModel = offerModel;
             _setting = setting;
             __weak typeof(self) weakSelf = self;
             [_delegateStorageAccessor writeWithBlock:^{
                 [weakSelf.delegateStorage AT_setWeakObject:delegate forKey:offerModel.offerID];
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    ATMyOfferVideoViewController *videoViewController = [[ATMyOfferVideoViewController alloc] initWithMyOfferModel:offerModel rewardedVideoSetting:setting];
+                    ATOfferVideoViewController *videoViewController = [[ATOfferVideoViewController alloc] initWithOfferModel:offerModel rewardedVideoSetting:setting];
                     _currentViewController = videoViewController;
                     videoViewController.delegate = self;
                     videoViewController.modalPresentationStyle = UIModalPresentationFullScreen;
@@ -60,7 +61,7 @@
                 });
             }];
             
-            [[ATMyOfferResourceManager sharedManager] updateLastUseDateForResourceWithResourceID:offerModel.localResourceID];
+            [[ATOfferResourceManager sharedManager] updateLastUseDateForResourceWithResourceID:offerModel.localResourceID];
             [[ATMyOfferCapsManager shareManager] increaseCapForOfferModel:offerModel];
             if ([[ATMyOfferCapsManager shareManager] validateCapsForOfferModel:offerModel]) {
                 [[ATPlacementSettingManager sharedManager] removeCappedMyOfferID:offerModel.offerID];
@@ -75,7 +76,7 @@
     }
 }
 
--(void)myOfferVideoStartPlayWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+-(void)offerVideoStartPlayWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
     [ATLogger logMessage:@"MyOfferRewardedVideo::myOfferVideoStartPlayWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
     __weak typeof(self) weakSelf = self;
     [_delegateStorageAccessor readWithBlock:^id{
@@ -97,7 +98,7 @@
     }];
 }
 
--(void)myOfferVideoPlay25PercentWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+-(void)offerVideoPlay25PercentWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
     [ATLogger logMessage:@"MyOfferRewardedVideo::myOfferVideoPlay25PercentWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
     //Send 25% tk
     __weak typeof(self) weakSelf = self;
@@ -112,7 +113,7 @@
     }];
 }
 
--(void)myOfferVideoPlay50PercentWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+-(void)offerVideoPlay50PercentWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
     [ATLogger logMessage:@"MyOfferRewardedVideo::myOfferVideoPlay50PercentWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
     //Send 50% tk
     __weak typeof(self) weakSelf = self;
@@ -127,7 +128,7 @@
     }];
 }
 
--(void)myOfferVideoPlay75PercentWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+-(void)offerVideoPlay75PercentWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
     [ATLogger logMessage:@"MyOfferRewardedVideo::myOfferVideoPlay75PercentWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
     //Send 75% tk
     __weak typeof(self) weakSelf = self;
@@ -142,7 +143,7 @@
     }];
 }
 
--(void)myOfferVideoDidEndPlayWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+-(void)offerVideoDidEndPlayWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
     [ATLogger logMessage:@"MyOfferRewardedVideo::myOfferVideoDidEndPlayWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
     //Send 100% tk
     __weak typeof(self) weakSelf = self;
@@ -159,8 +160,13 @@
     }];
 }
 
--(void)myOfferVideoDidClickVideoWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+-(void)offerVideoDidClickVideoWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
     [ATLogger logMessage:@"MyOfferRewardedVideo::myOfferVideoDidClickVideoWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
+   
+}
+
+-(void)offerVideoDidClickAdWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+    [ATLogger logMessage:@"MyOfferRewardedVideo::offerVideoDidClickAdWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
     __weak typeof(self) weakSelf = self;
     [_delegateStorageAccessor readWithBlock:^id{
         id<ATMyOfferRewardedVideoDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
@@ -169,8 +175,8 @@
         NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATMyOfferTrackerExtraLifeCircleID];
         if (scene != nil) { trackerExtra[kATMyOfferTrackerExtraScene] = scene; }
         
-        BOOL openStorekit = _setting.storekitTime!=2;
-        [[ATMyOfferTracker sharedTracker] clickOfferWithOfferModel:offerModel setting:_setting extra:@{kATMyOfferTrackerExtraLifeCircleID:lifeCircleID != nil ? lifeCircleID : @""} skDelegate:self viewController:_currentViewController circleId:lifeCircleID];
+        BOOL openStorekit = weakSelf.setting.storekitTime != ATATLoadStorekitTimeNone;
+        [[ATMyOfferTracker sharedTracker] clickOfferWithOfferModel:offerModel setting:weakSelf.setting extra:@{kATMyOfferTrackerExtraLifeCircleID:lifeCircleID != nil ? lifeCircleID : @""} skDelegate:self viewController:_currentViewController circleId:lifeCircleID];
         
         [[ATMyOfferTracker sharedTracker] trackEvent:ATMyOfferTrackerEventClick offerModel:offerModel extra:trackerExtra];
         
@@ -178,8 +184,18 @@
         return nil;
     }];
 }
+-(void)offerVideoDidVideoPausedWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+    [ATLogger logMessage:@"MyOfferRewardedVideo::offerVideoDidVideoPausedWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
+}
+-(void)offerVideoDidVideoMutedWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+    [ATLogger logMessage:@"MyOfferRewardedVideo::offerVideoDidVideoMutedWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
+}
+-(void)offerVideoDidVideoUnMutedWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+    [ATLogger logMessage:@"MyOfferRewardedVideo::offerVideoDidVideoUnMutedWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
+}
 
--(void)myOfferVideoDidCloseWithOfferModel:(ATMyOfferOfferModel*)offerModel extra:(NSDictionary*)extra {
+
+-(void)offerVideoDidCloseWithOfferModel:(ATMyOfferOfferModel*)offerModel extra:(NSDictionary*)extra {
     [ATLogger logMessage:@"MyOfferRewardedVideo::myOfferVideoDidCloseWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
     __weak typeof(self) weakSelf = self;
     [_delegateStorageAccessor writeWithBlock:^{
@@ -189,7 +205,7 @@
     }];
 }
 
--(void)myOfferVideoEndCardDidShowWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+-(void)offerVideoEndCardDidShowWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
     [ATLogger logMessage:@"MyOfferRewardedVideo::myOfferVideoEndCardDidShowWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
     __weak typeof(self) weakSelf = self;
     [_delegateStorageAccessor readWithBlock:^id{
@@ -203,7 +219,7 @@
     }];
 }
 
--(void)myOfferVideoEndCardDidCloseWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
+-(void)offerVideoEndCardDidCloseWithOfferModel:(ATMyOfferOfferModel *)offerModel extra:(NSDictionary *)extra {
     [ATLogger logMessage:@"MyOfferRewardedVideo::myOfferVideoEndCardDidCloseWithOfferModel:%@ extra:%@" type:ATLogTypeExternal];
     __weak typeof(self) weakSelf = self;
     [_delegateStorageAccessor readWithBlock:^id{

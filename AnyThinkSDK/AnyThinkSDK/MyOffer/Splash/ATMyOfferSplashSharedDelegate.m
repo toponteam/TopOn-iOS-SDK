@@ -14,7 +14,7 @@
 #import "ATMyOfferTracker.h"
 #import "ATMyOfferCapsManager.h"
 #import "ATPlacementSettingManager.h"
-#import "ATMyOfferResourceManager.h"
+#import "ATOfferResourceManager.h"
 #import "ATMyOfferSplashSharedDelegate.h"
 
 NSString *const kATMyOfferSplashShowingExtraCTAButtonBackgroundColorKey = @"cta_button_bg_color";
@@ -399,12 +399,12 @@ static NSString *const kTimerUserInfoBlockKey = @"com.anythink.myoffer_splash_ti
 -(void) initViewResourceWithRemainingTime:(NSTimeInterval)interval {
     if (_currentSplashView != nil && _offerModel != nil) {
         [ATMyOfferSplashStarRatingView configureStarView:_currentSplashView.starView star:5.0f];
-        [_currentSplashView.mainImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.fullScreenImageURL]];
-        [_currentSplashView.backgroundImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.fullScreenImageURL]];
+        [_currentSplashView.mainImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.fullScreenImageURL]];
+        [_currentSplashView.backgroundImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.fullScreenImageURL]];
         [_currentSplashView.titleLabel setText:self.offerModel.title];
         [_currentSplashView.textLabel setText:self.offerModel.text];
         [_currentSplashView.ctaLabel setText:self.offerModel.CTA];
-        [_currentSplashView.sponsorImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.logoURL]];
+        [_currentSplashView.sponsorImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.logoURL]];
         NSInteger remainingTime = interval + 1;
         [_currentSplashView.skipButton setTitle:[NSString stringWithFormat:kSkipTextFormatString, --remainingTime, _setting.skipable ? [ATMyOfferSplashSharedDelegate skipSubString] : @""] forState:UIControlStateNormal];
         
@@ -551,8 +551,8 @@ static NSString *kLanguageConfigurationSkip = @"skip";
     _setting = setting;
     _offerModel = offerModel;
     
-    if ([[ATMyOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID]) {
-        if ([[ATMyOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.fullScreenImageURL] != nil) {
+    if ([[ATOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID]) {
+        if ([[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.fullScreenImageURL] != nil) {
             __weak typeof(self) weakSelf = self;
             [_delegateStorageAccessor writeWithBlock:^{
                 [weakSelf setDelegate:delegate forPlacementID:offerModel.offerID];
@@ -567,7 +567,7 @@ static NSString *kLanguageConfigurationSkip = @"skip";
             [[ATMyOfferTracker sharedTracker] trackEvent:ATMyOfferTrackerEventImpression offerModel:_offerModel extra:trackerExtra];
             if ([delegate respondsToSelector:@selector(myOfferSplashShowOffer:)]) { [delegate myOfferSplashShowOffer:offerModel]; }
             
-            [[ATMyOfferResourceManager sharedManager] updateLastUseDateForResourceWithResourceID:offerModel.localResourceID];
+            [[ATOfferResourceManager sharedManager] updateLastUseDateForResourceWithResourceID:offerModel.localResourceID];
             [[ATMyOfferCapsManager shareManager] increaseCapForOfferModel:offerModel];
             if ([[ATMyOfferCapsManager shareManager] validateCapsForOfferModel:offerModel]) {
                 [[ATPlacementSettingManager sharedManager] removeCappedMyOfferID:offerModel.offerID];

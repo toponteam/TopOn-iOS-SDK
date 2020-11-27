@@ -14,6 +14,10 @@ extern NSString *const kFacebookRVCustomEventKey;
 
 @end
 
+@protocol ATFBAdSettings <NSObject>
++ (void)setAdvertiserTrackingEnabled:(BOOL)advertiserTrackingEnabled;
+@end
+
 @protocol ATFBRewardedVideoAdDelegate;
 @protocol ATFBRewardedVideoAd<NSObject>
 @property (nonatomic, weak, nullable) id<ATFBRewardedVideoAdDelegate> delegate;

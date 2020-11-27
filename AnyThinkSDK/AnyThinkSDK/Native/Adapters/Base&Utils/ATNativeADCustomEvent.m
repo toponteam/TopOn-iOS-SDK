@@ -89,7 +89,7 @@
 -(void) trackNativeAdShow:(BOOL)refresh {
     ATNativeADCache *offer = (ATNativeADCache*)self.adView.nativeAd;
     [[ATLoadingScheduler sharedScheduler] cancelScheduleLoadingWithPlacementModel:offer.placementModel unitGroup:offer.unitGroup requestID:offer.requestID];
-    offer.sdkTime = [Utilities normalizedTimeStamp];
+//    offer.sdkTime = [Utilities normalizedTimeStamp];
     NSMutableDictionary *generalAdAgentEventExtraInfo = [NSMutableDictionary dictionaryWithDictionary:[ATAgentEvent generalAdAgentInfoWithPlacementModel:offer.placementModel unitGroupModel:offer.unitGroup requestID:offer.requestID]];
     generalAdAgentEventExtraInfo[kGeneralAdAgentEventExtraInfoAutoRequestFlagKey] = [self.requestExtra[kAdLoadingExtraAutoloadFlagKey] boolValue] ? @"1" : @"0";
     [ATLogger logMessage:[NSString stringWithFormat:@"\nImpression with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:offer event:ATGeneralAdAgentEventTypeImpression extra:self.requestExtra error:nil]] type:ATLogTypeTemporary];
@@ -145,17 +145,17 @@
 
 -(NSDictionary*)delegateExtra {
     ATNativeADCache *cache = (ATNativeADCache*)self.adView.nativeAd;
-    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATNativeDelegateExtraNetworkIDKey:@(cache.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:cache.unitGroup.unitID != nil ? cache.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(cache.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(cache.priorityIndex),kATNativeDelegateExtraPrice:@(cache.price), kATADDelegateExtraECPMLevelKey:@(cache.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(cache.placementModel.groupID)}];
+    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATNativeDelegateExtraNetworkIDKey:@(cache.unitGroup.networkFirmID),kATNativeDelegateExtraAdSourceIDKey:cache.unitGroup.unitID != nil ? cache.unitGroup.unitID : @"",kATNativeDelegateExtraIsHeaderBidding:@(cache.unitGroup.headerBidding),kATNativeDelegateExtraPriority:@(cache.priorityIndex),kATNativeDelegateExtraPrice:@([cache.price doubleValue]), kATADDelegateExtraECPMLevelKey:@(cache.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(cache.placementModel.groupID)}];
     
     NSString *channel = [ATAPI sharedInstance].channel;
     if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
     NSString *subchannel = [ATAPI sharedInstance].subchannel;
     if (subchannel != nil) { extra[kATADDelegateExtraSubChannelKey] = subchannel; }
     if ([cache.placementModel.associatedCustomData count] > 0) { extra[kATADDelegateExtraCustomRuleKey] = cache.placementModel.associatedCustomData; }
-    NSString *extraID = [NSString stringWithFormat:@"%@%@%@",cache.requestID,cache.unitGroup.unitID,cache.sdkTime];
-    extra[kATADDelegateExtraIDKey] = [extraID md5];
+    NSString *extraID = [NSString stringWithFormat:@"%@_%@_%@",cache.requestID,cache.unitGroup.unitID,self.sdkTime];
+    extra[kATADDelegateExtraIDKey] = extraID;
     extra[kATADDelegateExtraAdunitIDKey] = cache.placementModel.placementID;
-    extra[kATADDelegateExtraPublisherRevenueKey] = @(cache.price / 1000.0f);
+    extra[kATADDelegateExtraPublisherRevenueKey] = @([cache.price doubleValue] / 1000.f);
      extra[kATADDelegateExtraCurrencyKey] = cache.placementModel.callback[@"currency"];
     extra[kATADDelegateExtraCountryKey] = cache.placementModel.callback[@"cc"];
     extra[kATADDelegateExtraFormatKey] = @"Native";

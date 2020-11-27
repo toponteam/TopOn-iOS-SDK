@@ -13,7 +13,7 @@
 #import "ATMyOfferOfferModel.h"
 #import "ATMyOfferOfferManager.h"
 #import "ATMyOfferTracker.h"
-#import "ATMyOfferResourceManager.h"
+#import "ATOfferResourceManager.h"
 #import "UIViewController+PresentationAndDismissalSwizzling.h"
 
 @interface ATMyOfferBannerView()
@@ -208,24 +208,24 @@
 }
 
 -(void) initBannerResourceWithOfferModel:(ATMyOfferOfferModel *)offerModel {
-    [self.sponsorImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.logoURL]];
+    [self.sponsorImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.logoURL]];
     if([_setting.bannerSize isEqualToString:kATMyOfferBannerSize320_50]){
         if(offerModel.bannerImageUrl != nil && offerModel.bannerImageUrl.length > 0){
-            [self.homeImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.bannerImageUrl]];
-            [self.backgroundImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.bannerImageUrl]];
+            [self.homeImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.bannerImageUrl]];
+            [self.backgroundImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.bannerImageUrl]];
         }else{
-            [self.iconImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.iconURL]];
+            [self.iconImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.iconURL]];
             [self.titleLabel setText:self.offerModel.title];
             [self.textLabel setText:self.offerModel.text];
             [self.ctaLabel setText:self.offerModel.CTA];
         }
     }else if([_setting.bannerSize isEqualToString:kATMyOfferBannerSize320_90]){
         if(offerModel.bannerBigImageUrl != nil && offerModel.bannerBigImageUrl.length > 0){
-            [self.homeImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.bannerBigImageUrl]];
-            [self.backgroundImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.bannerBigImageUrl]];
+            [self.homeImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.bannerBigImageUrl]];
+            [self.backgroundImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.bannerBigImageUrl]];
         }else{
-            [self.mainImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.fullScreenImageURL]];
-            [self.iconImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.iconURL]];
+            [self.mainImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.fullScreenImageURL]];
+            [self.iconImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.iconURL]];
             [self.titleLabel setText:self.offerModel.title];
             [self.textLabel setText:self.offerModel.text];
             [self.ctaLabel setText:self.offerModel.CTA];
@@ -233,11 +233,11 @@
         
     }else if([_setting.bannerSize isEqualToString:kATMyOfferBannerSize300_250]){
         if(offerModel.rectangleImageUrl != nil && offerModel.rectangleImageUrl.length > 0){
-            [self.homeImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.rectangleImageUrl]];
-            [self.backgroundImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.rectangleImageUrl]];
+            [self.homeImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.rectangleImageUrl]];
+            [self.backgroundImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.rectangleImageUrl]];
         }else{
-            [self.mainImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.fullScreenImageURL]];
-            [self.iconImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.iconURL]];
+            [self.mainImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.fullScreenImageURL]];
+            [self.iconImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.iconURL]];
             [self.titleLabel setText:self.offerModel.title];
             [self.textLabel setText:self.offerModel.text];
             [self.ctaLabel setText:self.offerModel.CTA];
@@ -245,11 +245,11 @@
     }else if([_setting.bannerSize isEqualToString:kATMyOfferBannerSize728_90]){
         //728*90
         if(offerModel.homeImageUrl != nil && offerModel.homeImageUrl.length > 0){
-            [self.homeImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.homeImageUrl]];
-            [self.backgroundImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.homeImageUrl]];
+            [self.homeImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.homeImageUrl]];
+            [self.backgroundImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.homeImageUrl]];
         }else{
-            [self.mainImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.fullScreenImageURL]];
-            [self.iconImageView setImage:[[ATMyOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.iconURL]];
+            [self.mainImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.fullScreenImageURL]];
+            [self.iconImageView setImage:[[ATOfferResourceManager sharedManager]imageForOfferModel:self.offerModel resourceURL:self.offerModel.iconURL]];
             [self.titleLabel setText:self.offerModel.title];
             [self.textLabel setText:self.offerModel.text];
             [self.ctaLabel setText:self.offerModel.CTA];
@@ -307,7 +307,7 @@
     [ATLogger logMessage:@"ATMyOfferBannerView::adViewTapped" type:ATLogTypeExternal];
     NSString *lifeCircleID = [_delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [_delegate lifeCircleIDForOffer:_offerModel] : @"";
     NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATMyOfferTrackerExtraLifeCircleID];
-    BOOL openStorekit = _setting.storekitTime!=2;
+    BOOL openStorekit = _setting.storekitTime != ATATLoadStorekitTimeNone;
     [[ATMyOfferTracker sharedTracker] clickOfferWithOfferModel:_offerModel setting:_setting extra:trackerExtra skDelegate:self viewController:_viewController circleId:lifeCircleID];
     [[ATMyOfferTracker sharedTracker] trackEvent:ATMyOfferTrackerEventClick offerModel:_offerModel extra:trackerExtra];
     if ([_delegate respondsToSelector:@selector(myOfferBannerClickOffer:)]) { [_delegate myOfferBannerClickOffer:_offerModel]; }

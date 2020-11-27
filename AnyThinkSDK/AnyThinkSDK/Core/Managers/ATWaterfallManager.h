@@ -36,7 +36,7 @@ typedef NS_ENUM(NSInteger, ATUnitGroupFinishType) {
 -(void) requestUnitGroup:(ATUnitGroupModel*)unitGroup;
 -(void) finishUnitGroup:(ATUnitGroupModel*)unitGroup withType:(ATUnitGroupFinishType)type;
 -(void) addUnitGroup:(ATUnitGroupModel*)unitGroup;
--(void) insertUnitGroup:(ATUnitGroupModel*)unitGroup price:(double)price;
+-(void) insertUnitGroup:(ATUnitGroupModel*)unitGroup price:(NSString *)price;
 -(ATUnitGroupModel*) firstPendingNonHBUnitGroupWithNetworkFirmID:(NSInteger)nwFirmID;
 -(ATUnitGroupModel*) unitGroupWithUnitID:(NSString*)unitID;
 -(ATUnitGroupModel*) unitGroupWithMaximumPrice;

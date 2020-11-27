@@ -15,6 +15,7 @@
 #import "ATAdAdapter.h"
 @interface ATGDTBannerAdapter()
 @property(nonatomic, readonly) ATGDTBannerCustomEvent *customEvent;
+@property(nonatomic, readonly) id<ATGDTMobBannerView> bannerView;
 @property(nonatomic, readonly) id<ATGDTUnifiedBannerView> unifiedBannerView;
 @end
 @implementation ATGDTBannerAdapter

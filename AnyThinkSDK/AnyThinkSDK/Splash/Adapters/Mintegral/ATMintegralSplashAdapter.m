@@ -16,6 +16,9 @@
 #import "ATAdAdapter.h"
 #import "ATAdManager+Internal.h"
 #import "ATAppSettingManager.h"
+
+static NSString *const kATMintegralPluginNumber = @"Y+H6DFttYrPQYcIeicKwJQKQYrN=";//topon的渠道号
+ 
 @interface ATMintegralSplashAdapter()
 @property(nonatomic, readonly) ATMintegralSplashCustomEvent *customEvent;
 @property(nonatomic, readonly) id<ATMTGSplashAD> splashAd;
@@ -28,6 +31,15 @@
         if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameMintegral]) {
             [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameMintegral];
             void(^blk)(void) = ^{
+                Class class = NSClassFromString(@"MTGSDK");
+                SEL selector = NSSelectorFromString(@"setChannelFlag:");
+                #pragma clang diagnostic push
+                #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                    if ([class respondsToSelector:selector]) {
+                        [class performSelector:selector withObject:kATMintegralPluginNumber];
+                    }
+                #pragma clang diagnostic pop
+                
                 BOOL set = NO;
                 ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
                 BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
@@ -68,4 +80,9 @@
         completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadSplashADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Mintegral"]}]);
     }
 }
+
++(NSString*) adsourceRemoteKeyWithContent:(NSDictionary*)content unitGroupModel:(ATUnitGroupModel *)unitGroupModel {
+    return content[@"unitid"];
+}
+
 @end

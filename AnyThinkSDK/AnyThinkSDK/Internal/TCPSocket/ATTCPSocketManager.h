@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)connectCompletion:(nullable void (^)(NSError * __nullable error))completion;
 - (BOOL)isConnected;
 - (void)disconnect;
+- (void)removeSendDataCompletion;
 @end
 
 NS_ASSUME_NONNULL_END

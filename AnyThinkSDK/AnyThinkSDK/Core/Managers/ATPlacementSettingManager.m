@@ -450,9 +450,9 @@ static NSInteger errorCodeDuration = 20 * 60;
                                        @"custom":([customData isKindOfClass:[NSDictionary class]] && [customData count] > 0) ? customData : @{},
                                        @"package_name":[Utilities appBundleID],
                                        @"app_vn":[Utilities appBundleVersion],
-                                       @"app_vc":[Utilities appBundleVersion],
+                                       @"app_vc":[Utilities appBundleVersionCode],
                                        @"sdk_ver":[ATAPI sharedInstance].version,
-                                       @"nw_ver":[Utilities networkVersions],
+                                       @"nw_ver":@{},//[Utilities networkVersions]
                                        @"orient":[Utilities screenOrientation],
                                        @"system":@(1),
                                        @"gdpr_cs":[NSString stringWithFormat:@"%ld", [[ATAppSettingManager sharedManager] commonTkDataConsentSet]]
@@ -463,7 +463,8 @@ static NSInteger errorCodeDuration = 20 * 60;
     if ([[ATAPI sharedInstance].subchannel length] > 0) { parameters[@"sub_channel"] = [ATAPI sharedInstance].subchannel; }
     parameters[@"first_init_time"] = @((NSUInteger)([[ATAPI firstLaunchDate] timeIntervalSince1970] * 1000.0f));
     parameters[@"days_from_first_init"] = @([[NSDate date] numberOfDaysSinceDate:[ATAPI firstLaunchDate]]);
-    if ([extra isKindOfClass:[NSDictionary class]] && [extra[kATAdLoadingExtraExcludedBundleIDListKey] isKindOfClass:[NSArray<NSString*> class]]) { parameters[@"ecpoffer"] = extra[kATAdLoadingExtraExcludedBundleIDListKey]; }
+    if ([[ATAPI sharedInstance] exludeAppleIdArray] != nil) {
+        parameters[@"ecpoffer"] = [[ATAPI sharedInstance] exludeAppleIdArray]; }
     
     NSArray *cappedMyOfferIDs = [NSArray arrayWithArray:[ATPlacementSettingManager excludeMyOfferID]];
     if (cappedMyOfferIDs.count > 0) { parameters[@"exclude_myofferid"] = cappedMyOfferIDs; }

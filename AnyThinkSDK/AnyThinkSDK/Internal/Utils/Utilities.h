@@ -29,6 +29,7 @@ BOOL AT_ProxyEnabled(void);
 +(NSString*)appBundleName;
 +(NSString*)appBundleID;
 +(NSString*)appBundleVersion;
++(NSString*)appBundleVersionCode;
 +(NSNumber*)platform;
 +(NSString*)brand;
 +(NSString*)model;
@@ -50,8 +51,8 @@ BOOL AT_ProxyEnabled(void);
 +(NSString*)computeSignWithParameters:(NSDictionary*)parameters;
 
 +(BOOL)higherThanIOS13;
-
 +(BOOL)isBlankDictionary:(NSDictionary *)dic;
++(BOOL)isEmpty:(id)object;
 
 extern NSString *const kCallStackSymbolCallerMethodKey;
 extern NSString *const kCallStackSymbolCallerClassKey;

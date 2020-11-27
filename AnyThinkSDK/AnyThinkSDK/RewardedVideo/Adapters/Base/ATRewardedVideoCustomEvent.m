@@ -24,17 +24,17 @@
 @end
 @implementation ATRewardedVideoCustomEvent
 -(NSDictionary*)delegateExtra {
-    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@(self.rewardedVideo.price), kATADDelegateExtraECPMLevelKey:@(self.rewardedVideo.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.rewardedVideo.placementModel.groupID)}];
+    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@([self.rewardedVideo.price doubleValue]), kATADDelegateExtraECPMLevelKey:@(self.rewardedVideo.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.rewardedVideo.placementModel.groupID)}];
     if (self.rewardedVideo.scene != nil) { extra[kATADDelegateExtraScenarioIDKey] = self.rewardedVideo.scene; }
     NSString *channel = [ATAPI sharedInstance].channel;
     if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
     NSString *subchannel = [ATAPI sharedInstance].subchannel;
     if (subchannel != nil) { extra[kATADDelegateExtraSubChannelKey] = subchannel; }
     if ([self.rewardedVideo.placementModel.associatedCustomData count] > 0) { extra[kATADDelegateExtraCustomRuleKey] = self.rewardedVideo.placementModel.associatedCustomData; }
-    NSString *extraID = [NSString stringWithFormat:@"%@%@%@",self.rewardedVideo.requestID,self.rewardedVideo.unitGroup.unitID,self.sdkTime];
-    extra[kATADDelegateExtraIDKey] = [extraID md5];
+    NSString *extraID = [NSString stringWithFormat:@"%@_%@_%@",self.rewardedVideo.requestID,self.rewardedVideo.unitGroup.unitID,self.sdkTime];
+    extra[kATADDelegateExtraIDKey] = extraID;
     extra[kATADDelegateExtraAdunitIDKey] = self.rewardedVideo.placementModel.placementID;
-    extra[kATADDelegateExtraPublisherRevenueKey] = @(self.rewardedVideo.price / 1000.0f);
+    extra[kATADDelegateExtraPublisherRevenueKey] = @([self.rewardedVideo.price doubleValue] / 1000.f);
     extra[kATADDelegateExtraCurrencyKey] = self.rewardedVideo.placementModel.callback[@"currency"];
     extra[kATADDelegateExtraCountryKey] = self.rewardedVideo.placementModel.callback[@"cc"];
     extra[kATADDelegateExtraFormatKey] = @"RewardedVideo";
@@ -116,7 +116,7 @@
 
 -(void) trackRewardedVideoAdShow {
     [[ATLoadingScheduler sharedScheduler] cancelScheduleLoadingWithPlacementModel:self.ad.placementModel unitGroup:self.ad.unitGroup requestID:self.ad.requestID];
-    self.sdkTime = [Utilities normalizedTimeStamp];
+//    self.sdkTime = [Utilities normalizedTimeStamp];
     NSMutableDictionary *generalAdAgentEventExtraInfo = [NSMutableDictionary dictionaryWithDictionary:[ATAgentEvent generalAdAgentInfoWithPlacementModel:self.ad.placementModel unitGroupModel:self.ad.unitGroup requestID:self.ad.requestID]];
     [generalAdAgentEventExtraInfo addEntriesFromDictionary:self.localInfo != nil ? self.localInfo : @{}];
     generalAdAgentEventExtraInfo[kGeneralAdAgentEventExtraInfoAutoRequestFlagKey] = [self.localInfo[kAdLoadingExtraAutoloadFlagKey] boolValue] ? @"1" : @"0";

@@ -57,6 +57,7 @@ static NSString *const kStartAppPlacementID = @"b5e731a0acabdf";
 static NSString *const kStartAppVideoPlacementID = @"b5e732a9577182";
 static NSString *const kFyberPlacementID = @"b5e96db2198474";
 static NSString *const kGAMPlacementID = @"b5f2389ab6ee63";
+static NSString *const kHeliumPlacementID = @"b5f583ec12143f";
 
 
 @interface ATInterstitialViewController ()<ATInterstitialDelegate>
@@ -111,7 +112,8 @@ static NSString *const kGAMPlacementID = @"b5f2389ab6ee63";
                           kStartAppPlacement:kStartAppPlacementID,
                           kStartAppVideoPlacement:kStartAppVideoPlacementID,
                           kFyberPlacement:kFyberPlacementID,
-                          kGAMPlacement:kGAMPlacementID
+                          kGAMPlacement:kGAMPlacementID,
+                          kHeliumPlacement:kHeliumPlacementID
                           };
     }
     return self;
@@ -166,6 +168,9 @@ static NSString *const kGAMPlacementID = @"b5f2389ab6ee63";
     UIAlertAction *action = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
     [alert addAction:action];
     [self presentViewController:alert animated:YES completion:nil];
+    
+//    //check load status
+//    [[ATAdManager sharedManager] checkInterstitialLoadStatusForPlacementID:_placementIDs[_name]];
 }
 
 -(void) clearAdButtonTapped {
@@ -180,7 +185,7 @@ static NSString *const kGAMPlacementID = @"b5f2389ab6ee63";
     NSLog(@"Begin loading interstitial ad");
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:[_name isEqualToString:kSigmobRVIntPlacement] ? @{kATInterstitialExtraUsesRewardedVideo:@YES, kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} : @{kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} delegate:self];
+    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:[_name isEqualToString:kSigmobRVIntPlacement] ? @{kATInterstitialExtraUsesRewardedVideo:@YES} : @{} delegate:self];
 }
 
 -(void) showAD {

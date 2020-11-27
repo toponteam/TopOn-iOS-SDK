@@ -17,11 +17,11 @@
 static NSString *const kVungleRewardedVideoInitializationNotification = @"com.anythink.VungleDelegateInit";
 NSString *const kVungleRewardedVideoLoadNotification = @"com.anythink.VungleDelegateLoaded";
 NSString *const kVungleRewardedVideoShowNotification = @"com.anythink.VungleDelegateShown";
+NSString *const kVungleRewardedVideoClickNotification = @"com.anythink.VungleDelegateClick";
+NSString *const kVungleRewardedVideoRewardNotification = @"com.anythink.VungleDelegateReward";
 NSString *const kVungleRewardedVideoCloseNotification = @"com.anythink.VungleDelegateClose";
 NSString *const kVungleRewardedVideoNotificationUserInfoPlacementIDKey = @"placement_id";
 NSString *const kVungleRewardedVideoNotificationUserInfoErrorKey = @"error";
-NSString *const kVungleRewardedVideoNotificationUserInfoVideoCompletedFlagKey = @"video_completed";
-NSString *const kVungleRewardedVideoNotificationUserInfoClickFlagKey = @"clicked";
 @interface ATVungleDelegate_RewardedVideo:NSObject<ATVungleSDKDelegate>
 @end
 @implementation ATVungleDelegate_RewardedVideo
@@ -44,20 +44,31 @@ NSString *const kVungleRewardedVideoNotificationUserInfoClickFlagKey = @"clicked
     }
 }
 
-- (void)vungleWillShowAdForPlacementID:(nullable NSString *)placementID {
-    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleWillShowAdForPlacementID:%@", placementID] type:ATLogTypeExternal];
+- (void)vungleTrackClickForPlacementID:(nullable NSString *)placementID {
+    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleTrackClickForPlacementID:%@", placementID] type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
+    if (placementID != nil) { userInfo[kVungleRewardedVideoNotificationUserInfoPlacementIDKey] = placementID; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleRewardedVideoClickNotification object:nil userInfo:userInfo];
+}
+
+- (void)vungleRewardUserForPlacementID:(nullable NSString *)placementID {
+    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleRewardUserForPlacementID:%@", placementID] type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
+    if (placementID != nil) { userInfo[kVungleRewardedVideoNotificationUserInfoPlacementIDKey] = placementID; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleRewardedVideoRewardNotification object:nil userInfo:userInfo];
+}
+
+- (void)vungleDidShowAdForPlacementID:(nullable NSString *)placementID {
+    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleDidShowAdForPlacementID:%@", placementID] type:ATLogTypeExternal];
     NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
     if (placementID != nil) { userInfo[kVungleRewardedVideoNotificationUserInfoPlacementIDKey] = placementID; }
     [[NSNotificationCenter defaultCenter] postNotificationName:kVungleRewardedVideoShowNotification object:nil userInfo:userInfo];
 }
 
-- (void)vungleWillCloseAdWithViewInfo:(nonnull id<ATVungleViewInfo>)info placementID:(nonnull NSString *)placementID {
-    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleWillCloseAdWithViewInfo: placementID:%@", placementID] type:ATLogTypeExternal];
-}
 
-- (void)vungleDidCloseAdWithViewInfo:(nonnull id<ATVungleViewInfo>)info placementID:(nonnull NSString *)placementID {
+- (void)vungleDidCloseAdForPlacementID:(nonnull NSString *)placementID {
     [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleDidCloseAdWithViewInfo:placementID:%@", placementID] type:ATLogTypeExternal];
-    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:info.completedView, kVungleRewardedVideoNotificationUserInfoVideoCompletedFlagKey, info.didDownload, kVungleRewardedVideoNotificationUserInfoClickFlagKey, nil];
+    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
     if (placementID != nil) { userInfo[kVungleRewardedVideoNotificationUserInfoPlacementIDKey] = placementID; }
     [[NSNotificationCenter defaultCenter] postNotificationName:kVungleRewardedVideoCloseNotification object:nil userInfo:userInfo];
 }
@@ -102,8 +113,9 @@ static NSString *const kOptionsUserKey = @"user";
     ATVungleRewardedVideoCustomEvent *customEvent = (ATVungleRewardedVideoCustomEvent*)rewardedVideo.customEvent;
     customEvent.delegate = delegate;
     NSMutableDictionary *options = [NSMutableDictionary dictionary];
-    if ([rewardedVideo.unitGroup.content containsObjectForKey:kATAdLoadingExtraUserDataKeywordKey])
-        options[kOptionsUserKey] = rewardedVideo.unitGroup.content[kATAdLoadingExtraUserDataKeywordKey];
+    if (customEvent.localInfo[kATAdLoadingExtraUserIDKey] != nil) {
+        options[kOptionsUserKey] = customEvent.localInfo[kATAdLoadingExtraUserIDKey];
+    }
     NSError *error = nil;
     [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) playAd:viewController options:[options count] > 0 ? options : nil placementID:rewardedVideo.customObject error:&error];
     if (error != nil) [customEvent handlerPlayError:error];
@@ -124,7 +136,7 @@ static NSString *const kOptionsUserKey = @"user";
                     BOOL set = NO;
                     ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
                     BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
-                    if (set) { [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.4.6"]; }
+                    if (set) { [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.8.0"]; }
                 }
             }
         });

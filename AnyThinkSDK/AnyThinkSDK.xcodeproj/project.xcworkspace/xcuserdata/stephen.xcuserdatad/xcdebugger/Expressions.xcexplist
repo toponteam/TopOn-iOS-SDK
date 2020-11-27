@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "-[ATADXAdManager readyForUnitGroupModel:setting:]:ATADXAdManager.m">
+         <PersistentStrings>
+            <PersistentString
+               value = " [[ATOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID] ">
+            </PersistentString>
+            <PersistentString
+               value = "[[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.videoURL]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "__119+[ATAdLoader(S2SHeaderBidding) sendS2SBidRequestWithPlacementModel:headerBiddingUnitGroups:requestID:extra:completion:]_block_invoke.70:ATAdLoader+S2SHeaderBidding.m">
+         <PersistentStrings>
+            <PersistentString
+               value = "obj[@&quot;nw_firm_id&quot;]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "__64-[ATOfferResourceManager resourcePathForOfferModel:resourceURL:]_block_invoke:ATOfferResourceManager.m">
+         <PersistentStrings>
+            <PersistentString
+               value = "[weakSelf.resourceStorage[offerModel.localResourceID] resourcePathForURL:URL]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "-[ATPlacementModel initWithDictionary:associatedCustomData:placementID:]:ATPlacementModel.m">
+      </ContextState>
+      <ContextState
+         contextName = "__96-[ATADXAdManager loadADWithUnitGroup:bidInfo:setting:placementModel:content:requestID:delegate:]_block_invoke.22:ATADXAdManager.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[ATADXPlacementSetting initWithPlacementDictionary:infoDictionary:placementID:]:ATADXPlacementSetting.m">
+      </ContextState>
+      <ContextState
+         contextName = "__27-[ATAppSettingManager init]_block_invoke:ATAppSettingManager.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[ATADXAdManager(Interstitial) showInterstitialWithUnitGroupModel:setting:viewController:delegate:]:ATADXAdManager+Interstitial.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[ATOfferResourceModel resourcePathForURL:]:ATOfferResourceModel.m">
+         <PersistentStrings>
+            <PersistentString
+               value = "URL.md5">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "__95-[ATBidInfoManager unitGroupWithHistoryBidInfoAvailableForPlacementID:unitGroups:newRequestID:]_block_invoke.101:ATBidInfoManager.m">
+         <PersistentStrings>
+            <PersistentString
+               value = "!weakSelf.diskBidInfoStorage[ug.unitID].isExpired">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "-[ATBidInfoManager unitGroupWithHistoryBidInfoAvailableForPlacementID:unitGroups:newRequestID:]:ATBidInfoManager.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[ATBidInfoManager checkAdxBidInfoExpireForUnitGroupModel:]:ATBidInfoManager.m">
+      </ContextState>
+      <ContextState
+         contextName = "__76+[ATAdStorageUtility adInStorage:statusStorage:forPlacementID:caller:extra:]_block_invoke_2:ATAdStorageUtility.m">
+         <PersistentStrings>
+            <PersistentString
+               value = "[self checkExpireForAdxUnitGroup:obj.unitGroup]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "__99-[ATADXLoader requestADXAdsWithUnitGroupModel:bidInfo:requestID:placementModel:content:completion:]_block_invoke_2:ATADXLoader.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[ATInterstitial ready]:ATInterstitial.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[ATADXPlacementSetting initWithDictionary:placementID:]:ATADXPlacementSetting.m">
+      </ContextState>
+      <ContextState
+         contextName = "__119+[ATAdLoader(S2SHeaderBidding) sendS2SBidRequestWithPlacementModel:headerBiddingUnitGroups:requestID:extra:completion:]_block_invoke.47:ATAdLoader+S2SHeaderBidding.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[ATADXOfferModel initWithDictionary:content:]:ATADXOfferModel.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[ATADXLoader readyADXAdWithUnitGroupModel:placementID:]:ATADXLoader.m">
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>

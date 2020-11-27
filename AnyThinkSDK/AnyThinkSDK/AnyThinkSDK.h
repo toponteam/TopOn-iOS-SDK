@@ -17,6 +17,8 @@
 #import "ATAdCustomEvent.h"
 #import "ATAdAdapter.h"
 #import "ATPlacementModel.h"
+#import "ATWaterfallManager.h"
+#import "ATCheckLoadModel.h"
 
 //! Project version number for AnyThinkSDK.
 FOUNDATION_EXPORT double AnyThinkSDKVersionNumber;

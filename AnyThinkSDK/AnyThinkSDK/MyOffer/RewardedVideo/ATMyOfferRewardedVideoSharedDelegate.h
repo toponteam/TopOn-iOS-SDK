@@ -8,9 +8,11 @@
 
 #import <Foundation/Foundation.h>
 #import <StoreKit/StoreKit.h>
-#import "ATMyOfferVideoViewController.h"
+#import "ATOfferVideoViewController.h"
 #import "ATMyOfferRewardedVideoDelegate.h"
-@interface ATMyOfferRewardedVideoSharedDelegate : NSObject<ATMyOfferVideoDelegate, SKStoreProductViewControllerDelegate>
+#import "ATMyOfferOfferModel.h"
+#import "ATMyOfferSetting.h"
+@interface ATMyOfferRewardedVideoSharedDelegate : NSObject<ATOfferVideoDelegate, SKStoreProductViewControllerDelegate>
 +(instancetype) sharedDelegate;
 -(void) showRewardedVideoWithOfferModel:(ATMyOfferOfferModel *)offerModel setting:(ATMyOfferSetting*)setting viewController:(UIViewController*)viewController delegate:(id<ATMyOfferRewardedVideoDelegate>)delegate;
 @end

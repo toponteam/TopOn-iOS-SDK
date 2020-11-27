@@ -10,11 +10,11 @@
 #import <UIKit/UIKit.h>
 extern NSString *const kVungleRewardedVideoLoadNotification;
 extern NSString *const kVungleRewardedVideoShowNotification;
+extern NSString *const kVungleRewardedVideoClickNotification;
+extern NSString *const kVungleRewardedVideoRewardNotification;
 extern NSString *const kVungleRewardedVideoCloseNotification;
 extern NSString *const kVungleRewardedVideoNotificationUserInfoPlacementIDKey;
 extern NSString *const kVungleRewardedVideoNotificationUserInfoErrorKey;
-extern NSString *const kVungleRewardedVideoNotificationUserInfoVideoCompletedFlagKey;
-extern NSString *const kVungleRewardedVideoNotificationUserInfoClickFlagKey;
 
 @interface ATVungleRewardedVideoAdapter : NSObject
 @end
@@ -33,29 +33,14 @@ extern NSString *const kVungleRewardedVideoNotificationUserInfoClickFlagKey;
 - (BOOL)loadPlacementWithID:(NSString *)placementID error:(NSError **)error;
 @end
 
-@protocol ATVungleViewInfo<NSObject>
-/**
- * Represents a BOOL whether or not the video can be considered a full view.
- */
-@property (nonatomic, readonly) NSNumber *completedView;
-
-/**
- * The time in seconds that the user watched the video.
- */
-@property (nonatomic, readonly) NSNumber *playTime;
-
-/**
- * Represents a BOOL whether or not the user clicked the download button.
- */
-@property (nonatomic, readonly) NSNumber *didDownload;
-@end
 
 @protocol ATVungleSDKDelegate <NSObject>
 @optional
 - (void)vungleAdPlayabilityUpdate:(BOOL)isAdPlayable placementID:(nullable NSString *)placementID error:(nullable NSError *)error;
-- (void)vungleWillShowAdForPlacementID:(nullable NSString *)placementID;
-- (void)vungleWillCloseAdWithViewInfo:(nonnull id<ATVungleViewInfo>)info placementID:(nonnull NSString *)placementID;
-- (void)vungleDidCloseAdWithViewInfo:(nonnull id<ATVungleViewInfo>)info placementID:(nonnull NSString *)placementID;
+- (void)vungleDidShowAdForPlacementID:(nullable NSString *)placementID;
+- (void)vungleTrackClickForPlacementID:(nullable NSString *)placementID;
+- (void)vungleRewardUserForPlacementID:(nullable NSString *)placementID;
+- (void)vungleDidCloseAdForPlacementID:(nonnull NSString *)placementID;
 - (void)vungleSDKDidInitialize;
 - (void)vungleSDKFailedToInitializeWithError:(NSError *)error;
 @end

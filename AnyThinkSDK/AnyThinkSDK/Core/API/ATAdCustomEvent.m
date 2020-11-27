@@ -19,6 +19,7 @@
 #import "ATAdLoader.h"
 #import "ATAdManager+Internal.h"
 #import "ATWaterfallManager.h"
+#import <objc/runtime.h>
 
 NSString *const kATSDKFailedToLoadSplashADMsg = @"AnythinkSDK has failed to load splash ad.";
 NSString *const kATSDKFailedToLoadBannerADMsg = @"AnythinkSDK has failed to load banner ad.";
@@ -57,7 +58,7 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
 }
 
 -(NSMutableArray<NSDictionary*>*) assets {
-    return [_assetsAccessor readWithBlock:^id{ return _assets_impl; }];
+    return [_assetsAccessor readWithBlock:^id{ return self->_assets_impl; }];
 }
 
 -(void) setRequestNumber:(NSInteger)requestNumber {
@@ -66,7 +67,7 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
 }
 
 -(NSInteger) numberOfFinishedRequests {
-    return [[_numberOfFinishedRequestsAccessor readWithBlock:^id{ return @(_numberOfFinishedRequests_impl); }] integerValue];
+    return [[_numberOfFinishedRequestsAccessor readWithBlock:^id{ return @(self->_numberOfFinishedRequests_impl); }] integerValue];
 }
 
 -(void) setNumberOfFinishedRequests:(NSInteger)numberOfFinishedRequests {
@@ -93,7 +94,6 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
 
 -(void) trackShow {
     if (self.ad != nil) {
-        self.sdkTime = [Utilities normalizedTimeStamp];
         [[ATLoadingScheduler sharedScheduler] cancelScheduleLoadingWithPlacementModel:self.ad.placementModel unitGroup:self.ad.unitGroup requestID:self.ad.requestID];
         [ATLogger logMessage:[NSString stringWithFormat:@"\nImpression with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:self.ad event:ATGeneralAdAgentEventTypeImpression extra:self.localInfo error:nil]] type:ATLogTypeTemporary];
         [[ATCapsManager sharedManager] increaseCapWithPlacementID:self.ad.placementModel.placementID unitGroupID:self.ad.unitGroup.unitGroupID requestID:self.ad.requestID];
@@ -116,6 +116,28 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
 }
 
 -(void) handleAssets:(NSDictionary*)assets {
+    
+    // Todo: 这里可能不是最好的解决办法.介于目前整体的结构和设计,先临时这样
+    if (assets[@"price"] == nil) { // kAdAssetsPriceKey
+        
+        unsigned int count;
+        objc_property_t *propertyList = class_copyPropertyList([self class], &count);
+        for (int k = 0; k < count; k ++) {
+            @autoreleasepool {
+                objc_property_t property = propertyList[k];
+                const char *name = property_getName(property);
+                NSString *finalName = [NSString stringWithUTF8String:name];
+                if ([finalName isEqualToString:@"price"]) {
+                    NSMutableDictionary *mutableDic = [assets mutableCopy];
+                    mutableDic[@"price"] = [self valueForKey: @"price"];
+                    assets = mutableDic;
+                    break;
+                }
+            }
+        }
+        free(propertyList);
+
+    }
     [self.assets addObject:assets];
     self.numberOfFinishedRequests++;
     [ATLogger logMessage:[NSString stringWithFormat:@"Successfully loaded, event:%@, finishedNumber: %ld, successful loads:%ld, total: %ld", NSStringFromClass([self class]), [self.assets count], self.numberOfFinishedRequests, self.requestNumber] type:ATLogTypeInternal];
@@ -143,7 +165,10 @@ NSString *const kATAdAssetsAppIDKey = @"app_id";
 }
 
 -(void) saveShowAPIContext {
-    _showDate = [NSDate date];
+    self.sdkTime = [Utilities normalizedTimeStamp];
+    if (_showDate == nil) {
+        _showDate = [NSDate date];
+    }
     _psIDOnShow = [ATAPI sharedInstance].psID;
 }
 

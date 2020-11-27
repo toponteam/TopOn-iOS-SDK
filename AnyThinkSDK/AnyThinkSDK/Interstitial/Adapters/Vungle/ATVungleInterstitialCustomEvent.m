@@ -40,12 +40,17 @@
     }
 }
 
+-(void) handleClickNotification:(NSNotification*)notification {
+    if ([notification.userInfo[kVungleInterstitialNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && self.interstitial != nil) {
+        [ATLogger logMessage:@"VungleInterstitial::show" type:ATLogTypeExternal];
+        [self trackInterstitialAdClick];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:kVungleInterstitialShowNotification object:nil];
+    }
+}
+
 -(void) handleCloseNotification:(NSNotification*)notification {
     if ([notification.userInfo[kVungleInterstitialNotificationUserInfoPlacementIDKey] isEqualToString:self.unitID] && self.interstitial != nil) {
         [ATLogger logMessage:@"VungleInterstitial::close" type:ATLogTypeExternal];
-        if ([notification.userInfo[kVungleInterstitialNotificationUserInfoClickFlagKey] boolValue]) {
-            [self trackInterstitialAdClick];
-        }
         
         [self trackInterstitialAdClose];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:kVungleInterstitialCloseNotification object:nil];
@@ -61,6 +66,7 @@
     if (self != nil) {
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadNotification:) name:kVungleInterstitialLoadNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleShowNotification:) name:kVungleInterstitialShowNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleClickNotification:) name:kVungleInterstitialClickNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleCloseNotification:) name:kVungleInterstitialCloseNotification object:nil];
     }
     return self;
@@ -70,9 +76,4 @@
     return self.serverInfo[@"placement_id"];
 }
 
-//-(NSDictionary*)delegateExtra {
-//    NSMutableDictionary* extra = [[super delegateExtra] mutableCopy];
-//    extra[kATADDelegateExtraNetworkPlacementIDKey] = self.interstitial.unitGroup.content[@"placement_id"];
-//    return extra;
-//}
 @end

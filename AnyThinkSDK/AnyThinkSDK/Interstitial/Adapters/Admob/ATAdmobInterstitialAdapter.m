@@ -63,7 +63,7 @@
         _interstitial = [[NSClassFromString(@"GADInterstitial") alloc] initWithAdUnitID:serverInfo[@"unit_id"]];
         _interstitial.delegate = _customEvent;
         dispatch_async(dispatch_get_main_queue(), ^{
-            [_interstitial loadRequest:[NSClassFromString(@"GADRequest") request]];
+            [self->_interstitial loadRequest:[NSClassFromString(@"GADRequest") request]];
         });
     } else {
         completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadInterstitialADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Admob"]}]);

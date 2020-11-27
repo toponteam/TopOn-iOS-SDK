@@ -658,6 +658,7 @@
 		8DB7FD56236C50B3007A889D /* AnyThinkUnityAdsBannerAdapter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DB7FD4F236C50B3007A889D /* AnyThinkUnityAdsBannerAdapter.framework */; };
 		8DB7FDA1236C56A3007A889D /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DB7FDA0236C56A3007A889D /* libxml2.tbd */; };
 		8DB7FDA3236C56AA007A889D /* libresolv.9.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DB7FDA2236C56A9007A889D /* libresolv.9.tbd */; };
+		8DB7FDA5236C56C9007A889D /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DB7FDA4236C56C9007A889D /* libc++.tbd */; };
 		8DB7FDA7236C56ED007A889D /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DB7FDA6236C56ED007A889D /* CoreTelephony.framework */; };
 		8DB7FDA9236C56F4007A889D /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DB7FDA8236C56F3007A889D /* CoreMotion.framework */; };
 		8DB7FDAB236C5731007A889D /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DB7FDAA236C5730007A889D /* SystemConfiguration.framework */; };
@@ -696,35 +697,6 @@
 		8DE325682440445800D72844 /* ATFyberRewardedVideoAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE325642440445700D72844 /* ATFyberRewardedVideoAdapter.m */; };
 		8DE325692440445800D72844 /* ATFyberRewardedVideoCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE325652440445800D72844 /* ATFyberRewardedVideoCustomEvent.h */; };
 		8DE3256A2440445800D72844 /* ATFyberRewardedVideoAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE325662440445800D72844 /* ATFyberRewardedVideoAdapter.h */; };
-		8DE56CA82372D5FE000E879B /* AnyThinkMyOffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CA62372D5FE000E879B /* AnyThinkMyOffer.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		8DE56CAB2372D5FE000E879B /* AnyThinkMyOffer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DE56CA42372D5FE000E879B /* AnyThinkMyOffer.framework */; };
-		8DE56CAC2372D5FE000E879B /* AnyThinkMyOffer.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8DE56CA42372D5FE000E879B /* AnyThinkMyOffer.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		8DE56CE62372D8AD000E879B /* ATMyOfferVideoViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD22372D8A9000E879B /* ATMyOfferVideoViewController.h */; };
-		8DE56CE72372D8AD000E879B /* ATMyOfferRewardedVideoSharedDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD32372D8AA000E879B /* ATMyOfferRewardedVideoSharedDelegate.h */; };
-		8DE56CE82372D8AD000E879B /* ATMyOfferVideoBannerView.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD42372D8AA000E879B /* ATMyOfferVideoBannerView.h */; };
-		8DE56CE92372D8AD000E879B /* ATMyOfferTracker.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD52372D8AA000E879B /* ATMyOfferTracker.h */; };
-		8DE56CEA2372D8AD000E879B /* ATMyOfferInterstitialSharedDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CD62372D8AA000E879B /* ATMyOfferInterstitialSharedDelegate.m */; };
-		8DE56CEB2372D8AD000E879B /* ATMyOfferResourceLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD72372D8AA000E879B /* ATMyOfferResourceLoader.h */; };
-		8DE56CEC2372D8AD000E879B /* ATMyOfferTracker.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CD82372D8AA000E879B /* ATMyOfferTracker.m */; };
-		8DE56CED2372D8AD000E879B /* ATMyOfferCapsManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD92372D8AA000E879B /* ATMyOfferCapsManager.h */; };
-		8DE56CEE2372D8AD000E879B /* ATMyOfferOfferManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CDA2372D8AB000E879B /* ATMyOfferOfferManager.h */; };
-		8DE56CEF2372D8AD000E879B /* ATMyOfferOfferManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CDB2372D8AB000E879B /* ATMyOfferOfferManager.m */; };
-		8DE56CF02372D8AD000E879B /* ATMyOfferVideoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CDC2372D8AB000E879B /* ATMyOfferVideoViewController.m */; };
-		8DE56CF12372D8AD000E879B /* ATMyOfferProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CDD2372D8AB000E879B /* ATMyOfferProgressView.m */; };
-		8DE56CF22372D8AD000E879B /* ATMyOfferProgressView.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CDE2372D8AB000E879B /* ATMyOfferProgressView.h */; };
-		8DE56CF32372D8AD000E879B /* ATMyOfferCapsManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CDF2372D8AB000E879B /* ATMyOfferCapsManager.m */; };
-		8DE56CF42372D8AD000E879B /* ATMyOfferVideoBannerView.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CE02372D8AC000E879B /* ATMyOfferVideoBannerView.m */; };
-		8DE56CF52372D8AD000E879B /* ATMyOfferInterstitialSharedDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CE12372D8AC000E879B /* ATMyOfferInterstitialSharedDelegate.h */; };
-		8DE56CF62372D8AD000E879B /* ATMyOfferResourceManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CE22372D8AC000E879B /* ATMyOfferResourceManager.m */; };
-		8DE56CF72372D8AD000E879B /* ATMyOfferResourceLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CE32372D8AC000E879B /* ATMyOfferResourceLoader.m */; };
-		8DE56CF82372D8AD000E879B /* ATMyOfferRewardedVideoSharedDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CE42372D8AC000E879B /* ATMyOfferRewardedVideoSharedDelegate.m */; };
-		8DE56CF92372D8AD000E879B /* ATMyOfferResourceManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CE52372D8AC000E879B /* ATMyOfferResourceManager.h */; };
-		8DE56CFC2372D8C0000E879B /* ATMyOfferResourceModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CFA2372D8BF000E879B /* ATMyOfferResourceModel.m */; };
-		8DE56CFD2372D8C0000E879B /* ATMyOfferResourceModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CFB2372D8BF000E879B /* ATMyOfferResourceModel.h */; };
-		8DE56D022372D8E6000E879B /* ATMyOfferInterstitialDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CFE2372D8E6000E879B /* ATMyOfferInterstitialDelegate.h */; };
-		8DE56D032372D8E6000E879B /* ATMyOfferProgressHud.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CFF2372D8E6000E879B /* ATMyOfferProgressHud.h */; };
-		8DE56D042372D8E6000E879B /* ATMyOfferProgressHud.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D002372D8E6000E879B /* ATMyOfferProgressHud.m */; };
-		8DE56D052372D8E6000E879B /* ATMyOfferRewardedVideoDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D012372D8E6000E879B /* ATMyOfferRewardedVideoDelegate.h */; };
 		8DE56D0A2372DBBA000E879B /* ATMyOfferSetting.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D062372DBB9000E879B /* ATMyOfferSetting.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8DE56D0B2372DBBA000E879B /* ATMyOfferOfferModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D072372DBB9000E879B /* ATMyOfferOfferModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8DE56D0C2372DBBA000E879B /* ATMyOfferSetting.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D082372DBBA000E879B /* ATMyOfferSetting.m */; };
@@ -743,6 +715,11 @@
 		8DFD802F247CBED40099756C /* ATAdLoader+S2SHeaderBidding.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DFD802D247CBED40099756C /* ATAdLoader+S2SHeaderBidding.m */; };
 		8DFD80E02489F4B80099756C /* ATSigmobInterstitialRewardedVideoDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DFD80DF2489F4480099756C /* ATSigmobInterstitialRewardedVideoDelegate.h */; };
 		8DFD80E12489F4B80099756C /* ATSigmobInterstitialRewardedVideoDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DFD80DE2489F43C0099756C /* ATSigmobInterstitialRewardedVideoDelegate.m */; };
+		960686562521D1C400BA96EF /* SimpleWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 960686552521D1C400BA96EF /* SimpleWebViewController.swift */; };
+		9606890625239EAE00BA96EF /* ATWebAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9606890525239EAE00BA96EF /* ATWebAction.swift */; };
+		96068A8F25245DE800BA96EF /* ATOfferWebViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 96068A8D25245DE800BA96EF /* ATOfferWebViewController.h */; };
+		96068A9025245DE800BA96EF /* ATOfferWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 96068A8E25245DE800BA96EF /* ATOfferWebViewController.m */; };
+		96757B9B25357FA900055E1C /* AnyThinkSDK.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 96757B9A25357FA100055E1C /* AnyThinkSDK.bundle */; };
 		9B0AB0B8249C5400003C5282 /* AnyThinkMintegralSplashAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B0AB0B6249C5400003C5282 /* AnyThinkMintegralSplashAdapter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9B0AB0BB249C5400003C5282 /* AnyThinkMintegralSplashAdapter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B0AB0B4249C5400003C5282 /* AnyThinkMintegralSplashAdapter.framework */; };
 		9B0AB0BC249C5400003C5282 /* AnyThinkMintegralSplashAdapter.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9B0AB0B4249C5400003C5282 /* AnyThinkMintegralSplashAdapter.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -771,8 +748,19 @@
 		9B0AB114249C56DD003C5282 /* ATVungleBannerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B0AB110249C56DD003C5282 /* ATVungleBannerAdapter.m */; };
 		9B0AB115249C56DD003C5282 /* ATVungleBannerCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B0AB111249C56DD003C5282 /* ATVungleBannerCustomEvent.m */; };
 		9B0AB116249C56DD003C5282 /* ATVungleBannerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B0AB112249C56DD003C5282 /* ATVungleBannerAdapter.h */; };
+		9B120B80252319FD00BAA664 /* ATCheckLoadModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B120B7E252319FC00BAA664 /* ATCheckLoadModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9B120B81252319FD00BAA664 /* ATCheckLoadModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B120B7F252319FC00BAA664 /* ATCheckLoadModel.m */; };
+		9B120E35252472CF00BAA664 /* AnyThinkAdmobSplashAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B120E33252472CF00BAA664 /* AnyThinkAdmobSplashAdapter.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9B120E38252472CF00BAA664 /* AnyThinkAdmobSplashAdapter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B120E31252472CE00BAA664 /* AnyThinkAdmobSplashAdapter.framework */; };
+		9B120E39252472CF00BAA664 /* AnyThinkAdmobSplashAdapter.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9B120E31252472CE00BAA664 /* AnyThinkAdmobSplashAdapter.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		9B120F042524733B00BAA664 /* ATAdmobSplashAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B120F022524733B00BAA664 /* ATAdmobSplashAdapter.h */; };
+		9B120F052524733B00BAA664 /* ATAdmobSplashAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B120F032524733B00BAA664 /* ATAdmobSplashAdapter.m */; };
+		9B120FCC2524736B00BAA664 /* ATAdmobSplashCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B120FCA2524736B00BAA664 /* ATAdmobSplashCustomEvent.h */; };
+		9B120FCD2524736B00BAA664 /* ATAdmobSplashCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B120FCB2524736B00BAA664 /* ATAdmobSplashCustomEvent.m */; };
 		9B1AE1DB23B4A87300F50CED /* ATMintegralInterstitialAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DB70147236D67F4007A889D /* ATMintegralInterstitialAdapter.m */; };
 		9B1AE1DC23B4A87600F50CED /* ATMintegralInterstitialAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB70148236D67F5007A889D /* ATMintegralInterstitialAdapter.h */; };
+		9B2D947224FE2F97004C19BA /* ATOfferSessionRedirector.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B2D947024FE2F97004C19BA /* ATOfferSessionRedirector.h */; };
+		9B2D947324FE2F97004C19BA /* ATOfferSessionRedirector.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B2D947124FE2F97004C19BA /* ATOfferSessionRedirector.m */; };
 		9B56A0E0237E719600204E3D /* AnyThinkMintegralBannerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B56A0D0237E719600204E3D /* AnyThinkMintegralBannerAdapter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9B56A0F0237E721800204E3D /* ATMintegralBannerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B56A0EC237E720900204E3D /* ATMintegralBannerAdapter.h */; };
 		9B56A0F1237E721800204E3D /* ATMintegralBannerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B56A0ED237E720900204E3D /* ATMintegralBannerAdapter.m */; };
@@ -792,12 +780,6 @@
 		9B56A253238E5C0700204E3D /* ATOguryRewardedVideoAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B56A251238E5C0600204E3D /* ATOguryRewardedVideoAdapter.m */; };
 		9B56A256238E5C2900204E3D /* ATOguryRewardedVideoCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B56A254238E5C2900204E3D /* ATOguryRewardedVideoCustomEvent.h */; };
 		9B56A257238E5C2900204E3D /* ATOguryRewardedVideoCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B56A255238E5C2900204E3D /* ATOguryRewardedVideoCustomEvent.m */; };
-		9B69D10024E28C6300F293D8 /* ATMyOfferNativeCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B69D0FE24E28C6300F293D8 /* ATMyOfferNativeCustomEvent.h */; };
-		9B69D10124E28C6300F293D8 /* ATMyOfferNativeCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B69D0FF24E28C6300F293D8 /* ATMyOfferNativeCustomEvent.m */; };
-		9B69D10424E28C9400F293D8 /* ATMyOfferNativeAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B69D10224E28C9400F293D8 /* ATMyOfferNativeAdapter.h */; };
-		9B69D10524E28C9400F293D8 /* ATMyOfferNativeAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B69D10324E28C9400F293D8 /* ATMyOfferNativeAdapter.m */; };
-		9B69D10824E28D4400F293D8 /* ATMyOfferNativeRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B69D10624E28D4400F293D8 /* ATMyOfferNativeRenderer.h */; };
-		9B69D10924E28D4400F293D8 /* ATMyOfferNativeRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B69D10724E28D4400F293D8 /* ATMyOfferNativeRenderer.m */; };
 		9B77D7302404FBD0003FEF86 /* ATDrawViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B77D72F2404FBD0003FEF86 /* ATDrawViewController.m */; };
 		9B7B6F4224DD633C008C9C93 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B7B6F4124DD6337008C9C93 /* libbz2.tbd */; };
 		9B854E2024BD940300A88107 /* ATKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B854E1E24BD940300A88107 /* ATKeychain.h */; };
@@ -811,16 +793,6 @@
 		9B8DE6DD23EBEF600052DE3C /* ATKSNativeCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B8DE6D723EBEF600052DE3C /* ATKSNativeCustomEvent.m */; };
 		9B8DE6DE23EBEF600052DE3C /* ATKSNativeAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B8DE6D823EBEF600052DE3C /* ATKSNativeAdapter.m */; };
 		9B8DE6DF23EBEF600052DE3C /* ATKSNativeRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B8DE6D923EBEF600052DE3C /* ATKSNativeRenderer.m */; };
-		9BB8665F24E3F69400F94EDA /* ATMyOfferRewardedVideoAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D182373B4C5000E879B /* ATMyOfferRewardedVideoAdapter.m */; };
-		9BB8666024E3F69400F94EDA /* ATMyOfferRewardedVideoCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D192373B4C5000E879B /* ATMyOfferRewardedVideoCustomEvent.m */; };
-		9BB8666124E3F6A500F94EDA /* ATMyOfferInterstitialAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D102373B47C000E879B /* ATMyOfferInterstitialAdapter.m */; };
-		9BB8666224E3F6A500F94EDA /* ATMyOfferInterstitialCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D122373B47C000E879B /* ATMyOfferInterstitialCustomEvent.m */; };
-		9BB8666324E3F6C000F94EDA /* ATMyOfferInterstitialAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D132373B47C000E879B /* ATMyOfferInterstitialAdapter.h */; };
-		9BB8666424E3F6C400F94EDA /* ATMyOfferInterstitialCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D112373B47C000E879B /* ATMyOfferInterstitialCustomEvent.h */; };
-		9BB8666524E3F6CA00F94EDA /* ATMyOfferRewardedVideoAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D1A2373B4C5000E879B /* ATMyOfferRewardedVideoAdapter.h */; };
-		9BB8666624E3F6CE00F94EDA /* ATMyOfferRewardedVideoCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D1B2373B4C5000E879B /* ATMyOfferRewardedVideoCustomEvent.h */; };
-		9BB8666E24E6897100F94EDA /* ATMyOfferFullScreenPictureViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 9BB8666C24E6897100F94EDA /* ATMyOfferFullScreenPictureViewController.h */; };
-		9BB8666F24E6897100F94EDA /* ATMyOfferFullScreenPictureViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9BB8666D24E6897100F94EDA /* ATMyOfferFullScreenPictureViewController.m */; };
 		9BDA88302397DCB700881E25 /* ATYeahmobiBannerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB702BD236D76A8007A889D /* ATYeahmobiBannerAdapter.h */; };
 		9BDA88312397DCB700881E25 /* ATYeahmobiBannerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DB702BB236D76A7007A889D /* ATYeahmobiBannerAdapter.m */; };
 		9BDA88322397DCB700881E25 /* ATYeahmobiBannerCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB702BC236D76A8007A889D /* ATYeahmobiBannerCustomEvent.h */; };
@@ -831,16 +803,118 @@
 		9BDCBE6F24B441CB0059AAB0 /* ATGCDAsyncSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 9BDCBE6D24B441CB0059AAB0 /* ATGCDAsyncSocket.m */; };
 		9BDCBE7224B4893D0059AAB0 /* ATTCPLogManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 9BDCBE7024B4893D0059AAB0 /* ATTCPLogManager.h */; };
 		9BDCBE7324B4893D0059AAB0 /* ATTCPLogManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 9BDCBE7124B4893D0059AAB0 /* ATTCPLogManager.m */; };
-		9BF5E53E237267B600BBF5CE /* AnyThinkSDK.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 9BF5E53D237267B600BBF5CE /* AnyThinkSDK.bundle */; };
-		AC2A9A032521E1FD00DFD507 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DB7FDA4236C56C9007A889D /* libc++.tbd */; };
-		DC5FBE4724E2CE3F00E0C6B8 /* ATMyOfferBannerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = DC5FBE4624E2CE3F00E0C6B8 /* ATMyOfferBannerAdapter.h */; };
-		DC5FBE4924E2CE5800E0C6B8 /* ATMyOfferBannerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = DC5FBE4824E2CE5800E0C6B8 /* ATMyOfferBannerAdapter.m */; };
-		DC5FBE4B24E2CE7000E0C6B8 /* ATMyOfferBannerCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = DC5FBE4A24E2CE7000E0C6B8 /* ATMyOfferBannerCustomEvent.h */; };
-		DC5FBE4D24E2CE8600E0C6B8 /* ATMyOfferBannerCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = DC5FBE4C24E2CE8600E0C6B8 /* ATMyOfferBannerCustomEvent.m */; };
+		DC58DA2024EFCA13004FDDF5 /* ATOfferModel.h in Headers */ = {isa = PBXBuildFile; fileRef = DC58DA1F24EFCA13004FDDF5 /* ATOfferModel.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		DC58DA2224EFCA55004FDDF5 /* ATOfferModel.m in Sources */ = {isa = PBXBuildFile; fileRef = DC58DA2124EFCA55004FDDF5 /* ATOfferModel.m */; };
 		DC5FBE4E24E50A6400E0C6B8 /* ATStoreProductViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = DC83F50F24DBD29500EC50F6 /* ATStoreProductViewController.m */; };
 		DC5FBE4F24E50A9D00E0C6B8 /* ATStoreProductViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = DC83F50D24DBD27E00EC50F6 /* ATStoreProductViewController.h */; };
-		DCAB166924D8432300F118A9 /* ATMyOfferBannerView.h in Headers */ = {isa = PBXBuildFile; fileRef = DCAB166824D8432200F118A9 /* ATMyOfferBannerView.h */; };
-		DCAB166B24D8436400F118A9 /* ATMyOfferBannerView.m in Sources */ = {isa = PBXBuildFile; fileRef = DCAB166A24D8436400F118A9 /* ATMyOfferBannerView.m */; };
+		DC6405EF24EE2AE000842B2E /* ATADXPlacementSetting.h in Headers */ = {isa = PBXBuildFile; fileRef = DC6405EE24EE2AE000842B2E /* ATADXPlacementSetting.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		DC6405F124EE2AF300842B2E /* ATADXPlacementSetting.m in Sources */ = {isa = PBXBuildFile; fileRef = DC6405F024EE2AF300842B2E /* ATADXPlacementSetting.m */; };
+		DC6405FA24EE6A7C00842B2E /* ATADXLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = DC6405F924EE6A7C00842B2E /* ATADXLoader.m */; };
+		DC6405FF24EE8A3600842B2E /* ATADXTracker.h in Headers */ = {isa = PBXBuildFile; fileRef = DC6405FE24EE8A3600842B2E /* ATADXTracker.h */; };
+		DC64060124EE8A4900842B2E /* ATADXTracker.m in Sources */ = {isa = PBXBuildFile; fileRef = DC64060024EE8A4900842B2E /* ATADXTracker.m */; };
+		DC64060324EE8CDE00842B2E /* ATADXRewardedVideoAdManager.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64060224EE8CDE00842B2E /* ATADXRewardedVideoAdManager.h */; };
+		DC64060524EE8CF300842B2E /* ATADXRewardedVideoAdManager.m in Sources */ = {isa = PBXBuildFile; fileRef = DC64060424EE8CF300842B2E /* ATADXRewardedVideoAdManager.m */; };
+		DC64060724EE8D6200842B2E /* ATADXRewardedVideoDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64060624EE8D6200842B2E /* ATADXRewardedVideoDelegate.h */; };
+		DC64060924EE8D8A00842B2E /* ATADXOfferModel.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64060824EE8D8A00842B2E /* ATADXOfferModel.h */; };
+		DC64060B24EE8D9C00842B2E /* ATADXOfferModel.m in Sources */ = {isa = PBXBuildFile; fileRef = DC64060A24EE8D9C00842B2E /* ATADXOfferModel.m */; };
+		DC64060E24EE9BAD00842B2E /* ATADXInterstitialAdManager.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64060D24EE9BAD00842B2E /* ATADXInterstitialAdManager.h */; };
+		DC64061024EE9BC200842B2E /* ATADXInterstitialAdManager.m in Sources */ = {isa = PBXBuildFile; fileRef = DC64060F24EE9BC200842B2E /* ATADXInterstitialAdManager.m */; };
+		DC64061224EE9BE300842B2E /* ATADXInterstitialDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64061124EE9BE300842B2E /* ATADXInterstitialDelegate.h */; };
+		DC64061424EE9D6100842B2E /* ATADXAdManager.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64061324EE9D6100842B2E /* ATADXAdManager.h */; };
+		DC64061624EE9D7500842B2E /* ATADXAdManager.m in Sources */ = {isa = PBXBuildFile; fileRef = DC64061524EE9D7500842B2E /* ATADXAdManager.m */; };
+		DC64061824EE9FE600842B2E /* ATADXAdLoadingDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64061724EE9FE600842B2E /* ATADXAdLoadingDelegate.h */; };
+		DC924C1B25061B54001BF9C2 /* ATHeliumInterstitialAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = DC924C1A25061B54001BF9C2 /* ATHeliumInterstitialAdapter.h */; };
+		DC924C1D25061BAF001BF9C2 /* ATHeliumInterstitialAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = DC924C1C25061BAF001BF9C2 /* ATHeliumInterstitialAdapter.m */; };
+		DC924C1F25061C44001BF9C2 /* ATHeliumInterstitialCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = DC924C1E25061C44001BF9C2 /* ATHeliumInterstitialCustomEvent.h */; };
+		DC924C2125061C6E001BF9C2 /* ATHeliumInterstitialCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = DC924C2025061C6E001BF9C2 /* ATHeliumInterstitialCustomEvent.m */; };
+		DC924C2325061CD8001BF9C2 /* ATHeliumRewardedVideoAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = DC924C2225061CD8001BF9C2 /* ATHeliumRewardedVideoAdapter.h */; };
+		DC924C2525061CFA001BF9C2 /* ATHeliumRewardedVideoAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = DC924C2425061CFA001BF9C2 /* ATHeliumRewardedVideoAdapter.m */; };
+		DC924C2725061D3C001BF9C2 /* ATHeliumRewardedVideoCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = DC924C2625061D3C001BF9C2 /* ATHeliumRewardedVideoCustomEvent.h */; };
+		DC924C2925061D58001BF9C2 /* ATHeliumRewardedVideoCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = DC924C2825061D58001BF9C2 /* ATHeliumRewardedVideoCustomEvent.m */; };
+		DC9D077424F3D31800A8AF95 /* ATMyOfferInterstitialDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CFE2372D8E6000E879B /* ATMyOfferInterstitialDelegate.h */; };
+		DC9D077524F3D32000A8AF95 /* ATMyOfferInterstitialSharedDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CE12372D8AC000E879B /* ATMyOfferInterstitialSharedDelegate.h */; };
+		DC9D077624F3D32900A8AF95 /* ATMyOfferInterstitialSharedDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CD62372D8AA000E879B /* ATMyOfferInterstitialSharedDelegate.m */; };
+		DC9D077724F3D33300A8AF95 /* ATMyOfferInterstitialAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D132373B47C000E879B /* ATMyOfferInterstitialAdapter.h */; };
+		DC9D077824F3D33900A8AF95 /* ATMyOfferInterstitialAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D102373B47C000E879B /* ATMyOfferInterstitialAdapter.m */; };
+		DC9D077924F3D34100A8AF95 /* ATMyOfferInterstitialCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D112373B47C000E879B /* ATMyOfferInterstitialCustomEvent.h */; };
+		DC9D077A24F3D34900A8AF95 /* ATMyOfferInterstitialCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D122373B47C000E879B /* ATMyOfferInterstitialCustomEvent.m */; };
+		DC9D077B24F3D35900A8AF95 /* ATMyOfferRewardedVideoDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D012372D8E6000E879B /* ATMyOfferRewardedVideoDelegate.h */; };
+		DC9D077C24F3D35E00A8AF95 /* ATMyOfferRewardedVideoSharedDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD32372D8AA000E879B /* ATMyOfferRewardedVideoSharedDelegate.h */; };
+		DC9D077D24F3D36600A8AF95 /* ATMyOfferRewardedVideoSharedDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CE42372D8AC000E879B /* ATMyOfferRewardedVideoSharedDelegate.m */; };
+		DC9D077E24F3D37000A8AF95 /* ATMyOfferRewardedVideoAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D1A2373B4C5000E879B /* ATMyOfferRewardedVideoAdapter.h */; };
+		DC9D077F24F3D37600A8AF95 /* ATMyOfferRewardedVideoAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D182373B4C5000E879B /* ATMyOfferRewardedVideoAdapter.m */; };
+		DC9D078024F3D37E00A8AF95 /* ATMyOfferRewardedVideoCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56D1B2373B4C5000E879B /* ATMyOfferRewardedVideoCustomEvent.h */; };
+		DC9D078124F3D38200A8AF95 /* ATMyOfferRewardedVideoCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D192373B4C5000E879B /* ATMyOfferRewardedVideoCustomEvent.m */; };
+		DC9D078224F3D38E00A8AF95 /* ATMyOfferSplashAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = DCED438424DD4830001B3139 /* ATMyOfferSplashAdapter.h */; };
+		DC9D078324F3D39800A8AF95 /* ATMyOfferSplashAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = DCED438624DD4A93001B3139 /* ATMyOfferSplashAdapter.m */; };
+		DC9D078424F3D39C00A8AF95 /* ATMyOfferSplashCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = DCED438824DD4ABC001B3139 /* ATMyOfferSplashCustomEvent.h */; };
+		DC9D078524F3D3A600A8AF95 /* ATMyOfferSplashCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = DCED438A24DD4AD8001B3139 /* ATMyOfferSplashCustomEvent.m */; };
+		DC9D078624F3D3A900A8AF95 /* ATMyOfferSplashDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C05324D3FA6100FBC0EC /* ATMyOfferSplashDelegate.h */; };
+		DC9D078724F3D3B200A8AF95 /* ATMyOfferSplashSharedDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C05924D418F600FBC0EC /* ATMyOfferSplashSharedDelegate.h */; };
+		DC9D078824F3D3B600A8AF95 /* ATMyOfferSplashSharedDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB0C05B24D4197B00FBC0EC /* ATMyOfferSplashSharedDelegate.m */; };
+		DC9D078924F3D3C500A8AF95 /* ATMyOfferNativeDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C05524D4016400FBC0EC /* ATMyOfferNativeDelegate.h */; };
+		DC9D078A24F3D3CD00A8AF95 /* ATMyOfferNativeSharedDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C05D24D41A1100FBC0EC /* ATMyOfferNativeSharedDelegate.h */; };
+		DC9D078B24F3D3D000A8AF95 /* ATMyOfferNativeSharedDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB0C05F24D41A3B00FBC0EC /* ATMyOfferNativeSharedDelegate.m */; };
+		DC9D078C24F3D3D700A8AF95 /* ATMyOfferNativeAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B69D10224E28C9400F293D8 /* ATMyOfferNativeAdapter.h */; };
+		DC9D078D24F3D3DB00A8AF95 /* ATMyOfferNativeAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B69D10324E28C9400F293D8 /* ATMyOfferNativeAdapter.m */; };
+		DC9D078E24F3D3E300A8AF95 /* ATMyOfferNativeCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B69D0FE24E28C6300F293D8 /* ATMyOfferNativeCustomEvent.h */; };
+		DC9D078F24F3D3E700A8AF95 /* ATMyOfferNativeCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B69D0FF24E28C6300F293D8 /* ATMyOfferNativeCustomEvent.m */; };
+		DC9D079024F3D3F100A8AF95 /* ATMyOfferNativeRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B69D10624E28D4400F293D8 /* ATMyOfferNativeRenderer.h */; };
+		DC9D079124F3D3F400A8AF95 /* ATMyOfferNativeRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B69D10724E28D4400F293D8 /* ATMyOfferNativeRenderer.m */; };
+		DC9D079224F3D40F00A8AF95 /* ATMyOfferBannerDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C05724D4026D00FBC0EC /* ATMyOfferBannerDelegate.h */; };
+		DC9D079324F3D41200A8AF95 /* ATMyOfferBannerSharedDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C06124D41A8800FBC0EC /* ATMyOfferBannerSharedDelegate.h */; };
+		DC9D079424F3D41900A8AF95 /* ATMyOfferBannerSharedDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB0C06324D41AC500FBC0EC /* ATMyOfferBannerSharedDelegate.m */; };
+		DC9D079524F3D41C00A8AF95 /* ATMyOfferBannerView.h in Headers */ = {isa = PBXBuildFile; fileRef = DCAB166824D8432200F118A9 /* ATMyOfferBannerView.h */; };
+		DC9D079624F3D42500A8AF95 /* ATMyOfferBannerView.m in Sources */ = {isa = PBXBuildFile; fileRef = DCAB166A24D8436400F118A9 /* ATMyOfferBannerView.m */; };
+		DC9D079724F3D42C00A8AF95 /* ATMyOfferBannerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = DC5FBE4624E2CE3F00E0C6B8 /* ATMyOfferBannerAdapter.h */; };
+		DC9D079824F3D43700A8AF95 /* ATMyOfferBannerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = DC5FBE4824E2CE5800E0C6B8 /* ATMyOfferBannerAdapter.m */; };
+		DC9D079924F3D43D00A8AF95 /* ATMyOfferBannerCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = DC5FBE4A24E2CE7000E0C6B8 /* ATMyOfferBannerCustomEvent.h */; };
+		DC9D079A24F3D44400A8AF95 /* ATMyOfferBannerCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = DC5FBE4C24E2CE8600E0C6B8 /* ATMyOfferBannerCustomEvent.m */; };
+		DC9D079B24F3D44C00A8AF95 /* ATMyOfferOfferManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CDA2372D8AB000E879B /* ATMyOfferOfferManager.h */; };
+		DC9D079C24F3D45300A8AF95 /* ATMyOfferOfferManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CDB2372D8AB000E879B /* ATMyOfferOfferManager.m */; };
+		DC9D079D24F3D45800A8AF95 /* ATMyOfferProgressHud.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CFF2372D8E6000E879B /* ATMyOfferProgressHud.h */; };
+		DC9D079E24F3D45F00A8AF95 /* ATMyOfferProgressHud.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56D002372D8E6000E879B /* ATMyOfferProgressHud.m */; };
+		DC9D079F24F3D46200A8AF95 /* ATMyOfferUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = DCED438C24DD4F94001B3139 /* ATMyOfferUtilities.h */; };
+		DC9D07A024F3D46B00A8AF95 /* ATMyOfferUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = DCED438E24DD4FB2001B3139 /* ATMyOfferUtilities.m */; };
+		DC9D07A124F3D47000A8AF95 /* ATOfferResourceModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CFB2372D8BF000E879B /* ATOfferResourceModel.h */; };
+		DC9D07A224F3D47700A8AF95 /* ATOfferResourceModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CFA2372D8BF000E879B /* ATOfferResourceModel.m */; };
+		DC9D07A324F3D47B00A8AF95 /* ATMyOfferCapsManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD92372D8AA000E879B /* ATMyOfferCapsManager.h */; };
+		DC9D07A424F3D48400A8AF95 /* ATMyOfferCapsManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CDF2372D8AB000E879B /* ATMyOfferCapsManager.m */; };
+		DC9D07A524F3D48F00A8AF95 /* ATOfferProgressView.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CDE2372D8AB000E879B /* ATOfferProgressView.h */; };
+		DC9D07A624F3D49200A8AF95 /* ATOfferProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CDD2372D8AB000E879B /* ATOfferProgressView.m */; };
+		DC9D07A724F3D49900A8AF95 /* ATOfferResourceLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD72372D8AA000E879B /* ATOfferResourceLoader.h */; };
+		DC9D07A824F3D49D00A8AF95 /* ATOfferResourceLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CE32372D8AC000E879B /* ATOfferResourceLoader.m */; };
+		DC9D07A924F3D4A300A8AF95 /* ATOfferResourceManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CE52372D8AC000E879B /* ATOfferResourceManager.h */; };
+		DC9D07AA24F3D4A600A8AF95 /* ATOfferResourceManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CE22372D8AC000E879B /* ATOfferResourceManager.m */; };
+		DC9D07AB24F3D4B000A8AF95 /* ATMyOfferTracker.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD52372D8AA000E879B /* ATMyOfferTracker.h */; };
+		DC9D07AC24F3D4B400A8AF95 /* ATMyOfferTracker.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CD82372D8AA000E879B /* ATMyOfferTracker.m */; };
+		DC9D07AD24F3D4BB00A8AF95 /* ATOfferVideoBannerView.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD42372D8AA000E879B /* ATOfferVideoBannerView.h */; };
+		DC9D07AE24F3D4BF00A8AF95 /* ATOfferVideoBannerView.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CE02372D8AC000E879B /* ATOfferVideoBannerView.m */; };
+		DC9D07AF24F3D4C800A8AF95 /* ATOfferVideoViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DE56CD22372D8A9000E879B /* ATOfferVideoViewController.h */; };
+		DC9D07B024F3D4CC00A8AF95 /* ATOfferVideoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8DE56CDC2372D8AB000E879B /* ATOfferVideoViewController.m */; };
+		DC9D07B124F3D4D300A8AF95 /* ATOfferFullScreenPictureViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 9BB8666C24E6897100F94EDA /* ATOfferFullScreenPictureViewController.h */; };
+		DC9D07B224F3D4D700A8AF95 /* ATOfferFullScreenPictureViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9BB8666D24E6897100F94EDA /* ATOfferFullScreenPictureViewController.m */; };
+		DC9D07B424F6538B00A8AF95 /* ATOfferSetting.h in Headers */ = {isa = PBXBuildFile; fileRef = DC9D07B324F6538B00A8AF95 /* ATOfferSetting.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		DC9D07B624F6539E00A8AF95 /* ATOfferSetting.m in Sources */ = {isa = PBXBuildFile; fileRef = DC9D07B524F6539E00A8AF95 /* ATOfferSetting.m */; };
+		DC9D07B724F66CDC00A8AF95 /* ATADXInterstitialAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64062724EEA83600842B2E /* ATADXInterstitialAdapter.h */; };
+		DC9D07B824F66CE200A8AF95 /* ATADXInterstitialAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = DC64062924EEA84C00842B2E /* ATADXInterstitialAdapter.m */; };
+		DC9D07B924F66CE700A8AF95 /* ATADXInterstitialCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64062B24EEA86900842B2E /* ATADXInterstitialCustomEvent.h */; };
+		DC9D07BA24F66CEB00A8AF95 /* ATADXInterstitialCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = DC64062D24EEA87D00842B2E /* ATADXInterstitialCustomEvent.m */; };
+		DC9D07BB24F66D8D00A8AF95 /* ATADXRewardedVideoAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64061F24EEA7C800842B2E /* ATADXRewardedVideoAdapter.h */; };
+		DC9D07BC24F66D9300A8AF95 /* ATADXRewardedVideoAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = DC64062124EEA7DE00842B2E /* ATADXRewardedVideoAdapter.m */; };
+		DC9D07BD24F66D9800A8AF95 /* ATADXRewardedVideoCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = DC64062324EEA80400842B2E /* ATADXRewardedVideoCustomEvent.h */; };
+		DC9D07BE24F66D9C00A8AF95 /* ATADXRewardedVideoCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = DC64062524EEA81800842B2E /* ATADXRewardedVideoCustomEvent.m */; };
+		DC9D53812508AF430053AFAD /* ATHeaderBiddingManager.h in Headers */ = {isa = PBXBuildFile; fileRef = DC9D53802508AF430053AFAD /* ATHeaderBiddingManager.h */; };
+		DC9D53832508AF570053AFAD /* ATHeaderBiddingManager.m in Sources */ = {isa = PBXBuildFile; fileRef = DC9D53822508AF570053AFAD /* ATHeaderBiddingManager.m */; };
+		DC9D5385251060450053AFAD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC9D5384251060440053AFAD /* CoreGraphics.framework */; };
+		DC9D53872510604D0053AFAD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC9D53862510604D0053AFAD /* Foundation.framework */; };
+		DC9D5389251060560053AFAD /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC9D5388251060560053AFAD /* StoreKit.framework */; };
+		DC9D538B251060650053AFAD /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC9D538A251060650053AFAD /* WebKit.framework */; };
+		DC9D5394251305A70053AFAD /* ATADXLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = DC6405F824EE6A6A00842B2E /* ATADXLoader.h */; };
+		DC9D5399251316780053AFAD /* ATBidJobModel.h in Headers */ = {isa = PBXBuildFile; fileRef = DC9D5398251316780053AFAD /* ATBidJobModel.h */; };
+		DC9D539B251316900053AFAD /* ATBidJobModel.m in Sources */ = {isa = PBXBuildFile; fileRef = DC9D539A251316900053AFAD /* ATBidJobModel.m */; };
+		DC9D539D251316E40053AFAD /* ATBidTrackingModel.h in Headers */ = {isa = PBXBuildFile; fileRef = DC9D539C251316E40053AFAD /* ATBidTrackingModel.h */; };
+		DC9D539F251316FD0053AFAD /* ATBidTrackingModel.m in Sources */ = {isa = PBXBuildFile; fileRef = DC9D539E251316FD0053AFAD /* ATBidTrackingModel.m */; };
 		DCACFCE824CE7B8C00E0E47E /* ATGoogleAdManagerBannerAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = DCACFCE724CE7B8C00E0E47E /* ATGoogleAdManagerBannerAdapter.m */; };
 		DCACFCEA24CE7BE600E0E47E /* ATGoogleAdManagerBannerAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = DCACFCE924CE7BBD00E0E47E /* ATGoogleAdManagerBannerAdapter.h */; };
 		DCACFCEC24CE7D5500E0E47E /* ATGoogleAdManagerBannerCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = DCACFCEB24CE7D4200E0E47E /* ATGoogleAdManagerBannerCustomEvent.h */; };
@@ -861,21 +935,6 @@
 		DCACFD0A24CEBD1900E0E47E /* ATGoogleAdManagerNativeAdRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = DCACFD0824CEBCDD00E0E47E /* ATGoogleAdManagerNativeAdRenderer.m */; };
 		DCACFD0C24CEE3F800E0E47E /* ATAdmobNativeCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = DCACFD0B24CEE3F800E0E47E /* ATAdmobNativeCommon.h */; };
 		DCACFD0E24CEE41C00E0E47E /* ATAdmobNativeCommon.m in Sources */ = {isa = PBXBuildFile; fileRef = DCACFD0D24CEE41C00E0E47E /* ATAdmobNativeCommon.m */; };
-		DCB0C05424D3FA6100FBC0EC /* ATMyOfferSplashDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C05324D3FA6100FBC0EC /* ATMyOfferSplashDelegate.h */; };
-		DCB0C05624D4016400FBC0EC /* ATMyOfferNativeDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C05524D4016400FBC0EC /* ATMyOfferNativeDelegate.h */; };
-		DCB0C05824D4026D00FBC0EC /* ATMyOfferBannerDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C05724D4026D00FBC0EC /* ATMyOfferBannerDelegate.h */; };
-		DCB0C05A24D418F600FBC0EC /* ATMyOfferSplashSharedDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C05924D418F600FBC0EC /* ATMyOfferSplashSharedDelegate.h */; };
-		DCB0C05C24D4197B00FBC0EC /* ATMyOfferSplashSharedDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB0C05B24D4197B00FBC0EC /* ATMyOfferSplashSharedDelegate.m */; };
-		DCB0C05E24D41A1100FBC0EC /* ATMyOfferNativeSharedDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C05D24D41A1100FBC0EC /* ATMyOfferNativeSharedDelegate.h */; };
-		DCB0C06024D41A3B00FBC0EC /* ATMyOfferNativeSharedDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB0C05F24D41A3B00FBC0EC /* ATMyOfferNativeSharedDelegate.m */; };
-		DCB0C06224D41A8800FBC0EC /* ATMyOfferBannerSharedDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = DCB0C06124D41A8800FBC0EC /* ATMyOfferBannerSharedDelegate.h */; };
-		DCB0C06424D41AC500FBC0EC /* ATMyOfferBannerSharedDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = DCB0C06324D41AC500FBC0EC /* ATMyOfferBannerSharedDelegate.m */; };
-		DCED438524DD4830001B3139 /* ATMyOfferSplashAdapter.h in Headers */ = {isa = PBXBuildFile; fileRef = DCED438424DD4830001B3139 /* ATMyOfferSplashAdapter.h */; };
-		DCED438724DD4A93001B3139 /* ATMyOfferSplashAdapter.m in Sources */ = {isa = PBXBuildFile; fileRef = DCED438624DD4A93001B3139 /* ATMyOfferSplashAdapter.m */; };
-		DCED438924DD4ABC001B3139 /* ATMyOfferSplashCustomEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = DCED438824DD4ABC001B3139 /* ATMyOfferSplashCustomEvent.h */; };
-		DCED438B24DD4AD8001B3139 /* ATMyOfferSplashCustomEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = DCED438A24DD4AD8001B3139 /* ATMyOfferSplashCustomEvent.m */; };
-		DCED438D24DD4F94001B3139 /* ATMyOfferUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = DCED438C24DD4F94001B3139 /* ATMyOfferUtilities.h */; };
-		DCED438F24DD4FB2001B3139 /* ATMyOfferUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = DCED438E24DD4FB2001B3139 /* ATMyOfferUtilities.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1495,13 +1554,6 @@
 			remoteGlobalIDString = 8DE3254C244043E300D72844;
 			remoteInfo = AnyThinkFyberRewardedVideoAdapter;
 		};
-		8DE56CA92372D5FE000E879B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 8DB7F2E8236AC309007A889D /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 8DE56CA32372D5FE000E879B;
-			remoteInfo = AnyThinkMyOffer;
-		};
 		9B0AB0B9249C5400003C5282 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 8DB7F2E8236AC309007A889D /* Project object */;
@@ -1529,6 +1581,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 9B0AB0EF249C568B003C5282;
 			remoteInfo = AnyThinkVungleBannerAdapter;
+		};
+		9B120E36252472CF00BAA664 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8DB7F2E8236AC309007A889D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9B120E30252472CE00BAA664;
+			remoteInfo = AnyThinkAdmobSplashAdapter;
 		};
 		9B56A0E1237E719600204E3D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -1572,9 +1631,9 @@
 				8D1C16FF2422217F00639FCF /* AnyThinkStartAppRewardedVideoAdapter.framework in Embed Frameworks */,
 				8DB70414236D7E13007A889D /* AnyThinkYeahmobiBannerAdapter.framework in Embed Frameworks */,
 				8DE32555244043E300D72844 /* AnyThinkFyberRewardedVideoAdapter.framework in Embed Frameworks */,
+				9B120E39252472CF00BAA664 /* AnyThinkAdmobSplashAdapter.framework in Embed Frameworks */,
 				9B0AB0D6249C5481003C5282 /* AnyThinkAdColonyBannerAdapter.framework in Embed Frameworks */,
 				8DE32528243F0A2300D72844 /* AnyThinkFyberBannerAdapter.framework in Embed Frameworks */,
-				8DE56CAC2372D5FE000E879B /* AnyThinkMyOffer.framework in Embed Frameworks */,
 				9B0AB0BC249C5400003C5282 /* AnyThinkMintegralSplashAdapter.framework in Embed Frameworks */,
 				8DE325442440439000D72844 /* AnyThinkFyberInterstitialAdapter.framework in Embed Frameworks */,
 				9B8DE6CF23EBEF160052DE3C /* AnyThinkKSNativeAdapter.framework in Embed Frameworks */,
@@ -2395,35 +2454,34 @@
 		8DE325642440445700D72844 /* ATFyberRewardedVideoAdapter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATFyberRewardedVideoAdapter.m; sourceTree = "<group>"; };
 		8DE325652440445800D72844 /* ATFyberRewardedVideoCustomEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATFyberRewardedVideoCustomEvent.h; sourceTree = "<group>"; };
 		8DE325662440445800D72844 /* ATFyberRewardedVideoAdapter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATFyberRewardedVideoAdapter.h; sourceTree = "<group>"; };
-		8DE56CA42372D5FE000E879B /* AnyThinkMyOffer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AnyThinkMyOffer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8DE56CA62372D5FE000E879B /* AnyThinkMyOffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnyThinkMyOffer.h; sourceTree = "<group>"; };
 		8DE56CA72372D5FE000E879B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8DE56CB72372D687000E879B /* AnyThinkMyOfferInterstitialAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnyThinkMyOfferInterstitialAdapter.h; sourceTree = "<group>"; };
 		8DE56CB82372D687000E879B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8DE56CC82372D6D0000E879B /* AnyThinkMyOfferRewardedVideoAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnyThinkMyOfferRewardedVideoAdapter.h; sourceTree = "<group>"; };
 		8DE56CC92372D6D0000E879B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		8DE56CD22372D8A9000E879B /* ATMyOfferVideoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATMyOfferVideoViewController.h; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferVideoViewController.h; sourceTree = SOURCE_ROOT; };
+		8DE56CD22372D8A9000E879B /* ATOfferVideoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATOfferVideoViewController.h; path = AnyThinkSDK/Core/OfferManagers/ATOfferVideoViewController.h; sourceTree = SOURCE_ROOT; };
 		8DE56CD32372D8AA000E879B /* ATMyOfferRewardedVideoSharedDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATMyOfferRewardedVideoSharedDelegate.h; path = AnyThinkSDK/MyOffer/RewardedVideo/ATMyOfferRewardedVideoSharedDelegate.h; sourceTree = SOURCE_ROOT; };
-		8DE56CD42372D8AA000E879B /* ATMyOfferVideoBannerView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATMyOfferVideoBannerView.h; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferVideoBannerView.h; sourceTree = SOURCE_ROOT; };
+		8DE56CD42372D8AA000E879B /* ATOfferVideoBannerView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATOfferVideoBannerView.h; path = AnyThinkSDK/Core/OfferManagers/ATOfferVideoBannerView.h; sourceTree = SOURCE_ROOT; };
 		8DE56CD52372D8AA000E879B /* ATMyOfferTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATMyOfferTracker.h; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferTracker.h; sourceTree = SOURCE_ROOT; };
 		8DE56CD62372D8AA000E879B /* ATMyOfferInterstitialSharedDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATMyOfferInterstitialSharedDelegate.m; path = AnyThinkSDK/MyOffer/Interstitial/ATMyOfferInterstitialSharedDelegate.m; sourceTree = SOURCE_ROOT; };
-		8DE56CD72372D8AA000E879B /* ATMyOfferResourceLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATMyOfferResourceLoader.h; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferResourceLoader.h; sourceTree = SOURCE_ROOT; };
+		8DE56CD72372D8AA000E879B /* ATOfferResourceLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATOfferResourceLoader.h; path = AnyThinkSDK/Core/OfferManagers/ATOfferResourceLoader.h; sourceTree = SOURCE_ROOT; };
 		8DE56CD82372D8AA000E879B /* ATMyOfferTracker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATMyOfferTracker.m; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferTracker.m; sourceTree = SOURCE_ROOT; };
 		8DE56CD92372D8AA000E879B /* ATMyOfferCapsManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATMyOfferCapsManager.h; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferCapsManager.h; sourceTree = SOURCE_ROOT; };
 		8DE56CDA2372D8AB000E879B /* ATMyOfferOfferManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATMyOfferOfferManager.h; path = AnyThinkSDK/MyOffer/API/ATMyOfferOfferManager.h; sourceTree = SOURCE_ROOT; };
 		8DE56CDB2372D8AB000E879B /* ATMyOfferOfferManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATMyOfferOfferManager.m; path = AnyThinkSDK/MyOffer/API/ATMyOfferOfferManager.m; sourceTree = SOURCE_ROOT; };
-		8DE56CDC2372D8AB000E879B /* ATMyOfferVideoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATMyOfferVideoViewController.m; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferVideoViewController.m; sourceTree = SOURCE_ROOT; };
-		8DE56CDD2372D8AB000E879B /* ATMyOfferProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATMyOfferProgressView.m; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferProgressView.m; sourceTree = SOURCE_ROOT; };
-		8DE56CDE2372D8AB000E879B /* ATMyOfferProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATMyOfferProgressView.h; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferProgressView.h; sourceTree = SOURCE_ROOT; };
+		8DE56CDC2372D8AB000E879B /* ATOfferVideoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATOfferVideoViewController.m; path = AnyThinkSDK/Core/OfferManagers/ATOfferVideoViewController.m; sourceTree = SOURCE_ROOT; };
+		8DE56CDD2372D8AB000E879B /* ATOfferProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATOfferProgressView.m; path = AnyThinkSDK/Core/OfferManagers/ATOfferProgressView.m; sourceTree = SOURCE_ROOT; };
+		8DE56CDE2372D8AB000E879B /* ATOfferProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATOfferProgressView.h; path = AnyThinkSDK/Core/OfferManagers/ATOfferProgressView.h; sourceTree = SOURCE_ROOT; };
 		8DE56CDF2372D8AB000E879B /* ATMyOfferCapsManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATMyOfferCapsManager.m; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferCapsManager.m; sourceTree = SOURCE_ROOT; };
-		8DE56CE02372D8AC000E879B /* ATMyOfferVideoBannerView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATMyOfferVideoBannerView.m; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferVideoBannerView.m; sourceTree = SOURCE_ROOT; };
+		8DE56CE02372D8AC000E879B /* ATOfferVideoBannerView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATOfferVideoBannerView.m; path = AnyThinkSDK/Core/OfferManagers/ATOfferVideoBannerView.m; sourceTree = SOURCE_ROOT; };
 		8DE56CE12372D8AC000E879B /* ATMyOfferInterstitialSharedDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATMyOfferInterstitialSharedDelegate.h; path = AnyThinkSDK/MyOffer/Interstitial/ATMyOfferInterstitialSharedDelegate.h; sourceTree = SOURCE_ROOT; };
-		8DE56CE22372D8AC000E879B /* ATMyOfferResourceManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATMyOfferResourceManager.m; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferResourceManager.m; sourceTree = SOURCE_ROOT; };
-		8DE56CE32372D8AC000E879B /* ATMyOfferResourceLoader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATMyOfferResourceLoader.m; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferResourceLoader.m; sourceTree = SOURCE_ROOT; };
+		8DE56CE22372D8AC000E879B /* ATOfferResourceManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATOfferResourceManager.m; path = AnyThinkSDK/Core/OfferManagers/ATOfferResourceManager.m; sourceTree = SOURCE_ROOT; };
+		8DE56CE32372D8AC000E879B /* ATOfferResourceLoader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATOfferResourceLoader.m; path = AnyThinkSDK/Core/OfferManagers/ATOfferResourceLoader.m; sourceTree = SOURCE_ROOT; };
 		8DE56CE42372D8AC000E879B /* ATMyOfferRewardedVideoSharedDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ATMyOfferRewardedVideoSharedDelegate.m; path = AnyThinkSDK/MyOffer/RewardedVideo/ATMyOfferRewardedVideoSharedDelegate.m; sourceTree = SOURCE_ROOT; };
-		8DE56CE52372D8AC000E879B /* ATMyOfferResourceManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATMyOfferResourceManager.h; path = AnyThinkSDK/MyOffer/Managers/ATMyOfferResourceManager.h; sourceTree = SOURCE_ROOT; };
-		8DE56CFA2372D8BF000E879B /* ATMyOfferResourceModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATMyOfferResourceModel.m; sourceTree = "<group>"; };
-		8DE56CFB2372D8BF000E879B /* ATMyOfferResourceModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATMyOfferResourceModel.h; sourceTree = "<group>"; };
+		8DE56CE52372D8AC000E879B /* ATOfferResourceManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ATOfferResourceManager.h; path = AnyThinkSDK/Core/OfferManagers/ATOfferResourceManager.h; sourceTree = SOURCE_ROOT; };
+		8DE56CFA2372D8BF000E879B /* ATOfferResourceModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATOfferResourceModel.m; sourceTree = "<group>"; };
+		8DE56CFB2372D8BF000E879B /* ATOfferResourceModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATOfferResourceModel.h; sourceTree = "<group>"; };
 		8DE56CFE2372D8E6000E879B /* ATMyOfferInterstitialDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATMyOfferInterstitialDelegate.h; sourceTree = "<group>"; };
 		8DE56CFF2372D8E6000E879B /* ATMyOfferProgressHud.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATMyOfferProgressHud.h; sourceTree = "<group>"; };
 		8DE56D002372D8E6000E879B /* ATMyOfferProgressHud.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATMyOfferProgressHud.m; sourceTree = "<group>"; };
@@ -2448,6 +2506,12 @@
 		8DFD80C1247FCF4A0099756C /* ATStartAppBannerCustomEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATStartAppBannerCustomEvent.h; sourceTree = "<group>"; };
 		8DFD80DE2489F43C0099756C /* ATSigmobInterstitialRewardedVideoDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATSigmobInterstitialRewardedVideoDelegate.m; sourceTree = "<group>"; };
 		8DFD80DF2489F4480099756C /* ATSigmobInterstitialRewardedVideoDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATSigmobInterstitialRewardedVideoDelegate.h; sourceTree = "<group>"; };
+		960686542521D1C300BA96EF /* AnyThinkSDKDemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AnyThinkSDKDemo-Bridging-Header.h"; sourceTree = "<group>"; };
+		960686552521D1C400BA96EF /* SimpleWebViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleWebViewController.swift; sourceTree = "<group>"; };
+		9606890525239EAE00BA96EF /* ATWebAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ATWebAction.swift; sourceTree = "<group>"; };
+		96068A8D25245DE800BA96EF /* ATOfferWebViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATOfferWebViewController.h; sourceTree = "<group>"; };
+		96068A8E25245DE800BA96EF /* ATOfferWebViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATOfferWebViewController.m; sourceTree = "<group>"; };
+		96757B9A25357FA100055E1C /* AnyThinkSDK.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = AnyThinkSDK.bundle; sourceTree = "<group>"; };
 		9B0AB0B4249C5400003C5282 /* AnyThinkMintegralSplashAdapter.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AnyThinkMintegralSplashAdapter.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B0AB0B6249C5400003C5282 /* AnyThinkMintegralSplashAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnyThinkMintegralSplashAdapter.h; sourceTree = "<group>"; };
 		9B0AB0B7249C5400003C5282 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -2476,6 +2540,17 @@
 		9B0AB110249C56DD003C5282 /* ATVungleBannerAdapter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATVungleBannerAdapter.m; sourceTree = "<group>"; };
 		9B0AB111249C56DD003C5282 /* ATVungleBannerCustomEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATVungleBannerCustomEvent.m; sourceTree = "<group>"; };
 		9B0AB112249C56DD003C5282 /* ATVungleBannerAdapter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATVungleBannerAdapter.h; sourceTree = "<group>"; };
+		9B120B7E252319FC00BAA664 /* ATCheckLoadModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATCheckLoadModel.h; sourceTree = "<group>"; };
+		9B120B7F252319FC00BAA664 /* ATCheckLoadModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATCheckLoadModel.m; sourceTree = "<group>"; };
+		9B120E31252472CE00BAA664 /* AnyThinkAdmobSplashAdapter.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AnyThinkAdmobSplashAdapter.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9B120E33252472CF00BAA664 /* AnyThinkAdmobSplashAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnyThinkAdmobSplashAdapter.h; sourceTree = "<group>"; };
+		9B120E34252472CF00BAA664 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9B120F022524733B00BAA664 /* ATAdmobSplashAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATAdmobSplashAdapter.h; sourceTree = "<group>"; };
+		9B120F032524733B00BAA664 /* ATAdmobSplashAdapter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATAdmobSplashAdapter.m; sourceTree = "<group>"; };
+		9B120FCA2524736B00BAA664 /* ATAdmobSplashCustomEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATAdmobSplashCustomEvent.h; sourceTree = "<group>"; };
+		9B120FCB2524736B00BAA664 /* ATAdmobSplashCustomEvent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATAdmobSplashCustomEvent.m; sourceTree = "<group>"; };
+		9B2D947024FE2F97004C19BA /* ATOfferSessionRedirector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATOfferSessionRedirector.h; sourceTree = "<group>"; };
+		9B2D947124FE2F97004C19BA /* ATOfferSessionRedirector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATOfferSessionRedirector.m; sourceTree = "<group>"; };
 		9B56A0CE237E719600204E3D /* AnyThinkMintegralBannerAdapter.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AnyThinkMintegralBannerAdapter.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B56A0D0237E719600204E3D /* AnyThinkMintegralBannerAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnyThinkMintegralBannerAdapter.h; sourceTree = "<group>"; };
 		9B56A0D1237E719600204E3D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -2517,21 +2592,67 @@
 		9B8DE6D723EBEF600052DE3C /* ATKSNativeCustomEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATKSNativeCustomEvent.m; sourceTree = "<group>"; };
 		9B8DE6D823EBEF600052DE3C /* ATKSNativeAdapter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATKSNativeAdapter.m; sourceTree = "<group>"; };
 		9B8DE6D923EBEF600052DE3C /* ATKSNativeRenderer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATKSNativeRenderer.m; sourceTree = "<group>"; };
-		9BB8666C24E6897100F94EDA /* ATMyOfferFullScreenPictureViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATMyOfferFullScreenPictureViewController.h; sourceTree = "<group>"; };
-		9BB8666D24E6897100F94EDA /* ATMyOfferFullScreenPictureViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATMyOfferFullScreenPictureViewController.m; sourceTree = "<group>"; };
+		9BB8666C24E6897100F94EDA /* ATOfferFullScreenPictureViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATOfferFullScreenPictureViewController.h; sourceTree = "<group>"; };
+		9BB8666D24E6897100F94EDA /* ATOfferFullScreenPictureViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATOfferFullScreenPictureViewController.m; sourceTree = "<group>"; };
 		9BDCBE5D24AED9EF0059AAB0 /* ATTCPSocketManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATTCPSocketManager.h; sourceTree = "<group>"; };
 		9BDCBE5E24AED9EF0059AAB0 /* ATTCPSocketManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATTCPSocketManager.m; sourceTree = "<group>"; };
 		9BDCBE6C24B441CA0059AAB0 /* ATGCDAsyncSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATGCDAsyncSocket.h; sourceTree = "<group>"; };
 		9BDCBE6D24B441CB0059AAB0 /* ATGCDAsyncSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATGCDAsyncSocket.m; sourceTree = "<group>"; };
 		9BDCBE7024B4893D0059AAB0 /* ATTCPLogManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATTCPLogManager.h; sourceTree = "<group>"; };
 		9BDCBE7124B4893D0059AAB0 /* ATTCPLogManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATTCPLogManager.m; sourceTree = "<group>"; };
-		9BF5E53D237267B600BBF5CE /* AnyThinkSDK.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = AnyThinkSDK.bundle; sourceTree = "<group>"; };
+		DC58DA1F24EFCA13004FDDF5 /* ATOfferModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATOfferModel.h; sourceTree = "<group>"; };
+		DC58DA2124EFCA55004FDDF5 /* ATOfferModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATOfferModel.m; sourceTree = "<group>"; };
 		DC5FBE4624E2CE3F00E0C6B8 /* ATMyOfferBannerAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATMyOfferBannerAdapter.h; sourceTree = "<group>"; };
 		DC5FBE4824E2CE5800E0C6B8 /* ATMyOfferBannerAdapter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATMyOfferBannerAdapter.m; sourceTree = "<group>"; };
 		DC5FBE4A24E2CE7000E0C6B8 /* ATMyOfferBannerCustomEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATMyOfferBannerCustomEvent.h; sourceTree = "<group>"; };
 		DC5FBE4C24E2CE8600E0C6B8 /* ATMyOfferBannerCustomEvent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATMyOfferBannerCustomEvent.m; sourceTree = "<group>"; };
+		DC6405EE24EE2AE000842B2E /* ATADXPlacementSetting.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXPlacementSetting.h; sourceTree = "<group>"; };
+		DC6405F024EE2AF300842B2E /* ATADXPlacementSetting.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXPlacementSetting.m; sourceTree = "<group>"; };
+		DC6405F824EE6A6A00842B2E /* ATADXLoader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXLoader.h; sourceTree = "<group>"; };
+		DC6405F924EE6A7C00842B2E /* ATADXLoader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXLoader.m; sourceTree = "<group>"; };
+		DC6405FE24EE8A3600842B2E /* ATADXTracker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXTracker.h; sourceTree = "<group>"; };
+		DC64060024EE8A4900842B2E /* ATADXTracker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXTracker.m; sourceTree = "<group>"; };
+		DC64060224EE8CDE00842B2E /* ATADXRewardedVideoAdManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXRewardedVideoAdManager.h; sourceTree = "<group>"; };
+		DC64060424EE8CF300842B2E /* ATADXRewardedVideoAdManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXRewardedVideoAdManager.m; sourceTree = "<group>"; };
+		DC64060624EE8D6200842B2E /* ATADXRewardedVideoDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXRewardedVideoDelegate.h; sourceTree = "<group>"; };
+		DC64060824EE8D8A00842B2E /* ATADXOfferModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXOfferModel.h; sourceTree = "<group>"; };
+		DC64060A24EE8D9C00842B2E /* ATADXOfferModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXOfferModel.m; sourceTree = "<group>"; };
+		DC64060D24EE9BAD00842B2E /* ATADXInterstitialAdManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXInterstitialAdManager.h; sourceTree = "<group>"; };
+		DC64060F24EE9BC200842B2E /* ATADXInterstitialAdManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXInterstitialAdManager.m; sourceTree = "<group>"; };
+		DC64061124EE9BE300842B2E /* ATADXInterstitialDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXInterstitialDelegate.h; sourceTree = "<group>"; };
+		DC64061324EE9D6100842B2E /* ATADXAdManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXAdManager.h; sourceTree = "<group>"; };
+		DC64061524EE9D7500842B2E /* ATADXAdManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXAdManager.m; sourceTree = "<group>"; };
+		DC64061724EE9FE600842B2E /* ATADXAdLoadingDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXAdLoadingDelegate.h; sourceTree = "<group>"; };
+		DC64061F24EEA7C800842B2E /* ATADXRewardedVideoAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXRewardedVideoAdapter.h; sourceTree = "<group>"; };
+		DC64062124EEA7DE00842B2E /* ATADXRewardedVideoAdapter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXRewardedVideoAdapter.m; sourceTree = "<group>"; };
+		DC64062324EEA80400842B2E /* ATADXRewardedVideoCustomEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXRewardedVideoCustomEvent.h; sourceTree = "<group>"; };
+		DC64062524EEA81800842B2E /* ATADXRewardedVideoCustomEvent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXRewardedVideoCustomEvent.m; sourceTree = "<group>"; };
+		DC64062724EEA83600842B2E /* ATADXInterstitialAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXInterstitialAdapter.h; sourceTree = "<group>"; };
+		DC64062924EEA84C00842B2E /* ATADXInterstitialAdapter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXInterstitialAdapter.m; sourceTree = "<group>"; };
+		DC64062B24EEA86900842B2E /* ATADXInterstitialCustomEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATADXInterstitialCustomEvent.h; sourceTree = "<group>"; };
+		DC64062D24EEA87D00842B2E /* ATADXInterstitialCustomEvent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATADXInterstitialCustomEvent.m; sourceTree = "<group>"; };
 		DC83F50D24DBD27E00EC50F6 /* ATStoreProductViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATStoreProductViewController.h; sourceTree = "<group>"; };
 		DC83F50F24DBD29500EC50F6 /* ATStoreProductViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATStoreProductViewController.m; sourceTree = "<group>"; };
+		DC924C1A25061B54001BF9C2 /* ATHeliumInterstitialAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATHeliumInterstitialAdapter.h; sourceTree = "<group>"; };
+		DC924C1C25061BAF001BF9C2 /* ATHeliumInterstitialAdapter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATHeliumInterstitialAdapter.m; sourceTree = "<group>"; };
+		DC924C1E25061C44001BF9C2 /* ATHeliumInterstitialCustomEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATHeliumInterstitialCustomEvent.h; sourceTree = "<group>"; };
+		DC924C2025061C6E001BF9C2 /* ATHeliumInterstitialCustomEvent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATHeliumInterstitialCustomEvent.m; sourceTree = "<group>"; };
+		DC924C2225061CD8001BF9C2 /* ATHeliumRewardedVideoAdapter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATHeliumRewardedVideoAdapter.h; sourceTree = "<group>"; };
+		DC924C2425061CFA001BF9C2 /* ATHeliumRewardedVideoAdapter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATHeliumRewardedVideoAdapter.m; sourceTree = "<group>"; };
+		DC924C2625061D3C001BF9C2 /* ATHeliumRewardedVideoCustomEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATHeliumRewardedVideoCustomEvent.h; sourceTree = "<group>"; };
+		DC924C2825061D58001BF9C2 /* ATHeliumRewardedVideoCustomEvent.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATHeliumRewardedVideoCustomEvent.m; sourceTree = "<group>"; };
+		DC9D07B324F6538B00A8AF95 /* ATOfferSetting.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATOfferSetting.h; sourceTree = "<group>"; };
+		DC9D07B524F6539E00A8AF95 /* ATOfferSetting.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATOfferSetting.m; sourceTree = "<group>"; };
+		DC9D53802508AF430053AFAD /* ATHeaderBiddingManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATHeaderBiddingManager.h; sourceTree = "<group>"; };
+		DC9D53822508AF570053AFAD /* ATHeaderBiddingManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATHeaderBiddingManager.m; sourceTree = "<group>"; };
+		DC9D5384251060440053AFAD /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		DC9D53862510604D0053AFAD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		DC9D5388251060560053AFAD /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		DC9D538A251060650053AFAD /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		DC9D5398251316780053AFAD /* ATBidJobModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATBidJobModel.h; sourceTree = "<group>"; };
+		DC9D539A251316900053AFAD /* ATBidJobModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATBidJobModel.m; sourceTree = "<group>"; };
+		DC9D539C251316E40053AFAD /* ATBidTrackingModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATBidTrackingModel.h; sourceTree = "<group>"; };
+		DC9D539E251316FD0053AFAD /* ATBidTrackingModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATBidTrackingModel.m; sourceTree = "<group>"; };
 		DCAB166824D8432200F118A9 /* ATMyOfferBannerView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ATMyOfferBannerView.h; sourceTree = "<group>"; };
 		DCAB166A24D8436400F118A9 /* ATMyOfferBannerView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATMyOfferBannerView.m; sourceTree = "<group>"; };
 		DCACFCE724CE7B8C00E0E47E /* ATGoogleAdManagerBannerAdapter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ATGoogleAdManagerBannerAdapter.m; sourceTree = "<group>"; };
@@ -2604,6 +2725,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DC9D538B251060650053AFAD /* WebKit.framework in Frameworks */,
+				DC9D5389251060560053AFAD /* StoreKit.framework in Frameworks */,
+				DC9D53872510604D0053AFAD /* Foundation.framework in Frameworks */,
+				DC9D5385251060450053AFAD /* CoreGraphics.framework in Frameworks */,
 				8D94C22F243C4C85005495CB /* CoreData.framework in Frameworks */,
 				8D48AC4B23C8ADB0000DD638 /* AnyThinkMintegralNativeAdapter.framework in Frameworks */,
 				8DB7FF2C236D540F007A889D /* VideoToolbox.framework in Frameworks */,
@@ -2617,6 +2742,7 @@
 				8DB7FDAB236C5731007A889D /* SystemConfiguration.framework in Frameworks */,
 				8DB7FDA9236C56F4007A889D /* CoreMotion.framework in Frameworks */,
 				8DB7FDA7236C56ED007A889D /* CoreTelephony.framework in Frameworks */,
+				8DB7FDA5236C56C9007A889D /* libc++.tbd in Frameworks */,
 				8DB70413236D7E13007A889D /* AnyThinkYeahmobiBannerAdapter.framework in Frameworks */,
 				8DB7FDA3236C56AA007A889D /* libresolv.9.tbd in Frameworks */,
 				8DB7FDA1236C56A3007A889D /* libxml2.tbd in Frameworks */,
@@ -2650,6 +2776,7 @@
 				8DB7FD08236C5009007A889D /* AnyThinkMopubBannerAdapter.framework in Frameworks */,
 				8DB7F963236C3FA2007A889D /* AnyThinkYeahmobiNativeAdapter.framework in Frameworks */,
 				9B0AB0E6249C5662003C5282 /* AnyThinkChartboostBannerAdapter.framework in Frameworks */,
+				9B120E38252472CF00BAA664 /* AnyThinkAdmobSplashAdapter.framework in Frameworks */,
 				8DB7F5E8236C195C007A889D /* AnyThinkFlurryRewardedVideoAdapter.framework in Frameworks */,
 				9B56A23F238E18AE00204E3D /* AnyThinkOguryRewardedVideoAdapter.framework in Frameworks */,
 				8DB7FCBB236C4F6A007A889D /* AnyThinkFlurryBannerAdapter.framework in Frameworks */,
@@ -2685,7 +2812,6 @@
 				8D48AC3623C84C34000DD638 /* AnyThinkFacebookNativeAdapter.framework in Frameworks */,
 				8DB7F685236C1D80007A889D /* AnyThinkMopubRewardedVideoAdapter.framework in Frameworks */,
 				8DB7FCEF236C4FD2007A889D /* AnyThinkInmobiBannerAdapter.framework in Frameworks */,
-				AC2A9A032521E1FD00DFD507 /* libc++.tbd in Frameworks */,
 				8DB7FA86236C454E007A889D /* AnyThinkTTInterstitialAdapter.framework in Frameworks */,
 				8DE325432440439000D72844 /* AnyThinkFyberInterstitialAdapter.framework in Frameworks */,
 				8DE32554244043E300D72844 /* AnyThinkFyberRewardedVideoAdapter.framework in Frameworks */,
@@ -2707,7 +2833,6 @@
 				8DB7F86E236C31C3007A889D /* AnyThinkFlurryNativeAdapter.framework in Frameworks */,
 				8DB7FC1E236C4DF9007A889D /* AnyThinkSigmobInterstitialAdapter.framework in Frameworks */,
 				8DB7F54A236C0DD5007A889D /* AnyThinkAdColonyRewardedVideoAdapter.framework in Frameworks */,
-				8DE56CAB2372D5FE000E879B /* AnyThinkMyOffer.framework in Frameworks */,
 				9B56A21D238E187600204E3D /* AnyThinkOguryInterstitialAdapter.framework in Frameworks */,
 				8DB7F833236C30BF007A889D /* AnyThinkAppnextNativeAdapter.framework in Frameworks */,
 				9B8DE6CE23EBEF160052DE3C /* AnyThinkKSNativeAdapter.framework in Frameworks */,
@@ -3308,13 +3433,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8DE56CA12372D5FE000E879B /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		9B0AB0B1249C53FF003C5282 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -3337,6 +3455,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9B0AB0ED249C568B003C5282 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9B120E2E252472CE00BAA664 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -3453,7 +3578,7 @@
 		8DB7F2E7236AC309007A889D = {
 			isa = PBXGroup;
 			children = (
-				9BF5E53D237267B600BBF5CE /* AnyThinkSDK.bundle */,
+				96757B9A25357FA100055E1C /* AnyThinkSDK.bundle */,
 				8DB7FF16236D4FB4007A889D /* check_build_files.py */,
 				8D3BDB0623AA49C2008CFA7A /* sdk_auto_build.py */,
 				8DB7F311236AC43E007A889D /* AnyThinkSDKDemo */,
@@ -3562,6 +3687,7 @@
 				9B0AB0CF249C5481003C5282 /* AnyThinkAdColonyBannerAdapter */,
 				9B0AB0E0249C5662003C5282 /* AnyThinkChartboostBannerAdapter */,
 				9B0AB0F1249C568C003C5282 /* AnyThinkVungleBannerAdapter */,
+				9B120E32252472CF00BAA664 /* AnyThinkAdmobSplashAdapter */,
 				8DB7F2F1236AC309007A889D /* Products */,
 				8DB7F409236BD056007A889D /* Frameworks */,
 			);
@@ -3653,7 +3779,6 @@
 				8DB7FD35236C5075007A889D /* AnyThinkTTBannerAdapter.framework */,
 				8DB7FD4F236C50B3007A889D /* AnyThinkUnityAdsBannerAdapter.framework */,
 				8DB7040C236D7E12007A889D /* AnyThinkYeahmobiBannerAdapter.framework */,
-				8DE56CA42372D5FE000E879B /* AnyThinkMyOffer.framework */,
 				9B56A0CE237E719600204E3D /* AnyThinkMintegralBannerAdapter.framework */,
 				9B56A208238E187200204E3D /* AnyThinkOguryInterstitialAdapter.framework */,
 				9B56A22A238E18AB00204E3D /* AnyThinkOguryRewardedVideoAdapter.framework */,
@@ -3668,6 +3793,7 @@
 				9B0AB0CE249C5481003C5282 /* AnyThinkAdColonyBannerAdapter.framework */,
 				9B0AB0DF249C5662003C5282 /* AnyThinkChartboostBannerAdapter.framework */,
 				9B0AB0F0249C568B003C5282 /* AnyThinkVungleBannerAdapter.framework */,
+				9B120E31252472CE00BAA664 /* AnyThinkAdmobSplashAdapter.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -3702,6 +3828,9 @@
 				8DB7F324236AC440007A889D /* main.m */,
 				8D48AC4023C886F8000DD638 /* TopOnAdManager.h */,
 				8D48AC4123C886F8000DD638 /* TopOnAdManager.m */,
+				960686552521D1C400BA96EF /* SimpleWebViewController.swift */,
+				960686542521D1C300BA96EF /* AnyThinkSDKDemo-Bridging-Header.h */,
+				9606890525239EAE00BA96EF /* ATWebAction.swift */,
 			);
 			path = AnyThinkSDKDemo;
 			sourceTree = "<group>";
@@ -3709,6 +3838,7 @@
 		8DB7F32F236AC61C007A889D /* AnyThinkSDK */ = {
 			isa = PBXGroup;
 			children = (
+				DC6405F224EE648300842B2E /* ADX */,
 				8DB7F33B236ACF45007A889D /* Internal */,
 				8DB7F377236AE319007A889D /* Core */,
 				8DE56C962372C886000E879B /* MyOffer */,
@@ -3768,6 +3898,8 @@
 		8DB7F377236AE319007A889D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				DC9D5395251315FD0053AFAD /* hb */,
+				DC64060C24EE8E6800842B2E /* OfferManagers */,
 				8DB7F3D3236AE4D8007A889D /* Others */,
 				8DB7F3C0236AE4C2007A889D /* Models */,
 				8DB7F38D236AE4A7007A889D /* Managers */,
@@ -3798,8 +3930,6 @@
 			children = (
 				8DB70082236D6139007A889D /* ATAdLoader.h */,
 				8DB7007F236D6138007A889D /* ATAdLoader.m */,
-				8DFD802C247CBED40099756C /* ATAdLoader+S2SHeaderBidding.h */,
-				8DFD802D247CBED40099756C /* ATAdLoader+S2SHeaderBidding.m */,
 				8DB70088236D613A007A889D /* ATAdManagement.h */,
 				8DB70095236D613C007A889D /* ATAgentEvent.h */,
 				8DB7007D236D6138007A889D /* ATAgentEvent.m */,
@@ -3821,8 +3951,6 @@
 				8DBB0A102421F72A00C6123A /* ATLifecycleManager.m */,
 				8D79B31C245812DA0007B158 /* ATWaterfallManager.h */,
 				8D79B31D245812DA0007B158 /* ATWaterfallManager.m */,
-				8D79B320245834240007B158 /* ATBidInfoManager.h */,
-				8D79B321245834240007B158 /* ATBidInfoManager.m */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -3830,6 +3958,8 @@
 		8DB7F3C0236AE4C2007A889D /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				8DE56CFB2372D8BF000E879B /* ATOfferResourceModel.h */,
+				8DE56CFA2372D8BF000E879B /* ATOfferResourceModel.m */,
 				8DE56D072372DBB9000E879B /* ATMyOfferOfferModel.h */,
 				8DE56D092372DBBA000E879B /* ATMyOfferOfferModel.m */,
 				8DE56D062372DBB9000E879B /* ATMyOfferSetting.h */,
@@ -3843,8 +3973,14 @@
 				8DB700B1236D615B007A889D /* ATUnitGroupModel.m */,
 				8DB700B5236D615B007A889D /* NSObject+ATAdExpiration.h */,
 				8DB700B6236D615C007A889D /* NSObject+ATAdExpiration.m */,
-				8D79B3182456FED40007B158 /* ATBidInfo.h */,
-				8D79B3192456FED40007B158 /* ATBidInfo.m */,
+				DC6405EE24EE2AE000842B2E /* ATADXPlacementSetting.h */,
+				DC6405F024EE2AF300842B2E /* ATADXPlacementSetting.m */,
+				DC58DA1F24EFCA13004FDDF5 /* ATOfferModel.h */,
+				DC58DA2124EFCA55004FDDF5 /* ATOfferModel.m */,
+				DC9D07B324F6538B00A8AF95 /* ATOfferSetting.h */,
+				DC9D07B524F6539E00A8AF95 /* ATOfferSetting.m */,
+				9B120B7E252319FC00BAA664 /* ATCheckLoadModel.h */,
+				9B120B7F252319FC00BAA664 /* ATCheckLoadModel.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -3972,6 +4108,10 @@
 		8DB7F409236BD056007A889D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DC9D538A251060650053AFAD /* WebKit.framework */,
+				DC9D5388251060560053AFAD /* StoreKit.framework */,
+				DC9D53862510604D0053AFAD /* Foundation.framework */,
+				DC9D5384251060440053AFAD /* CoreGraphics.framework */,
 				9B7B6F4124DD6337008C9C93 /* libbz2.tbd */,
 				8D94C22E243C4C85005495CB /* CoreData.framework */,
 				8DB7FF2B236D540E007A889D /* VideoToolbox.framework */,
@@ -4353,6 +4493,7 @@
 		8DB7F4F6236C02FD007A889D /* Adapters */ = {
 			isa = PBXGroup;
 			children = (
+				9B120F012524730D00BAA664 /* Admob */,
 				9B0AB0C0249C5451003C5282 /* Mintegral */,
 				8DB7F7B0236C2D6C007A889D /* Sigmob */,
 				8DB7F78E236C2D09007A889D /* TT */,
@@ -4506,6 +4647,10 @@
 				8DB70365236D7B2D007A889D /* ATChartboostRewardedVideoAdapter.m */,
 				8DB70366236D7B2D007A889D /* ATChartboostRewardedVideoCustomEvent.h */,
 				8DB70368236D7B2D007A889D /* ATChartboostRewardedVideoCustomEvent.m */,
+				DC924C2225061CD8001BF9C2 /* ATHeliumRewardedVideoAdapter.h */,
+				DC924C2425061CFA001BF9C2 /* ATHeliumRewardedVideoAdapter.m */,
+				DC924C2625061D3C001BF9C2 /* ATHeliumRewardedVideoCustomEvent.h */,
+				DC924C2825061D58001BF9C2 /* ATHeliumRewardedVideoCustomEvent.m */,
 			);
 			path = Chartboost;
 			sourceTree = "<group>";
@@ -5585,6 +5730,10 @@
 				8DB70137236D67B4007A889D /* ATChartboostInterstitialAdapter.m */,
 				8DB70135236D67B3007A889D /* ATChartboostInterstitialCustomEvent.h */,
 				8DB70138236D67B4007A889D /* ATChartboostInterstitialCustomEvent.m */,
+				DC924C1A25061B54001BF9C2 /* ATHeliumInterstitialAdapter.h */,
+				DC924C1C25061BAF001BF9C2 /* ATHeliumInterstitialAdapter.m */,
+				DC924C1E25061C44001BF9C2 /* ATHeliumInterstitialCustomEvent.h */,
+				DC924C2025061C6E001BF9C2 /* ATHeliumInterstitialCustomEvent.m */,
 			);
 			path = Chartboost;
 			sourceTree = "<group>";
@@ -6043,20 +6192,8 @@
 			children = (
 				8DE56CD92372D8AA000E879B /* ATMyOfferCapsManager.h */,
 				8DE56CDF2372D8AB000E879B /* ATMyOfferCapsManager.m */,
-				8DE56CDE2372D8AB000E879B /* ATMyOfferProgressView.h */,
-				8DE56CDD2372D8AB000E879B /* ATMyOfferProgressView.m */,
-				8DE56CD72372D8AA000E879B /* ATMyOfferResourceLoader.h */,
-				8DE56CE32372D8AC000E879B /* ATMyOfferResourceLoader.m */,
-				8DE56CE52372D8AC000E879B /* ATMyOfferResourceManager.h */,
-				8DE56CE22372D8AC000E879B /* ATMyOfferResourceManager.m */,
 				8DE56CD52372D8AA000E879B /* ATMyOfferTracker.h */,
 				8DE56CD82372D8AA000E879B /* ATMyOfferTracker.m */,
-				8DE56CD42372D8AA000E879B /* ATMyOfferVideoBannerView.h */,
-				8DE56CE02372D8AC000E879B /* ATMyOfferVideoBannerView.m */,
-				8DE56CD22372D8A9000E879B /* ATMyOfferVideoViewController.h */,
-				8DE56CDC2372D8AB000E879B /* ATMyOfferVideoViewController.m */,
-				9BB8666C24E6897100F94EDA /* ATMyOfferFullScreenPictureViewController.h */,
-				9BB8666D24E6897100F94EDA /* ATMyOfferFullScreenPictureViewController.m */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -6064,8 +6201,6 @@
 		8DE56C9D2372C92B000E879B /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				8DE56CFB2372D8BF000E879B /* ATMyOfferResourceModel.h */,
-				8DE56CFA2372D8BF000E879B /* ATMyOfferResourceModel.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -6199,6 +6334,26 @@
 			path = Vungle;
 			sourceTree = "<group>";
 		};
+		9B120E32252472CF00BAA664 /* AnyThinkAdmobSplashAdapter */ = {
+			isa = PBXGroup;
+			children = (
+				9B120E33252472CF00BAA664 /* AnyThinkAdmobSplashAdapter.h */,
+				9B120E34252472CF00BAA664 /* Info.plist */,
+			);
+			path = AnyThinkAdmobSplashAdapter;
+			sourceTree = "<group>";
+		};
+		9B120F012524730D00BAA664 /* Admob */ = {
+			isa = PBXGroup;
+			children = (
+				9B120F022524733B00BAA664 /* ATAdmobSplashAdapter.h */,
+				9B120F032524733B00BAA664 /* ATAdmobSplashAdapter.m */,
+				9B120FCA2524736B00BAA664 /* ATAdmobSplashCustomEvent.h */,
+				9B120FCB2524736B00BAA664 /* ATAdmobSplashCustomEvent.m */,
+			);
+			path = Admob;
+			sourceTree = "<group>";
+		};
 		9B56A0C8237E713400204E3D /* Mintegral */ = {
 			isa = PBXGroup;
 			children = (
@@ -6292,6 +6447,134 @@
 				9BDCBE6D24B441CB0059AAB0 /* ATGCDAsyncSocket.m */,
 			);
 			path = TCPSocket;
+			sourceTree = "<group>";
+		};
+		DC6405F224EE648300842B2E /* ADX */ = {
+			isa = PBXGroup;
+			children = (
+				DC6405F724EE65E100842B2E /* Managers */,
+				DC6405F624EE65D800842B2E /* Models */,
+				DC6405F524EE65D000842B2E /* API */,
+				DC6405F424EE65B800842B2E /* RewardedVideo */,
+				DC6405F324EE65AD00842B2E /* Interstitial */,
+			);
+			path = ADX;
+			sourceTree = "<group>";
+		};
+		DC6405F324EE65AD00842B2E /* Interstitial */ = {
+			isa = PBXGroup;
+			children = (
+				DC64060D24EE9BAD00842B2E /* ATADXInterstitialAdManager.h */,
+				DC64060F24EE9BC200842B2E /* ATADXInterstitialAdManager.m */,
+				DC64061124EE9BE300842B2E /* ATADXInterstitialDelegate.h */,
+				DC64062724EEA83600842B2E /* ATADXInterstitialAdapter.h */,
+				DC64062924EEA84C00842B2E /* ATADXInterstitialAdapter.m */,
+				DC64062B24EEA86900842B2E /* ATADXInterstitialCustomEvent.h */,
+				DC64062D24EEA87D00842B2E /* ATADXInterstitialCustomEvent.m */,
+			);
+			path = Interstitial;
+			sourceTree = "<group>";
+		};
+		DC6405F424EE65B800842B2E /* RewardedVideo */ = {
+			isa = PBXGroup;
+			children = (
+				DC64060224EE8CDE00842B2E /* ATADXRewardedVideoAdManager.h */,
+				DC64060424EE8CF300842B2E /* ATADXRewardedVideoAdManager.m */,
+				DC64060624EE8D6200842B2E /* ATADXRewardedVideoDelegate.h */,
+				DC64061F24EEA7C800842B2E /* ATADXRewardedVideoAdapter.h */,
+				DC64062124EEA7DE00842B2E /* ATADXRewardedVideoAdapter.m */,
+				DC64062324EEA80400842B2E /* ATADXRewardedVideoCustomEvent.h */,
+				DC64062524EEA81800842B2E /* ATADXRewardedVideoCustomEvent.m */,
+			);
+			path = RewardedVideo;
+			sourceTree = "<group>";
+		};
+		DC6405F524EE65D000842B2E /* API */ = {
+			isa = PBXGroup;
+			children = (
+				DC64061324EE9D6100842B2E /* ATADXAdManager.h */,
+				DC64061524EE9D7500842B2E /* ATADXAdManager.m */,
+				DC64061724EE9FE600842B2E /* ATADXAdLoadingDelegate.h */,
+			);
+			path = API;
+			sourceTree = "<group>";
+		};
+		DC6405F624EE65D800842B2E /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				DC64060824EE8D8A00842B2E /* ATADXOfferModel.h */,
+				DC64060A24EE8D9C00842B2E /* ATADXOfferModel.m */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		DC6405F724EE65E100842B2E /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				DC6405F824EE6A6A00842B2E /* ATADXLoader.h */,
+				DC6405F924EE6A7C00842B2E /* ATADXLoader.m */,
+				DC6405FE24EE8A3600842B2E /* ATADXTracker.h */,
+				DC64060024EE8A4900842B2E /* ATADXTracker.m */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		DC64060C24EE8E6800842B2E /* OfferManagers */ = {
+			isa = PBXGroup;
+			children = (
+				8DE56CD22372D8A9000E879B /* ATOfferVideoViewController.h */,
+				8DE56CDC2372D8AB000E879B /* ATOfferVideoViewController.m */,
+				9BB8666C24E6897100F94EDA /* ATOfferFullScreenPictureViewController.h */,
+				9BB8666D24E6897100F94EDA /* ATOfferFullScreenPictureViewController.m */,
+				8DE56CD42372D8AA000E879B /* ATOfferVideoBannerView.h */,
+				8DE56CE02372D8AC000E879B /* ATOfferVideoBannerView.m */,
+				8DE56CDE2372D8AB000E879B /* ATOfferProgressView.h */,
+				8DE56CDD2372D8AB000E879B /* ATOfferProgressView.m */,
+				8DE56CD72372D8AA000E879B /* ATOfferResourceLoader.h */,
+				8DE56CE32372D8AC000E879B /* ATOfferResourceLoader.m */,
+				8DE56CE52372D8AC000E879B /* ATOfferResourceManager.h */,
+				8DE56CE22372D8AC000E879B /* ATOfferResourceManager.m */,
+				9B2D947024FE2F97004C19BA /* ATOfferSessionRedirector.h */,
+				9B2D947124FE2F97004C19BA /* ATOfferSessionRedirector.m */,
+				96068A8D25245DE800BA96EF /* ATOfferWebViewController.h */,
+				96068A8E25245DE800BA96EF /* ATOfferWebViewController.m */,
+			);
+			path = OfferManagers;
+			sourceTree = "<group>";
+		};
+		DC9D5395251315FD0053AFAD /* hb */ = {
+			isa = PBXGroup;
+			children = (
+				DC9D5397251316140053AFAD /* manager */,
+				DC9D53962513160D0053AFAD /* model */,
+			);
+			path = hb;
+			sourceTree = "<group>";
+		};
+		DC9D53962513160D0053AFAD /* model */ = {
+			isa = PBXGroup;
+			children = (
+				8D79B3182456FED40007B158 /* ATBidInfo.h */,
+				8D79B3192456FED40007B158 /* ATBidInfo.m */,
+				DC9D5398251316780053AFAD /* ATBidJobModel.h */,
+				DC9D539A251316900053AFAD /* ATBidJobModel.m */,
+				DC9D539C251316E40053AFAD /* ATBidTrackingModel.h */,
+				DC9D539E251316FD0053AFAD /* ATBidTrackingModel.m */,
+			);
+			path = model;
+			sourceTree = "<group>";
+		};
+		DC9D5397251316140053AFAD /* manager */ = {
+			isa = PBXGroup;
+			children = (
+				8DFD802D247CBED40099756C /* ATAdLoader+S2SHeaderBidding.m */,
+				8DFD802C247CBED40099756C /* ATAdLoader+S2SHeaderBidding.h */,
+				8D79B320245834240007B158 /* ATBidInfoManager.h */,
+				8D79B321245834240007B158 /* ATBidInfoManager.m */,
+				DC9D53802508AF430053AFAD /* ATHeaderBiddingManager.h */,
+				DC9D53822508AF570053AFAD /* ATHeaderBiddingManager.m */,
+			);
+			path = manager;
 			sourceTree = "<group>";
 		};
 		DCBE204324D27C7000D14678 /* API */ = {
@@ -6424,14 +6707,24 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DC58DA2024EFCA13004FDDF5 /* ATOfferModel.h in Headers */,
+				DC9D079F24F3D46200A8AF95 /* ATMyOfferUtilities.h in Headers */,
 				8DB70097236D613D007A889D /* ATPlacementSettingManager.h in Headers */,
+				DC64060E24EE9BAD00842B2E /* ATADXInterstitialAdManager.h in Headers */,
 				8DB700CD236D6199007A889D /* ATAdLoadingDelegate.h in Headers */,
 				8DB700D4236D6199007A889D /* ATAdManager.h in Headers */,
+				DC64060324EE8CDE00842B2E /* ATADXRewardedVideoAdManager.h in Headers */,
 				9B854E2024BD940300A88107 /* ATKeychain.h in Headers */,
+				96068A8F25245DE800BA96EF /* ATOfferWebViewController.h in Headers */,
 				DC5FBE4F24E50A9D00E0C6B8 /* ATStoreProductViewController.h in Headers */,
+				DC9D079224F3D40F00A8AF95 /* ATMyOfferBannerDelegate.h in Headers */,
 				8DB700D2236D6199007A889D /* ATAPI.h in Headers */,
 				8DB70067236D5FEE007A889D /* ATVideoView.h in Headers */,
+				DC64060924EE8D8A00842B2E /* ATADXOfferModel.h in Headers */,
 				8DB700BC236D615C007A889D /* ATModel.h in Headers */,
+				DC9D539D251316E40053AFAD /* ATBidTrackingModel.h in Headers */,
+				9B120B80252319FD00BAA664 /* ATCheckLoadModel.h in Headers */,
+				DC9D07A124F3D47000A8AF95 /* ATOfferResourceModel.h in Headers */,
 				9BDCBE7224B4893D0059AAB0 /* ATTCPLogManager.h in Headers */,
 				8DB700A1236D613D007A889D /* ATAdManagement.h in Headers */,
 				8DB700F1236D62BF007A889D /* UIViewController+AdObjectAssociation.h in Headers */,
@@ -6439,36 +6732,67 @@
 				8DB7F332236AC61C007A889D /* AnyThinkSDK.h in Headers */,
 				8DB700D8236D6297007A889D /* ATNetworkingManager.h in Headers */,
 				8DE56D0A2372DBBA000E879B /* ATMyOfferSetting.h in Headers */,
+				DC64061224EE9BE300842B2E /* ATADXInterstitialDelegate.h in Headers */,
+				DC6405FF24EE8A3600842B2E /* ATADXTracker.h in Headers */,
 				8DB700BE236D615C007A889D /* NSObject+ATAdExpiration.h in Headers */,
+				DC6405EF24EE2AE000842B2E /* ATADXPlacementSetting.h in Headers */,
 				8DB700A2236D613D007A889D /* ATTracker.h in Headers */,
+				DC9D07AD24F3D4BB00A8AF95 /* ATOfferVideoBannerView.h in Headers */,
 				8DB700BD236D615C007A889D /* ATUnitGroupModel.h in Headers */,
+				DC9D5399251316780053AFAD /* ATBidJobModel.h in Headers */,
+				DC9D079D24F3D45800A8AF95 /* ATMyOfferProgressHud.h in Headers */,
 				8D79B31A2456FED40007B158 /* ATBidInfo.h in Headers */,
+				DC9D07A924F3D4A300A8AF95 /* ATOfferResourceManager.h in Headers */,
+				DC64061824EE9FE600842B2E /* ATADXAdLoadingDelegate.h in Headers */,
 				8DB700CE236D6199007A889D /* ATAPI+Internal.h in Headers */,
+				DC9D077424F3D31800A8AF95 /* ATMyOfferInterstitialDelegate.h in Headers */,
 				8D79B31E245812DA0007B158 /* ATWaterfallManager.h in Headers */,
 				8DB700FE236D62BF007A889D /* ATThreadSafeAccessor.h in Headers */,
+				DC9D07AF24F3D4C800A8AF95 /* ATOfferVideoViewController.h in Headers */,
 				8DBB0A112421F72A00C6123A /* ATLifecycleManager.h in Headers */,
+				DC9D077C24F3D35E00A8AF95 /* ATMyOfferRewardedVideoSharedDelegate.h in Headers */,
+				DC9D07A724F3D49900A8AF95 /* ATOfferResourceLoader.h in Headers */,
+				DC9D078724F3D3B200A8AF95 /* ATMyOfferSplashSharedDelegate.h in Headers */,
 				8DB700D1236D6199007A889D /* ATAdManager+Internal.h in Headers */,
+				DC64061424EE9D6100842B2E /* ATADXAdManager.h in Headers */,
 				8DB700A4236D613D007A889D /* ATGeneralAdAgentEvent.h in Headers */,
 				9BDCBE6E24B441CB0059AAB0 /* ATGCDAsyncSocket.h in Headers */,
+				DC9D07A324F3D47B00A8AF95 /* ATMyOfferCapsManager.h in Headers */,
 				8DB700CB236D6199007A889D /* ATAdAdapter.h in Headers */,
 				8DB7009B236D613D007A889D /* ATAdLoader.h in Headers */,
+				DC9D07A524F3D48F00A8AF95 /* ATOfferProgressView.h in Headers */,
 				8DB700A9236D613D007A889D /* ATCapsManager.h in Headers */,
 				8DB700F8236D62BF007A889D /* Utilities.h in Headers */,
+				DC9D079524F3D41C00A8AF95 /* ATMyOfferBannerView.h in Headers */,
 				8DFD802E247CBED40099756C /* ATAdLoader+S2SHeaderBidding.h in Headers */,
+				DC9D079B24F3D44C00A8AF95 /* ATMyOfferOfferManager.h in Headers */,
+				DC9D079324F3D41200A8AF95 /* ATMyOfferBannerSharedDelegate.h in Headers */,
+				DC64060724EE8D6200842B2E /* ATADXRewardedVideoDelegate.h in Headers */,
+				DC9D078924F3D3C500A8AF95 /* ATMyOfferNativeDelegate.h in Headers */,
 				8DB700AB236D613D007A889D /* ATImageLoader.h in Headers */,
 				8D79B322245834240007B158 /* ATBidInfoManager.h in Headers */,
 				8DB700F4236D62BF007A889D /* NSString+KAKit.h in Headers */,
+				9B2D947224FE2F97004C19BA /* ATOfferSessionRedirector.h in Headers */,
 				8DB700F6236D62BF007A889D /* ATLogger.h in Headers */,
 				8DB700C0236D615C007A889D /* ATPlacementModel.h in Headers */,
 				8DB700D3236D6199007A889D /* ATAdCustomEvent.h in Headers */,
+				DC9D07AB24F3D4B000A8AF95 /* ATMyOfferTracker.h in Headers */,
 				8DB700B8236D615C007A889D /* ATAd.h in Headers */,
 				8DB700A8236D613D007A889D /* ATAppSettingManager.h in Headers */,
+				DC9D5394251305A70053AFAD /* ATADXLoader.h in Headers */,
+				DC9D53812508AF430053AFAD /* ATHeaderBiddingManager.h in Headers */,
 				8DB70107236D62BF007A889D /* NSDictionary+KAKit.h in Headers */,
 				8DE56D0B2372DBBA000E879B /* ATMyOfferOfferModel.h in Headers */,
+				DC9D07B124F3D4D300A8AF95 /* ATOfferFullScreenPictureViewController.h in Headers */,
 				8DB7009E236D613D007A889D /* ATLoadingScheduler.h in Headers */,
 				8DB700F5236D62BF007A889D /* ATAdStorageUtility.h in Headers */,
+				DC9D077524F3D32000A8AF95 /* ATMyOfferInterstitialSharedDelegate.h in Headers */,
+				DC9D078A24F3D3CD00A8AF95 /* ATMyOfferNativeSharedDelegate.h in Headers */,
 				8DB700AE236D613D007A889D /* ATAgentEvent.h in Headers */,
+				DC9D077B24F3D35900A8AF95 /* ATMyOfferRewardedVideoDelegate.h in Headers */,
 				8DB70069236D5FEE007A889D /* ATPolicyViewController.h in Headers */,
+				DC9D078624F3D3A900A8AF95 /* ATMyOfferSplashDelegate.h in Headers */,
+				DC9D07B424F6538B00A8AF95 /* ATOfferSetting.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6476,13 +6800,17 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DC9D077E24F3D37000A8AF95 /* ATMyOfferRewardedVideoAdapter.h in Headers */,
+				DC9D07BD24F66D9800A8AF95 /* ATADXRewardedVideoCustomEvent.h in Headers */,
 				8DB70330236D79BE007A889D /* ATRewardedVideo.h in Headers */,
 				8DB70336236D79EF007A889D /* ATAdManager+RewardedVideo.h in Headers */,
 				8DB70335236D79EF007A889D /* ATRewardedVideoDelegate.h in Headers */,
 				8DB7033A236D7A16007A889D /* ATRewardedVideoCustomEvent.h in Headers */,
+				DC9D07BB24F66D8D00A8AF95 /* ATADXRewardedVideoAdapter.h in Headers */,
 				8DB7033C236D7A16007A889D /* ATRewardedVideoAdapter.h in Headers */,
 				8DB7F3E8236BCAA9007A889D /* AnyThinkRewardedVideo.h in Headers */,
 				8DB7032B236D79AB007A889D /* ATRewardedVideoManager.h in Headers */,
+				DC9D078024F3D37E00A8AF95 /* ATMyOfferRewardedVideoCustomEvent.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6493,13 +6821,16 @@
 				8DB701F0236D6F2C007A889D /* ATNativeADDelegate.h in Headers */,
 				8DB7F414236BD108007A889D /* AnyThinkNative.h in Headers */,
 				8DB701DD236D6EC2007A889D /* ATNativeADView.h in Headers */,
+				DC9D078E24F3D3E300A8AF95 /* ATMyOfferNativeCustomEvent.h in Headers */,
 				8DB701FE236D6F64007A889D /* ATNativeSplashWrapper.h in Headers */,
 				8DB701FA236D6F43007A889D /* ATAdManager+Native.h in Headers */,
 				8DB701E8236D6EF7007A889D /* ATNativeAd.h in Headers */,
+				DC9D079024F3D3F100A8AF95 /* ATMyOfferNativeRenderer.h in Headers */,
 				8DB701EC236D6EF7007A889D /* ATNativeADConfiguration.h in Headers */,
 				8DB701F2236D6F2C007A889D /* ATNativeRendering.h in Headers */,
 				8DB70210236D6FCF007A889D /* ATNativeADCustomEvent.h in Headers */,
 				8DB70202236D6F77007A889D /* ATNativeBannerWrapper.h in Headers */,
+				DC9D078C24F3D3D700A8AF95 /* ATMyOfferNativeAdapter.h in Headers */,
 				8DB701E7236D6EF7007A889D /* ATNativeADCache.h in Headers */,
 				8DB701F1236D6F2C007A889D /* ATNativeADRenderer.h in Headers */,
 				8DB701DF236D6EC2007A889D /* ATNativeADView+Internal.h in Headers */,
@@ -6518,9 +6849,13 @@
 				8DB7F489236BFC24007A889D /* AnyThinkInterstitial.h in Headers */,
 				8DB701CF236D6C7A007A889D /* ATInterstitialDelegate.h in Headers */,
 				8DB701D0236D6C7A007A889D /* ATAdManager+Interstitial.h in Headers */,
+				DC9D077924F3D34100A8AF95 /* ATMyOfferInterstitialCustomEvent.h in Headers */,
 				8DB701CA236D6C28007A889D /* ATInterstitialCustomEvent.h in Headers */,
 				8DB701C9236D6C28007A889D /* ATInterstitialAdapter.h in Headers */,
 				8DB701D7236D6C92007A889D /* ATInterstitial.h in Headers */,
+				DC9D07B724F66CDC00A8AF95 /* ATADXInterstitialAdapter.h in Headers */,
+				DC9D077724F3D33300A8AF95 /* ATMyOfferInterstitialAdapter.h in Headers */,
+				DC9D07B924F66CE700A8AF95 /* ATADXInterstitialCustomEvent.h in Headers */,
 				8DB701D3236D6C84007A889D /* ATInterstitialManager.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6533,10 +6868,12 @@
 				8DB702B4236D75EA007A889D /* ATAdManager+Banner.h in Headers */,
 				8DB70327236D7914007A889D /* ATBannerAdapter.h in Headers */,
 				8DB702B6236D75EA007A889D /* ATBannerView.h in Headers */,
+				DC9D079924F3D43D00A8AF95 /* ATMyOfferBannerCustomEvent.h in Headers */,
 				8DB70326236D7914007A889D /* ATBannerCustomEvent.h in Headers */,
 				8DB702B1236D75EA007A889D /* ATBannerDelegate.h in Headers */,
 				8DB702BA236D7610007A889D /* ATBanner.h in Headers */,
 				8DB7F4AE236BFD08007A889D /* AnyThinkBanner.h in Headers */,
+				DC9D079724F3D42C00A8AF95 /* ATMyOfferBannerAdapter.h in Headers */,
 				8DB702B5236D75EA007A889D /* ATBannerView+Internal.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6550,7 +6887,9 @@
 				8DB703F7236D7CB0007A889D /* ATSplashCustomEvent.h in Headers */,
 				8DB703FB236D7CBD007A889D /* ATSplash.h in Headers */,
 				8DB703FF236D7CCC007A889D /* ATSplashManager.h in Headers */,
+				DC9D078224F3D38E00A8AF95 /* ATMyOfferSplashAdapter.h in Headers */,
 				8DB7F4EA236C01AA007A889D /* AnyThinkSplash.h in Headers */,
+				DC9D078424F3D39C00A8AF95 /* ATMyOfferSplashCustomEvent.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6622,7 +6961,9 @@
 			files = (
 				8DB7036B236D7B2E007A889D /* ATChartboostRewardedVideoAdapter.h in Headers */,
 				8DB7036A236D7B2E007A889D /* ATChartboostRewardedVideoCustomEvent.h in Headers */,
+				DC924C2725061D3C001BF9C2 /* ATHeliumRewardedVideoCustomEvent.h in Headers */,
 				8DB7F5B1236C1668007A889D /* AnyThinkChartboostRewardedVideoAdapter.h in Headers */,
+				DC924C2325061CD8001BF9C2 /* ATHeliumRewardedVideoAdapter.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -7160,6 +7501,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				8DB7013A236D67B4007A889D /* ATChartboostInterstitialAdapter.h in Headers */,
+				DC924C1F25061C44001BF9C2 /* ATHeliumInterstitialCustomEvent.h in Headers */,
+				DC924C1B25061B54001BF9C2 /* ATHeliumInterstitialAdapter.h in Headers */,
 				8DB70139236D67B4007A889D /* ATChartboostInterstitialCustomEvent.h in Headers */,
 				8DB7FBB3236C4C7A007A889D /* AnyThinkChartboostInterstitialAdapter.h in Headers */,
 			);
@@ -7358,48 +7701,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8DE56C9F2372D5FE000E879B /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				8DE56CF22372D8AD000E879B /* ATMyOfferProgressView.h in Headers */,
-				8DE56CE92372D8AD000E879B /* ATMyOfferTracker.h in Headers */,
-				9B69D10824E28D4400F293D8 /* ATMyOfferNativeRenderer.h in Headers */,
-				DCED438924DD4ABC001B3139 /* ATMyOfferSplashCustomEvent.h in Headers */,
-				9BB8666524E3F6CA00F94EDA /* ATMyOfferRewardedVideoAdapter.h in Headers */,
-				DCED438D24DD4F94001B3139 /* ATMyOfferUtilities.h in Headers */,
-				DCB0C05424D3FA6100FBC0EC /* ATMyOfferSplashDelegate.h in Headers */,
-				8DE56CEB2372D8AD000E879B /* ATMyOfferResourceLoader.h in Headers */,
-				DCB0C05A24D418F600FBC0EC /* ATMyOfferSplashSharedDelegate.h in Headers */,
-				9B69D10424E28C9400F293D8 /* ATMyOfferNativeAdapter.h in Headers */,
-				DCAB166924D8432300F118A9 /* ATMyOfferBannerView.h in Headers */,
-				8DE56D032372D8E6000E879B /* ATMyOfferProgressHud.h in Headers */,
-				8DE56CED2372D8AD000E879B /* ATMyOfferCapsManager.h in Headers */,
-				DCB0C06224D41A8800FBC0EC /* ATMyOfferBannerSharedDelegate.h in Headers */,
-				8DE56CF92372D8AD000E879B /* ATMyOfferResourceManager.h in Headers */,
-				8DE56D022372D8E6000E879B /* ATMyOfferInterstitialDelegate.h in Headers */,
-				8DE56CE72372D8AD000E879B /* ATMyOfferRewardedVideoSharedDelegate.h in Headers */,
-				DCB0C05824D4026D00FBC0EC /* ATMyOfferBannerDelegate.h in Headers */,
-				DCB0C05E24D41A1100FBC0EC /* ATMyOfferNativeSharedDelegate.h in Headers */,
-				9BB8666424E3F6C400F94EDA /* ATMyOfferInterstitialCustomEvent.h in Headers */,
-				8DE56CE82372D8AD000E879B /* ATMyOfferVideoBannerView.h in Headers */,
-				9B69D10024E28C6300F293D8 /* ATMyOfferNativeCustomEvent.h in Headers */,
-				8DE56CA82372D5FE000E879B /* AnyThinkMyOffer.h in Headers */,
-				8DE56CFD2372D8C0000E879B /* ATMyOfferResourceModel.h in Headers */,
-				DCB0C05624D4016400FBC0EC /* ATMyOfferNativeDelegate.h in Headers */,
-				DC5FBE4724E2CE3F00E0C6B8 /* ATMyOfferBannerAdapter.h in Headers */,
-				8DE56CE62372D8AD000E879B /* ATMyOfferVideoViewController.h in Headers */,
-				DC5FBE4B24E2CE7000E0C6B8 /* ATMyOfferBannerCustomEvent.h in Headers */,
-				8DE56CF52372D8AD000E879B /* ATMyOfferInterstitialSharedDelegate.h in Headers */,
-				8DE56D052372D8E6000E879B /* ATMyOfferRewardedVideoDelegate.h in Headers */,
-				9BB8666624E3F6CE00F94EDA /* ATMyOfferRewardedVideoCustomEvent.h in Headers */,
-				9BB8666E24E6897100F94EDA /* ATMyOfferFullScreenPictureViewController.h in Headers */,
-				8DE56CEE2372D8AD000E879B /* ATMyOfferOfferManager.h in Headers */,
-				9BB8666324E3F6C000F94EDA /* ATMyOfferInterstitialAdapter.h in Headers */,
-				DCED438524DD4830001B3139 /* ATMyOfferSplashAdapter.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		9B0AB0AF249C53FF003C5282 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -7437,6 +7738,16 @@
 				9B0AB113249C56DD003C5282 /* ATVungleBannerCustomEvent.h in Headers */,
 				9B0AB0F4249C568C003C5282 /* AnyThinkVungleBannerAdapter.h in Headers */,
 				9B0AB116249C56DD003C5282 /* ATVungleBannerAdapter.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9B120E2C252472CE00BAA664 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9B120F042524733B00BAA664 /* ATAdmobSplashAdapter.h in Headers */,
+				9B120FCC2524736B00BAA664 /* ATAdmobSplashCustomEvent.h in Headers */,
+				9B120E35252472CF00BAA664 /* AnyThinkAdmobSplashAdapter.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -7650,7 +7961,6 @@
 				8DB7FD3B236C5075007A889D /* PBXTargetDependency */,
 				8DB7FD55236C50B3007A889D /* PBXTargetDependency */,
 				8DB70412236D7E13007A889D /* PBXTargetDependency */,
-				8DE56CAA2372D5FE000E879B /* PBXTargetDependency */,
 				9B56A0E2237E719600204E3D /* PBXTargetDependency */,
 				9B56A21C238E187500204E3D /* PBXTargetDependency */,
 				9B56A23E238E18AD00204E3D /* PBXTargetDependency */,
@@ -7665,6 +7975,7 @@
 				9B0AB0D4249C5481003C5282 /* PBXTargetDependency */,
 				9B0AB0E5249C5662003C5282 /* PBXTargetDependency */,
 				9B0AB0F6249C568C003C5282 /* PBXTargetDependency */,
+				9B120E37252472CF00BAA664 /* PBXTargetDependency */,
 			);
 			name = AnyThinkSDKDemo;
 			productName = AnyThinkSDKDemo;
@@ -9183,24 +9494,6 @@
 			productReference = 8DE3254D244043E300D72844 /* AnyThinkFyberRewardedVideoAdapter.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		8DE56CA32372D5FE000E879B /* AnyThinkMyOffer */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 8DE56CAD2372D5FE000E879B /* Build configuration list for PBXNativeTarget "AnyThinkMyOffer" */;
-			buildPhases = (
-				8DE56C9F2372D5FE000E879B /* Headers */,
-				8DE56CA02372D5FE000E879B /* Sources */,
-				8DE56CA12372D5FE000E879B /* Frameworks */,
-				8DE56CA22372D5FE000E879B /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = AnyThinkMyOffer;
-			productName = AnyThinkMyOffer;
-			productReference = 8DE56CA42372D5FE000E879B /* AnyThinkMyOffer.framework */;
-			productType = "com.apple.product-type.framework";
-		};
 		9B0AB0B3249C53FF003C5282 /* AnyThinkMintegralSplashAdapter */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9B0AB0BF249C5401003C5282 /* Build configuration list for PBXNativeTarget "AnyThinkMintegralSplashAdapter" */;
@@ -9271,6 +9564,24 @@
 			name = AnyThinkVungleBannerAdapter;
 			productName = AnyThinkVungleBannerAdapter;
 			productReference = 9B0AB0F0249C568B003C5282 /* AnyThinkVungleBannerAdapter.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		9B120E30252472CE00BAA664 /* AnyThinkAdmobSplashAdapter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9B120E3C252472D000BAA664 /* Build configuration list for PBXNativeTarget "AnyThinkAdmobSplashAdapter" */;
+			buildPhases = (
+				9B120E2C252472CE00BAA664 /* Headers */,
+				9B120E2D252472CE00BAA664 /* Sources */,
+				9B120E2E252472CE00BAA664 /* Frameworks */,
+				9B120E2F252472CE00BAA664 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AnyThinkAdmobSplashAdapter;
+			productName = AnyThinkAdmobSplashAdapter;
+			productReference = 9B120E31252472CE00BAA664 /* AnyThinkAdmobSplashAdapter.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		9B56A0CD237E719600204E3D /* AnyThinkMintegralBannerAdapter */ = {
@@ -9368,9 +9679,11 @@
 					};
 					8DB7F30F236AC43E007A889D = {
 						CreatedOnToolsVersion = 11.1;
+						LastSwiftMigration = 1200;
 					};
 					8DB7F32D236AC61C007A889D = {
 						CreatedOnToolsVersion = 11.1;
+						LastSwiftMigration = 1200;
 					};
 					8DB7F3E3236BCAA8007A889D = {
 						CreatedOnToolsVersion = 11.1;
@@ -9621,9 +9934,6 @@
 					8DE3254C244043E300D72844 = {
 						CreatedOnToolsVersion = 11.4;
 					};
-					8DE56CA32372D5FE000E879B = {
-						CreatedOnToolsVersion = 11.1;
-					};
 					9B0AB0B3249C53FF003C5282 = {
 						CreatedOnToolsVersion = 11.5;
 					};
@@ -9635,6 +9945,9 @@
 					};
 					9B0AB0EF249C568B003C5282 = {
 						CreatedOnToolsVersion = 11.5;
+					};
+					9B120E30252472CE00BAA664 = {
+						CreatedOnToolsVersion = 12.0;
 					};
 					9B56A0CD237E719600204E3D = {
 						CreatedOnToolsVersion = 11.1;
@@ -9746,7 +10059,6 @@
 				8DB7FD34236C5075007A889D /* AnyThinkTTBannerAdapter */,
 				8DB7FD4E236C50B3007A889D /* AnyThinkUnityAdsBannerAdapter */,
 				8DB7040B236D7E12007A889D /* AnyThinkYeahmobiBannerAdapter */,
-				8DE56CA32372D5FE000E879B /* AnyThinkMyOffer */,
 				9B56A0CD237E719600204E3D /* AnyThinkMintegralBannerAdapter */,
 				9B56A207238E187200204E3D /* AnyThinkOguryInterstitialAdapter */,
 				9B56A229238E18AB00204E3D /* AnyThinkOguryRewardedVideoAdapter */,
@@ -9761,6 +10073,7 @@
 				9B0AB0CD249C5481003C5282 /* AnyThinkAdColonyBannerAdapter */,
 				9B0AB0DE249C5662003C5282 /* AnyThinkChartboostBannerAdapter */,
 				9B0AB0EF249C568B003C5282 /* AnyThinkVungleBannerAdapter */,
+				9B120E30252472CE00BAA664 /* AnyThinkAdmobSplashAdapter */,
 			);
 		};
 /* End PBXProject section */
@@ -9798,7 +10111,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9BF5E53E237267B600BBF5CE /* AnyThinkSDK.bundle in Resources */,
+				96757B9B25357FA900055E1C /* AnyThinkSDK.bundle in Resources */,
 				8DB7F322236AC440007A889D /* LaunchScreen.storyboard in Resources */,
 				8DB7F31F236AC440007A889D /* Assets.xcassets in Resources */,
 				8DB7F31D236AC43E007A889D /* Main.storyboard in Resources */,
@@ -10393,13 +10706,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8DE56CA22372D5FE000E879B /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		9B0AB0B2249C53FF003C5282 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -10422,6 +10728,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9B0AB0EE249C568B003C5282 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9B120E2F252472CE00BAA664 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -10503,7 +10816,9 @@
 				8DB7F31A236AC43E007A889D /* ViewController.m in Sources */,
 				8DB7F314236AC43E007A889D /* AppDelegate.m in Sources */,
 				8DB7F325236AC440007A889D /* main.m in Sources */,
+				960686562521D1C400BA96EF /* SimpleWebViewController.swift in Sources */,
 				8DB7FF4C236D5E52007A889D /* ATNativeViewController.m in Sources */,
+				9606890625239EAE00BA96EF /* ATWebAction.swift in Sources */,
 				9B77D7302404FBD0003FEF86 /* ATDrawViewController.m in Sources */,
 				8DB7FF4F236D5E52007A889D /* ATBannerViewController.m in Sources */,
 				8DB7FF4E236D5E52007A889D /* ATInterstitialViewController.m in Sources */,
@@ -10518,42 +10833,75 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DC9D079E24F3D45F00A8AF95 /* ATMyOfferProgressHud.m in Sources */,
+				DC9D07A224F3D47700A8AF95 /* ATOfferResourceModel.m in Sources */,
+				9B2D947324FE2F97004C19BA /* ATOfferSessionRedirector.m in Sources */,
+				96068A9025245DE800BA96EF /* ATOfferWebViewController.m in Sources */,
+				DC9D53832508AF570053AFAD /* ATHeaderBiddingManager.m in Sources */,
 				8DB700BA236D615C007A889D /* ATUnitGroupModel.m in Sources */,
 				8D79B31F245812DA0007B158 /* ATWaterfallManager.m in Sources */,
 				DC5FBE4E24E50A6400E0C6B8 /* ATStoreProductViewController.m in Sources */,
+				DC9D07AE24F3D4BF00A8AF95 /* ATOfferVideoBannerView.m in Sources */,
 				8DBB0A122421F72A00C6123A /* ATLifecycleManager.m in Sources */,
 				8DB70100236D62BF007A889D /* ATLogger.m in Sources */,
 				8D79B323245834240007B158 /* ATBidInfoManager.m in Sources */,
 				8DB7009A236D613D007A889D /* ATCapsManager.m in Sources */,
 				9B854E2124BD940300A88107 /* ATKeychain.m in Sources */,
+				DC64060524EE8CF300842B2E /* ATADXRewardedVideoAdManager.m in Sources */,
 				8DB700BB236D615C007A889D /* ATModel.m in Sources */,
 				8DB7009C236D613D007A889D /* ATGeneralAdAgentEvent.m in Sources */,
 				8DB70096236D613D007A889D /* ATAgentEvent.m in Sources */,
 				9BDCBE7324B4893D0059AAB0 /* ATTCPLogManager.m in Sources */,
+				DC9D07A024F3D46B00A8AF95 /* ATMyOfferUtilities.m in Sources */,
 				8DB700A5236D613D007A889D /* ATLoadingScheduler.m in Sources */,
 				8DB70108236D62BF007A889D /* UIViewController+AdObjectAssociation.m in Sources */,
 				8DFD802F247CBED40099756C /* ATAdLoader+S2SHeaderBidding.m in Sources */,
 				8DB700FA236D62BF007A889D /* NSDictionary+KAKit.m in Sources */,
 				8DB700D0236D6199007A889D /* ATAdCustomEvent.m in Sources */,
+				DC9D07A424F3D48400A8AF95 /* ATMyOfferCapsManager.m in Sources */,
+				DC6405FA24EE6A7C00842B2E /* ATADXLoader.m in Sources */,
+				DC9D07A824F3D49D00A8AF95 /* ATOfferResourceLoader.m in Sources */,
+				DC9D539F251316FD0053AFAD /* ATBidTrackingModel.m in Sources */,
 				8DB700F9236D62BF007A889D /* ATThreadSafeAccessor.m in Sources */,
 				8DB700A0236D613D007A889D /* ATImageLoader.m in Sources */,
+				DC64060B24EE8D9C00842B2E /* ATADXOfferModel.m in Sources */,
 				8DB7009F236D613D007A889D /* ATAppSettingManager.m in Sources */,
+				DC64060124EE8A4900842B2E /* ATADXTracker.m in Sources */,
 				8DB700CF236D6199007A889D /* ATAPI.m in Sources */,
 				8D79B31B2456FED40007B158 /* ATBidInfo.m in Sources */,
+				DC9D077624F3D32900A8AF95 /* ATMyOfferInterstitialSharedDelegate.m in Sources */,
+				DC58DA2224EFCA55004FDDF5 /* ATOfferModel.m in Sources */,
+				DC64061624EE9D7500842B2E /* ATADXAdManager.m in Sources */,
+				DC9D078B24F3D3D000A8AF95 /* ATMyOfferNativeSharedDelegate.m in Sources */,
+				DC64061024EE9BC200842B2E /* ATADXInterstitialAdManager.m in Sources */,
 				8DB7006A236D5FEE007A889D /* ATVideoView.m in Sources */,
+				DC9D07B624F6539E00A8AF95 /* ATOfferSetting.m in Sources */,
 				8D88BDEC239A00D2001ADC10 /* ATAdLoader.m in Sources */,
+				DC9D539B251316900053AFAD /* ATBidJobModel.m in Sources */,
+				DC9D07AA24F3D4A600A8AF95 /* ATOfferResourceManager.m in Sources */,
+				DC9D077D24F3D36600A8AF95 /* ATMyOfferRewardedVideoSharedDelegate.m in Sources */,
+				DC9D07B224F3D4D700A8AF95 /* ATOfferFullScreenPictureViewController.m in Sources */,
 				8DB700BF236D615C007A889D /* NSObject+ATAdExpiration.m in Sources */,
 				8DB700FD236D62BF007A889D /* Utilities.m in Sources */,
+				DC9D079C24F3D45300A8AF95 /* ATMyOfferOfferManager.m in Sources */,
 				9BDCBE6024AED9EF0059AAB0 /* ATTCPSocketManager.m in Sources */,
+				DC9D07A624F3D49200A8AF95 /* ATOfferProgressView.m in Sources */,
 				8DB700A3236D613D007A889D /* ATPlacementSettingManager.m in Sources */,
 				9BDCBE6F24B441CB0059AAB0 /* ATGCDAsyncSocket.m in Sources */,
 				8DE56D0D2372DBBA000E879B /* ATMyOfferOfferModel.m in Sources */,
+				DC9D07B024F3D4CC00A8AF95 /* ATOfferVideoViewController.m in Sources */,
 				8DB7009D236D613D007A889D /* ATTracker.m in Sources */,
 				8DB70068236D5FEE007A889D /* ATPolicyViewController.m in Sources */,
+				DC6405F124EE2AF300842B2E /* ATADXPlacementSetting.m in Sources */,
+				DC9D078824F3D3B600A8AF95 /* ATMyOfferSplashSharedDelegate.m in Sources */,
 				8DB700D6236D628B007A889D /* ATNetworkingManager.m in Sources */,
 				8DE56D0C2372DBBA000E879B /* ATMyOfferSetting.m in Sources */,
+				DC9D079424F3D41900A8AF95 /* ATMyOfferBannerSharedDelegate.m in Sources */,
 				8DB700CC236D6199007A889D /* ATAdManager.m in Sources */,
+				DC9D079624F3D42500A8AF95 /* ATMyOfferBannerView.m in Sources */,
+				9B120B81252319FD00BAA664 /* ATCheckLoadModel.m in Sources */,
 				8DB700B9236D615C007A889D /* ATPlacementModel.m in Sources */,
+				DC9D07AC24F3D4B400A8AF95 /* ATMyOfferTracker.m in Sources */,
 				8DB70101236D62BF007A889D /* NSString+KAKit.m in Sources */,
 				8DB700F3236D62BF007A889D /* ATAdStorageUtility.m in Sources */,
 			);
@@ -10563,10 +10911,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DC9D077F24F3D37600A8AF95 /* ATMyOfferRewardedVideoAdapter.m in Sources */,
+				DC9D07BC24F66D9300A8AF95 /* ATADXRewardedVideoAdapter.m in Sources */,
 				8DB7032C236D79AB007A889D /* ATRewardedVideoManager.m in Sources */,
 				8DB7033B236D7A16007A889D /* ATRewardedVideoCustomEvent.m in Sources */,
 				8DB70334236D79EF007A889D /* ATAdManager+RewardedVideo.m in Sources */,
 				8DB7032F236D79BE007A889D /* ATRewardedVideo.m in Sources */,
+				DC9D07BE24F66D9C00A8AF95 /* ATADXRewardedVideoCustomEvent.m in Sources */,
+				DC9D078124F3D38200A8AF95 /* ATMyOfferRewardedVideoCustomEvent.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -10578,15 +10930,18 @@
 				8DB70215236D6FCF007A889D /* NSObject+ExtraInfo.m in Sources */,
 				8DB701EB236D6EF7007A889D /* ATNativeADConfiguration.m in Sources */,
 				8DB70206236D6F8E007A889D /* UIViewController+PresentationAndDismissalSwizzling.m in Sources */,
+				DC9D078D24F3D3DB00A8AF95 /* ATMyOfferNativeAdapter.m in Sources */,
 				8DB701FD236D6F64007A889D /* ATNativeSplashWrapper.m in Sources */,
 				8DB701F8236D6F43007A889D /* ATNativeADOfferManager.m in Sources */,
 				8DB701DE236D6EC2007A889D /* ATNativeADView.m in Sources */,
+				DC9D078F24F3D3E700A8AF95 /* ATMyOfferNativeCustomEvent.m in Sources */,
 				8DB70201236D6F77007A889D /* ATNativeBannerWrapper.m in Sources */,
 				8DB70216236D6FCF007A889D /* NSObject+ATCustomEvent.m in Sources */,
 				8DB7020F236D6FCF007A889D /* ATNativeADCustomEvent.m in Sources */,
 				8DB701E9236D6EF7007A889D /* ATNativeADCache.m in Sources */,
 				8DB701F9236D6F43007A889D /* ATAdManager+Native.m in Sources */,
 				8DB701EA236D6EF7007A889D /* ATNativeAd.m in Sources */,
+				DC9D079124F3D3F400A8AF95 /* ATMyOfferNativeRenderer.m in Sources */,
 				8DB701E0236D6EC2007A889D /* ATNativeADView+Internal.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -10596,9 +10951,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				8DB701D8236D6C92007A889D /* ATInterstitial.m in Sources */,
+				DC9D077A24F3D34900A8AF95 /* ATMyOfferInterstitialCustomEvent.m in Sources */,
 				8DB701C8236D6C28007A889D /* ATInterstitialCustomEvent.m in Sources */,
 				8DB701CE236D6C7A007A889D /* ATAdManager+Interstitial.m in Sources */,
+				DC9D07BA24F66CEB00A8AF95 /* ATADXInterstitialCustomEvent.m in Sources */,
+				DC9D07B824F66CE200A8AF95 /* ATADXInterstitialAdapter.m in Sources */,
 				8DB701D4236D6C84007A889D /* ATInterstitialManager.m in Sources */,
+				DC9D077824F3D33900A8AF95 /* ATMyOfferInterstitialAdapter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -10608,7 +10967,9 @@
 			files = (
 				8DB70328236D7914007A889D /* ATBannerCustomEvent.m in Sources */,
 				8DB702A9236D75D0007A889D /* ATBannerManager.m in Sources */,
+				DC9D079A24F3D44400A8AF95 /* ATMyOfferBannerCustomEvent.m in Sources */,
 				8DB702B2236D75EA007A889D /* ATAdManager+Banner.m in Sources */,
+				DC9D079824F3D43700A8AF95 /* ATMyOfferBannerAdapter.m in Sources */,
 				8DB702B3236D75EA007A889D /* ATBannerView.m in Sources */,
 				8DB702B9236D7610007A889D /* ATBanner.m in Sources */,
 			);
@@ -10620,7 +10981,9 @@
 			files = (
 				8DB703F8236D7CB0007A889D /* ATSplashCustomEvent.m in Sources */,
 				8DB703FC236D7CBD007A889D /* ATSplash.m in Sources */,
+				DC9D078524F3D3A600A8AF95 /* ATMyOfferSplashCustomEvent.m in Sources */,
 				8DB70406236D7CD8007A889D /* ATAdManager+Splash.m in Sources */,
+				DC9D078324F3D39800A8AF95 /* ATMyOfferSplashAdapter.m in Sources */,
 				8DB70400236D7CCC007A889D /* ATSplashManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -10685,8 +11048,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DC924C2925061D58001BF9C2 /* ATHeliumRewardedVideoCustomEvent.m in Sources */,
 				8DB70369236D7B2E007A889D /* ATChartboostRewardedVideoAdapter.m in Sources */,
 				8DB7036C236D7B2E007A889D /* ATChartboostRewardedVideoCustomEvent.m in Sources */,
+				DC924C2525061CFA001BF9C2 /* ATHeliumRewardedVideoAdapter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11174,6 +11539,8 @@
 			files = (
 				8DB7013B236D67B4007A889D /* ATChartboostInterstitialAdapter.m in Sources */,
 				8DB7013C236D67B4007A889D /* ATChartboostInterstitialCustomEvent.m in Sources */,
+				DC924C2125061C6E001BF9C2 /* ATHeliumInterstitialCustomEvent.m in Sources */,
+				DC924C1D25061BAF001BF9C2 /* ATHeliumInterstitialAdapter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11351,42 +11718,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8DE56CA02372D5FE000E879B /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				9B69D10924E28D4400F293D8 /* ATMyOfferNativeRenderer.m in Sources */,
-				DCB0C06024D41A3B00FBC0EC /* ATMyOfferNativeSharedDelegate.m in Sources */,
-				8DE56D042372D8E6000E879B /* ATMyOfferProgressHud.m in Sources */,
-				8DE56CF32372D8AD000E879B /* ATMyOfferCapsManager.m in Sources */,
-				8DE56CF02372D8AD000E879B /* ATMyOfferVideoViewController.m in Sources */,
-				8DE56CF12372D8AD000E879B /* ATMyOfferProgressView.m in Sources */,
-				8DE56CEC2372D8AD000E879B /* ATMyOfferTracker.m in Sources */,
-				9BB8666124E3F6A500F94EDA /* ATMyOfferInterstitialAdapter.m in Sources */,
-				DCED438724DD4A93001B3139 /* ATMyOfferSplashAdapter.m in Sources */,
-				8DE56CF72372D8AD000E879B /* ATMyOfferResourceLoader.m in Sources */,
-				DCB0C05C24D4197B00FBC0EC /* ATMyOfferSplashSharedDelegate.m in Sources */,
-				8DE56CF82372D8AD000E879B /* ATMyOfferRewardedVideoSharedDelegate.m in Sources */,
-				8DE56CEA2372D8AD000E879B /* ATMyOfferInterstitialSharedDelegate.m in Sources */,
-				DCED438B24DD4AD8001B3139 /* ATMyOfferSplashCustomEvent.m in Sources */,
-				DC5FBE4D24E2CE8600E0C6B8 /* ATMyOfferBannerCustomEvent.m in Sources */,
-				DCB0C06424D41AC500FBC0EC /* ATMyOfferBannerSharedDelegate.m in Sources */,
-				8DE56CFC2372D8C0000E879B /* ATMyOfferResourceModel.m in Sources */,
-				9BB8666F24E6897100F94EDA /* ATMyOfferFullScreenPictureViewController.m in Sources */,
-				9BB8666024E3F69400F94EDA /* ATMyOfferRewardedVideoCustomEvent.m in Sources */,
-				DC5FBE4924E2CE5800E0C6B8 /* ATMyOfferBannerAdapter.m in Sources */,
-				8DE56CF62372D8AD000E879B /* ATMyOfferResourceManager.m in Sources */,
-				DCED438F24DD4FB2001B3139 /* ATMyOfferUtilities.m in Sources */,
-				8DE56CF42372D8AD000E879B /* ATMyOfferVideoBannerView.m in Sources */,
-				9B69D10524E28C9400F293D8 /* ATMyOfferNativeAdapter.m in Sources */,
-				9B69D10124E28C6300F293D8 /* ATMyOfferNativeCustomEvent.m in Sources */,
-				DCAB166B24D8436400F118A9 /* ATMyOfferBannerView.m in Sources */,
-				8DE56CEF2372D8AD000E879B /* ATMyOfferOfferManager.m in Sources */,
-				9BB8666224E3F6A500F94EDA /* ATMyOfferInterstitialCustomEvent.m in Sources */,
-				9BB8665F24E3F69400F94EDA /* ATMyOfferRewardedVideoAdapter.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		9B0AB0B0249C53FF003C5282 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -11420,6 +11751,15 @@
 			files = (
 				9B0AB114249C56DD003C5282 /* ATVungleBannerAdapter.m in Sources */,
 				9B0AB115249C56DD003C5282 /* ATVungleBannerCustomEvent.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9B120E2D252472CE00BAA664 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9B120F052524733B00BAA664 /* ATAdmobSplashAdapter.m in Sources */,
+				9B120FCD2524736B00BAA664 /* ATAdmobSplashCustomEvent.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11903,11 +12243,6 @@
 			target = 8DE3254C244043E300D72844 /* AnyThinkFyberRewardedVideoAdapter */;
 			targetProxy = 8DE32552244043E300D72844 /* PBXContainerItemProxy */;
 		};
-		8DE56CAA2372D5FE000E879B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 8DE56CA32372D5FE000E879B /* AnyThinkMyOffer */;
-			targetProxy = 8DE56CA92372D5FE000E879B /* PBXContainerItemProxy */;
-		};
 		9B0AB0BA249C5400003C5282 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 9B0AB0B3249C53FF003C5282 /* AnyThinkMintegralSplashAdapter */;
@@ -11927,6 +12262,11 @@
 			isa = PBXTargetDependency;
 			target = 9B0AB0EF249C568B003C5282 /* AnyThinkVungleBannerAdapter */;
 			targetProxy = 9B0AB0F5249C568C003C5282 /* PBXContainerItemProxy */;
+		};
+		9B120E37252472CF00BAA664 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9B120E30252472CE00BAA664 /* AnyThinkAdmobSplashAdapter */;
+			targetProxy = 9B120E36252472CF00BAA664 /* PBXContainerItemProxy */;
 		};
 		9B56A0E2237E719600204E3D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -12322,8 +12662,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 6YXYV74FF7;
+				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThrirdPartySDK",
@@ -12378,6 +12721,9 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.anythink.AnyThinkSDKDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "AnyThinkSDKDemo/AnyThinkSDKDemo-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -12386,8 +12732,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 6YXYV74FF7;
+				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThrirdPartySDK",
@@ -12442,6 +12791,8 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.anythink.AnyThinkSDKDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "AnyThinkSDKDemo/AnyThinkSDKDemo-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -12449,6 +12800,7 @@
 		8DB7F338236AC61C007A889D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
@@ -12466,13 +12818,15 @@
 					"@loader_path/Frameworks",
 				);
 				MACH_O_TYPE = staticlib;
-				MARKETING_VERSION = 5.6.8;
+				MARKETING_VERSION = 5.7.3;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.anythink.AnyThinkSDK;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -12482,6 +12836,7 @@
 		8DB7F339236AC61C007A889D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
@@ -12499,13 +12854,14 @@
 					"@loader_path/Frameworks",
 				);
 				MACH_O_TYPE = staticlib;
-				MARKETING_VERSION = 5.6.8;
+				MARKETING_VERSION = 5.7.3;
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.anythink.AnyThinkSDK;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -13184,6 +13540,10 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ThrirdPartySDK/chartboost",
+				);
 				INFOPLIST_FILE = AnyThinkChartboostRewardedVideoAdapter/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -13214,6 +13574,10 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ThrirdPartySDK/chartboost",
+				);
 				INFOPLIST_FILE = AnyThinkChartboostRewardedVideoAdapter/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -17518,66 +17882,6 @@
 			};
 			name = Release;
 		};
-		8DE56CAE2372D5FE000E879B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = "";
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = AnyThinkMyOffer/Info.plist;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MACH_O_TYPE = staticlib;
-				PRODUCT_BUNDLE_IDENTIFIER = com.anythink.AnyThinkMyOffer;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
-				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
-			};
-			name = Debug;
-		};
-		8DE56CAF2372D5FE000E879B /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = "";
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = AnyThinkMyOffer/Info.plist;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MACH_O_TYPE = staticlib;
-				PRODUCT_BUNDLE_IDENTIFIER = com.anythink.AnyThinkMyOffer;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
-				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
-			};
-			name = Release;
-		};
 		9B0AB0BD249C5401003C5282 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -17808,6 +18112,72 @@
 				);
 				MACH_O_TYPE = staticlib;
 				PRODUCT_BUNDLE_IDENTIFIER = com.anythink.AnyThinkVungleBannerAdapter;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		9B120E3A252472CF00BAA664 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = AnyThinkAdmobSplashAdapter/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACH_O_TYPE = staticlib;
+				PRODUCT_BUNDLE_IDENTIFIER = com.anythink.AnyThinkAdmobSplashAdapter;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		9B120E3B252472CF00BAA664 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = AnyThinkAdmobSplashAdapter/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACH_O_TYPE = staticlib;
+				PRODUCT_BUNDLE_IDENTIFIER = com.anythink.AnyThinkAdmobSplashAdapter;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
@@ -18871,15 +19241,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8DE56CAD2372D5FE000E879B /* Build configuration list for PBXNativeTarget "AnyThinkMyOffer" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				8DE56CAE2372D5FE000E879B /* Debug */,
-				8DE56CAF2372D5FE000E879B /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		9B0AB0BF249C5401003C5282 /* Build configuration list for PBXNativeTarget "AnyThinkMintegralSplashAdapter" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -18912,6 +19273,15 @@
 			buildConfigurations = (
 				9B0AB0FA249C568C003C5282 /* Debug */,
 				9B0AB0FB249C568C003C5282 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9B120E3C252472D000BAA664 /* Build configuration list for PBXNativeTarget "AnyThinkAdmobSplashAdapter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9B120E3A252472CF00BAA664 /* Debug */,
+				9B120E3B252472CF00BAA664 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

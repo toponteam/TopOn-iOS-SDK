@@ -95,6 +95,7 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
         [[ATPlacementSettingManager sharedManager] setStatus:NO forPlacementID:_banner.placementModel.placementID];
         _banner.customEvent.bannerView = self;
         _banner.customEvent.delegate = _delegate;
+        _banner.customEvent.sdkTime = [Utilities normalizedTimeStamp];
         if ([_banner.bannerView isKindOfClass:[UIView class]]) {
             [self addSubview:_banner.bannerView];
             _banner.bannerView.frame = CGRectMake((_banner.customEvent.size.width - CGRectGetWidth(_banner.bannerView.frame)) / 2.0f, (_banner.customEvent.size.height - CGRectGetHeight(_banner.bannerView.frame)) / 2.0f, CGRectGetWidth(_banner.bannerView.frame), CGRectGetHeight(_banner.bannerView.frame));
@@ -256,7 +257,6 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
     if (_banner != nil && ![self impressionFlagForRequestID:_banner.requestID]) {
         [self setImpressionFlagForRequestID:_banner.requestID];
         _banner.showTimes++;
-        self.banner.customEvent.sdkTime = [Utilities normalizedTimeStamp];
         [[ATCapsManager sharedManager] increaseCapWithPlacementID:_banner.placementModel.placementID unitGroupID:_banner.unitGroup.unitGroupID requestID:_banner.requestID];
         [[ATCapsManager sharedManager] setLastShowTimeWithPlacementID:_banner.placementModel.placementID unitGroupID:_banner.unitGroup.unitGroupID];
         NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@(refresh), kATTrackerExtraRefreshFlagKey, @NO, kATTrackerExtraAutoloadFlagKey, @NO, kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.banner requestID:self.banner.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.banner.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.banner.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.banner.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey,self.banner.customEvent.sdkTime,kATTrackerExtraAdShowSDKTimeKey, nil];

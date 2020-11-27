@@ -18,7 +18,7 @@
 - (void) onInterstitialLoadSuccess:(id<ATMTGInterstitialAdManager>)adManager {
     [ATLogger logMessage:@"MintegralInterstitial::onInterstitialLoadSuccess:" type:ATLogTypeExternal];
 //    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:adManager, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsPriceKey:@(_price)}];
-    [self trackInterstitialAdLoaded:adManager adExtra:@{kAdAssetsPriceKey:@(_price)}];
+    [self trackInterstitialAdLoaded:adManager adExtra:@{kAdAssetsPriceKey:_price}];
 }
 
 - (void) onInterstitialLoadFail:(nonnull NSError *)error adManager:(id<ATMTGInterstitialAdManager>)adManager {
@@ -55,7 +55,7 @@
 - (void) onInterstitialVideoLoadSuccess:(id<ATMTGInterstitialVideoAdManager>)adManager {
     [ATLogger logMessage:@"MintegralInterstitial::onInterstitialVideoLoadSuccess:" type:ATLogTypeExternal];
 //    [self handleAssets:@{kInterstitialAssetsCustomEventKey:self, kAdAssetsCustomObjectKey:adManager, kInterstitialAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"", kAdAssetsPriceKey:@(_price)}];
-    [self trackInterstitialAdLoaded:adManager adExtra:@{kAdAssetsPriceKey:@(_price)}];
+    [self trackInterstitialAdLoaded:adManager adExtra:@{kAdAssetsPriceKey:_price}];
 }
 
 - (void) onInterstitialVideoLoadFail:(nonnull NSError *)error adManager:(id<ATMTGInterstitialVideoAdManager>)adManager {

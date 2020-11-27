@@ -55,6 +55,25 @@ NSString *const kATInterstitialExtraAdSize600_900 = @"600_900";
     }];
 }
 
+- (ATCheckLoadModel*)checkInterstitialLoadStatusForPlacementID:(NSString *)placementID {
+    ATInterstitial *interstitial = nil;
+    ATCheckLoadModel *checkLoadModel = [[ATCheckLoadModel alloc] init];
+    if ([[ATWaterfallManager sharedManager] loadingAdForPlacementID:placementID]) {
+        checkLoadModel.isLoading = YES;
+    }
+    if ([self interstitialReadyForPlacementID:placementID scene:nil caller:ATAdManagerReadyAPICallerReady interstitial:&interstitial]) {
+        checkLoadModel.isReady = YES;
+        NSMutableDictionary *delegateExtra = [NSMutableDictionary dictionaryWithDictionary:[interstitial.customEvent delegateExtra]];
+        if ([delegateExtra containsObjectForKey:kATADDelegateExtraIDKey]) { [delegateExtra removeObjectForKey:kATADDelegateExtraIDKey]; }
+        checkLoadModel.adOfferInfo = delegateExtra;
+    }
+    NSMutableDictionary *info = [NSMutableDictionary dictionaryWithDictionary:[ATGeneralAdAgentEvent apiLogInfoWithPlacementID:placementID format:ATAdFormatInterstitial api:kATAPICheckLoadStatus]];
+    info[@"result"] = @{@"isLoading":checkLoadModel.isLoading ? @"YES" : @"NO", @"isReady":checkLoadModel.isReady ? @"YES" : @"NO", @"adOfferInfo":![Utilities isBlankDictionary:checkLoadModel.adOfferInfo] ? checkLoadModel.adOfferInfo : @{}};
+    [ATLogger logMessage:[NSString stringWithFormat:@"\nAPI invocation info:\n*****************************\n%@ \n*****************************", info] type:ATLogTypeTemporary];
+    return checkLoadModel;
+}
+
+
 -(void) showInterstitialWithPlacementID:(NSString*)placementID scene:(NSString*)scene inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate {
     [ATLogger logMessage:[NSString stringWithFormat:@"\nAPI invocation info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent apiLogInfoWithPlacementID:placementID format:3 api:kATAPIShow]] type:ATLogTypeTemporary];
     NSString *showingScene = nil;
@@ -68,9 +87,9 @@ NSString *const kATInterstitialExtraAdSize600_900 = @"600_900";
     if ([self interstitialReadyForPlacementID:placementID scene:showingScene caller:ATAdManagerReadyAPICallerShow interstitial:&interstitial]) {
         interstitial.scene = showingScene;
         viewController.ad = interstitial;
+        [interstitial.customEvent saveShowAPIContext];
         [interstitial.unitGroup.adapterClass showInterstitial:interstitial inViewController:viewController delegate:delegate];
         interstitial.showTimes++;
-        [interstitial.customEvent saveShowAPIContext];
         [[ATCapsManager sharedManager] setShowFlagForPlacementID:placementID requestID:interstitial.requestID];
         [[ATPlacementSettingManager sharedManager] setStatus:NO forPlacementID:placementID];
     } else {
@@ -78,7 +97,7 @@ NSString *const kATInterstitialExtraAdSize600_900 = @"600_900";
     }
     if (error != nil) {
         if ([delegate respondsToSelector:@selector(interstitialFailedToShowForPlacementID:error:extra:)]) {
-            [delegate interstitialFailedToShowForPlacementID:placementID error:error extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:interstitial.unitGroup.unitID != nil ? interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(interstitial.priority),kATInterstitialDelegateExtraPrice:@(interstitial.unitGroup.headerBidding ? interstitial.unitGroup.bidPrice:interstitial.unitGroup.price)}];
+            [delegate interstitialFailedToShowForPlacementID:placementID error:error extra:@{kATInterstitialDelegateExtraNetworkIDKey:@(interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:interstitial.unitGroup.unitID != nil ? interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(interstitial.priority),kATInterstitialDelegateExtraPrice:interstitial != nil ? (interstitial.unitGroup.headerBidding ? @([interstitial.unitGroup.bidPrice doubleValue]):@([interstitial.unitGroup.price doubleValue])) : @(0)}];
         }
     }
 }

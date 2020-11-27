@@ -65,6 +65,7 @@
                         [ATLogger logMessage:@"TCPSocket sendData success" type:ATLogTypeInternal];
                     }
                 }
+                [mg.clientSocket removeSendDataCompletion];
                 dispatch_semaphore_signal(mg.semaphore);
             }];
         }else {
@@ -84,6 +85,7 @@
                                 [ATLogger logMessage:@"TCPSocket sendData success" type:ATLogTypeInternal];
                             }
                         }
+                        [mg.clientSocket removeSendDataCompletion];
                         dispatch_semaphore_signal(mg.semaphore);
                     }];
                 }
@@ -93,8 +95,8 @@
 }
 @end
 
-@interface ATTCPClientSocket ()<GCDAsyncSocketDelegate>
-@property (nonatomic, strong) GCDAsyncSocket *clientSocket;
+@interface ATTCPClientSocket ()<ATGCDAsyncSocketDelegate>
+@property (nonatomic, strong) ATGCDAsyncSocket *clientSocket;
 @property (nonatomic, copy)  NSString *host;
 @property (nonatomic, assign)  uint16_t port;
 @property (nonatomic, assign)  NSInteger retryConnentTimes;
@@ -110,7 +112,7 @@ const int ATWriteTimeout = 30;
     ATTCPClientSocket *clientSocket = [[ATTCPClientSocket alloc] init];
     clientSocket.host = host;
     clientSocket.port = port;
-    clientSocket.clientSocket = [[GCDAsyncSocket alloc] initWithDelegate:clientSocket delegateQueue:dispatch_get_main_queue()];
+    clientSocket.clientSocket = [[ATGCDAsyncSocket alloc] initWithDelegate:clientSocket delegateQueue:dispatch_get_main_queue()];
     return clientSocket;
 }
 
@@ -138,6 +140,10 @@ const int ATWriteTimeout = 30;
     [self.clientSocket disconnect];
 }
 
+-(void)removeSendDataCompletion {
+    self.sendDataCompletion = nil;
+}
+
 - (void)sendData:(NSData *)data completionHandler:(void (^)(NSError * _Nullable))handler {
     if (data.length == 0) {
         NSError *error = [NSError errorWithDomain:@"TCPSocket sendData is nil" code:-1 userInfo:nil];
@@ -162,13 +168,13 @@ const int ATWriteTimeout = 30;
     if (self.sendDataCompletion) {
         NSError *error = [NSError errorWithDomain:@"TCPSocket send data writing timeouts" code:-1 userInfo:nil];
         self.sendDataCompletion(error);
-        self.sendDataCompletion = nil;
+        [self removeSendDataCompletion];
     }
 }
 
 #pragma mark -GCDAsyncSocketDelegate
 //connect success
-- (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port{
+- (void)socket:(ATGCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(uint16_t)port{
     [ATLogger logMessage:[NSString stringWithFormat:@"TCPSocket Connect success::socket::didConnectToHost:%@ port:%hu",host,port] type:ATLogTypeInternal];
     if (self.connectCompletion) {
         self.connectCompletion(nil);
@@ -177,7 +183,7 @@ const int ATWriteTimeout = 30;
 }
 
 //disconnect
-- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(nullable NSError *)err{
+- (void)socketDidDisconnect:(ATGCDAsyncSocket *)sock withError:(nullable NSError *)err{
     [ATLogger logMessage:[NSString stringWithFormat:@"TCPSocket socketDidDisconnect::error：%@",err] type:ATLogTypeInternal];
     if (self.connectCompletion) {
         self.connectCompletion(err);
@@ -185,7 +191,7 @@ const int ATWriteTimeout = 30;
     }
 }
 
-- (void)socket:(GCDAsyncSocket *)sock didWriteDataWithTag:(long)tag {
+- (void)socket:(ATGCDAsyncSocket *)sock didWriteDataWithTag:(long)tag {
     [ATLogger logMessage:@"TCPSocket socket::didWriteDataWithTag" type:ATLogTypeInternal];
     [self.clientSocket readDataWithTimeout:ATWriteTimeout tag:1];
 }
@@ -194,7 +200,7 @@ const int ATWriteTimeout = 30;
  * Called when a socket has completed reading the requested data into memory.
  * Not called if there is an error.
 **/
-- (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag {
+- (void)socket:(ATGCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag {
     [ATLogger logMessage:@"TCPSocket socket::didReadData:" type:ATLogTypeInternal];
     // cancel
     [NSObject cancelPreviousPerformRequestsWithTarget:self];
@@ -207,14 +213,14 @@ const int ATWriteTimeout = 30;
    }
     Byte *byteVaule = (Byte*)malloc(len);
     memcpy(byteVaule, [data bytes], len);
-    if (byteVaule[0] == 0x01 && self.sendDataCompletion) {
-        self.sendDataCompletion(nil);
-        self.sendDataCompletion = nil;
+    if (byteVaule[0] == 0x01) {
+        if (self.sendDataCompletion) {
+            self.sendDataCompletion(nil);
+        }
     }else {
         if (self.sendDataCompletion) {
             NSError *error = [NSError errorWithDomain:@"TCPSocket write Data To Server Fail" code:-1 userInfo:nil];
             self.sendDataCompletion(error);
-            self.sendDataCompletion = nil;
         }
     }
     free(byteVaule);

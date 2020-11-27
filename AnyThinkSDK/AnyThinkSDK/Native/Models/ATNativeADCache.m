@@ -36,7 +36,7 @@
         _appID = assets[kATAdAssetsAppIDKey];
         _priorityIndex = [ATAdCustomEvent calculateAdPriority:self];
         _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? (_priorityIndex / _placementModel.maxConcurrentRequestCount) + 1 : 1;
-        _price = unitGroup.headerBidding ? [assets[kAdAssetsPriceKey] doubleValue] : unitGroup.price;
+        _price = unitGroup.headerBidding ? assets[kAdAssetsPriceKey] : unitGroup.price;
         if ([assets[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { _autoReqType = 5; }
     }
     return self;

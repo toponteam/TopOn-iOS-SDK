@@ -11,6 +11,7 @@
 #import "ATGDTInterstitialCustomEvent.h"
 @interface ATGDTInterstitialAdapter()
 @property (nonatomic, readonly) ATGDTInterstitialCustomEvent *customEvent;
+@property (nonatomic, readonly) id<ATGDTMobInterstitial> interstitial;
 @property (nonatomic, readonly) id<ATGDTUnifiedInterstitialAd> unifiedInterstitialAd;
 @end
 @implementation ATGDTInterstitialAdapter
@@ -19,7 +20,7 @@
 }
 
 +(void) showInterstitial:(ATInterstitial*)interstitial inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate {
-    id<ATGDTUnifiedInterstitialAd> gdtInterstitial = interstitial.customObject;
+    id<ATGDTMobInterstitial> gdtInterstitial = interstitial.customObject;
     interstitial.customEvent.delegate = delegate;
     if ([interstitial.unitGroup.content[@"unit_version"] integerValue] == 2) {
         if ([interstitial.unitGroup.content[@"is_fullscreen"] integerValue] == 1) {
@@ -27,6 +28,8 @@
         } else {
             [(id<ATGDTUnifiedInterstitialAd>)gdtInterstitial presentAdFromRootViewController:viewController];
         }
+    } else {
+        [gdtInterstitial presentFromRootViewController:viewController];
     }
 }
 

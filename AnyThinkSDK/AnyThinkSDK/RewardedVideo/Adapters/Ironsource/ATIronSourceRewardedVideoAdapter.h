@@ -26,6 +26,7 @@ extern NSString *const kATIronSourceRVNotificationUserInfoErrorKey;
 @protocol ATIronSource<NSObject>
 + (void)setConsent:(BOOL)consent;
 + (NSString *)sdkVersion;
++ (BOOL)setDynamicUserId:(NSString *)dynamicUserId;
 #pragma makr - mediation
 //To be added
 

@@ -14,6 +14,7 @@ typedef NS_ENUM(NSInteger, ATNetworkingHTTPMethod) {
 
 NS_ASSUME_NONNULL_BEGIN
 extern NSString *const kAPIDomain;
+extern NSString *const kADXReqDomain;
 @interface ATNetworkingManager : NSObject
 +(NSString*)currentNetworkType;
 +(instancetype)sharedManager;

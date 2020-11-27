@@ -12,6 +12,10 @@
 
 @end
 
+@protocol ATFBAdSettings <NSObject>
++ (void)setAdvertiserTrackingEnabled:(BOOL)advertiserTrackingEnabled;
+@end
+
 @protocol FBInterstitialAdDelegate;
 @protocol ATFBInterstitialAd<NSObject>
 @property (nonatomic, copy, readonly) NSString *placementID;

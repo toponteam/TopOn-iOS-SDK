@@ -71,4 +71,31 @@ NS_ASSUME_NONNULL_BEGIN
 @optional
 - (void) videoEnded:(id<ATAppnextAd>)ad;
 @end
+
+@protocol ATAppnextRewardedServerSidePostbackParams;
+@protocol ATAppnextRewardedVideoAd<ATAppnextAd>
+@property (nonatomic, strong, readonly) id<ATAppnextRewardedServerSidePostbackParams> rewardedServerSidePostbackParams;
+#pragma mark - Setters/Getters
+- (void) setRewardedServerSidePostbackParams:(id<ATAppnextRewardedServerSidePostbackParams>) params;
+- (void) setRewardsTransactionId:(NSString *)rewardsTransactionId;
+- (NSString *) getRewardsTransactionId;
+- (void) setRewardsUserId:(NSString *)rewardsUserId;
+- (NSString *) getRewardsUserId;
+- (void) setRewardsRewardTypeCurrency:(NSString *)rewardsRewardTypeCurrency;
+- (NSString *) getRewardsRewardTypeCurrency;
+- (void) setRewardsAmountRewarded:(NSString *)rewardsAmountRewarded;
+- (NSString *) getRewardsAmountRewarded;
+- (void) setRewardsCustomParameter:(NSString *)rewardsCustomParameter;
+- (NSString *) getRewardsCustomParameter;
+@end
+
+
+@protocol ATAppnextRewardedServerSidePostbackParams<NSObject>
+@property (nonatomic, strong) NSString *rewardsTransactionId;
+@property (nonatomic, strong) NSString *rewardsUserId;
+@property (nonatomic, strong) NSString *rewardsRewardTypeCurrency;
+@property (nonatomic, strong) NSString *rewardsAmountRewarded;
+@property (nonatomic, strong) NSString *rewardsCustomParameter;
+@end
+
 NS_ASSUME_NONNULL_END

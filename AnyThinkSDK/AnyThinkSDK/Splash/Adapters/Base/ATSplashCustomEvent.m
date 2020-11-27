@@ -27,16 +27,16 @@ NSString *const kATSplashExtraRequestIDKey = @"request_id";
 
 -(NSDictionary*)delegateExtra {
     if (self.ad != nil) {
-        NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATSplashDelegateExtraNetworkIDKey:@(self.ad.unitGroup.networkFirmID),kATSplashDelegateExtraAdSourceIDKey:self.ad.unitGroup.unitID != nil ? self.ad.unitGroup.unitID : @"",kATSplashDelegateExtraIsHeaderBidding:@(self.ad.unitGroup.headerBidding),kATSplashDelegateExtraPriority:@(self.ad.priority),kATSplashDelegateExtraPrice:@(self.ad.price), kATADDelegateExtraSegmentIDKey:@(self.ad.placementModel.groupID), kATADDelegateExtraECPMLevelKey:@(self.ad.unitGroup.ecpmLevel)}];
+        NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATSplashDelegateExtraNetworkIDKey:@(self.ad.unitGroup.networkFirmID),kATSplashDelegateExtraAdSourceIDKey:self.ad.unitGroup.unitID != nil ? self.ad.unitGroup.unitID : @"",kATSplashDelegateExtraIsHeaderBidding:@(self.ad.unitGroup.headerBidding),kATSplashDelegateExtraPriority:@(self.ad.priority),kATSplashDelegateExtraPrice:@([self.ad.price doubleValue]), kATADDelegateExtraSegmentIDKey:@(self.ad.placementModel.groupID), kATADDelegateExtraECPMLevelKey:@(self.ad.unitGroup.ecpmLevel)}];
         NSString *channel = [ATAPI sharedInstance].channel;
         if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
         NSString *subchannel = [ATAPI sharedInstance].subchannel;
         if (subchannel != nil) { extra[kATADDelegateExtraSubChannelKey] = subchannel; }
         if ([self.ad.placementModel.associatedCustomData count] > 0) { extra[kATADDelegateExtraCustomRuleKey] = self.ad.placementModel.associatedCustomData; }
-        NSString *extraID = [NSString stringWithFormat:@"%@%@%@",self.ad.requestID,self.ad.unitGroup.unitID,self.sdkTime];
-        extra[kATADDelegateExtraIDKey] = [extraID md5];
+        NSString *extraID = [NSString stringWithFormat:@"%@_%@_%@",self.ad.requestID,self.ad.unitGroup.unitID,self.sdkTime];
+        extra[kATADDelegateExtraIDKey] = extraID;
         extra[kATADDelegateExtraAdunitIDKey] = self.ad.placementModel.placementID;
-        extra[kATADDelegateExtraPublisherRevenueKey] = @(self.ad.price / 1000.0f);
+        extra[kATADDelegateExtraPublisherRevenueKey] = @([self.ad.price doubleValue] / 1000.f);
         extra[kATADDelegateExtraCurrencyKey] = self.ad.placementModel.callback[@"currency"];
         extra[kATADDelegateExtraCountryKey] = self.ad.placementModel.callback[@"cc"];
         extra[kATADDelegateExtraFormatKey] = @"Splash";

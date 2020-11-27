@@ -24,7 +24,7 @@
 
 +(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall {
     ATMyOfferOfferModel *offerModel = [ATMyOfferUtilities getMyOfferModelWithOfferId:placementModel.offers offerID:unitGroup.content[@"my_oid"]];
-    if (offerModel != nil && [[ATMyOfferOfferManager sharedManager] resourceReadyForOfferModel:offerModel]) {
+    if (offerModel != nil && ![[ATMyOfferOfferManager sharedManager] checkExcludedWithOfferModel:offerModel] && [[ATMyOfferOfferManager sharedManager] resourceReadyForOfferModel:offerModel]) {
         
         NSDictionary *loadExtraInfo = [[ATAdManager sharedManager] lastExtraInfoForPlacementID:placementModel.placementID];
         if (loadExtraInfo != nil) {
@@ -55,12 +55,6 @@
 
 -(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
-    if (self != nil) {
-        if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameMyOffer]) {
-            [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameMyOffer];
-            [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameMyOffer];
-        }
-    }
     return self;
 }
 
@@ -70,7 +64,7 @@
     _customEvent = [[ATMyOfferBannerCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
     _customEvent.requestCompletionBlock = completion;
     __weak typeof(self) weakSelf = self;
-    [[ATMyOfferOfferManager sharedManager] loadOfferWithOfferModel:offerModel setting:placementModel.myOfferSetting extra:nil completion:^(NSError *error) {
+    [[ATMyOfferOfferManager sharedManager] loadOfferWithOfferModel:offerModel setting:placementModel.myOfferSetting extra:localInfo completion:^(NSError *error) {
         if (error == nil) {
             if (offerModel != nil && offerModel.offerID != nil && weakSelf.customEvent != nil) {
                 ATMyOfferBannerView* bannerView = [[ATMyOfferBannerSharedDelegate sharedDelegate] retrieveBannerViewWithOfferModel:offerModel setting:placementModel.myOfferSetting extra:nil delegate:weakSelf.customEvent];

@@ -31,7 +31,7 @@
         _customEvent.rewardedVideo = self;
         _appID = assets[kATAdAssetsAppIDKey];
         _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? ([ATAdCustomEvent calculateAdPriority:self] / _placementModel.maxConcurrentRequestCount) + 1 : 1;
-        _price = unitGroup.headerBidding ? [assets[kAdAssetsPriceKey] doubleValue] : unitGroup.price;
+        _price = unitGroup.headerBidding ? assets[kAdAssetsPriceKey] : unitGroup.price;
         _finalWaterfall = finalWaterfall;
         if ([assets[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { _autoReqType = 5; }
     }

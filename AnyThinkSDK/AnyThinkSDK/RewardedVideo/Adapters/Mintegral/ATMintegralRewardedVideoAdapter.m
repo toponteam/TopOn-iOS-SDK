@@ -22,8 +22,9 @@
 @end
 
 static NSString *const kUnitIDKey = @"unitid";
+static NSString *const kATMintegralPluginNumber = @"Y+H6DFttYrPQYcIeicKwJQKQYrN=";//topon的渠道号
 @implementation ATMintegralRewardedVideoAdapter
-+(NSDictionary*)headerBiddingParametersWithUnitGroupModel:(ATUnitGroupModel*)unitGroupModel {
++(NSDictionary*)headerBiddingParametersWithUnitGroupModel:(ATUnitGroupModel*)unitGroupModel extra:(NSDictionary *)extra {
     return @{@"display_manager_ver":[NSClassFromString(@"MTGSDK") sdkVersion],
              @"unit_id":unitGroupModel.content[@"unitid"] != nil ? unitGroupModel.content[@"unitid"] : @"",
              @"app_id":unitGroupModel.content[@"appid"] != nil ? unitGroupModel.content[@"appid"] : @"",
@@ -55,6 +56,15 @@ static NSString *const kUnitIDKey = @"unitid";
                     mtgSDK.consentStatus = !limit;
                 }
             }
+            Class class = NSClassFromString(@"MTGSDK");
+            SEL selector = NSSelectorFromString(@"setChannelFlag:");
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                if ([class respondsToSelector:selector]) {
+                    [class performSelector:selector withObject:kATMintegralPluginNumber];
+                }
+            #pragma clang diagnostic pop
+            
             [[NSClassFromString(@"MTGSDK") sharedInstance] setAppID:info[@"appid"] ApiKey:info[@"appkey"]];
         };
         if ([NSThread mainThread]) blk();
@@ -126,6 +136,15 @@ static NSString *const kUnitIDKey = @"unitid";
                             mtgSDK.consentStatus = !limit;
                         }
                     }
+                    Class class = NSClassFromString(@"MTGSDK");
+                    SEL selector = NSSelectorFromString(@"setChannelFlag:");
+                    #pragma clang diagnostic push
+                    #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                        if ([class respondsToSelector:selector]) {
+                            [class performSelector:selector withObject:kATMintegralPluginNumber];
+                        }
+                    #pragma clang diagnostic pop
+                    
                     [[NSClassFromString(@"MTGSDK") sharedInstance] setAppID:serverInfo[@"appid"] ApiKey:serverInfo[@"appkey"]];
                 };
                 if ([NSThread mainThread]) blk();
@@ -156,7 +175,7 @@ static NSString *const kUnitIDKey = @"unitid";
             id<ATMTGBidRewardAdManager> mgr = [NSClassFromString(@"MTGBidRewardAdManager") sharedInstance];
             _customEvent.rewardedVideoMgr = mgr;
             _customEvent.price = bidInfo.price;
-            [mgr loadVideoWithBidToken:bidInfo.token placementId:serverInfo[@"placement_id"] unitId:serverInfo[@"unitid"] delegate:_customEvent];
+            [mgr loadVideoWithBidToken:bidInfo.bidId placementId:serverInfo[@"placement_id"] unitId:serverInfo[@"unitid"] delegate:_customEvent];
             [[ATBidInfoManager sharedManager] invalidateBidInfoForPlacementID:placementModel.placementID unitGroupModel:unitGroupModel requestID:requestID];
         } else {
             if (NSClassFromString(@"MTGAdCustomConfig") != nil && [NSClassFromString(@"MTGAdCustomConfig") respondsToSelector:@selector(sharedInstance)] && [[NSClassFromString(@"MTGAdCustomConfig") sharedInstance] respondsToSelector:@selector(setCustomInfo:type:unitId:)]) {
@@ -170,4 +189,9 @@ static NSString *const kUnitIDKey = @"unitid";
         completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadRewardedVideoADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"Mintegral"]}]);
     }
 }
+
++(NSString*) adsourceRemoteKeyWithContent:(NSDictionary*)content unitGroupModel:(ATUnitGroupModel *)unitGroupModel {
+    return content[@"unitid"];
+}
+
 @end

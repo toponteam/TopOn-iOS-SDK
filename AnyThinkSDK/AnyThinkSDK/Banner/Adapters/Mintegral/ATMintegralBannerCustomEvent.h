@@ -12,7 +12,7 @@
 
 
 @interface ATMintegralBannerCustomEvent : ATBannerCustomEvent<ATMTGBannerAdViewDelegate>
-@property(nonatomic) double price;
+@property(nonatomic) NSString *price;
 @end
 
 

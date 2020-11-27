@@ -68,6 +68,9 @@ static NSString *const kZoneIDKey = @"zone_id";
         _customEvent.requestNumber = [serverInfo[@"request_num"] longValue];
         _customEvent.requestCompletionBlock = completion;
         _incentivizedInterstitialAd = [[NSClassFromString(@"ALIncentivizedInterstitialAd") alloc] initWithZoneIdentifier:serverInfo[kZoneIDKey] sdk:[NSClassFromString(@"ALSdk") sharedWithKey:serverInfo[@"sdkkey"]]];
+        if (localInfo[kATAdLoadingExtraUserIDKey] != nil) {
+            ((id<ATALSdk>)[NSClassFromString(@"ALSdk") sharedWithKey:serverInfo[@"sdkkey"]]).userIdentifier = localInfo[kATAdLoadingExtraUserIDKey];
+        }
         _customEvent.incentivizedInterstitialAd = _incentivizedInterstitialAd;
         for (NSInteger i = 0; i < [serverInfo[@"request_num"] integerValue]; i++) { [_incentivizedInterstitialAd preloadAndNotify:_customEvent]; }
     } else {

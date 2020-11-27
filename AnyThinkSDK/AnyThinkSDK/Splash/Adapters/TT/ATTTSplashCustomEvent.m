@@ -36,12 +36,10 @@
         [_backgroundImageView removeFromSuperview];
         [self trackSplashAdLoadFailed:error];
     } else {
-//        if (self.ad == nil) { if ([self.delegate respondsToSelector:@selector(splashDidShowForPlacementID:extra:)]) { [self.delegate splashDidShowForPlacementID:self.unitID extra:[self delegateExtra]]; } }
         [_window addSubview:_containerView];
         [_window addSubview:_ttSplashView];
         [self trackSplashAdLoaded:splashAd];
         [self trackSplashAdShow];
-//        [self handleAssets:@{kAdAssetsCustomObjectKey:splashAd, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
     }
 }
 
@@ -82,7 +80,6 @@
         [_window addSubview:_containerView];
         [_window addSubview:_ttSplashView];
         [self trackSplashAdLoaded:splashAdView];
-//        [self handleAssets:@{kAdAssetsCustomObjectKey:splashAdView, kAdAssetsCustomEventKey:self, kAdAssetsUnitIDKey:[self.unitID length] > 0 ? self.unitID : @"" }];
     }
 }
 

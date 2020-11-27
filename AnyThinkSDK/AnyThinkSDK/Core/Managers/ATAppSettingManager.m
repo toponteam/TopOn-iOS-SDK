@@ -36,10 +36,16 @@ static NSString *const kUserDefaultsBKUPIDKey = @"com.exc.C43EB5CC.bk";
 @property(nonatomic, readonly) ATThreadSafeAccessor *settingAccessor;
 @property(nonatomic) NSDictionary *currentSetting_impl;
 @property(nonatomic) ATTrackingSetting *trackingSetting_impl;
+@property(nonatomic) ATADXSetting *adxSetting_impl;
 @property(nonatomic, readonly) NSDate *currentSettingExpireDate;
 @property(atomic) BOOL loading;
 @property(nonatomic, readonly) NSArray<NSString*>* GDPRAreas;
 @property(nonatomic, readonly) NSDictionary<NSString*, NSString*>* notifications;
+
+@property(nonatomic, copy) NSString *kSYSID;
+@property(nonatomic, copy) NSString *kATID;
+@property(nonatomic, copy) NSString *kBKUPID;
+
 @end
 
 static NSString *const kBase64Table1 = @"dMWnhbeyKr0J+IvLNOx3BFkEuml92/5fjSqGT7R8pZVciPHAstC4UXa6QDw1gozY";
@@ -74,12 +80,14 @@ static NSString *const kSettingArchiveExpireDateKey = @"expire_date";
             }
             NSMutableDictionary *currentSetting_impl = [NSMutableDictionary dictionaryWithDictionary:archivedSettingInfo[kSettingArchiveSettingKey]];
             if ([currentSetting_impl count] == 0) { currentSetting_impl[kATAppSettingDefaultFlagKey] = @YES; }
-            if (![currentSetting_impl containsObjectForKey:kATAppSettingDataProtectedArea]) currentSetting_impl[kATAppSettingDataProtectedArea] = _GDPRAreas;
-            _currentSetting_impl = currentSetting_impl;
+            if (![currentSetting_impl containsObjectForKey:kATAppSettingDataProtectedArea]) currentSetting_impl[kATAppSettingDataProtectedArea] = self->_GDPRAreas;
+            self->_currentSetting_impl = currentSetting_impl;
             _trackingSetting_impl = [_currentSetting_impl[@"logger"] isKindOfClass:[NSDictionary class]] ? [[ATTrackingSetting alloc] initWithDictionary:_currentSetting_impl[@"logger"]] : [ATTrackingSetting defaultSetting];
             
             if ([_currentSetting_impl[@"n_l"] isKindOfClass:[NSString class]]) { _notifications = [NSJSONSerialization JSONObjectWithData:[_currentSetting_impl[@"n_l"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
             [self preinitFilterAdapter:_currentSetting_impl[@"preinit"]];
+            
+             _adxSetting_impl = [_currentSetting_impl[@"adx"] isKindOfClass:[NSDictionary class]] ? [[ATADXSetting alloc] initWithDictionary:_currentSetting_impl[@"adx"]] : [ATADXSetting defaultSetting];
             
             _currentSettingExpireDate = archivedSettingInfo[kSettingArchiveExpireDateKey];
             if ([_currentSettingExpireDate isKindOfClass:[NSDate class]]) {
@@ -113,6 +121,7 @@ static NSString *const kSettingArchiveExpireDateKey = @"expire_date";
         _currentSettingExpireDate = [NSDate dateWithTimeIntervalSinceNow:[_currentSetting_impl[kATAppSettingExpireIntervalKey] floatValue] / 1000.0f];
         if ([_currentSetting_impl[@"n_l"] isKindOfClass:[NSString class]]) { _notifications = [NSJSONSerialization JSONObjectWithData:[_currentSetting_impl[@"n_l"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
         [self preinitFilterAdapter:_currentSetting_impl[@"preinit"]];
+         if ([_currentSetting_impl[@"adx"] isKindOfClass:[NSDictionary class]]) { _adxSetting_impl = [[ATADXSetting alloc] initWithDictionary:_currentSetting_impl[@"adx"]]; }
         NSDictionary *settingToSave = @{kSettingArchiveSettingKey:_currentSetting_impl, kSettingArchiveExpireDateKey:_currentSettingExpireDate};
         [settingToSave writeToFile:[ATAppSettingManager appSettingFilePath] atomically:YES];
         if ([currentSetting count] > 0) { [self scheduleSettingUpdate:_currentSetting_impl]; }
@@ -126,6 +135,10 @@ static NSString *const kSettingArchiveExpireDateKey = @"expire_date";
 
 -(ATTrackingSetting*) trackingSetting {
     return [_settingAccessor readWithBlock:^id{ return _trackingSetting_impl; }];
+}
+
+-(ATADXSetting*) adxSetting {
+    return [_settingAccessor readWithBlock:^id{ return _adxSetting_impl; }];
 }
 
 +(BOOL) validateATID:(NSString*)ATID {
@@ -339,87 +352,77 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
 }
 
 -(NSString*) ATID {
-    __block NSString *UPID;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
+    if (_kATID == nil) {
         if (_currentSetting_impl[@"upid"]) {
-            UPID = _currentSetting_impl[@"upid"];
+            _kATID = _currentSetting_impl[@"upid"];
         } else {
             if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsATIDKey]) {
-                UPID = [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsATIDKey];
+                _kATID = [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsATIDKey];
             } else {
                 if ([Utilities advertisingIdentifier] && [[Utilities advertisingIdentifier] length] > 0 && [Utilities validateDeviceId:[Utilities advertisingIdentifier]]) {
-                    UPID = [Utilities advertisingIdentifier].md5;
-//                        NSLog(@"generate upid by idfa string, upid:%@", UPID);
+                    _kATID = [Utilities advertisingIdentifier].md5;
                 } else {
                     NSString *tmpId = [Utilities validateDeviceId:[Utilities idfv]]?[Utilities idfv]:[NSString stringWithFormat:@"%@&%@&%d", [Utilities userAgent], [Utilities normalizedTimeStamp], arc4random_uniform(10000)];
-                    UPID = tmpId.md5;
-//                        NSLog(@"generate upid by idfv string, upid:%@", UPID);
+                    _kATID = tmpId.md5;
                 }
-                [[NSUserDefaults standardUserDefaults] setObject:UPID forKey:kUserDefaultsATIDKey];
+                [[NSUserDefaults standardUserDefaults] setObject:_kATID forKey:kUserDefaultsATIDKey];
                 [[NSUserDefaults standardUserDefaults] synchronize];
-                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{ [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyPSIDSessionIDGeneration placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoGeneratedIDTypeKey:@3}]; });
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{ [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyPSIDSessionIDGeneration placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoGeneratedIDTypeKey:@3}];
+                });
             }
         }
-    });
-    return UPID != nil ? UPID : [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsATIDKey];
+    }
+    return _kATID;
 }
 
 -(NSString*) SYSID {
-    __block NSString *SYSID;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        //get sysid from app settings
+    if (_kSYSID == nil) {
         if (_currentSetting_impl[@"sy_id"]) {
-            SYSID = _currentSetting_impl[@"sy_id"];
+            _kSYSID = _currentSetting_impl[@"sy_id"];
             if (![[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey] || [ATKeychain searchDateWithService:kUserDefaultsSYSIDKey] == nil) {
                 // save to keychain again
-                [ATKeychain saveData:SYSID withService:kUserDefaultsSYSIDKey];
+                [ATKeychain saveData:_kSYSID withService:kUserDefaultsSYSIDKey];
                 // save to user default again
-                [[NSUserDefaults standardUserDefaults] setObject:SYSID forKey:kUserDefaultsSYSIDKey];
+                [[NSUserDefaults standardUserDefaults] setObject:_kSYSID forKey:kUserDefaultsSYSIDKey];
                 [[NSUserDefaults standardUserDefaults] synchronize];
             }
         }else{
             // first check system_id on user default storage.
             if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey]) {
-                SYSID = [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey];
+                _kSYSID = [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey];
             }else {
                 // then check system_id on keychain storage.
-                SYSID = [ATKeychain searchDateWithService:kUserDefaultsSYSIDKey];
-                if (SYSID != nil) {
+                _kSYSID = [ATKeychain searchDateWithService:kUserDefaultsSYSIDKey];
+                if (_kSYSID != nil) {
                     // save to user default again
-                    [[NSUserDefaults standardUserDefaults] setObject:SYSID forKey:kUserDefaultsSYSIDKey];
+                    [[NSUserDefaults standardUserDefaults] setObject:_kSYSID forKey:kUserDefaultsSYSIDKey];
                     [[NSUserDefaults standardUserDefaults] synchronize];
                 }
             }
         }
-    });
-    return SYSID != nil ? SYSID : ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey]!=nil ? [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsSYSIDKey]:@"");
+    }
+    return  _kSYSID;
 }
 
 -(NSString*) BKUPID {
-    __block NSString *BKUPID;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        // first check system_id on user default storage.
+    if (_kBKUPID == nil) {
         if ([[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsBKUPIDKey]) {
-            BKUPID = [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsBKUPIDKey];
+            _kBKUPID = [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsBKUPIDKey];
         }else {
             // BKUPID nil
             // then check system_id on keychain storage.
-            BKUPID = [ATKeychain searchDateWithService:kUserDefaultsBKUPIDKey];
-            if (BKUPID == nil) {
-                BKUPID = [self ATID];
+            _kBKUPID = [ATKeychain searchDateWithService:kUserDefaultsBKUPIDKey];
+            if (_kBKUPID == nil) {
+                _kBKUPID = [self ATID];
                 // save to keychain again
-                [ATKeychain saveData:BKUPID withService:kUserDefaultsBKUPIDKey];
+                [ATKeychain saveData:_kBKUPID withService:kUserDefaultsBKUPIDKey];
                 // save to user default again
-                [[NSUserDefaults standardUserDefaults] setObject:BKUPID forKey:kUserDefaultsBKUPIDKey];
+                [[NSUserDefaults standardUserDefaults] setObject:_kBKUPID forKey:kUserDefaultsBKUPIDKey];
                 [[NSUserDefaults standardUserDefaults] synchronize];
             }
-           
         }
-    });
-    return BKUPID != nil ? BKUPID : [self ATID];
+    }
+    return _kBKUPID;
 }
 
 -(NSString*)ABTestID {
@@ -507,9 +510,9 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
                                        @"platform":[Utilities platform],
                                        @"package_name":[Utilities appBundleID],
                                        @"app_vn":[Utilities appBundleVersion],
-                                       @"app_vc":[Utilities appBundleVersion],
+                                       @"app_vc":[Utilities appBundleVersionCode],
                                        @"sdk_ver":[ATAPI sharedInstance].version,
-                                       @"nw_ver":[Utilities networkVersions],
+                                       @"nw_ver":@{},//[Utilities networkVersions]
                                        @"orient":[Utilities screenOrientation],
                                        @"system":@(1),
                                        @"gdpr_cs":[NSString stringWithFormat:@"%ld", [[ATAppSettingManager sharedManager] commonTkDataConsentSet]]
@@ -585,6 +588,39 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
         if ([dictionary[key] isKindOfClass:[NSString class]] && [dictionary[key]
             dataUsingEncoding:NSUTF8StringEncoding] != nil) { _tcTKSkipFormats = [NSJSONSerialization JSONObjectWithData:[dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
 //        _tcTKSkipFormats = @{@"1":@[@"1", @"2"]};
+    }
+    return self;
+}
+@end
+
+
+@implementation ATADXSetting
++(instancetype) defaultSetting {
+    return [[self alloc] initWithDictionary:@{@"req_addr":@"https://adx.anythinktech.com/request", @"bid_sw":@1,
+                                              @"bid_addr":@"https://adx.anythinktech.com/bid", @"req_sw":@1,
+                                              @"tk_addr":@"https://adxtk.anythinktech.com/v1", @"tk_sw":@1,
+                                              kATAppSettingDefaultFlagKey:@YES
+                                              }];
+}
+
+-(instancetype) initWithDictionary:(NSDictionary *)dictionary {
+    self = [super initWithDictionary:dictionary];
+    if (self != nil) {
+        _reqHttpAddress = dictionary[@"req_addr"];
+        _reqTCPAdress = dictionary[@"req_tcp_addr"];
+        _reqTCPPort = [dictionary[@"req_tcp_port"] intValue];
+        _reqNetType = [dictionary[@"req_sw"] intValue];
+        
+        _bidHttpAddress = dictionary[@"bid_addr"];
+        _bidTCPAdress = dictionary[@"bid_tcp_addr"];
+        _bidTCPPort = [dictionary[@"bid_tcp_port"] intValue];
+        _bidNetType = [dictionary[@"bid_sw"] intValue];
+        
+        _trackerHttpAdress = dictionary[@"tk_addr"];
+        _trackerTCPAdress = dictionary[@"tk_tcp_addr"];
+        _trackerTCPPort = [dictionary[@"tk_tcp_port"] intValue];
+        _trackerNetType = [dictionary[@"tk_sw"] intValue];
+        
     }
     return self;
 }

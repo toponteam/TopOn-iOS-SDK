@@ -12,57 +12,11 @@
 #import "Utilities.h"
 #import "ATBannerManager.h"
 #import "ATAppSettingManager.h"
+#import "ATAdManager+Banner.h"
 
-NSString *const kATUnityAdsBannerNotificationLoaded = @"com.anythink.UnityAdsBannerNotificationLoaded";
-NSString *const kATUnityAdsBannerNotificationShow = @"com.anythink.UnityAdsBannerNotificationShow";
-NSString *const kATUnityAdsBannerNotificationClick = @"com.anythink.UnityAdsBannerNotificationClick";
-NSString *const kATUnityAdsBannerNotificationUserInfoPlacementIDKey = @"placement_id";
-NSString *const kATUnityAdsBannerNotificationUserInfoViewKey = @"view";
-@interface ATUnityAdsBannerDelegate:NSObject<UnityAdsBannerDelegate>
-@end
-@implementation ATUnityAdsBannerDelegate
-+(instancetype) sharedDelegate {
-    static ATUnityAdsBannerDelegate *sharedManager = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedManager = [[ATUnityAdsBannerDelegate alloc] init];
-    });
-    return sharedManager;
-}
-
--(void)unityAdsBannerDidLoad:(NSString *)placementId view:(UIView *)view {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsBanner::unityAdsBannerDidLoad:%@ view:", placementId] type:ATLogTypeExternal];
-    NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
-    if (placementId != nil) { userInfo[kATUnityAdsBannerNotificationUserInfoPlacementIDKey] = placementId; }
-    if (view != nil) { userInfo[kATUnityAdsBannerNotificationUserInfoViewKey] = view; }
-    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsBannerNotificationLoaded object:nil userInfo:userInfo];
-}
-
--(void)unityAdsBannerDidUnload:(NSString *)placementId {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsBanner::unityAdsBannerDidUnload:%@", placementId] type:ATLogTypeExternal];
-}
-
--(void)unityAdsBannerDidShow:(NSString *)placementId {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsBanner:::%@", placementId] type:ATLogTypeExternal];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsBannerNotificationShow object:nil userInfo:@{kATUnityAdsBannerNotificationUserInfoPlacementIDKey: placementId != nil ? placementId : @""}];
-}
-
--(void)unityAdsBannerDidHide:(NSString *)placementId {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsBanner::unityAdsBannerDidHide:%@", placementId] type:ATLogTypeExternal];
-    [NSClassFromString(@"UnityAdsBanner") destroy];
-}
-
--(void)unityAdsBannerDidClick:(NSString *)placementId {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsBanner::unityAdsBannerDidClick:%@", placementId] type:ATLogTypeExternal];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kATUnityAdsBannerNotificationClick object:nil userInfo:@{kATUnityAdsBannerNotificationUserInfoPlacementIDKey: placementId != nil ? placementId : @""}];
-}
-
--(void)unityAdsBannerDidError:(NSString *)message {
-    [ATLogger logMessage:[NSString stringWithFormat:@"UnityAdsBanner::unityAdsBannerDidError:%@", message] type:ATLogTypeExternal];
-}
-@end
-@interface ATUnityAdsBannerAdapter()<UnityAdsDelegate>
+@interface ATUnityAdsBannerAdapter()
 @property(nonatomic, readonly) ATUnityAdsBannerCustomEvent *customEvent;
+@property (strong, nonatomic) id<UADSBannerView> bannerView;
 @end
 @implementation ATUnityAdsBannerAdapter
 -(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
@@ -87,27 +41,30 @@ NSString *const kATUnityAdsBannerNotificationUserInfoViewKey = @"view";
     return self;
 }
 
--(void)placementContentReady:(NSString *)placementId placementContent:(id)decision {
-    [NSClassFromString(@"UnityAdsBanner") loadBanner:_customEvent.unitID];
-}
-
--(void)placementContentStateDidChange:(NSString *)placementId placementContent:(id)placementContent previousState:(NSInteger)previousState newState:(NSInteger)newState {
-    
-}
-
 -(void) loadADWithInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo completion:(void (^)(NSArray<NSDictionary *> *, NSError *))completion {
-    if (NSClassFromString(@"UnityAdsBanner") != nil && NSClassFromString(@"UnityMonetization") != nil && NSClassFromString(@"UnityAds") != nil) {
+    if (NSClassFromString(@"UADSBannerView") != nil && NSClassFromString(@"UnityAds") != nil) {
         _customEvent = [[ATUnityAdsBannerCustomEvent alloc] initWithInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
-        [NSClassFromString(@"UnityAdsBanner") setBannerPosition:6];
-        [NSClassFromString(@"UnityAdsBanner") setDelegate:[ATUnityAdsBannerDelegate sharedDelegate]];
-        if ([NSClassFromString(@"UnityAds") isInitialized]) {
-            [NSClassFromString(@"UnityAdsBanner") loadBanner:_customEvent.unitID];
-        } else {
-            [NSClassFromString(@"UnityMonetization") initialize:serverInfo[@"game_id"] delegate:self];
+        
+        if (![NSClassFromString(@"UnityAds") isInitialized]) {
+            [NSClassFromString(@"UnityAds") initialize:serverInfo[@"game_id"]];
         }
+        self.bannerView = [[NSClassFromString(@"UADSBannerView") alloc] initWithPlacementId:serverInfo[@"placement_id"] size:[self sizeToSizeType:serverInfo[@"size"]]];
+        self.bannerView.delegate = _customEvent;
+        [self.bannerView load];
     } else {
         completion(nil, [NSError errorWithDomain:ATADLoadingErrorDomain code:ATADLoadingErrorCodeThirdPartySDKNotImportedProperly userInfo:@{NSLocalizedDescriptionKey:kATSDKFailedToLoadBannerADMsg, NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:kSDKImportIssueErrorReason, @"UnityAds"]}]);
     }
 }
+
+- (CGSize) sizeToSizeType:(NSString *)sizeStr {
+    if ([sizeStr isEqualToString:@"728x90"]) {
+        return CGSizeMake(728.0f, 90.0f);
+    } else if ([sizeStr isEqualToString:@"468x60"]) {
+        return CGSizeMake(468.0f, 60.0f);
+    } else {
+        return CGSizeMake(320.0f, 50.0f);
+    }
+}
+
 @end

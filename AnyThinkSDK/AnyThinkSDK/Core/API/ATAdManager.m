@@ -33,7 +33,6 @@ NSString *const kAdLoadingTrackingExtraFlagKey = @"hight_priority_shown_flag";
 NSString *const kAdLoadingExtraDefaultLoadKey = @"default_ad_source_load";
 NSString *const kAdLoadingExtraFilledByReadyFlagKey = @"filled_by_ready";
 NSString *const kAdLoadingExtraAutoLoadOnCloseFlagKey = @"auto_load_on_close";
-NSString *const kATAdLoadingExtraExcludedBundleIDListKey = @"excluded_offer_bundle_id_list";
 NSString *const kATAdLoadingExtraGDTEnableDefaultAudioSessionKey = @"GDT_Enable_Default_AudioSession";
 
 NSString *const kAdAssetsCustomEventKey = @"custom_event";

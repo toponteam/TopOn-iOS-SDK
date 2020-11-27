@@ -16,7 +16,7 @@
 @implementation ATMintegralBannerCustomEvent
 - (void)adViewLoadSuccess:(id<ATMTGBannerAdView>)adView {
     [ATLogger logMessage:@"MTGBanner::bannerAdViewDidLoad:" type:ATLogTypeExternal];
-    [self trackBannerAdLoaded:adView adExtra:@{kAdAssetsPriceKey:@(_price)}];
+    [self trackBannerAdLoaded:adView adExtra:@{kAdAssetsPriceKey: _price}];
 }
 
 - (void)adViewLoadFailedWithError:(NSError *)error adView:(id<ATMTGBannerAdView>)adView {

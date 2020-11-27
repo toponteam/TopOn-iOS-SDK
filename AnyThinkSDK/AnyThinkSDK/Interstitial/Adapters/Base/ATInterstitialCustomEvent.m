@@ -28,17 +28,17 @@
 }
 
 -(NSDictionary*)delegateExtra {
-    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@(self.interstitial.price), kATADDelegateExtraECPMLevelKey:@(self.interstitial.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.interstitial.placementModel.groupID)}];
+    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATInterstitialDelegateExtraNetworkIDKey:@(self.interstitial.unitGroup.networkFirmID), kATInterstitialDelegateExtraAdSourceIDKey:self.interstitial.unitGroup.unitID != nil ? self.interstitial.unitGroup.unitID : @"",kATInterstitialDelegateExtraIsHeaderBidding:@(self.interstitial.unitGroup.headerBidding),kATInterstitialDelegateExtraPriority:@(self.priorityIndex),kATInterstitialDelegateExtraPrice:@([self.interstitial.price doubleValue]), kATADDelegateExtraECPMLevelKey:@(self.interstitial.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.interstitial.placementModel.groupID)}];
     if (self.interstitial.scene != nil) { extra[kATADDelegateExtraScenarioIDKey] = self.interstitial.scene; }
     NSString *channel = [ATAPI sharedInstance].channel;
     if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
     NSString *subchannel = [ATAPI sharedInstance].subchannel;
     if (subchannel != nil) { extra[kATADDelegateExtraSubChannelKey] = subchannel; }
     if ([self.interstitial.placementModel.associatedCustomData count] > 0) { extra[kATADDelegateExtraCustomRuleKey] = self.interstitial.placementModel.associatedCustomData; }
-    NSString *extraID = [NSString stringWithFormat:@"%@%@%@",self.interstitial.requestID,self.interstitial.unitGroup.unitID,self.sdkTime];
-    extra[kATADDelegateExtraIDKey] = [extraID md5];
+    NSString *extraID = [NSString stringWithFormat:@"%@_%@_%@",self.interstitial.requestID,self.interstitial.unitGroup.unitID,self.sdkTime];
+    extra[kATADDelegateExtraIDKey] = extraID;
     extra[kATADDelegateExtraAdunitIDKey] = self.interstitial.placementModel.placementID;
-    extra[kATADDelegateExtraPublisherRevenueKey] = @(self.interstitial.price / 1000.0f);
+    extra[kATADDelegateExtraPublisherRevenueKey] = @([self.interstitial.price doubleValue] / 1000.f);
     extra[kATADDelegateExtraCurrencyKey] = self.interstitial.placementModel.callback[@"currency"];
     extra[kATADDelegateExtraCountryKey] = self.interstitial.placementModel.callback[@"cc"];
     extra[kATADDelegateExtraFormatKey] = @"Interstitial";
@@ -141,7 +141,7 @@
         [ATLogger logMessage:[NSString stringWithFormat:@"\nImpression with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:self.interstitial event:ATGeneralAdAgentEventTypeImpression extra:self.localInfo error:nil]] type:ATLogTypeTemporary];
         [[ATCapsManager sharedManager] increaseCapWithPlacementID:self.interstitial.placementModel.placementID unitGroupID:self.interstitial.unitGroup.unitGroupID requestID:self.interstitial.requestID];
         [[ATCapsManager sharedManager] setLastShowTimeWithPlacementID:self.interstitial.placementModel.placementID unitGroupID:self.interstitial.unitGroup.unitGroupID];
-        self.sdkTime = [Utilities normalizedTimeStamp];
+//        self.sdkTime = [Utilities normalizedTimeStamp];
         NSDictionary *loadExtra = [self.localInfo isKindOfClass:[NSDictionary class]] ? self.localInfo : nil;
         NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.interstitial requestID:self.interstitial.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.interstitial.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.interstitial.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @([loadExtra[kAdLoadingExtraFilledByReadyFlagKey] boolValue]), kATTrackerExtraAdFilledByReadyFlagKey, @([loadExtra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraAutoloadOnCloseFlagKey, @(self.interstitial.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey,self.sdkTime,kATTrackerExtraAdShowSDKTimeKey, nil];
         
@@ -154,7 +154,7 @@
 }
 
 - (void)trackInterstitialAdShowFailed:(NSError *)error {
-    
+    if ([self.delegate respondsToSelector:@selector(interstitialFailedToShowForPlacementID:error:extra:)]) { [self.delegate interstitialFailedToShowForPlacementID:self.interstitial.placementModel.placementID error:error extra:[self delegateExtra]]; }
 }
 
 -(void) trackInterstitialAdClick {

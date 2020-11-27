@@ -13,7 +13,7 @@ import glob
 # 4、打成zip包
 
 #configuration for iOS build setting
-AnyThink_VERSION = "5.6.8"
+AnyThink_VERSION = "5.7.3"
 CONFIGURATION = "Release"
 EXPORT_OPTIONS_PLIST = "exportOptions.plist"
 # 保存发布包的路径
@@ -28,7 +28,7 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkInterstitial'
                        , 'AnyThinkSplash'
                        # My Offer
-                       , 'AnyThinkMyOffer'
+                       #, 'AnyThinkMyOffer'
                        # Native Adapters
                        , 'AnyThinkGDTNativeAdapter'
                        , 'AnyThinkMopubNativeAdapter'
@@ -91,6 +91,7 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkVungleBannerAdapter'
                        , 'AnyThinkAdColonyBannerAdapter'
                        , 'AnyThinkChartboostBannerAdapter'
+                       , 'AnyThinkUnityAdsBannerAdapter'
                        # Interstitial Adapters
                        , 'AnyThinkAdColonyInterstitialAdapter'
                        , 'AnyThinkKSInterstitialAdapter'
@@ -124,8 +125,10 @@ EXPORT_TARGETS_LIST = ['AnyThinkSDK'
                        , 'AnyThinkTTSplashAdapter'
                        , 'AnyThinkSigmobSplashAdapter'
                        , 'AnyThinkMintegralSplashAdapter'
+                       , 'AnyThinkAdmobSplashAdapter'
                        #TraminiSDK
-                       ,'TraminiSDK']
+#                       ,'TraminiSDK'
+                       ]
 #EXPORT_TARGETS_LIST = ['AnyThinkSDK']
 
 # CPU支持指令集架构
@@ -363,7 +366,7 @@ def outputSdkWithFrameWork():
         "AnyThinkInterstitial.framework", "AnyThinkNative.framework", 
         "AnyThinkRewardedVideo.framework",
         "AnyThinkSDK.framework", "AnyThinkSplash.framework", 
-        "TraminiSDK.framework", "AnyThinkSDK.bundle", "*MyOffer*.framework"]
+        "TraminiSDK.framework", "AnyThinkSDK.bundle"]
   for x in corelist:
     for y in glob.glob(x):
       shutil.copytree(os.getcwd() +'/'+ y,copytarget + 'release_shell/SDK/Core/' + y)

@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "82A2D063-4DE6-4C84-B90E-E39F216E9BEF"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "86032A96-334E-4731-B684-7D56AAF07151"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Interstitial/Adapters/Chartboost/ATHeliumInterstitialCustomEvent.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "37"
+            endingLineNumber = "37">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "A347DEF0-4F0F-4222-AE90-0D94009D54D7"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Core/Managers/ATHeaderBiddingManager.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "108"
+            endingLineNumber = "108"
+            landmarkName = "-headerBiddingResponseWithRequestID:headerBiddingUnitGroups:s2sHBUnitGroups:offerCachedHBUnitGroups:unitGroupsWithHistoryBidInfo:inactiveUGInfo:inactiveHBUGInfo:placementModel:extra:bidInfos:bidErrors:bidTime:bidStartDate:ugMap:delegate:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5A1F569D-D7EC-486F-91CF-4E09D104FD4B"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/RewardedVideo/Adapters/Chartboost/ATHeliumRewardedVideoAdapter.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "189"
+            endingLineNumber = "189"
+            landmarkName = "-heliumRewardedAdWithPlacementName:didGetReward:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "644404CF-81C2-412F-92CF-CF094DFAC9E9"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Core/Managers/ATHeaderBiddingManager.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "172"
+            endingLineNumber = "172"
+            landmarkName = "-startLoadingHeaderBiddingWithRequestID:headerBiddingUnitGroups:s2sHBUnitGroups:offerCachedHBUnitGroups:unitGroupsWithHistoryBidInfo:inactiveUGInfo:inactiveHBUGInfo:placementModel:extra:delegate:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "90D81624-D6C9-4353-AE0A-3144CFD1DF95"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Core/Managers/ATAdLoader.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "547"
+            endingLineNumber = "547"
+            landmarkName = "-seriallyLoadOfferWithWaterfall:finalWaterfall:requestID:placementModel:startDate:extra:delegate:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "295A71A8-AE00-4AA9-A288-A1D58B0A6881"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Core/Managers/ATAdLoader.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "704"
+            endingLineNumber = "704"
+            landmarkName = "-loadOfferWithRequestID:placementModel:unitGroupModel:finalWaterfall:startDate:extra:delegate:success:failure:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "C28C389F-8F8E-48CD-ACD3-559FEC403071"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Core/Managers/ATAdLoader.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "722"
+            endingLineNumber = "722"
+            landmarkName = "-loadOfferWithRequestID:placementModel:unitGroupModel:finalWaterfall:startDate:extra:delegate:success:failure:"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "C28C389F-8F8E-48CD-ACD3-559FEC403071 - 33ae1530cbe76cf2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "__123-[ATAdLoader loadOfferWithRequestID:placementModel:unitGroupModel:finalWaterfall:startDate:extra:delegate:success:failure:]_block_invoke.520"
+                  moduleName = "AnyThinkSDKDemo"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/stephen/Desktop/work/SuperAds/git/UpPlatform/up_sdk_ios/AnyThinkSDK/FinalPorject/AnyThinkSDK/AnyThinkSDK/Core/Managers/ATAdLoader.m"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "722"
+                  endingLineNumber = "722"
+                  offsetFromSymbolStart = "36">
+               </Location>
+               <Location
+                  uuid = "C28C389F-8F8E-48CD-ACD3-559FEC403071 - a24d4f90fe423f69"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "__123-[ATAdLoader loadOfferWithRequestID:placementModel:unitGroupModel:finalWaterfall:startDate:extra:delegate:success:failure:]_block_invoke_2"
+                  moduleName = "AnyThinkSDKDemo"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/stephen/Desktop/work/SuperAds/git/UpPlatform/up_sdk_ios/AnyThinkSDK/FinalPorject/AnyThinkSDK/AnyThinkSDK/Core/Managers/ATAdLoader.m"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "723"
+                  endingLineNumber = "723"
+                  offsetFromSymbolStart = "128">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "4E2873C9-4053-4C68-9B63-D557A9463D72"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Interstitial/Adapters/Chartboost/ATHeliumInterstitialAdapter.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "192"
+            endingLineNumber = "192"
+            landmarkName = "-heliumInterstitialAdWithPlacementName:didClickWithError:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "2D6712AE-A508-4BD1-B698-5CC415C93A30"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Interstitial/Adapters/Chartboost/ATHeliumInterstitialAdapter.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "213"
+            endingLineNumber = "213"
+            landmarkName = "+bidRequestWithPlacementModel:unitGroupModel:info:completion:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B33AF11F-326A-4B0F-A594-9AA63001D3A1"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Interstitial/Adapters/Chartboost/ATHeliumInterstitialAdapter.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "215"
+            endingLineNumber = "215"
+            landmarkName = "+bidRequestWithPlacementModel:unitGroupModel:info:completion:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "A18E1749-79F7-4140-B7F6-75EEA6F96B23"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Interstitial/Adapters/Chartboost/ATHeliumInterstitialAdapter.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "212"
+            endingLineNumber = "212"
+            landmarkName = "+bidRequestWithPlacementModel:unitGroupModel:info:completion:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "3C3C84E5-D0FF-4D50-9B37-AF731B3931EE"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Core/Managers/ATHeaderBiddingManager.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "162"
+            endingLineNumber = "162"
+            landmarkName = "-headerBiddingResponseWithRequestID:headerBiddingUnitGroups:s2sHBUnitGroups:offerCachedHBUnitGroups:unitGroupsWithHistoryBidInfo:inactiveUGInfo:inactiveHBUGInfo:placementModel:extra:bidInfos:bidErrors:bidTime:bidStartDate:ugMap:delegate:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "2698B640-7C6E-4E0D-85C1-43415EFFB67C"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Interstitial/Adapters/Chartboost/ATHeliumInterstitialCustomEvent.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "41"
+            endingLineNumber = "41">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>

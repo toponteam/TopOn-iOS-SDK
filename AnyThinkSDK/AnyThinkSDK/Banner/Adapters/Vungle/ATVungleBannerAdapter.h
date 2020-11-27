@@ -8,6 +8,13 @@
 
 #import <UIKit/UIKit.h>
 
+extern NSString *const kVungleBannerLoadNotification;
+extern NSString *const kVungleBannerShowNotification;
+extern NSString *const kVungleBannerClickNotification;
+extern NSString *const kVungleBannerCloseNotification;
+extern NSString *const kVungleBannerNotificationUserInfoPlacementIDKey;
+
+
 @interface ATVungleBannerAdapter : NSObject
 @end
 
@@ -26,10 +33,5 @@
 - (void)finishedDisplayingAd;
 @end
 
-@protocol ATVungleViewInfo<NSObject>
-@property (nonatomic, readonly) NSNumber *completedView;
-@property (nonatomic, readonly) NSNumber *playTime;
-@property (nonatomic, readonly) NSNumber *didDownload;
-@end
 
 

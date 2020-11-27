@@ -86,6 +86,7 @@ NSString *const kAgentEventExtraInfoMyOfferVideoDownloadFailReasonKey = @"my_off
 NSString *const kAgentEventExtraInfoMyOfferVideoDownloadStartTimestampKey = @"my_offer_video_download_start_timestamp";
 NSString *const kAgentEventExtraInfoMyOfferVideoDownloadFinishTimestampKey = @"my_offer_video_download_end_timestamp";
 NSString *const kAgentEventExtraInfoMyOfferVideoDownloadTimeKey = @"my_offer_video_download_time";
+NSString *const kAgentEventExtraInfoMyOfferVideoDownloadModelTypeKey = @"my_offer_video_download_modelType";
 NSString *const kAgentEventExtraInfoOriginalRequestIDKey = @"original_request_id";
 NSString *const kAgentEventExtraInfoMetadataLoadingTimeKey = @"metadata_loading_time";
 NSString *const kAgentEventExtraInfoAdDataLoadingTimeKey = @"ad_data_loading_time";
@@ -426,6 +427,7 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
                                                         kAgentEventExtraInfoMyOfferVideoDownloadStartTimestampKey:@"msg5",
                                                         kAgentEventExtraInfoMyOfferVideoDownloadFinishTimestampKey:@"msg6",
                                                         kAgentEventExtraInfoMyOfferVideoDownloadTimeKey:@"msg7",
+                                                        kAgentEventExtraInfoMyOfferVideoDownloadModelTypeKey:@"msg8"
                                                         },
              kATAgentEventKeyAdSourceStatusFillKey:@{kAgentEventExtraInfoNetworkFirmIDKey:@"msg",
                                                      kAgentEventExtraInfoAdSourceIDKey:@"msg1",
@@ -521,7 +523,7 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
                                        @"platform":[Utilities platform],
                                        @"package_name":[Utilities appBundleID],
                                        @"app_vn":[Utilities appBundleVersion],
-                                       @"app_vc":[Utilities appBundleVersion],
+                                       @"app_vc":[Utilities appBundleVersionCode],
                                        @"sdk_ver":[ATAPI sharedInstance].version,
                                        @"orient":[Utilities screenOrientation],
                                        @"system":@(1)
@@ -529,7 +531,7 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
     if ([[ATAPI sharedInstance].channel length] > 0) { parameters[@"channel"] = [ATAPI sharedInstance].channel; }
     if ([[ATAPI sharedInstance].subchannel length] > 0) { parameters[@"sub_channel"] = [ATAPI sharedInstance].subchannel; }
     if ([Utilities isBlankDictionary:[ATAPI sharedInstance].customData] == NO) {
-        parameters[@"custom"] = [ATAPI sharedInstance].customData;
+        parameters[@"custom"] = [[ATAPI sharedInstance].customData calculateObjectChangeStringForKey];
     }
     parameters[@"first_init_time"] = @((NSUInteger)([[ATAPI firstLaunchDate] timeIntervalSince1970] * 1000.0f));
     parameters[@"days_from_first_init"] = @([[NSDate date] numberOfDaysSinceDate:[ATAPI firstLaunchDate]]);

@@ -17,7 +17,7 @@
 #import "ATAdAdapter.h"
 @interface ATAppnextRewardedVideoAdapter()
 @property(nonatomic, readonly) ATAppnextRewardedVideoCustomEvent *customEvent;
-@property(nonatomic, readonly) id<ATAppnextAd> rewardedVideo;
+@property(nonatomic, readonly) id<ATAppnextRewardedVideoAd> rewardedVideo;
 @end
 @implementation ATAppnextRewardedVideoAdapter
 //+(id<ATAd>) placeholderAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall *)finalWaterfall {
@@ -56,6 +56,11 @@
         
         _rewardedVideo = [[NSClassFromString(@"AppnextRewardedVideoAd") alloc] initWithPlacementID:serverInfo[@"placement_id"]];
         _rewardedVideo.delegate = _customEvent;
+        if (localInfo[kATAdLoadingExtraUserIDKey] != nil) {
+            id<ATAppnextRewardedServerSidePostbackParams> serverPostbackParams = [[NSClassFromString(@"AppnextRewardedServerSidePostbackParams") alloc] init];
+            serverPostbackParams.rewardsUserId = localInfo[kATAdLoadingExtraUserIDKey];
+            [_rewardedVideo setRewardedServerSidePostbackParams:serverPostbackParams];
+        }
         if ([[[ATAdManager sharedManager] extraInfoForPlacementID:((ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey]).placementID requestID:serverInfo[kAdapterCustomInfoRequestIDKey]] containsObjectForKey:kATAdLoadingExtraUserIDKey]) {
             [_rewardedVideo setRewardsUserId:[[ATAdManager sharedManager] extraInfoForPlacementID:((ATPlacementModel*)serverInfo[kAdapterCustomInfoPlacementModelKey]).placementID requestID:serverInfo[kAdapterCustomInfoRequestIDKey]][kATAdLoadingExtraUserIDKey]];
         }

@@ -33,6 +33,15 @@
         return ret;
     }
 }
+
+-(NSDictionary*)calculateObjectChangeStringForKey{
+    NSMutableDictionary * customData = [NSMutableDictionary dictionary];
+    if ([self count] > 0) { [customData addEntriesFromDictionary:self]; }
+    NSArray<NSString*>* keys = [customData allKeys];
+    [keys enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { customData[obj] = [NSString stringWithFormat:@"%@", customData[obj]]; }];
+    return customData;
+}
+
 @end
 
 @interface ATWeakDictionarySlot:NSObject

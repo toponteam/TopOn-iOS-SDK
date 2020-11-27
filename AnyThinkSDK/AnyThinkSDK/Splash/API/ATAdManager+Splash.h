@@ -34,12 +34,18 @@ extern NSString *const kATSplashExtraPersonalizedTemplateFlag;
 #pragma mark - Baidu
 extern NSString *const kATSplashExtraBaiduAppID;
 extern NSString *const kATSplashExtraBaiduAdPlaceID;
-#pragma mark - Sibmob
+#pragma mark - Sigmob
 extern NSString *const kATSplashExtraSigmobAppKey;
 extern NSString *const kATSplashExtraSigmobAppID;
 extern NSString *const kATSplashExtraSigmobPlacementID;
+#pragma mark - Admob
+extern NSString *const kATSplashExtraAdmobAppID;
+extern NSString *const kATSplashExtraAdmobUnitID;
+extern NSString *const kATSplashExtraAdmobOrientation;
+
 @protocol ATSplashDelegate;
 @interface ATAdManager (Splash)
 -(void) loadADWithPlacementID:(NSString*)placementID extra:(NSDictionary*)extra customData:(NSDictionary*)customData delegate:(id<ATSplashDelegate>)delegate window:(UIWindow*)window containerView:(UIView*)containerView;
 -(void) loadADWithPlacementID:(NSString*)placementID extra:(NSDictionary*)extra customData:(NSDictionary*)customData delegate:(id<ATSplashDelegate>)delegate window:(UIWindow*)window windowScene:(UIWindowScene *)windowScene containerView:(UIView*)containerView API_AVAILABLE(ios(13.0));
+-(void) checkAdSourceList:(NSString*)placementID;
 @end

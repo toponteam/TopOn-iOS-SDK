@@ -11,7 +11,7 @@ import os
 #4、打成zip包
 
 #configuration for iOS build setting
-AnyThink_VERSION = "5.6.8"
+AnyThink_VERSION = "5.7.3"
 CONFIGURATION = "Release"
 EXPORT_OPTIONS_PLIST = "exportOptions.plist"
 #保存发布包的路径

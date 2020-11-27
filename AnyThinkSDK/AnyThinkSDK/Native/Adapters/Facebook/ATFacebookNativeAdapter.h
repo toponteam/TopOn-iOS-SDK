@@ -29,6 +29,10 @@ typedef NS_ENUM(NSInteger, ATFBAdFormatType) {
 @interface ATFacebookNativeAdapter : NSObject
 @end
 
+@protocol ATFBAdSettings <NSObject>
++ (void)setAdvertiserTrackingEnabled:(BOOL)advertiserTrackingEnabled;
+@end
+
 @protocol ATFBNativeAd;
 @protocol FBNativeAdDelegate<NSObject>
 @optional

@@ -109,11 +109,16 @@ BOOL AT_ProxyEnabled(void) {
 }
 
 +(NSNumber*)screenOrientation {
-    return UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation]) ? @1 : @2;
+//    return [UIApplication sharedApplication].statusBarOrientation == UIDeviceOrientationPortrait ? @1 : @2;
+    if ([[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoOrientKey]) {
+        return @1;
+    }else {
+        return UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation]) ? @1 : @2;
+    }
 }
 
 +(NSString*)screenResolution {
-    return [NSString stringWithFormat:@"%ld*%ld", (NSInteger)(CGRectGetWidth([UIScreen mainScreen].bounds) * [UIScreen mainScreen].scale), (NSInteger)(CGRectGetHeight([UIScreen mainScreen].bounds) * [UIScreen mainScreen].scale)];
+    return [[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoScreenKey] == NO ? [NSString stringWithFormat:@"%ld*%ld", (NSInteger)(CGRectGetWidth([UIScreen mainScreen].bounds) * [UIScreen mainScreen].scale), (NSInteger)(CGRectGetHeight([UIScreen mainScreen].bounds) * [UIScreen mainScreen].scale)] : @"";
 }
 
 +(NSString*)appBundleName {
@@ -121,11 +126,27 @@ BOOL AT_ProxyEnabled(void) {
 }
 
 +(NSString*)appBundleID {
-    return ([[NSBundle mainBundle] infoDictionary][@"CFBundleIdentifier"] != nil)?[[NSBundle mainBundle] infoDictionary][@"CFBundleIdentifier"]:@"";
+    if ([[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoPackageNameKey]) {
+        return @"";
+    }else {
+        return ([[NSBundle mainBundle] infoDictionary][@"CFBundleIdentifier"] != nil)?[[NSBundle mainBundle] infoDictionary][@"CFBundleIdentifier"]:@"";
+    }
 }
 
 +(NSString*)appBundleVersion {
-    return ([[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"] != nil)?[[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"]:@"";
+    if ([[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoAppVersionNameKey]) {
+        return @"";
+    }else {
+        return ([[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"] != nil)?[[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"]:@"";
+    }
+}
+
++(NSString*)appBundleVersionCode {
+    if ([[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoAppVersionCodeKey]) {
+        return @"";
+    }else {
+        return ([[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"] != nil)?[[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"]:@"";
+    }
 }
 
 +(NSNumber*)platform {
@@ -133,45 +154,51 @@ BOOL AT_ProxyEnabled(void) {
 }
 
 +(NSString*)brand {
-    return @"apple";
+    return [[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoBrandKey] == NO ? @"apple" : @"";
 }
 
 +(NSString*)model {
     NSString *model = @"";
-    @try {
-        struct utsname systemInfo;
-        uname(&systemInfo);
-        
-         model = [NSString stringWithCString:systemInfo.machine
-                                  encoding:NSUTF8StringEncoding];
-    } @catch (NSException *exception) {
-        model = @"";
-    } @finally {
-        
+    if (![[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoModelKey]) {
+        @try {
+            struct utsname systemInfo;
+            uname(&systemInfo);
+            
+             model = [NSString stringWithCString:systemInfo.machine
+                                      encoding:NSUTF8StringEncoding];
+        } @catch (NSException *exception) {
+            model = @"";
+        } @finally {
+            
+        }
     }
     return model;
 }
 
 +(NSString*)systemName {
-    return [UIDevice currentDevice].systemVersion;
+    return [[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoOSVersionNameKey] == NO ? [UIDevice currentDevice].systemVersion : @"";
 }
 
 +(NSString*)systemVersion {
-    return [UIDevice currentDevice].systemVersion;
+    return [[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoOSVersionCodeKey] == NO ? [UIDevice currentDevice].systemVersion : @"";
 }
 
 +(NSString*)language {
-    return [NSLocale preferredLanguages][0];
+    return [[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoLanguageKey] == NO ? [NSLocale preferredLanguages][0] : @"";
 }
 
 +(NSString*)timezone {
-    return [NSTimeZone systemTimeZone].abbreviation;
+    return [[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoTimeZoneKey] == NO ? [NSTimeZone systemTimeZone].abbreviation : @"";
 }
 
 +(NSString*)mobileCountryCode {
     @try {
-        CTTelephonyNetworkInfo *networkInfo = [CTTelephonyNetworkInfo new];
-        return [networkInfo.subscriberCellularProvider.isoCountryCode length] > 0 ? [networkInfo.subscriberCellularProvider.isoCountryCode uppercaseString] : @"";
+        if ([[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoMCCKey]) {
+            return @"";
+        }else {
+            CTTelephonyNetworkInfo *networkInfo = [CTTelephonyNetworkInfo new];
+            return [networkInfo.subscriberCellularProvider.isoCountryCode length] > 0 ? [networkInfo.subscriberCellularProvider.isoCountryCode uppercaseString] : @"";
+        }
     } @catch (NSException *exception) {
         [ATLogger logError:[NSString stringWithFormat:@"Exception caught while fetching mobileCountryCode:%@", exception] type:ATLogTypeInternal];
     } @finally {
@@ -181,8 +208,12 @@ BOOL AT_ProxyEnabled(void) {
 
 +(NSString*)mobileNetworkCode {
     @try {
-        CTTelephonyNetworkInfo *networkInfo = [CTTelephonyNetworkInfo new];
-        return [networkInfo.subscriberCellularProvider.mobileNetworkCode length] > 0 ? networkInfo.subscriberCellularProvider.mobileNetworkCode : @"";
+        if ([[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoMNCKey]) {
+            return @"";
+        }else {
+            CTTelephonyNetworkInfo *networkInfo = [CTTelephonyNetworkInfo new];
+            return [networkInfo.subscriberCellularProvider.mobileNetworkCode length] > 0 ? networkInfo.subscriberCellularProvider.mobileNetworkCode : @"";
+        }
     } @catch (NSException *exception) {
         [ATLogger logError:[NSString stringWithFormat:@"Exception caught while fetching mobileNetworkCode:%@", exception] type:ATLogTypeInternal];
     } @finally {
@@ -193,18 +224,26 @@ BOOL AT_ProxyEnabled(void) {
 +(NSString*)advertisingIdentifier {
 //    return [ASIdentifierManager sharedManager].advertisingTrackingEnabled ? [ASIdentifierManager sharedManager].advertisingIdentifier.UUIDString : @"";
     //remove check idfa enable to solve
-    return [ASIdentifierManager sharedManager].advertisingIdentifier.UUIDString != nil ? [ASIdentifierManager sharedManager].advertisingIdentifier.UUIDString : @"";
+    if ([[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoIDFAKey]) {
+        return @"";
+    }else {
+        return [ASIdentifierManager sharedManager].advertisingIdentifier.UUIDString != nil ? [ASIdentifierManager sharedManager].advertisingIdentifier.UUIDString : @"";
+    }
 }
 
 +(NSString*)idfv {
-    return [[[UIDevice currentDevice] identifierForVendor] UUIDString] != nil ? [[[UIDevice currentDevice] identifierForVendor] UUIDString] : @"";
+    if ([[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoIDFVKey]) {
+        return @"";
+    }else {
+        return [[[UIDevice currentDevice] identifierForVendor] UUIDString] != nil ? [[[UIDevice currentDevice] identifierForVendor] UUIDString] : @"";
+    }
 }
 
 static NSString *const UAInfoKey = @"user_agent_info_key";
 static NSString *const UAInfoSystemVersionKey = @"sys_ver";
 static NSString *const UAInfoUAKey = @"ua";
 +(NSString*)userAgent {
-   return [ATAPI sharedInstance].userAgent;
+    return [[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoUserAgentKey] == NO ?  [ATAPI sharedInstance].userAgent : @"";
 }
 
 +(NSDictionary*)networkVersions {
@@ -293,6 +332,10 @@ NSString *const kCallStackSymbolCallerClassKey = @"caller_class";
         return YES;
     }
     return NO;
+}
+
++(BOOL)isEmpty:(id)object {
+    return (object == nil || [object isKindOfClass:[NSNull class]] || ([object respondsToSelector:@selector(length)] && [(NSData *)object length] == 0) || ([object respondsToSelector:@selector(count)] && [(NSArray *)object count] == 0));
 }
 
 @end

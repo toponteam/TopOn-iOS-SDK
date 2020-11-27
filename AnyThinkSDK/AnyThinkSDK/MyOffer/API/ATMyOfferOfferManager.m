@@ -8,14 +8,15 @@
 
 #import "ATMyOfferOfferManager.h"
 #import "ATThreadSafeAccessor.h"
-#import "ATMyOfferResourceLoader.h"
+#import "ATOfferResourceLoader.h"
 #import "ATMyOfferCapsManager.h"
-#import "ATMyOfferResourceManager.h"
+#import "ATOfferResourceManager.h"
 #import "Utilities.h"
 #import "ATMyOfferInterstitialSharedDelegate.h"
 #import "ATMyOfferRewardedVideoSharedDelegate.h"
 #import "ATMyOfferSplashSharedDelegate.h"
 #import "ATMyOfferNativeSharedDelegate.h"
+#import "ATAPI.h"
 
 NSString *const kATMyOfferBannerSize320_50 = @"320x50";
 NSString *const kATMyOfferBannerSize320_90 = @"320x90";
@@ -35,15 +36,20 @@ NSString *const kATMyOfferBannerSize728_90 = @"728x90";
 }
 
 -(BOOL) resourceReadyForOfferModel:(ATMyOfferOfferModel*)offerModel {
-    return [[ATMyOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID] != nil;
+    return [[ATOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID] != nil;
 }
 
 -(BOOL) offerReadyForOfferModel:(ATMyOfferOfferModel*)offerModel {
-    return [[ATMyOfferCapsManager shareManager] validateCapsForOfferModel:offerModel] && [[ATMyOfferCapsManager shareManager] validatePacingForOfferModel:offerModel] && [[ATMyOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID] != nil && [[ATMyOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.videoURL] != nil;
+    return [[ATMyOfferCapsManager shareManager] validateCapsForOfferModel:offerModel] && [[ATMyOfferCapsManager shareManager] validatePacingForOfferModel:offerModel] && [[ATOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID] != nil && [[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.videoURL] != nil;
 }
 
 -(BOOL) offerReadyForInterstitialOfferModel:(ATMyOfferOfferModel*)offerModel {
-    return [[ATMyOfferCapsManager shareManager] validateCapsForOfferModel:offerModel] && [[ATMyOfferCapsManager shareManager] validatePacingForOfferModel:offerModel] && [[ATMyOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID] != nil && [[ATMyOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.fullScreenImageURL] != nil;
+    return [[ATMyOfferCapsManager shareManager] validateCapsForOfferModel:offerModel] && [[ATMyOfferCapsManager shareManager] validatePacingForOfferModel:offerModel] && [[ATOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID] != nil && [[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.fullScreenImageURL] != nil && ![self checkExcludedWithOfferModel:offerModel];
+}
+
+-(BOOL) checkExcludedWithOfferModel:(ATMyOfferOfferModel*)offerModel {
+     NSMutableArray<NSString*>* exludeOfferList = [[ATAPI sharedInstance] exludeAppleIdArray];
+    return exludeOfferList != nil && [exludeOfferList containsObject:offerModel.pkgName];
 }
 
 -(ATMyOfferOfferModel*) defaultOfferInOfferModels:(NSArray<ATMyOfferOfferModel*>*)offerModels {
@@ -51,7 +57,7 @@ NSString *const kATMyOfferBannerSize728_90 = @"728x90";
     __block NSInteger minCap = [[ATMyOfferCapsManager shareManager] capForOfferModel:[offerModels firstObject]];
     [offerModels enumerateObjectsUsingBlock:^(ATMyOfferOfferModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         NSInteger curCap = [[ATMyOfferCapsManager shareManager] capForOfferModel:obj];
-        offer = [[ATMyOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:obj.localResourceID] != nil && curCap < minCap ? obj : offer;
+        offer = [[ATOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:obj.localResourceID] != nil && curCap < minCap ? obj : offer;
     }];
     return offer;
 }
@@ -63,10 +69,16 @@ NSString *const kATMyOfferBannerSize728_90 = @"728x90";
             break;
         }
         if (![[ATMyOfferCapsManager shareManager] validatePacingForOfferModel:offerModel]) {
-            completion([NSError errorWithDomain:@"com.anythink.MyOfferLoading" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"MyOffer has failed to load ad", NSLocalizedFailureReasonErrorKey:@"Within pacing limit"}]);
+            completion([NSError errorWithDomain:@"com.anythink.MyOfferLoading" code:10002 userInfo:@{NSLocalizedDescriptionKey:@"MyOffer has failed to load ad", NSLocalizedFailureReasonErrorKey:@"Within pacing limit"}]);
             break;
         }
-        [[ATMyOfferResourceLoader sharedLoader] loadOfferWithOfferModel:offerModel setting:setting extra:extra completion:completion];
+        //check offer's pkg is in exclude apple id list
+        if([self checkExcludedWithOfferModel:offerModel]){
+             completion([NSError errorWithDomain:@"com.anythink.MyOfferLoading" code:10003 userInfo:@{NSLocalizedDescriptionKey:@"MyOffer has failed to load ad", NSLocalizedFailureReasonErrorKey:@"The cross-promotion offer was filtered for exclude offers."}]);
+            break;
+        }
+        
+        [[ATOfferResourceLoader sharedLoader] loadOfferWithOfferModel:offerModel placementID:setting.placementID resourceDownloadTimeout:setting.resourceDownloadTimeout extra:extra completion:completion];
     } while (NO);
 }
 

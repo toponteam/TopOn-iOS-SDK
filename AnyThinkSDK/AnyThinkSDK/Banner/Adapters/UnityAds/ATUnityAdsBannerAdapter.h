@@ -8,11 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-extern NSString *const kATUnityAdsBannerNotificationLoaded;
-extern NSString *const kATUnityAdsBannerNotificationShow;
-extern NSString *const kATUnityAdsBannerNotificationClick;
-extern NSString *const kATUnityAdsBannerNotificationUserInfoPlacementIDKey;
-extern NSString *const kATUnityAdsBannerNotificationUserInfoViewKey;
 @interface ATUnityAdsBannerAdapter : NSObject
 
 @end
@@ -21,10 +16,14 @@ extern NSString *const kATUnityAdsBannerNotificationUserInfoViewKey;
 @protocol ATUnityAds<NSObject>
 + (NSString *)getVersion;
 + (BOOL)isInitialized;
++ (void)initialize:(NSString *)gameId;
++ (void)addDelegate:(__nullable id<UnityAdsDelegate>)delegate;
++ (void)removeDelegate:(id<UnityAdsDelegate>)delegate;
 + (BOOL)isReady:(NSString *)placementId;
 + (void)initialize:(NSString *)gameId delegate:(nullable id<UnityAdsDelegate>)delegate;
 + (void)initialize:(NSString *)gameId delegate:(nullable id<UnityAdsDelegate>)delegate testMode:(BOOL)testMode;
 @end
+
 
 @protocol UnityAdsDelegate <NSObject>
 - (void)unityAdsReady:(NSString *)placementId;
@@ -39,20 +38,30 @@ extern NSString *const kATUnityAdsBannerNotificationUserInfoViewKey;
 - (void)commit;
 @end
 
-@protocol UnityAdsBannerDelegate <NSObject>
--(void)unityAdsBannerDidLoad:(NSString *)placementId view:(UIView *)view;
--(void)unityAdsBannerDidUnload:(NSString *)placementId;
--(void)unityAdsBannerDidShow:(NSString *)placementId;
--(void)unityAdsBannerDidHide:(NSString *)placementId;
--(void)unityAdsBannerDidClick:(NSString *)placementId;
--(void)unityAdsBannerDidError:(NSString *)message;
+@protocol UADSBannerViewDelegate;
+@protocol UADSBannerView <NSObject>
+@property(nonatomic, readonly) CGSize size;
+@property(nonatomic, readwrite, nullable, weak) NSObject <UADSBannerViewDelegate> *delegate;
+@property(nonatomic, readonly) NSString *placementId;
+-(instancetype)initWithPlacementId:(NSString *)placementId size:(CGSize)size;
+-(void)load;
 @end
 
-@protocol UnityAdsBanner<NSObject>
-+(void)setBannerPosition:(NSInteger)position;
-+(void)loadBanner;
-+(void)loadBanner:(NSString *)placementId;
-+(void)destroy;
-+(nullable id <UnityAdsBannerDelegate>)getDelegate;
-+(void)setDelegate:(id<UnityAdsBannerDelegate>)delegate;
+typedef NS_ENUM(NSInteger, ATUADSBannerErrorCode) {
+    UADSBannerErrorCodeUnknown = 0,
+    UADSBannerErrorCodeNativeError = 1,
+    UADSBannerErrorCodeWebViewError = 2,
+    UADSBannerErrorCodeNoFillError = 3
+};
+
+@protocol UADSBannerError <NSObject>
+- (instancetype)initWithCode:(ATUADSBannerErrorCode)code userInfo:(nullable NSDictionary<NSErrorUserInfoKey, id> *)dict;
+@end
+
+@protocol UADSBannerViewDelegate <NSObject>
+@optional
+- (void)bannerViewDidLoad:(id<UADSBannerView>)bannerView;
+- (void)bannerViewDidClick:(id<UADSBannerView>)bannerView;
+- (void)bannerViewDidLeaveApplication:(id<UADSBannerView>)bannerView;
+- (void)bannerViewDidError:(id<UADSBannerView>)bannerView error:(NSError *)error;
 @end

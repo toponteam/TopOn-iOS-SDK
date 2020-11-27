@@ -79,6 +79,17 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
             unitGroupDict[@"header_bidding"] = @YES;
             [S2SHeaderBiddingUnitGroups addObject:[[ATUnitGroupModel alloc] initWithDictionary:unitGroupDict]];
         }];
+        //add adx list to s2s list
+        NSMutableArray<ATUnitGroupModel*>* adxUnitGroups = [NSMutableArray<ATUnitGroupModel*> array];
+        NSArray<NSDictionary*>* adxUnitGroupDicts = dictionary[@"adx_list"];
+        [adxUnitGroupDicts enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            NSMutableDictionary *unitGroupDict = [NSMutableDictionary dictionaryWithDictionary:obj];
+            unitGroupDict[@"header_bidding"] = @YES;
+            [adxUnitGroups addObject:[[ATUnitGroupModel alloc] initWithDictionary:unitGroupDict]];
+            [S2SHeaderBiddingUnitGroups addObject:[[ATUnitGroupModel alloc] initWithDictionary:unitGroupDict]];
+        }];
+        _adxUnitGroups = adxUnitGroups;
+        
         _S2SHeaderBiddingUnitGroups = S2SHeaderBiddingUnitGroups;
         
         _S2SBidRequestAddress = dictionary[@"addr_bid"];
@@ -89,6 +100,7 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
         _myOfferSetting = [[ATMyOfferSetting alloc] initWithDictionary:dictionary[@"m_o_s"] placementID:_placementID];
         NSMutableArray<ATMyOfferOfferModel*>* offers = [NSMutableArray<ATMyOfferOfferModel*> array];
         NSArray<NSDictionary*>* offerDicts = dictionary[@"m_o"];
+        //for myoffer tk
         NSDictionary *placeHolders = dictionary[@"m_o_ks"];
         [offerDicts enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             ATMyOfferOfferModel *offerModel = [[ATMyOfferOfferModel alloc] initWithDictionary:obj placeholders:placeHolders format:_format setting:_myOfferSetting];
@@ -96,7 +108,9 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
         }];
         _offers = offers;
         _callback = dictionary[@"callback"];
-
+        
+        _adxSettingDict = dictionary[@"adx_st"];
+        
     }
     return self;
 }

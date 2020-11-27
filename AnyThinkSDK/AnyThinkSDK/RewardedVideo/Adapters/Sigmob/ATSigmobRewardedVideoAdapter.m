@@ -138,7 +138,7 @@ static NSString *const kATSigmobInterstitialDataLoadedNotification = @"com.anyth
     if (![sharedRewardedAd playAd:viewController withPlacementId:rewardedVideo.customEvent.unitID options:nil error:&error]) {
 
         if ([((ATSigmobRewardedVideoCustomEvent*)rewardedVideo.customEvent).delegate respondsToSelector:@selector(rewardedVideoDidFailToPlayForPlacementID:error:extra:)]) {
-            [((ATSigmobRewardedVideoCustomEvent*)rewardedVideo.customEvent).delegate rewardedVideoDidFailToPlayForPlacementID:rewardedVideo.placementModel.placementID error:error extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:rewardedVideo.unitGroup.unitID != nil ? rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(rewardedVideo.priority),kATRewardedVideoCallbackExtraPrice:@(rewardedVideo.unitGroup.headerBidding ? rewardedVideo.unitGroup.bidPrice:rewardedVideo.unitGroup.price)}];
+            [((ATSigmobRewardedVideoCustomEvent*)rewardedVideo.customEvent).delegate rewardedVideoDidFailToPlayForPlacementID:rewardedVideo.placementModel.placementID error:error extra:@{kATRewardedVideoCallbackExtraAdsourceIDKey:rewardedVideo.unitGroup.unitID != nil ? rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(rewardedVideo.priority),kATRewardedVideoCallbackExtraPrice:rewardedVideo.unitGroup.headerBidding ? rewardedVideo.unitGroup.bidPrice:rewardedVideo.unitGroup.price}];
         }
     }
 }

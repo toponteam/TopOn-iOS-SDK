@@ -28,10 +28,10 @@
 @property(nonatomic, readonly) NSDictionary *content;
 @property(nonatomic, readonly) NSTimeInterval showingInterval;//minimum interval between previous request & last impression
 @property(nonatomic, readonly) CGSize adSize;
-@property(nonatomic, readonly) double price;
+@property(nonatomic, readonly) NSString *price;
 @property(nonatomic, readonly) NSInteger ecpmLevel;
 @property(nonatomic, readonly) NSTimeInterval headerBiddingRequestTimeout;
-@property(nonatomic, readwrite) double bidPrice;
+@property(nonatomic, readwrite) NSString *bidPrice;
 @property(nonatomic, readwrite) NSString *bidToken;
 @property(nonatomic, readonly) BOOL headerBidding;
 @property(nonatomic, readonly) NSTimeInterval bidTokenTime;

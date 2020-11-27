@@ -59,8 +59,12 @@ NSString *ClickErrorDesc_ATCHBRewarded(NSUInteger code) {
 
 - (void)didShowAd:(id)event error:(id<ATCHBError>)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"ChartboostRewardedVideo::didShowAd:error:%@", error != nil ? ShowErrorDesc_ATCHBRewarded(error.code) : @""] type:ATLogTypeExternal];
-    [self trackRewardedVideoAdShow];
-    [self trackRewardedVideoAdVideoStart];
+    if (error == nil) {
+        [self trackRewardedVideoAdShow];
+        [self trackRewardedVideoAdVideoStart];
+    }else {
+        [self trackRewardedVideoAdPlayEventWithError:[NSError errorWithDomain:@"com.anythink.ChartboostRewardedVideoShow" code:error.code userInfo:@{NSLocalizedDescriptionKey:@"AnyThinkSDK has failed to show RewardedVideo", NSLocalizedFailureReasonErrorKey:@"Chartboost SDK has failed to show RewardedVideo"}]];
+    }
 }
 
 - (BOOL)shouldConfirmClick:(id)event confirmationHandler:(void(^)(BOOL))confirmationHandler {

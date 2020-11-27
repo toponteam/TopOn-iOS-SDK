@@ -11,5 +11,5 @@
 #import "ATMintegralRewardedVideoAdapter.h"
 @interface ATMintegralRewardedVideoCustomEvent : ATRewardedVideoCustomEvent<ATRVMTGRewardAdLoadDelegate, ATRVMTGRewardAdShowDelegate>
 @property(nonatomic, weak) id rewardedVideoMgr;
-@property(nonatomic) double price;
+@property(nonatomic) NSString *price;
 @end

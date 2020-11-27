@@ -38,6 +38,7 @@ NSString *const kMaioPlacement = @"Maio";
 NSString *const kKSPlacement = @"KS";
 NSString *const kMyOfferPlacement = @"MyOffer";
 NSString *const kOguryPlacement = @"Ogury";
+NSString *const kHeliumPlacement = @"Helium";
 
 static NSString *const kPlacement0ID = @"b5ad9ba61dcb39";
 static NSString *const kInmobiPlacementID = @"b5b44a03522f92";
@@ -72,6 +73,7 @@ static NSString *const kOguryPlacementID = @"b5dde2379dc6ce";
 static NSString *const kStartAppPlacementID = @"b5e7319f619931";
 static NSString *const kFyberPlacementID = @"b5e96db106d8f2";
 static NSString *const kGAMPlacementID = @"b5f23897bba4ca";
+static NSString *const kHeliumPlacementID = @"b5f583ea323756";
 
 
 @implementation ATRewardedVideoVideoViewController
@@ -111,7 +113,8 @@ static NSString *const kGAMPlacementID = @"b5f23897bba4ca";
                           kOguryPlacement:kOguryPlacementID,
                           kStartAppPlacement:kStartAppPlacementID,
                           kFyberPlacement:kFyberPlacementID,
-                          kGAMPlacement:kGAMPlacementID
+                          kGAMPlacement:kGAMPlacementID,
+                          kHeliumPlacement:kHeliumPlacementID
                           };
     }
     return self;
@@ -163,6 +166,9 @@ static NSString *const kGAMPlacementID = @"b5f23897bba4ca";
     UIAlertAction *action = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
     [alert addAction:action];
     [self presentViewController:alert animated:YES completion:nil];
+    
+//    //check load status
+//    [[ATAdManager sharedManager] checkRewardedVideoLoadStatusForPlacementID:_placementIDs[_name]];
 }
 
 -(void) clearAdButtonTapped {
@@ -177,7 +183,7 @@ static NSString *const kGAMPlacementID = @"b5f23897bba4ca";
 //    _reload = YES;
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{ kATAdLoadingExtraMediaExtraKey:@"media_val", kATAdLoadingExtraUserIDKey:@"rv_test_user_id", kATAdLoadingExtraExcludedBundleIDListKey:@[@"com.anythink.AnyThinkSDKDemo"]} customData:nil delegate:self];
+    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{ kATAdLoadingExtraMediaExtraKey:@"media_val", kATAdLoadingExtraUserIDKey:@"rv_test_user_id"} customData:nil delegate:self];
 }
 
 -(void) showAD {

@@ -13,14 +13,14 @@
 #import "ATVungleBannerCustomEvent.h"
 #import "Utilities.h"
 
-static NSString *const kVungleSDKInitializationNotification = @"com.anythink.VungleDelegateInit";
-static NSString *const kVungleLoadNotification = @"com.anythink.VungleDelegateLoaded";
-static NSString *const kVungleShowNotification = @"com.anythink.VungleDelegateShown";
-static NSString *const kVungleCloseNotification = @"com.anythink.VungleDelegateClose";
-static NSString *const kVungleNotificationUserInfoPlacementIDKey = @"placement_id";
-static NSString *const kVungleNotificationUserInfoErrorKey = @"error";
-static NSString *const kVungleNotificationUserInfoVideoCompletedFlagKey = @"video_completed";
-static NSString *const kVungleNotificationUserInfoClickFlagKey = @"clicked";
+static NSString *const kVungleBannerInitializationNotification = @"com.anythink.VungleDelegateInit";
+NSString *const kVungleBannerLoadNotification = @"com.anythink.VungleDelegateLoaded";
+NSString *const kVungleBannerShowNotification = @"com.anythink.VungleDelegateShown";
+NSString *const kVungleBannerClickNotification = @"com.anythink.VungleDelegateClick";
+NSString *const kVungleBannerCloseNotification = @"com.anythink.VungleDelegateClose";
+NSString *const kVungleBannerNotificationUserInfoPlacementIDKey = @"placement_id";
+NSString *const kVungleBannerNotificationUserInfoErrorKey = @"error";
+
 @interface ATVungleDelegate_Banner:NSObject<ATVungleSDKDelegate>
 @end
 @implementation ATVungleDelegate_Banner
@@ -35,36 +35,41 @@ static NSString *const kVungleNotificationUserInfoClickFlagKey = @"clicked";
     [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleAdPlayabilityUpdate:%@ placementID:%@ error:%@", isAdPlayable ? @"YES" : @"NO", placementID, error] type:ATLogTypeExternal];
     if (isAdPlayable) {
         NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
-        if (placementID != nil) { userInfo[kVungleNotificationUserInfoPlacementIDKey] = placementID; }
-        if (error != nil) { userInfo[kVungleNotificationUserInfoErrorKey] = error; }
-        [[NSNotificationCenter defaultCenter] postNotificationName:kVungleLoadNotification object:nil userInfo:userInfo];
+        if (placementID != nil) { userInfo[kVungleBannerNotificationUserInfoPlacementIDKey] = placementID; }
+        if (error != nil) { userInfo[kVungleBannerNotificationUserInfoErrorKey] = error; }
+        [[NSNotificationCenter defaultCenter] postNotificationName:kVungleBannerLoadNotification object:nil userInfo:userInfo];
     }
 }
 
-- (void)vungleWillShowAdForPlacementID:(nullable NSString *)placementID {
-    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleWillShowAdForPlacementID:%@", placementID] type:ATLogTypeExternal];
+- (void)vungleDidShowAdForPlacementID:(nullable NSString *)placementID {
+    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleDidShowAdForPlacementID:%@", placementID] type:ATLogTypeExternal];
     NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
-    if (placementID != nil) { userInfo[kVungleNotificationUserInfoPlacementIDKey] = placementID; }
-    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleShowNotification object:nil userInfo:userInfo];
+    if (placementID != nil) { userInfo[kVungleBannerNotificationUserInfoPlacementIDKey] = placementID; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleBannerShowNotification object:nil userInfo:userInfo];
 }
 
-- (void)vungleWillCloseAdWithViewInfo:(nonnull id<ATVungleViewInfo>)info placementID:(nonnull NSString *)placementID { [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleWillCloseAdWithViewInfo: placementID:%@", placementID] type:ATLogTypeExternal]; }
+- (void)vungleTrackClickForPlacementID:(nullable NSString *)placementID {
+    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleTrackClickForPlacementID:%@", placementID] type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
+    if (placementID != nil) { userInfo[kVungleBannerNotificationUserInfoPlacementIDKey] = placementID; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleBannerClickNotification object:nil userInfo:userInfo];
+}
 
-- (void)vungleDidCloseAdWithViewInfo:(nonnull id<ATVungleViewInfo>)info placementID:(nonnull NSString *)placementID {
-    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleDidCloseAdWithViewInfo:placementID:%@", placementID] type:ATLogTypeExternal];
-    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:info.completedView, kVungleNotificationUserInfoVideoCompletedFlagKey, info.didDownload, kVungleNotificationUserInfoClickFlagKey, nil];
-    if (placementID != nil) { userInfo[kVungleNotificationUserInfoPlacementIDKey] = placementID; }
-    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleCloseNotification object:nil userInfo:userInfo];
+- (void)vungleDidCloseAdForPlacementID:(nonnull NSString *)placementID {
+    [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleDidCloseAdForPlacementID:placementID:%@", placementID] type:ATLogTypeExternal];
+    NSMutableDictionary *userInfo = NSMutableDictionary.dictionary;
+    if (placementID != nil) { userInfo[kVungleBannerNotificationUserInfoPlacementIDKey] = placementID; }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleBannerCloseNotification object:nil userInfo:userInfo];
 }
 
 - (void)vungleSDKDidInitialize {
     [ATLogger logMessage:@"VungleDelegate::vungleSDKDidInitialize" type:ATLogTypeExternal];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleSDKInitializationNotification object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleBannerInitializationNotification object:nil];
 }
 
 - (void)vungleSDKFailedToInitializeWithError:(NSError *)error {
     [ATLogger logMessage:[NSString stringWithFormat:@"VungleDelegate::vungleSDKFailedToInitializeWithError:%@", error] type:ATLogTypeExternal];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleSDKInitializationNotification object:nil userInfo:@{kVungleNotificationUserInfoErrorKey:error != nil ? error : [NSError errorWithDomain:@"com.anythink.VungleInterstitialInit" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"VungleSDK has failed to init", NSLocalizedFailureReasonErrorKey:@"VungleSDK has failed to init"}]}];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kVungleBannerInitializationNotification object:nil userInfo:@{kVungleBannerNotificationUserInfoErrorKey:error != nil ? error : [NSError errorWithDomain:@"com.anythink.VungleInterstitialInit" code:10001 userInfo:@{NSLocalizedDescriptionKey:@"VungleSDK has failed to init", NSLocalizedFailureReasonErrorKey:@"VungleSDK has failed to init"}]}];
 }
 @end
 
@@ -93,7 +98,7 @@ static NSString *const kVungleSDKClassName = @"VungleSDK";
             BOOL set = NO;
             ATUnitGroupModel *unitGroupModel =(ATUnitGroupModel*)serverInfo[kAdapterCustomInfoUnitGroupModelKey];
             BOOL limit = [[ATAppSettingManager sharedManager] limitThirdPartySDKDataCollection:&set networkFirmID:unitGroupModel.networkFirmID];
-            if (set) { [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.5.4"]; }
+            if (set) { [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) updateConsentStatus:limit ? 2 : 1 consentMessageVersion:@"6.8.0"]; }
         }
     }
     return self;
@@ -105,7 +110,7 @@ static NSString *const kVungleSDKClassName = @"VungleSDK";
         _customEvent = [[ATVungleBannerCustomEvent alloc] initWithUnitID:serverInfo[kPlacementIDKey] serverInfo:serverInfo localInfo:localInfo];
         _customEvent.requestCompletionBlock = completion;
         if (!((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]).isInitialized) {
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleInitNotification:) name:kVungleSDKInitializationNotification object:nil];
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleInitNotification:) name:kVungleBannerInitializationNotification object:nil];
             NSError *error = nil;
             ((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]).delegate = [ATVungleDelegate_Banner sharedDelegate];
             [((id<ATVungleSDK>)[NSClassFromString(kVungleSDKClassName) sharedSDK]) startWithAppId:serverInfo[@"app_id"] error:&error];
@@ -121,8 +126,8 @@ static NSString *const kVungleSDKClassName = @"VungleSDK";
 -(void) dealloc { [[NSNotificationCenter defaultCenter] removeObserver:self]; }
 
 -(void) handleInitNotification:(NSNotification*)notification {
-    if (notification.userInfo[kVungleNotificationUserInfoErrorKey] != nil) {
-        [_customEvent handleLoadingFailure:notification.userInfo[kVungleNotificationUserInfoErrorKey]];
+    if (notification.userInfo[kVungleBannerNotificationUserInfoErrorKey] != nil) {
+        [_customEvent handleLoadingFailure:notification.userInfo[kVungleBannerNotificationUserInfoErrorKey]];
     } else {
         [self startLoad];
     }

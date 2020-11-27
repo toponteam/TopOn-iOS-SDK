@@ -77,6 +77,7 @@ extern NSString *const kAgentEventExtraInfoMyOfferVideoDownloadFailReasonKey;
 extern NSString *const kAgentEventExtraInfoMyOfferVideoDownloadStartTimestampKey;
 extern NSString *const kAgentEventExtraInfoMyOfferVideoDownloadFinishTimestampKey;
 extern NSString *const kAgentEventExtraInfoMyOfferVideoDownloadTimeKey;
+extern NSString *const kAgentEventExtraInfoMyOfferVideoDownloadModelTypeKey;
 extern NSString *const kAgentEventExtraInfoOriginalRequestIDKey;
 extern NSString *const kAgentEventExtraInfoMetadataLoadingTimeKey;
 extern NSString *const kAgentEventExtraInfoAdDataLoadingTimeKey;

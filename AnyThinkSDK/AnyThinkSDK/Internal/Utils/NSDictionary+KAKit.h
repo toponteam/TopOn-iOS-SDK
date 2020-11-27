@@ -11,6 +11,7 @@
 @interface NSDictionary (KAKit)
 -(NSString*) jsonString_anythink;
 -(BOOL)containsObjectForKey:(id)key;
+-(NSDictionary*)calculateObjectChangeStringForKey;
 @end
 
 @interface NSMutableDictionary(Weakly)

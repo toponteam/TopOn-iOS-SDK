@@ -13,53 +13,18 @@
 #import "ATMyOfferProgressHud.h"
 #import "ATAppSettingManager.h"
 #import "ATStoreProductViewController.h"
+#import "ATOfferWebViewController.h"
 #import "ATAgentEvent.h"
+#import "ATOfferSessionRedirector.h"
+#import <SafariServices/SFSafariViewController.h>
 
 NSString *const kATMyOfferTrackerExtraLifeCircleID = @"life_circle_id";
 NSString *const kATMyOfferTrackerExtraScene = @"scene";
-#pragma mark - redirector
-@interface ATMyOfferSessionRedirector : NSObject
-+(instancetype) redirectorWithURL:(NSURL*)URL completion:(void(^)(NSURL *finalURL, NSError *error))completion;
-@end
-@interface ATMyOfferSessionRedirector()<NSURLSessionDelegate>
-@property(nonatomic, copy) void(^completion)(NSURL *finalURL, NSError *error);
-@property(nonatomic, readonly) NSURL *URL;
-@end
-@implementation ATMyOfferSessionRedirector
-+(instancetype) redirectorWithURL:(NSURL*)URL completion:(void(^)(NSURL *finalURL, NSError *error))completion {
-    return [[self alloc] initWithURL:(NSURL*)URL completion:completion];
-}
-
--(instancetype) initWithURL:(NSURL*)URL completion:(void(^)(NSURL *finalURL, NSError *error))completion {
-    self = [super init];
-    if (self != nil) {
-        _URL = URL;
-        _completion = completion;
-        [self start];
-    }
-    return self;
-}
-
--(void) start {
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:self delegateQueue:nil];
-    [[session dataTaskWithRequest:[NSMutableURLRequest requestWithURL:_URL]] resume];
-    [session finishTasksAndInvalidate];
-}
-
-- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
-    completionHandler(request);
-}
-
-- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(nullable NSError *)error {
-    _completion(task.currentRequest.URL, error);
-}
-@end
-
 #pragma mark - tracker
-@interface ATMyOfferTracker()
+@interface ATMyOfferTracker()<SFSafariViewControllerDelegate>
 @property(nonatomic, readonly) NSMutableArray<NSDictionary*>* failedEventStorage;
 @property(nonatomic, readonly) ATThreadSafeAccessor *failedEventStorageAccessor;
-@property(nonatomic, readonly) NSMutableArray<ATMyOfferSessionRedirector*> *redirectors;
+@property(nonatomic, readonly) NSMutableArray<ATOfferSessionRedirector*> *redirectors;
 @property(nonatomic, readonly) ATThreadSafeAccessor *redirectorsAccessor;
 @property(nonatomic, readonly) ATThreadSafeAccessor *storekitStorageAccessor;
 @property(nonatomic, readonly) NSMutableDictionary *preloadStorekitDict;
@@ -82,7 +47,7 @@ static NSString *kFailedEventStorageParametersKey = @"parameters";
     if (self != nil) {
         _failedEventStorage = [NSMutableArray<NSDictionary*> array];
         _failedEventStorageAccessor = [ATThreadSafeAccessor new];
-        _redirectors = [NSMutableArray<ATMyOfferSessionRedirector*> array];
+        _redirectors = [NSMutableArray<ATOfferSessionRedirector*> array];
         _redirectorsAccessor = [ATThreadSafeAccessor new];
         _storekitStorageAccessor = [ATThreadSafeAccessor new];
         _preloadStorekitDict = [NSMutableDictionary dictionary];
@@ -130,14 +95,12 @@ NSString *ExtractAddressFromURL(NSURL *URL) {
 }
 
 NSURL *BuildTKURL(ATMyOfferOfferModel *offerModel, ATMyOfferTrackerEvent event, NSDictionary *extra) {
-    
     NSURL *url = nil;
     __block NSString *tkURLStr = RetrieveTKURL(offerModel, event);
     if ([tkURLStr length] > 0) {
         [offerModel.placeholders enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) { tkURLStr = [tkURLStr stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"{%@}", key] withString:obj]; }];
         url = [NSURL URLWithString:tkURLStr];
     }
-    
     return url;
 }
 
@@ -162,7 +125,12 @@ NSString* RetrieveTKURL(ATMyOfferOfferModel *offerModel, ATMyOfferTrackerEvent e
 }
 
 -(void) sendTKEventWithAddress:(NSString*)address parameters:(NSDictionary*)parameters {
-    [[ATNetworkingManager sharedManager] sendHTTPRequestToAddress:address HTTPMethod:ATNetworkingHTTPMethodPOST parameters:parameters completion:^(NSData * _Nonnull data, NSURLResponse * _Nullable response, NSError * _Nullable error) { if (((NSHTTPURLResponse*)response).statusCode != 200 || error != nil) { [self appendFailedEventWithAddress:address parameters:parameters]; } }];
+    [[ATNetworkingManager sharedManager] sendHTTPRequestToAddress:address HTTPMethod:ATNetworkingHTTPMethodPOST parameters:parameters completion:^(NSData * _Nonnull data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (error.code == NSURLErrorNetworkConnectionLost || error.code == NSURLErrorNotConnectedToInternet || error.code == 53) {
+            [self appendFailedEventWithAddress:address parameters:parameters];
+        }
+        
+    }];
 }
 
 -(void) appendFailedEventWithAddress:(NSString*)address parameters:(NSDictionary*)parameters {
@@ -185,8 +153,8 @@ NSString *AppendLifeCircleIDToURL(NSString *URL, NSString *lifeCircleID) {
     if (offerModel.impURL != nil) {
         __weak typeof(self) weakSelf = self;
         [_redirectorsAccessor writeWithBlock:^{
-            __weak __block ATMyOfferSessionRedirector *weakRedirector = nil;
-            __block ATMyOfferSessionRedirector *redirector = [ATMyOfferSessionRedirector redirectorWithURL:[NSURL URLWithString:AppendLifeCircleIDToURL(offerModel.impURL, extra[kATMyOfferTrackerExtraLifeCircleID])] completion:^(NSURL *finalURL, NSError *error) { [weakSelf.redirectorsAccessor writeWithBlock:^{ [weakSelf.redirectors removeObject:weakRedirector]; }]; }];
+            __weak __block ATOfferSessionRedirector *weakRedirector = nil;
+            __block ATOfferSessionRedirector *redirector = [ATOfferSessionRedirector redirectorWithURL:[NSURL URLWithString:AppendLifeCircleIDToURL(offerModel.impURL, extra[kATMyOfferTrackerExtraLifeCircleID])] completion:^(NSURL *finalURL, NSError *error) { [weakSelf.redirectorsAccessor writeWithBlock:^{ [weakSelf.redirectors removeObject:weakRedirector]; }]; }];
             weakRedirector = redirector;
             [weakSelf.redirectors addObject:redirector];
         }];
@@ -199,14 +167,40 @@ NSString *AppendLifeCircleIDToURL(NSString *URL, NSString *lifeCircleID) {
 
 -(void) clickOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting *)setting extra:(NSDictionary*)extra skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *)viewController circleId:(NSString *) circleId{
     if (offerModel.clickURL != nil) {
-        if (offerModel.jumpType == ATMyOfferJumpTypeSafari) {
+        if (offerModel.linkType == ATLinkTypeSafari) {
             dispatch_async(dispatch_get_main_queue(), ^{ [[UIApplication sharedApplication] openURL:[NSURL URLWithString:AppendLifeCircleIDToURL(offerModel.clickURL, extra[kATMyOfferTrackerExtraLifeCircleID])]]; });
-        } else {
+        } else if (offerModel.linkType == ATLinkTypeWebView) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                ATOfferWebViewController *webVC = [ATOfferWebViewController new];
+                webVC.urlString = offerModel.clickURL;
+                webVC.storeUrlStr = offerModel.storeURL;
+                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:webVC];
+                nav.modalPresentationStyle = UIModalPresentationFullScreen;
+                [viewController presentViewController:nav animated:YES completion:nil];
+            });
+        }else if (offerModel.linkType == ATLinkTypeInnerSafari) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if ([offerModel.clickURL hasPrefix:@"http"] == NO &&
+                    [offerModel.clickURL hasPrefix:@"https"] == NO) {
+                    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:AppendLifeCircleIDToURL(offerModel.clickURL, extra[kATMyOfferTrackerExtraLifeCircleID])]];
+                    return;
+                }
+                NSString *url = [offerModel.clickURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+
+                SFSafariViewController *safari = [[SFSafariViewController alloc]initWithURL: [NSURL URLWithString:url]];
+                safari.delegate = self;
+                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:safari];
+                nav.modalPresentationStyle = UIModalPresentationFullScreen;
+                [viewController presentViewController:nav animated:YES completion:nil];
+
+            });
+        }
+        else {
             if (validateFinalURL([NSURL URLWithString:offerModel.clickURL])) {
                 dispatch_async(dispatch_get_main_queue(), ^{ [[UIApplication sharedApplication] openURL:[NSURL URLWithString:AppendLifeCircleIDToURL(offerModel.clickURL, extra[kATMyOfferTrackerExtraLifeCircleID])]]; });
             } else {
                 if (offerModel.performsAsynchronousRedirection && offerModel.storeURL != nil) { dispatch_async(dispatch_get_main_queue(), ^{
-                    if(setting.storekitTime != 2 && offerModel.pkgName != nil && [Utilities higherThanIOS13]){
+                    if(setting.storekitTime != ATATLoadStorekitTimeNone && offerModel.pkgName != nil && [Utilities higherThanIOS13]){
                         [self presentStorekitViewControllerWithCircleId:circleId pkgName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID skDelegate:skDelegate viewController:viewController];
                     }else{
                         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:offerModel.storeURL]];
@@ -215,13 +209,13 @@ NSString *AppendLifeCircleIDToURL(NSString *URL, NSString *lifeCircleID) {
                 __weak typeof(self) weakSelf = self;
                 [_redirectorsAccessor writeWithBlock:^{
                     if (!offerModel.performsAsynchronousRedirection) { dispatch_async(dispatch_get_main_queue(), ^{ [ATMyOfferProgressHud showProgressHud:[UIApplication sharedApplication].keyWindow]; }); }
-                    __weak __block ATMyOfferSessionRedirector *weakRedirector = nil;
-                    __block ATMyOfferSessionRedirector *redirector = [ATMyOfferSessionRedirector redirectorWithURL:[NSURL URLWithString:AppendLifeCircleIDToURL(offerModel.clickURL, extra[kATMyOfferTrackerExtraLifeCircleID])] completion:^(NSURL *finalURL, NSError *error) {
+                    __weak __block ATOfferSessionRedirector *weakRedirector = nil;
+                    __block ATOfferSessionRedirector *redirector = [ATOfferSessionRedirector redirectorWithURL:[NSURL URLWithString:AppendLifeCircleIDToURL(offerModel.clickURL, extra[kATMyOfferTrackerExtraLifeCircleID])] completion:^(NSURL *finalURL, NSError *error) {
                         if (!offerModel.performsAsynchronousRedirection) { dispatch_async(dispatch_get_main_queue(), ^{ [ATMyOfferProgressHud hideProgressHud:[UIApplication sharedApplication].keyWindow]; }); }
                         if (error == nil || validateFinalURL(finalURL)) {
                             [weakSelf.redirectorsAccessor writeWithBlock:^{ [weakSelf.redirectors removeObject:weakRedirector]; }];
                             if (!offerModel.performsAsynchronousRedirection && validateFinalURL(finalURL)) { dispatch_async(dispatch_get_main_queue(), ^{
-                                if(setting.storekitTime != 2 && offerModel.pkgName != nil  && [Utilities higherThanIOS13]){
+                                if(setting.storekitTime != ATATLoadStorekitTimeNone && offerModel.pkgName != nil  && [Utilities higherThanIOS13]){
                                     [self presentStorekitViewControllerWithCircleId:circleId pkgName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID skDelegate:skDelegate viewController:viewController];
                                 }else{
                                     [[UIApplication sharedApplication] openURL:finalURL];
@@ -230,17 +224,15 @@ NSString *AppendLifeCircleIDToURL(NSString *URL, NSString *lifeCircleID) {
                         } else {
                             if (!offerModel.performsAsynchronousRedirection && offerModel.storeURL != nil) {
                                 dispatch_async(dispatch_get_main_queue(), ^{
-                                    if(setting.storekitTime != 2 && offerModel.pkgName != nil  && [Utilities higherThanIOS13]){
+                                    if(setting.storekitTime != ATATLoadStorekitTimeNone && offerModel.pkgName != nil  && [Utilities higherThanIOS13]){
                                         [self presentStorekitViewControllerWithCircleId:circleId pkgName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID skDelegate:skDelegate viewController:viewController];
                                     }else{
                                         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:offerModel.storeURL]];
                                     }
-                                    
                                 });
                             }
                             //agent event for click failed
                             [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyClickRedirectFailedKey placementID:setting.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoMyOfferOfferIDKey:offerModel.offerID, kAgentEventExtraInfoAdTypeKey:@1, kAgentEventExtraInfoAdClickUrlKey:offerModel.clickURL != nil ? [offerModel.clickURL stringUrlEncode] : @"", kAgentEventExtraInfoAdLastUrlKey:finalURL != nil? [finalURL.absoluteString stringUrlEncode]:@"",  kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@(error.code)}];
-                            
                         }
                     }];
                     weakRedirector = redirector;
@@ -257,7 +249,7 @@ BOOL validateFinalURL(NSURL *URL) {
 
 -(void)preloadStorekitForOfferModel:(ATMyOfferOfferModel *)offerModel setting:(ATMyOfferSetting *) setting viewController:(UIViewController *)viewController circleId:(NSString *) circleId  skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate {
     
-    if(setting != nil && setting.storekitTime == 0 && [Utilities higherThanIOS13]){
+    if(setting != nil && setting.storekitTime == ATLoadStorekitTimePreload && [Utilities higherThanIOS13]){
         //TODO preload storekit
         dispatch_async(dispatch_get_main_queue(), ^{
             if(offerModel != nil && offerModel.pkgName != nil){
@@ -269,14 +261,10 @@ BOOL validateFinalURL(NSURL *URL) {
                         [ATLogger logMessage:@"ATMyOfferBannerView::atLoadProductWithPackageName:finished success!" type:ATLogTypeInternal];
                         [self setStorekitViewControllerWithPkgName:offerModel.pkgName storekitVC:storekitVC];
                     }
-                    
                 }];
             }
         });
     }
-    
-    
-    
 }
 
 -(void)presentStorekitViewControllerWithCircleId:(NSString *) circleId pkgName:(NSString *) pkgName placementID:(NSString *)placementID offerID:(NSString *)offerID  skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *)viewController {
@@ -289,20 +277,34 @@ BOOL validateFinalURL(NSURL *URL) {
 }
 
 -(ATStoreProductViewController *)getStorekitViewControllerWithPkgName:(NSString *) pkgName skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate parentVC:(UIViewController *) parentVC {
-    return [_storekitStorageAccessor readWithBlock:^id {
-        if(_preloadStorekitDict[pkgName] != nil && (((ATStoreProductViewController*)_preloadStorekitDict[pkgName]).parentVC == nil || [((ATStoreProductViewController*)_preloadStorekitDict[pkgName]).parentVC isEqual:parentVC])){
-            return _preloadStorekitDict[pkgName];
+    __weak typeof(self) weakSelf = self;
+    return [weakSelf.storekitStorageAccessor readWithBlock:^id {
+        if(weakSelf.preloadStorekitDict[pkgName] != nil && (((ATStoreProductViewController*)weakSelf.preloadStorekitDict[pkgName]).parentVC == nil || [((ATStoreProductViewController*)weakSelf.preloadStorekitDict[pkgName]).parentVC isEqual:parentVC])){
+            return weakSelf.preloadStorekitDict[pkgName];
         }else{
             ATStoreProductViewController* storekitVC = [ATStoreProductViewController storekitWithPackageName:pkgName skDelegate:skDelegate];
             return storekitVC;
         }
-        
     }];
 }
 
 -(void )setStorekitViewControllerWithPkgName:(NSString *) pkgName storekitVC:(ATStoreProductViewController *) storekitVC{
+    __weak typeof(self) weakSelf = self;
     [_storekitStorageAccessor writeWithBlock:^ {
-        _preloadStorekitDict[pkgName] = storekitVC;
+        weakSelf.preloadStorekitDict[pkgName] = storekitVC;
     }];
 }
+
+// MARK:- SFSafariViewControllerDelegate
+- (void)safariViewControllerDidFinish:(SFSafariViewController *)controller {
+    [controller dismissViewControllerAnimated:true completion:^{
+        
+    }];
+}
+
+- (void)safariViewController:(SFSafariViewController *)controller initialLoadDidRedirectToURL:(NSURL *)URL {
+    NSLog(@"redirect to: %@",URL.absoluteString);
+}
+
+
 @end

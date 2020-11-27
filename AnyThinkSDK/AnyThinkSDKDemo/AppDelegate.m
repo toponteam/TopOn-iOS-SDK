@@ -10,7 +10,7 @@
 #import "NSString+KAKit.h"
 #import "Utilities.h"
 //iOS 14
-#import <AppTrackingTransparency/AppTrackingTransparency.h>
+//#import <AppTrackingTransparency/AppTrackingTransparency.h>
 
 @import AnyThinkSDK;
 @interface AppDelegate ()
@@ -58,7 +58,25 @@
                                           kATCustomDataSubchannelKey:@"placement_custom_data_subchannel"
     } forPlacementID:@"b5c1b048c498b9"];
     
+    [[ATAPI sharedInstance] setExludeAppleIdArray:@[@"id529479190"]];
     
+//    [[ATAPI sharedInstance] setDeniedUploadInfoArray:@[kATDeviceDataInfoOSVersionNameKey,
+//                                                       kATDeviceDataInfoOSVersionCodeKey,
+//                                                       kATDeviceDataInfoPackageNameKey,
+//                                                       kATDeviceDataInfoAppVersionCodeKey,
+//                                                       kATDeviceDataInfoAppVersionNameKey,
+//                                                       kATDeviceDataInfoBrandKey,
+//                                                       kATDeviceDataInfoModelKey,
+//                                                       kATDeviceDataInfoScreenKey,
+//                                                       kATDeviceDataInfoNetworkTypeKey,
+//                                                       kATDeviceDataInfoMNCKey,
+//                                                       kATDeviceDataInfoMCCKey,
+//                                                       kATDeviceDataInfoLanguageKey,
+//                                                       kATDeviceDataInfoTimeZoneKey,
+//                                                       kATDeviceDataInfoUserAgentKey,
+//                                                       kATDeviceDataInfoOrientKey,
+//                                                       kATDeviceDataInfoIDFAKey,
+//                                                       kATDeviceDataInfoIDFVKey]];
     
     [[ATAPI sharedInstance] getUserLocationWithCallback:^(ATUserLocation location) {
         if (location == ATUserLocationInEU) {
@@ -75,9 +93,9 @@
     
     if (@available(iOS 14, *)) {
         //iOS 14
-        [ATTrackingManager requestTrackingAuthorizationWithCompletionHandler:^(ATTrackingManagerAuthorizationStatus status) {
+//        [ATTrackingManager requestTrackingAuthorizationWithCompletionHandler:^(ATTrackingManagerAuthorizationStatus status) {
             [[ATAPI sharedInstance] startWithAppID:@"a5b0e8491845b3" appKey:@"7eae0567827cfe2b22874061763f30c9" error:nil];
-        }];
+//        }];
     } else {
         // Fallback on earlier versions
         [[ATAPI sharedInstance] startWithAppID:@"a5b0e8491845b3" appKey:@"7eae0567827cfe2b22874061763f30c9" error:nil];

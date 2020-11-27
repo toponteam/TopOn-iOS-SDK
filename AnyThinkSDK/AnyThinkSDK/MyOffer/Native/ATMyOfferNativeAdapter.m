@@ -26,7 +26,7 @@
 
 +(id<ATAd>) readyFilledAdWithPlacementModel:(ATPlacementModel*)placementModel requestID:(NSString*)requestID priority:(NSInteger)priority unitGroup:(ATUnitGroupModel*)unitGroup finalWaterfall:(ATWaterfall*)finalWaterfall {
     ATMyOfferOfferModel *offerModel = [ATMyOfferUtilities getMyOfferModelWithOfferId:placementModel.offers offerID:unitGroup.content[@"my_oid"]];
-    if (offerModel != nil && [[ATMyOfferOfferManager sharedManager] resourceReadyForOfferModel:offerModel]) {
+    if (offerModel != nil && ![[ATMyOfferOfferManager sharedManager] checkExcludedWithOfferModel:offerModel] && [[ATMyOfferOfferManager sharedManager] resourceReadyForOfferModel:offerModel]) {
         ATMyOfferNativeCustomEvent *customEvent = [[ATMyOfferNativeCustomEvent alloc] initWithUnitID:nil serverInfo:[ATAdCustomEvent customInfoWithUnitGroupModel:unitGroup extra:nil] localInfo:nil];
         customEvent.offerModel = offerModel;
         customEvent.setting = placementModel.myOfferSetting;
@@ -52,15 +52,6 @@
 
 -(instancetype) initWithNetworkCustomInfo:(NSDictionary*)serverInfo localInfo:(NSDictionary*)localInfo {
     self = [super init];
-    if (self != nil) {
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            if (![[ATAPI sharedInstance] initFlagForNetwork:kNetworkNameMyOffer]) {
-                [[ATAPI sharedInstance] setInitFlagForNetwork:kNetworkNameMyOffer];
-                [[ATAPI sharedInstance] setVersion:@"" forNetwork:kNetworkNameMyOffer];
-            }
-        });
-    }
     return self;
 }
 
@@ -77,7 +68,7 @@
     _customEvent.setting = placementModel.myOfferSetting;
     
     __weak typeof(self) weakSelf = self;
-    [[ATMyOfferOfferManager sharedManager] loadOfferWithOfferModel:offerModel setting:placementModel.myOfferSetting extra:nil completion:^(NSError *error) {
+    [[ATMyOfferOfferManager sharedManager] loadOfferWithOfferModel:offerModel setting:placementModel.myOfferSetting extra:localInfo completion:^(NSError *error) {
         if (error == nil) {
             if (offerModel != nil && offerModel.offerID != nil && weakSelf.customEvent != nil) {
                 weakSelf.customEvent.requestCompletionBlock(@[[ATMyOfferNativeAdapter nativeAdLoaded:offerModel customEvent:weakSelf.customEvent]], nil);
