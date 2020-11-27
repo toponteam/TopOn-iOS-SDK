@@ -1,36 +1,31 @@
-# TopOn iOS SDK
+# TopOn-iOS-SDK  for iOS
 
-TopOn is an ad mediation platform that helps global app developers manage ad networks conveniently and maximize revenue lightly. Relying on big data + cloud computing, TopOn collects global mobile marketing resources, which can optimize the choice of advertising delivery, improves the filling rate and eCPM, and maximizes user retention and advertising revenue.
+TopOn is an ad mediation platform that helps global app developers manage ad networks conveniently and maximize revenue lightly. Especially in China, TopOn becomes the Top #1 mediation platform. Until now, We have cooperated with around 400 companies. We have supported rich local advertising platform resources and lots of global ad platforms. 
 
-Sign up for an account at https://www.toponad.com/.
 
-# SDK Download 
+## Communication
+Official website ： https://www.toponad.com/
 
-The TopOn SDK can be downloaded through https://docs.toponad.com/#/en-us/ios/download/package, you can choose the mediation's SDK which you want to import to your project.
+Business Cooperation : business@toponad.com
 
-You can find integration documentation in https://docs.toponad.com/#/en-us/ios/android_doc/ios_access_doc
+Market Cooperation : leon@toponad.com
 
-If you have any questions, you can file the issue by github or email developer@toponad.com, we will reply you as soon as possible.
+Technical Support : support@toponad.com
 
-# SDK Project Instruction
+QQ & wechat 188108875(Harry)
 
-## Framework Summary
 
-| Framework | Description |
-| ---- | --- |
-|**AnyThinkSDK.framework** |AnyThinkSDK Core Moduel，implement the basic function logic of advertising. e.g: Ad loading logic, Mediation management.|
-|**AnyThinkHeaderBidding.framework** |AnyThinkSDK Header Bidding Moduel.|
-|**AnyThinkSDKMyOffer.framework** |AnyThinkSDK Cross-Promotion Moduel.|
-|**AnyThinkSDKNative.framework** |AnyThinkSDK NativeAd Moduel.|
-|**AnyThinkSDKRewardedVideo.framework** |AnyThinkSDK RewardedVideo Moduel.|
-|**AnyThinkSDKBanner.framework** |AnyThinkSDK Banner Moduel.|
-|**AnyThinkSDKInterstitial.framework** |AnyThinkSDK Interstitial Moduel.|
-|**AnyThinkSDKSplash.framework** |AnyThinkSDK Splash Moduel.|
-|**sdk_auto_build.py** |AnyThinkSDK building script. Run this script in terminal with python to generate framework files you can import into your project.|
+## Requirements
 
-## SDK Usage
+- iOS 9.0 and up
+- Xcode 9.3 and up
 
-Drag&Drop the frameworks you need into xcode and follow the [integration guide](!https://docs.toponad.com/#/zh-cn/ios/GetStarted/TopOn_Get_Started) to implement your advertisement logic.
+## Integration instructions
+** This project only contains TopOn SDK source code. If you need to test a third-party advertising platform, please download from the following URL。
 
-## License
-To view the full license, visit [GPL License](LICENSE)<br>
+https://docs.toponad.com/#/en-us/ios/ios_doc/ios_sdk_config_access
+
+
+## LICENSE
+
+See the [LICENSE](LICENSE) file.
