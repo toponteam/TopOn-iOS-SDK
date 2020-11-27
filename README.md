@@ -21,7 +21,7 @@ QQ & wechat 188108875(Harry)
 - Xcode 9.3 and up
 
 ## Integration instructions
-** This project only contains TopOn SDK source code. If you need to test a third-party advertising platform, please download from the following URL。
+This project only contains TopOn SDK source code. If you need to test a third-party advertising platform, please download from the following URL。
 
 https://docs.toponad.com/#/en-us/ios/ios_doc/ios_sdk_config_access
 
