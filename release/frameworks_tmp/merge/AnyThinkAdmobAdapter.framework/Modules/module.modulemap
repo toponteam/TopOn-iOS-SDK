@@ -1,6 +1,0 @@
-framework module AnyThinkAdmobAdapter {
-  umbrella header "AnyThinkAdmobAdapter.h"
-
-  export *
-  module * { export * }
-}

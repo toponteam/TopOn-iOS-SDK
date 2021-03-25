@@ -1,6 +1,0 @@
-framework module AnyThinkIronSourceAdapter {
-  umbrella header "AnyThinkIronSourceAdapter.h"
-
-  export *
-  module * { export * }
-}

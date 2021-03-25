@@ -1,6 +1,0 @@
-framework module AnyThinkOguryAdapter {
-  umbrella header "AnyThinkOguryAdapter.h"
-
-  export *
-  module * { export * }
-}

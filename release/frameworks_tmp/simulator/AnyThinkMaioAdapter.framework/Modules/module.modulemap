@@ -1,6 +1,0 @@
-framework module AnyThinkMaioAdapter {
-  umbrella header "AnyThinkMaioAdapter.h"
-
-  export *
-  module * { export * }
-}

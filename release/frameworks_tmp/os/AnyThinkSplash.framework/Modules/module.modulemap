@@ -1,6 +1,0 @@
-framework module AnyThinkSplash {
-  umbrella header "AnyThinkSplash.h"
-
-  export *
-  module * { export * }
-}

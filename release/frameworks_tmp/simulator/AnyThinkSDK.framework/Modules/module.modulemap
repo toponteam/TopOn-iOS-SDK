@@ -1,6 +1,0 @@
-framework module AnyThinkSDK {
-  umbrella header "AnyThinkSDK.h"
-
-  export *
-  module * { export * }
-}

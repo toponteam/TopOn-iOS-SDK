@@ -1,6 +1,0 @@
-framework module AnyThinkKuaiShouAdapter {
-  umbrella header "AnyThinkKuaiShouAdapter.h"
-
-  export *
-  module * { export * }
-}

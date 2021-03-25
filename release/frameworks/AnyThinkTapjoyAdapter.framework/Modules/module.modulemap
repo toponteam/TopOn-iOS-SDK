@@ -1,6 +1,0 @@
-framework module AnyThinkTapjoyAdapter {
-  umbrella header "AnyThinkTapjoyAdapter.h"
-
-  export *
-  module * { export * }
-}

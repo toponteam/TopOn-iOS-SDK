@@ -1,6 +1,0 @@
-framework module AnyThinkNative {
-  umbrella header "AnyThinkNative.h"
-
-  export *
-  module * { export * }
-}
