@@ -8,13 +8,16 @@
 
 #import "ATADXInterstitialAdManager.h"
 #import "ATOfferVideoViewController.h"
-#import "ATOfferFullScreenPictureViewController.h"
 #import "ATPlacementSettingManager.h"
 #import "ATOfferResourceManager.h"
 #import "ATADXAdManager.h"
 #import "ATADXLoader.h"
 #import "ATADXTracker.h"
 
+@interface ATADXInterstitialAdManager ()
+@property (nonatomic) NSInteger currentTime;
+
+@end
 @implementation ATADXInterstitialAdManager
 
 #pragma mark - init
@@ -37,7 +40,7 @@
         [self.delegateStorageAccessor writeWithBlock:^{
             [weakSelf.delegateStorage AT_setWeakObject:delegate forKey:self.offerModel.offerID];
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (self.offerModel.interstitalType == ATInterstitialVideo || self.offerModel.videoURL.length > 0) {
+                if (self.offerModel.interstitialType == ATInterstitialVideo && [Utilities isEmpty:self.offerModel.videoURL] == NO) {
                     ATOfferVideoViewController *videoViewController = [[ATOfferVideoViewController alloc] initWithOfferModel:self.offerModel rewardedVideoSetting:self.setting];
                     weakSelf.currentViewController = videoViewController;
                     videoViewController.delegate = self;
@@ -69,8 +72,10 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventImpression offerModel:offerModel extra:trackerExtra];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideoStart offerModel:offerModel extra:trackerExtra];
 
@@ -91,8 +96,10 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideo25Percent offerModel:offerModel extra:trackerExtra];
         return nil;
     }];
@@ -106,8 +113,10 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideo50Percent offerModel:offerModel extra:trackerExtra];
         return nil;
     }];
@@ -121,8 +130,10 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideo75Percent offerModel:offerModel extra:trackerExtra];
         return nil;
     }];
@@ -136,8 +147,10 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideoEnd offerModel:offerModel extra:trackerExtra];
 
         if ([delegate respondsToSelector:@selector(didInterstitialVideoEndOffer:)]) { [delegate didInterstitialVideoEndOffer:offerModel]; }
@@ -152,8 +165,11 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
+        [trackerExtra addEntriesFromDictionary:extra];
 
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideoClick offerModel:offerModel extra:trackerExtra];
         return nil;
@@ -167,10 +183,16 @@
       id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
       NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
       NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-      NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-      if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
-
-        [[ATADXTracker sharedTracker] clickOfferWithOfferModel:offerModel setting:self.setting extra:@{kATADXTrackerExtraLifeCircleID:lifeCircleID != nil ? lifeCircleID : @""} skDelegate:self viewController:self.currentViewController circleId:lifeCircleID];
+      NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+      if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
+        [trackerExtra addEntriesFromDictionary:extra];
+        [[ATADXTracker sharedTracker] clickOfferWithOfferModel:offerModel setting:self.setting extra:@{kATOfferTrackerExtraLifeCircleID:lifeCircleID != nil ? lifeCircleID : @""} skDelegate:self viewController:self.currentViewController circleId:lifeCircleID clickCallbackHandler:^(BOOL success) {
+            if ([delegate respondsToSelector:@selector(didInterstitialDeepLinkOrJumpResult:offer:)]) {
+                [delegate didInterstitialDeepLinkOrJumpResult:success offer:offerModel];
+            }
+        }];
       [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventClick offerModel:offerModel extra:trackerExtra];
 
       if ([delegate respondsToSelector:@selector(didInterstitialClickOffer:)]) { [delegate didInterstitialClickOffer:offerModel]; }
@@ -185,8 +207,10 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideoPaused offerModel:offerModel extra:trackerExtra];
         return nil;
     }];
@@ -199,8 +223,10 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideoMute offerModel:offerModel extra:trackerExtra];
         return nil;
     }];
@@ -213,8 +239,10 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideoUnMute offerModel:offerModel extra:trackerExtra];
         return nil;
     }];
@@ -238,8 +266,10 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventEndCardShow offerModel:offerModel extra:trackerExtra];
         return nil;
     }];
@@ -252,9 +282,59 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventEndCardClose offerModel:offerModel extra:trackerExtra];
+        return nil;
+    }];
+}
+
+-(void)offerVideoResumedWithOfferModel:(ATADXOfferModel *)offerModel extra:(NSDictionary *)extra {
+    [ATLogger logMessage:@"ATADXInterstitial::offerVideoResumedWithOfferModel" type:ATLogTypeExternal];
+    __weak typeof(self) weakSelf = self;
+    [self.delegateStorageAccessor readWithBlock:^id{
+        id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
+        NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
+        NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
+        [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideoResumed offerModel:offerModel extra:trackerExtra];
+        return nil;
+    }];
+}
+
+-(void)offerVideoSkipWithOfferModel:(ATADXOfferModel *)offerModel extra:(NSDictionary *)extra {
+    [ATLogger logMessage:@"ATADXInterstitial::offerVideoSkipWithOfferModel" type:ATLogTypeExternal];
+    __weak typeof(self) weakSelf = self;
+    [self.delegateStorageAccessor readWithBlock:^id{
+        id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
+        NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
+        NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
+        [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideoSkip offerModel:offerModel extra:trackerExtra];
+        return nil;
+    }];
+}
+
+-(void)offerVideoPlayFailWithOfferModel:(ATADXOfferModel *)offerModel extra:(NSDictionary *)extra{
+    [ATLogger logMessage:@"ATADXInterstitial::offerVideoPlayFailWithOfferModel" type:ATLogTypeExternal];
+    __weak typeof(self) weakSelf = self;
+    [self.delegateStorageAccessor readWithBlock:^id{
+        id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
+        NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
+        NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
+        [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideoPlayFail offerModel:offerModel extra:trackerExtra];
         return nil;
     }];
 }
@@ -263,17 +343,33 @@
    //TODO something when storeit is close
 }
 
+- (void)offerVideoPlayTime:(NSInteger)second offerModel:(ATADXOfferModel *)offerModel extra:(NSDictionary *)extra {
+    self.currentTime = second;
+    [offerModel.playingTKItems enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(ATVideoPlayingTKItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (second == obj.triggerTime && obj.sent == NO) {
+            NSDictionary *dic = @{kATOfferTrackerVideoTimePlayed: @(second),
+                                  kATOfferTrackerVideoMilliTimePlayed: @(second * 1000)
+            };
+            [[ATADXTracker sharedTracker] trackWithUrls:obj.urls offerModel:offerModel extra:dic];
+            obj.sent = YES;
+            *stop = YES;
+        }
+    }];
+}
+
 -(void)offerFullScreenPictureEndCardDidShowWithOfferModel:(ATADXOfferModel *)offerModel extra:(NSDictionary *)extra {
     [ATLogger logMessage:@"ATADXInterstitial::offerFullScreenPictureEndCardDidShowWithOfferModel" type:ATLogTypeExternal];
     __weak typeof(self) weakSelf = self;
     [self.delegateStorageAccessor readWithBlock:^id{
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
-        [[ATADXTracker sharedTracker] impressionOfferWithOfferModel:offerModel extra:@{kATADXTrackerExtraLifeCircleID:lifeCircleID != nil ? lifeCircleID : @""}];
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventImpression offerModel:offerModel extra:trackerExtra];
+        [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventEndCardShow offerModel:offerModel extra:trackerExtra];
 
         if ([delegate respondsToSelector:@selector(didInterstitialShowOffer:)]) { [delegate didInterstitialShowOffer:offerModel]; }
 
@@ -290,9 +386,16 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
-        [[ATADXTracker sharedTracker] clickOfferWithOfferModel:offerModel setting:weakSelf.setting extra:@{kATADXTrackerExtraLifeCircleID:lifeCircleID != nil ? lifeCircleID : @""} skDelegate:self viewController:weakSelf.currentViewController circleId:lifeCircleID];
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
+        [trackerExtra addEntriesFromDictionary:extra];
+        [[ATADXTracker sharedTracker] clickOfferWithOfferModel:offerModel setting:weakSelf.setting extra:@{kATOfferTrackerExtraLifeCircleID:lifeCircleID != nil ? lifeCircleID : @""} skDelegate:self viewController:weakSelf.currentViewController circleId:lifeCircleID clickCallbackHandler:^(BOOL success) {
+            if ([delegate respondsToSelector:@selector(didInterstitialDeepLinkOrJumpResult:offer:)]) {
+                [delegate didInterstitialDeepLinkOrJumpResult:success offer:offerModel];
+            }
+        }];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventClick offerModel:offerModel extra:trackerExtra];
 
         if ([delegate respondsToSelector:@selector(didInterstitialClickOffer:)]) { [delegate didInterstitialClickOffer:offerModel]; }
@@ -307,8 +410,10 @@
         id<ATADXInterstitialDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
         NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
         NSString *scene = [delegate respondsToSelector:@selector(sceneForOffer:)] ? [delegate sceneForOffer:offerModel] : nil;
-        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATADXTrackerExtraLifeCircleID];
-        if (scene != nil) { trackerExtra[kATADXTrackerExtraScene] = scene; }
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        if (scene != nil) { trackerExtra[kATOfferTrackerExtraScene] = scene; }
+        [trackerExtra setValue: @(self.currentTime) forKey:kATOfferTrackerVideoTimePlayed];
+        [trackerExtra setValue:@(self.currentTime * 1000) forKey:kATOfferTrackerVideoMilliTimePlayed];
         [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventEndCardClose offerModel:offerModel extra:trackerExtra];
 
         if ([delegate respondsToSelector:@selector(didInterstitialCloseOffer:)]) { [delegate didInterstitialCloseOffer:offerModel]; }
@@ -317,4 +422,21 @@
     }];
 }
 
+- (void)offerFullScreenPictureFeedbackViewDidSelectItemAtIndex:(NSInteger)index offerModel:(ATOfferModel *)offerModel extraMsg:(NSString *)msg {
+    
+    [ATLogger logMessage:@"ATADXInterstitial::offerFullScreenPictureFeedbackViewDidSelectItemAtIndex" type:ATLogTypeExternal];
+
+    [self offerVideoFeedbackViewDidSelectItemAtIndex:index extraMsg:msg offerModel:offerModel];
+}
+
+- (void)offerVideoFeedbackViewDidSelectItemAtIndex:(NSInteger)index extraMsg:(NSString *)msg offerModel:(ATOfferModel *)offerModel {
+    [ATLogger logMessage:@"ATADXInterstitial::offerVideoFeedbackViewDidSelectItemAtIndex" type:ATLogTypeExternal];
+    [self.delegateStorageAccessor readWithBlock:^id{
+        id<ATADXInterstitialDelegate> delegate = [self.delegateStorage AT_weakObjectForKey:offerModel.offerID];
+        if ([delegate respondsToSelector:@selector(didIntersititalFeedbackViewSelectItemAtIndex:extraMsg:offer:)]) {
+            [delegate didIntersititalFeedbackViewSelectItemAtIndex:index extraMsg:msg offer:offerModel];
+        }
+        return nil;
+    }];
+}
 @end

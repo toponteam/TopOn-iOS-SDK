@@ -7,6 +7,9 @@
 //
 
 #import "ATInterstitialViewController.h"
+#import "TopOnAdManager.h"
+
+
 @import AnyThinkSDK;
 @import AnyThinkInterstitial;
 
@@ -31,16 +34,13 @@ static NSString *const kApplovinPlacementID = @"b5bacad34e4294";
 static NSString *const kFacebookPlacementID = @"b5baf4bf9829e4";
 static NSString *const kFacebookHeaderBiddingPlacementID = @"b5d133421525a6";
 static NSString *const kAllPlacementID = @"b5bacad26a752a";
-static NSString *const kOnewayPlacementID = @"b5baf65b3b8631";
 static NSString *const kInmobiPlacementID = @"b5baf524062aca";
-static NSString *const kFlurryPlacementID = @"b5baf52ed8b418";
 static NSString *const kMopubPlacementID = @"b5baf56f03dbe9";
 static NSString *const kChartboostPlacementID = @"b5baf5cd422553";
 static NSString *const kTapjoyPlacementID = @"b5baf5ebe8df89";
 static NSString *const kIronsourcePlacementID = @"b5baf617891a2e";
 static NSString *const kVunglePlacementID = @"b5baf61edafdbb";
 static NSString *const kAdColonyPlacementID = @"b5baf620280a65";
-static NSString *const kYeahmobiPlacementID = @"b5bc7fb8d54acc";
 static NSString *const kAppnextPlacementID = @"b5bc7fb9cbfff1";
 static NSString *const kBaiduPlacementID = @"b5c04ddc6ba49e";
 static NSString *const kUnityAdsPlacementID = @"b5c21a055a51ab";
@@ -58,6 +58,10 @@ static NSString *const kStartAppVideoPlacementID = @"b5e732a9577182";
 static NSString *const kFyberPlacementID = @"b5e96db2198474";
 static NSString *const kGAMPlacementID = @"b5f2389ab6ee63";
 static NSString *const kHeliumPlacementID = @"b5f583ec12143f";
+static NSString *const kADXPlacementID = @"b5fa25016e80bd";
+static NSString *const kOnlineApiPlacementID = @"b5fa250771e076";
+static NSString *const kKidozPlacementID = @"b5feaa2df0e121";
+static NSString *const kMyTargetPlacementID = @"b5feaa306e483c";
 
 
 @interface ATInterstitialViewController ()<ATInterstitialDelegate>
@@ -86,9 +90,7 @@ static NSString *const kHeliumPlacementID = @"b5f583ec12143f";
                           kApplovinPlacement:kApplovinPlacementID,
                           kFacebookPlacement:kFacebookPlacementID,
                           kFacebookHeaderBiddingPlacement:kFacebookHeaderBiddingPlacementID,
-                          kOnewayPlacementName:kOnewayPlacementID,
                           kInmobiPlacement:kInmobiPlacementID,
-                          kFlurryPlacement:kFlurryPlacementID,
                           kMopubPlacementName:kMopubPlacementID,
                           kChartboostPlacementName:kChartboostPlacementID,
                           kTapjoyPlacementName:kTapjoyPlacementID,
@@ -96,7 +98,6 @@ static NSString *const kHeliumPlacementID = @"b5f583ec12143f";
                           kVunglePlacementName:kVunglePlacementID,
                           kAdcolonyPlacementName:kAdColonyPlacementID,
                           kAllPlacementName:kAllPlacementID,
-                          kYeahmobiPlacement:kYeahmobiPlacementID,
                           kAppnextPlacement:kAppnextPlacementID,
                           kBaiduPlacement:kBaiduPlacementID,
                           kUnityAdsPlacementName:kUnityAdsPlacementID,
@@ -113,7 +114,11 @@ static NSString *const kHeliumPlacementID = @"b5f583ec12143f";
                           kStartAppVideoPlacement:kStartAppVideoPlacementID,
                           kFyberPlacement:kFyberPlacementID,
                           kGAMPlacement:kGAMPlacementID,
-                          kHeliumPlacement:kHeliumPlacementID
+                          kHeliumPlacement:kHeliumPlacementID,
+                          kADXPlacement:kADXPlacementID,
+                          kOnlineApiPlacement:kOnlineApiPlacementID,
+                          kKidozPlacement:kKidozPlacementID,
+                          kMyTargetPlacement:kMyTargetPlacementID
                           };
     }
     return self;
@@ -164,13 +169,15 @@ static NSString *const kHeliumPlacementID = @"b5f583ec12143f";
 
 //Ad ready?
 -(void) removeAdButtonTapped {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[[ATAdManager sharedManager] interstitialReadyForPlacementID:_placementIDs[_name]] ? @"Ready!" : @"Not Yet!" message:nil preferredStyle:UIAlertControllerStyleAlert];
+    BOOL isReady = NO;
+    isReady = [[ATAdManager sharedManager] interstitialReadyForPlacementID:_placementIDs[_name]];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:isReady ? @"Ready!" : @"Not Yet!" message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *action = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
     [alert addAction:action];
     [self presentViewController:alert animated:YES completion:nil];
     
 //    //check load status
-//    [[ATAdManager sharedManager] checkInterstitialLoadStatusForPlacementID:_placementIDs[_name]];
+    [[ATAdManager sharedManager] checkInterstitialLoadStatusForPlacementID:_placementIDs[_name]];
 }
 
 -(void) clearAdButtonTapped {
@@ -185,11 +192,12 @@ static NSString *const kHeliumPlacementID = @"b5f583ec12143f";
     NSLog(@"Begin loading interstitial ad");
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:[_name isEqualToString:kSigmobRVIntPlacement] ? @{kATInterstitialExtraUsesRewardedVideo:@YES} : @{} delegate:self];
+        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:[_name isEqualToString:kSigmobRVIntPlacement] ? @{kATInterstitialExtraUsesRewardedVideo:@YES} : @{} delegate:self];
 }
 
 -(void) showAD {
-    [[ATAdManager sharedManager] showInterstitialWithPlacementID:_placementIDs[_name] scene:@"f5e549727efc49" inViewController:self delegate:self];
+
+        [[ATAdManager sharedManager] showInterstitialWithPlacementID:_placementIDs[_name] scene:@"f5e549727efc49" inViewController:self delegate:self];
 }
 
 #pragma mark - delegate method(s)
@@ -202,6 +210,15 @@ static NSString *const kHeliumPlacementID = @"b5f583ec12143f";
     NSLog(@"ATInterstitialViewController::didFailToLoadADWithPlacementID:%@ error:%@", placementID, error);
 }
 
+// ofm
+-(void) didFinishLoadingOFMADWithPlacementID:(NSString *)placementID {
+    NSLog(@"ATInterstitialViewController::didFinishLoadingOFMADWithPlacementID:%@", placementID);
+    _showAdButton.enabled = YES;
+}
+
+-(void) didFailToLoadOFMADWithPlacementID:(NSString*)placementID error:(NSError*)error {
+    NSLog(@"ATInterstitialViewController::didFailToLoadOFMADWithPlacementID:%@ error:%@", placementID, error);
+}
 
 #pragma mark - delegate with networkID and adsourceID
 
@@ -231,5 +248,10 @@ static NSString *const kHeliumPlacementID = @"b5f583ec12143f";
 
 -(void) interstitialDidClickForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
     NSLog(@"ATInterstitialViewController::interstitialDidClickForPlacementID:%@ extra:%@", placementID, extra);
+}
+
+- (void)interstitialDeepLinkOrJumpForPlacementID:(NSString *)placementID extra:(NSDictionary *)extra result:(BOOL)success {
+    NSLog(@"ATInterstitialViewController:: interstitialDeepLinkOrJumpForPlacementID:placementID:%@ with extra: %@, success:%@", placementID,extra, success ? @"YES" : @"NO");
+
 }
 @end

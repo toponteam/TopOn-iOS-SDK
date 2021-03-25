@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "NSDictionary+KAKit.h"
 #import "NSString+KAKit.h"
+#import "NSArray+KAKit.h"
+
 #import <UIKit/UIKit.h>
 #import "ATLogger.h"
 /*
@@ -21,11 +23,13 @@ NSArray* CallstackSymbols(void);
 
 BOOL AT_DebuggerAttached(void);
 BOOL AT_ProxyEnabled(void);
+@protocol ATAd;
 @class ATPlacementModel;
 @interface Utilities : NSObject
 +(NSNumber*)normalizedTimeStamp;
 +(NSNumber*)screenOrientation;
 +(NSString*)screenResolution;
++(UIEdgeInsets)safeAreaInsets;
 +(NSString*)appBundleName;
 +(NSString*)appBundleID;
 +(NSString*)appBundleVersion;
@@ -42,6 +46,8 @@ BOOL AT_ProxyEnabled(void);
 +(NSString*)advertisingIdentifier;
 +(NSString*)idfv;
 +(NSString*)userAgent;
++(NSString*)localizationForLearnMore;
+
 +(NSDictionary*)networkVersions;
 
 +(NSString*) generateRequestID;
@@ -50,9 +56,13 @@ BOOL AT_ProxyEnabled(void);
 
 +(NSString*)computeSignWithParameters:(NSDictionary*)parameters;
 
++(BOOL)isMandarin;
+
 +(BOOL)higherThanIOS13;
 +(BOOL)isBlankDictionary:(NSDictionary *)dic;
 +(BOOL)isEmpty:(id)object;
+
++ (void)reportProfit:(id<ATAd>)adModel time:(NSNumber *)time;
 
 extern NSString *const kCallStackSymbolCallerMethodKey;
 extern NSString *const kCallStackSymbolCallerClassKey;

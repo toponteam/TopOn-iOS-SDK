@@ -18,6 +18,10 @@ extern NSString *const kBannerDismissModalViewControllerNotification;
 extern NSString *const kBannerNotificationUserInfoRequestIDKey;
 @class ATBanner;
 @interface ATBannerManager : NSObject<ATAdManagement>
+
+@property(nonatomic, readonly) NSMutableDictionary *statusStorage;
+@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSMutableDictionary<NSString*, id>*>*bannerStorage;
+
 +(instancetype) sharedManager;
 -(void) removeCacheContainingBanner:(ATBanner*)banner;
 -(ATBanner*) bannerForPlacementID:(NSString*)placementID extra:(NSDictionary* __autoreleasing*)extra;

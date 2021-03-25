@@ -34,7 +34,10 @@
         _customEvent.ad = self;
         _appID = assets[kATAdAssetsAppIDKey];
         _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? ([ATAdCustomEvent calculateAdPriority:self] / _placementModel.maxConcurrentRequestCount) + 1 : 1;
-        _price = unitGroup.headerBidding ? assets[kAdAssetsPriceKey] : unitGroup.price;
+        NSString *bidPrice = assets[kAdAssetsPriceKey];
+        _price = unitGroup.headerBidding ? bidPrice : unitGroup.price;
+        
+        _bidId = unitGroup.headerBidding ? assets[kAdAssetsBidIDKey] : @"";
         _finalWaterfall = finalWaterfall;
         if ([assets[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { _autoReqType = 5; }
     }
@@ -67,5 +70,14 @@
 
 -(NSString*)description {
     return [NSString stringWithFormat:@"{ hash:%ld======unit_group_id:%@======show_time:%ld======priority:%ld======cache_date:%lf======network_cache_time:%lf======placement_id: %@ }", [self hash], _unitGroup.unitGroupID, _showTimes, _priority, [_cacheDate timeIntervalSinceReferenceDate], _unitGroup.networkCacheTime, _placementModel.placementID];
+}
+
+- (NSString *)ecpm {
+    if (self.unitGroup.headerBidding) {
+        NSDecimalNumber *priceDecimal = [NSDecimalNumber decimalNumberWithString:self.price];
+        NSDecimalNumber *rateDecimal = [NSDecimalNumber decimalNumberWithString:self.placementModel.exchangeRate];
+        return [[priceDecimal decimalNumberByMultiplyingBy:rateDecimal] stringValue];
+    }
+    return self.unitGroup.ecpmByCurrency;
 }
 @end

@@ -7,7 +7,8 @@
 //
 
 #import "ATBannerViewController.h"
-//#import <GoogleMobileAds/GoogleMobileAds.h>
+#import "TopOnAdManager.h"
+
 @import AnyThinkSDK;
 @import AnyThinkBanner;
 
@@ -18,10 +19,8 @@ static NSString *const kAdmobPlacementID = @"b5bacacef17717";
 static NSString *const kApplovinPlacementID = @"b5bacace1549da";
 static NSString *const kFacebookPlacementID = @"b5baf502bb23e3";
 static NSString *const kMopubPlacementID = @"b5baf57068e0b6";
-static NSString *const kFlurryPlacementID = @"b5baf52fe4e57b";
 static NSString *const kInmobiPlacementID = @"b5baf522891992";
 static NSString *const kAllPlacementID = @"b5bacaccb61c29";
-static NSString *const kYeahmobiPlacementID = @"b5bc7fb61b3213";
 static NSString *const kAppnextPlacementID = @"b5bc7fb78288e9";
 static NSString *const kBaiduPlacementID = @"b5c04dda229f7e";
 static NSString *const kUnityAdsPlacementID = @"b5c21a04406722";
@@ -35,6 +34,13 @@ static NSString *const kVunglePlacementID = @"b5ee89f3e63d80";
 static NSString *const kAdColonyPlacementID = @"b5ee89f4d1791e";
 static NSString *const kGAMPlacementID = @"b5f2389932a2ec";
 static NSString *const kMyofferPlacementID = @"b5f33c3231eb91";
+static NSString *const kADXPlacementID = @"b5fa24ff8a7446";
+static NSString *const kOnlineApiPlacementID = @"b5fa2508fbdaf6";
+//static NSString *const kFacebookInHousePlacementID = @"b5d146f9483215";
+static NSString *const kKidozPlacementID = @"b5feaa2cfe2959";
+static NSString *const kMyTargetPlacementID = @"b5feaa31284737";
+
+
 
 NSString *const kBannerShownNotification = @"banner_shown";
 NSString *const kBannerLoadingFailedNotification = @"banner_failed_to_load";
@@ -65,10 +71,8 @@ NSString *const kBannerLoadingFailedNotification = @"banner_failed_to_load";
                           kApplovinPlacement:kApplovinPlacementID,
                           kFacebookPlacement:kFacebookPlacementID,
                           kMopubPlacementName:kMopubPlacementID,
-                          kFlurryPlacement:kFlurryPlacementID,
                           kInmobiPlacement:kInmobiPlacementID,
                           kAllPlacementName:kAllPlacementID,
-                          kYeahmobiPlacement:kYeahmobiPlacementID,
                           kAppnextPlacement:kAppnextPlacementID,
                           kBaiduPlacement:kBaiduPlacementID,
                           kUnityAdsPlacementName:kUnityAdsPlacementID,
@@ -81,7 +85,11 @@ NSString *const kBannerLoadingFailedNotification = @"banner_failed_to_load";
                           kChartboostPlacementName:kChartboostPlacementID,
                           kAdcolonyPlacementName:kAdColonyPlacementID,
                           kGAMPlacement:kGAMPlacementID,
-                          kMyOfferPlacement:kMyofferPlacementID
+                          kMyOfferPlacement:kMyofferPlacementID,
+                          kADXPlacement:kADXPlacementID,
+                          kOnlineApiPlacement:kOnlineApiPlacementID,
+                          kKidozPlacement:kKidozPlacementID,
+                          kMyTargetPlacement:kMyTargetPlacementID,
                           };
     }
     return self;
@@ -133,20 +141,32 @@ NSString *const kBannerLoadingFailedNotification = @"banner_failed_to_load";
     _failureTipsLabel.hidden = YES;
     
     _adSize = CGSizeMake(CGRectGetWidth(self.view.bounds), 250.0f);
-    if ([[ATAdManager sharedManager] bannerAdReadyForPlacementID:_placementIDs[_name]]) {
-        NSLog(@"ATBannerViewController::banner ad ready, will show");
-        [self showBanner];
-    } else {
-        NSLog(@"ATBannerViewController::banner ad not ready, will load");
-        [self reloadADButtonTapped];
+    if([TopOnAdManager sharedManager].currentAPIType == TopOnAPITypeTopOn){
+        if ([[ATAdManager sharedManager] bannerAdReadyForPlacementID:_placementIDs[_name]]) {
+            NSLog(@"ATBannerViewController::banner ad ready, will show");
+            [self showBanner];
+        } else {
+            NSLog(@"ATBannerViewController::banner ad not ready, will load");
+            [self reloadADButtonTapped];
+        }
     }
+    
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+    [self removeAdButtonTapped];
 }
 
 -(void) readyButtonTapped {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[[ATAdManager sharedManager] bannerAdReadyForPlacementID:_placementIDs[_name]] ? @"Ready!" : @"Not Yet!" message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *action = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
-    [alert addAction:action];
-    [self presentViewController:alert animated:YES completion:nil];
+
+        ATCheckLoadModel *model = [[ATAdManager sharedManager] checkBannerLoadStatusForPlacementID:_placementIDs[_name]];
+
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:[[ATAdManager sharedManager] bannerAdReadyForPlacementID:_placementIDs[_name]] ? @"Ready!" : @"Not Yet!" message:nil preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *action = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
+        [alert addAction:action];
+        [self presentViewController:alert animated:YES completion:nil];
+
 }
 
 -(void) reloadADButtonTapped {
@@ -156,9 +176,9 @@ NSString *const kBannerLoadingFailedNotification = @"banner_failed_to_load";
     //GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth 自适应
     //GADPortraitAnchoredAdaptiveBannerAdSizeWithWidth 竖屏
     //GADLandscapeAnchoredAdaptiveBannerAdSizeWithWidth 横屏
-//    GADAdSize admobSize = GADLandscapeAnchoredAdaptiveBannerAdSizeWithWidth(CGRectGetWidth(self.view.bounds));
+
+        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kATAdLoadingExtraBannerAdSizeKey:[NSValue valueWithCGSize:_adSize], kATAdLoadingExtraBannerSizeAdjustKey:@NO} delegate:self];
     
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kATAdLoadingExtraBannerAdSizeKey:[NSValue valueWithCGSize:_adSize], kATAdLoadingExtraBannerSizeAdjustKey:@NO} delegate:self];
 }
 
 -(void) removeAdButtonTapped {
@@ -177,29 +197,30 @@ NSString *const kBannerLoadingFailedNotification = @"banner_failed_to_load";
 }
 
 -(void) showBanner {
-    if ([[ATAdManager sharedManager] bannerAdReadyForPlacementID:_placementIDs[_name]]) {
-        NSInteger tag = 3333;
-        [[self.view viewWithTag:tag] removeFromSuperview];
-        ATBannerView *bannerView = [[ATAdManager sharedManager] retrieveBannerViewForPlacementID:_placementIDs[_name]];
-        if (bannerView != nil) {
-            bannerView.delegate = self;
-            bannerView.presentingViewController = self;
-            bannerView.translatesAutoresizingMaskIntoConstraints = NO;
-            bannerView.tag = tag;
-            bannerView.layer.borderColor = [UIColor redColor].CGColor;
-            bannerView.layer.borderWidth = .5f;
-            bannerView.backgroundColor = [UIColor colorWithRed:.0f green:.0f blue:1.0f alpha:.4f];
-            [self.view addSubview:bannerView];
-            [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.view attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:bannerView attribute:NSLayoutAttributeCenterX multiplier:1.0f constant:.0f]];
-            [self.view addConstraint:[NSLayoutConstraint constraintWithItem:bannerView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0f constant:CGRectGetHeight([UIApplication sharedApplication].statusBarFrame) + CGRectGetHeight(self.navigationController.navigationBar.frame)]];
-            [self.view addConstraint:[NSLayoutConstraint constraintWithItem:bannerView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0f constant:_adSize.width]];
-            [self.view addConstraint:[NSLayoutConstraint constraintWithItem:bannerView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0f constant:_adSize.height]];
-        }else {
-            NSLog(@"BannerView is nil for placementID:%@", _placementIDs[_name]);
+        if ([[ATAdManager sharedManager] bannerAdReadyForPlacementID:_placementIDs[_name]]) {
+            NSInteger tag = 3333;
+            [[self.view viewWithTag:tag] removeFromSuperview];
+            ATBannerView *bannerView = [[ATAdManager sharedManager] retrieveBannerViewForPlacementID:_placementIDs[_name] scene:@"f600938d045dd3"];
+            if (bannerView != nil) {
+                bannerView.delegate = self;
+                bannerView.presentingViewController = self;
+                bannerView.translatesAutoresizingMaskIntoConstraints = NO;
+                bannerView.tag = tag;
+                bannerView.layer.borderColor = [UIColor redColor].CGColor;
+                bannerView.layer.borderWidth = .5f;
+                bannerView.backgroundColor = [UIColor colorWithRed:.0f green:.0f blue:1.0f alpha:.4f];
+                [self.view addSubview:bannerView];
+                [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.view attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:bannerView attribute:NSLayoutAttributeCenterX multiplier:1.0f constant:.0f]];
+                [self.view addConstraint:[NSLayoutConstraint constraintWithItem:bannerView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0f constant:CGRectGetHeight([UIApplication sharedApplication].statusBarFrame) + CGRectGetHeight(self.navigationController.navigationBar.frame)]];
+                [self.view addConstraint:[NSLayoutConstraint constraintWithItem:bannerView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0f constant:_adSize.width]];
+                [self.view addConstraint:[NSLayoutConstraint constraintWithItem:bannerView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0f constant:_adSize.height]];
+            }else {
+                NSLog(@"BannerView is nil for placementID:%@", _placementIDs[_name]);
+            }
+        } else {
+            NSLog(@"Banner ad's not ready for placementID:%@", _placementIDs[_name]);
         }
-    } else {
-        NSLog(@"Banner ad's not ready for placementID:%@", _placementIDs[_name]);
-    }
+    
 }
 
 #pragma mark - delegate method(s)
@@ -223,6 +244,9 @@ NSString *const kBannerLoadingFailedNotification = @"banner_failed_to_load";
 }
 
 #pragma mark - add networkID and adsourceID delegate
+- (void)bannerView:(ATBannerView *)bannerView didDeepLinkOrJumpForPlacementID:(NSString *)placementID extra:(NSDictionary *)extra result:(BOOL)success {
+    NSLog(@"ATBannerViewController:: didDeepLinkOrJumpForPlacementID:placementID:%@ with extra: %@, success:%@", placementID,extra, success ? @"YES" : @"NO");
+}
 
 -(void) bannerView:(ATBannerView*)bannerView didShowAdWithPlacementID:(NSString*)placementID extra:(NSDictionary *)extra{
     NSLog(@"ATBannerViewController::bannerView:didShowAdWithPlacementID:%@ with extra: %@", placementID,extra);
@@ -244,4 +268,36 @@ NSString *const kBannerLoadingFailedNotification = @"banner_failed_to_load";
 -(void) bannerView:(ATBannerView*)bannerView didTapCloseButtonWithPlacementID:(NSString*)placementID extra:(NSDictionary*)extra {
     NSLog(@"ATBannerViewController::bannerView:didTapCloseButtonWithPlacementID:%@ extra: %@", placementID,extra);
 }
+
+-(void) didFinishLoadingOFMADWithPlacementID:(NSString *)placementID {
+    NSLog(@"ATBannerViewController::didFinishLoadingOFMADWithPlacementID:%@", placementID);
+    [_loadingView removeFromSuperview];
+}
+-(void) didFailToLoadOFMADWithPlacementID:(NSString*)placementID error:(NSError*)error {
+    NSLog(@"ATBannerViewController::didFailToLoadOFMADWithPlacementID:%@ error:%@", placementID, error);
+    _failureTipsLabel.hidden = NO;
+#ifdef BANNER_AUTO_TEST
+    [[NSNotificationCenter defaultCenter] postNotificationName:kBannerLoadingFailedNotification object:nil];
+    [self.navigationController popViewControllerAnimated:NO];
+#endif
+}
+
+-(void) bannerDidShowForPlacementID:(NSString*)placementID extra:(NSDictionary*)extra {
+    NSLog(@"ATBannerViewController::bannerDidShowForPlacementID:%@ with extra: %@", placementID,extra);
+#ifdef BANNER_AUTO_TEST
+    [[NSNotificationCenter defaultCenter] postNotificationName:kBannerShownNotification object:nil];
+    [self.navigationController popViewControllerAnimated:NO];
+#endif
+}
+-(void) bannerDidCloseForPlacementID:(NSString*)placementID extra:(NSDictionary*)extra {
+    NSLog(@"ATBannerViewController::bannerView:bannerDidCloseForPlacementID:%@ extra: %@", placementID,extra);
+}
+-(void) bannerDidClickForPlacementID:(NSString*)placementID extra:(NSDictionary*)extra {
+    NSLog(@"ATBannerViewController::bannerDidClickForPlacementID:%@ with extra: %@", placementID,extra);
+}
+-(void) bannerDeepLinkOrJumpForPlacementID:(NSString*)placementID extra:(NSDictionary*)extra result:(BOOL)success {
+    NSLog(@"ATBannerViewController:: bannerDeepLinkOrJumpForPlacementID:placementID:%@ with extra: %@, success:%@", placementID,extra, success ? @"YES" : @"NO");
+}
+
+
 @end

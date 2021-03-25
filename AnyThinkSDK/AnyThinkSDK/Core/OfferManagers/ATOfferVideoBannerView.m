@@ -7,6 +7,7 @@
 //
 
 #import "ATOfferVideoBannerView.h"
+#import "Utilities.h"
 
 @interface ATOfferVideoBannerView ()
 @property (nonatomic , readonly)ATOfferModel *offerModel;
@@ -26,6 +27,10 @@
     return self;
 }
 
+- (BOOL)showCtaBtn {
+    return [Utilities isEmpty:self.offerModel.CTA] == NO;
+}
+
 -(void)layoutView {
     if(self.iconImage != nil){
         [self addSubview:self.iconImage];
@@ -36,9 +41,12 @@
     
     [self addSubview:self.title];
     
-    [self addSubview:self.ctaButton];
-    [self addSubview:self.logoImage];
-    
+    if (self.showCtaBtn) {
+        [self addSubview:self.ctaButton];
+    }
+    if ([Utilities isEmpty:self.offerModel.logoURL] == NO) {
+        [self addSubview:self.logoImage];
+    }
 }
 
 +(ATOfferVideoBannerView *)bannerForView:(UIView *)view {
@@ -51,6 +59,7 @@
     }
     return nil;
 }
+
 -(UIButton *)ctaButton {
     if (!_ctaButton) {
         _ctaButton = [[UIButton alloc]initWithFrame:CGRectMake(self.frame.size.width - 140, self.frame.size.height/2 - 22, 130, 44)];
@@ -71,6 +80,7 @@
     }
     return _iconImage;
 }
+
 -(UILabel *)title {
     if (!_title) {
         CGFloat x = 79.0f;
@@ -87,6 +97,9 @@
             fontSize = 20.0f;
             height = 30.0f;
         }
+        if (_offerModel.CTA.length <= 0) {
+            width += 130;
+        }
         _title = [[UILabel alloc]initWithFrame:CGRectMake(x, y, width, height)];
         [_title setTextColor:[UIColor colorWithRed:42.0/255.0 green:45.0/255.0 blue:52.0/255.0 alpha:1]];
         [_title setFont:[UIFont systemFontOfSize:fontSize]];
@@ -94,6 +107,7 @@
     }
     return _title;
 }
+
 -(UILabel *)desc {
     if (!_desc && _offerModel != nil && _offerModel.text && _offerModel.text.length > 0) {
         CGFloat x = 79.0f;
@@ -104,6 +118,9 @@
             x = x - 60.0f;
             width = width + 60.0f;
         }
+        if (_offerModel.CTA.length <= 0) {
+            width += 130;
+        }
         _desc = [[UILabel alloc]initWithFrame:CGRectMake(x,y,width, height)];
         [_desc setTextColor:[UIColor colorWithRed:42.0/255.0 green:45.0/255.0 blue:52.0/255.0 alpha:1]];
         [_desc setFont:[UIFont systemFontOfSize:12]];
@@ -113,10 +130,12 @@
     }
     return _desc;
 }
+
 -(UIImageView *)logoImage {
     if (!_logoImage) {
-        _logoImage = [[UIImageView alloc]initWithFrame:CGRectMake(self.frame.size.width - 51, self.frame.size.height/2 + 23, 36, 10)];
+        _logoImage = [[UIImageView alloc]initWithFrame:CGRectMake(self.frame.size.width - 50, self.frame.size.height - 15, 50, 15)];
     }
+
     return _logoImage;
 }
 

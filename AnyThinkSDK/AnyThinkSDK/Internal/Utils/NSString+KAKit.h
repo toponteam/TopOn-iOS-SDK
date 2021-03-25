@@ -25,6 +25,7 @@
 -(NSString*)stringUrlEncode;
 -(NSString*)stringUrlDecode;
 
+- (instancetype)optional;
 - (NSString *)fixECPMLoseWithPrice;
 
 @end

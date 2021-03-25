@@ -69,86 +69,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "90D81624-D6C9-4353-AE0A-3144CFD1DF95"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "AnyThinkSDK/Core/Managers/ATAdLoader.m"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "547"
-            endingLineNumber = "547"
-            landmarkName = "-seriallyLoadOfferWithWaterfall:finalWaterfall:requestID:placementModel:startDate:extra:delegate:"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "295A71A8-AE00-4AA9-A288-A1D58B0A6881"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "AnyThinkSDK/Core/Managers/ATAdLoader.m"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "704"
-            endingLineNumber = "704"
-            landmarkName = "-loadOfferWithRequestID:placementModel:unitGroupModel:finalWaterfall:startDate:extra:delegate:success:failure:"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "C28C389F-8F8E-48CD-ACD3-559FEC403071"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "AnyThinkSDK/Core/Managers/ATAdLoader.m"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "722"
-            endingLineNumber = "722"
-            landmarkName = "-loadOfferWithRequestID:placementModel:unitGroupModel:finalWaterfall:startDate:extra:delegate:success:failure:"
-            landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "C28C389F-8F8E-48CD-ACD3-559FEC403071 - 33ae1530cbe76cf2"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "__123-[ATAdLoader loadOfferWithRequestID:placementModel:unitGroupModel:finalWaterfall:startDate:extra:delegate:success:failure:]_block_invoke.520"
-                  moduleName = "AnyThinkSDKDemo"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/stephen/Desktop/work/SuperAds/git/UpPlatform/up_sdk_ios/AnyThinkSDK/FinalPorject/AnyThinkSDK/AnyThinkSDK/Core/Managers/ATAdLoader.m"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "722"
-                  endingLineNumber = "722"
-                  offsetFromSymbolStart = "36">
-               </Location>
-               <Location
-                  uuid = "C28C389F-8F8E-48CD-ACD3-559FEC403071 - a24d4f90fe423f69"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "__123-[ATAdLoader loadOfferWithRequestID:placementModel:unitGroupModel:finalWaterfall:startDate:extra:delegate:success:failure:]_block_invoke_2"
-                  moduleName = "AnyThinkSDKDemo"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/stephen/Desktop/work/SuperAds/git/UpPlatform/up_sdk_ios/AnyThinkSDK/FinalPorject/AnyThinkSDK/AnyThinkSDK/Core/Managers/ATAdLoader.m"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "723"
-                  endingLineNumber = "723"
-                  offsetFromSymbolStart = "128">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "4E2873C9-4053-4C68-9B63-D557A9463D72"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
@@ -238,6 +158,86 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "41"
             endingLineNumber = "41">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B0DE97B7-7C5D-4431-BA0E-7B7ABC217442"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Core/OfferManagers/ATCommonOfferTracker.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "179"
+            endingLineNumber = "179"
+            landmarkName = "-clickOfferWithOfferModel:setting:circleID:delegate:viewController:extra:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B00CA0FC-C8CF-4DC6-8BB5-ECD4C4C6CEB1"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/Core/OfferManagers/ATCommonOfferTracker.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "88"
+            endingLineNumber = "88"
+            landmarkName = "-openUrlInWebview:storeUrlStr:parentCtrl:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "985A44CA-5229-44CA-B939-96E335C932F9"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/OfmSDK/Mediations/TopOn/Base/OFMTopOnInitManager.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "32"
+            endingLineNumber = "32"
+            landmarkName = "-initWithCustomInfo:localInfo:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "F47FA8D4-7DD6-4A45-AB0D-3043C9878A94"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/OfmSDK/API/OFMAPI.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "267"
+            endingLineNumber = "267"
+            landmarkName = "-initCurrentMediationSDK"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "40C2C4DF-1FAE-44FA-8E51-FC4071E0CAE9"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnyThinkSDK/OfmSDK/Mediations/Mobrain/Base/OFMMobrainInitManager.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "49"
+            endingLineNumber = "49"
+            landmarkName = "-initWithCustomInfo:localInfo:"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

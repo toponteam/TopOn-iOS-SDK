@@ -11,6 +11,7 @@
 #import "ATLogger.h"
 #import "Utilities.h"
 #import "ATAgentEvent.h"
+#import "ATPlacementSettingManager.h"
 
 static NSLock* ATStoreKitLock = nil;
 
@@ -59,19 +60,19 @@ static NSLock* ATStoreKitLock = nil;
     return holder;
 }
 
-- (void)atLoadProductWithPackageName:(NSString *)packageName placementID:(NSString *)placementID offerID:(NSString *)offerID pkgName:(NSString *)pkgName finished:(void (^)(BOOL result, NSError *error, NSTimeInterval loadTime))finished {
+- (void)atLoadProductWithOfferModel:(ATOfferModel *)offerModel packageName:(NSString *)packageName placementID:(NSString *)placementID offerID:(NSString *)offerID pkgName:(NSString *)pkgName finished:(void (^)(BOOL result, NSError *error, NSTimeInterval loadTime))finished {
     NSString *appIDString = [packageName stringByReplacingOccurrencesOfString:@"id" withString:@""];
     NSInteger APPID = [appIDString integerValue];
     if([NSThread isMainThread]){
-        [self loadProductWithAPPID:APPID placementID:placementID offerID:offerID pkgName:pkgName finished:finished];
+        [self loadProductWithAPPID:APPID placementID:placementID offerID:offerID offerModel:offerModel pkgName:pkgName finished:finished];
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self loadProductWithAPPID:APPID placementID:placementID offerID:offerID pkgName:pkgName finished:finished];
+            [self loadProductWithAPPID:APPID placementID:placementID offerID:offerID offerModel:offerModel pkgName:pkgName finished:finished];
         });
     }
 }
 
-- (void)loadProductWithAPPID:(NSInteger)APPID placementID:(NSString *)placementID offerID:(NSString *)offerID pkgName:(NSString *)pkgName finished:(void (^)(BOOL result, NSError *error, NSTimeInterval loadTime))finished {
+- (void)loadProductWithAPPID:(NSInteger)APPID placementID:(NSString *)placementID offerID:(NSString *)offerID offerModel:(ATOfferModel *)offerModel pkgName:(NSString *)pkgName finished:(void (^)(BOOL result, NSError *error, NSTimeInterval loadTime))finished {
     if (APPID <= 0 ) {
         if(finished) {
             finished(NO, [NSError errorWithDomain:@"appid invalid" code:-1 userInfo:nil], 0);
@@ -83,7 +84,20 @@ static NSLock* ATStoreKitLock = nil;
     NSNumber *startTimeStamp =  [Utilities normalizedTimeStamp];
     [ATLogger logError:[NSString stringWithFormat:@"storekit load start APPID ==== %ld ",(long)APPID]  type:ATLogTypeInternal];
     
-    [self.storekit loadProductWithParameters:@{SKStoreProductParameterITunesItemIdentifier : @(APPID),@"_MSPNC_Tag":@"1"} completionBlock:^(BOOL result, NSError *error){
+    ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
+    NSDictionary *skParames = nil;
+    if (@available(iOS 14, *)) {
+//        skParames = @{
+//            SKStoreProductParameterITunesItemIdentifier : @(APPID),
+//            @"_MSPNC_Tag":@"1",
+//            SKStoreProductParameterCampaignToken: placementModel.campaign};
+        skParames = @{SKStoreProductParameterITunesItemIdentifier : @(APPID),@"_MSPNC_Tag":@"1"};
+
+    }else{
+        skParames = @{SKStoreProductParameterITunesItemIdentifier : @(APPID),@"_MSPNC_Tag":@"1"};
+    }
+    
+    [self.storekit loadProductWithParameters:skParames completionBlock:^(BOOL result, NSError *error){
         
         if(result){
             if (self.realtimeLoad) {
@@ -97,7 +111,7 @@ static NSLock* ATStoreKitLock = nil;
         
         NSNumber *endTimeStamp =  [Utilities normalizedTimeStamp];
         NSTimeInterval loadTime = [endTimeStamp doubleValue] - [startTimeStamp doubleValue];
-        [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyPreloadStorekitResultKey placementID:placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoMyOfferOfferIDKey:offerID, kAgentEventExtraInfoAdTypeKey:@1, kAgentEventExtraInfoAdPkgNameKey:pkgName, kAgentEventExtraInfoIsSuccessKey:result?@1:@0,  kAgentEventExtraInfoLoadStartTimeKey:startTimeStamp, kAgentEventExtraInfoLoadStopTimeKey:endTimeStamp}];
+        [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyPreloadStorekitResultKey placementID:placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoMyOfferOfferIDKey:offerID, kAgentEventExtraInfoAdTypeKey:@(offerModel.offerModelType), kAgentEventExtraInfoAdPkgNameKey:pkgName, kAgentEventExtraInfoIsSuccessKey:result?@1:@0,  kAgentEventExtraInfoLoadStartTimeKey:startTimeStamp, kAgentEventExtraInfoLoadStopTimeKey:endTimeStamp}];
         
         if(finished) {
             finished(result, error, loadTime);

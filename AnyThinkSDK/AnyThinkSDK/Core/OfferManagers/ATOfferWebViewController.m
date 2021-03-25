@@ -15,6 +15,7 @@
 @property (nonatomic, strong) WKWebView *web;
 @property (nonatomic, strong) UIButton *backBtn;
 @property (nonatomic, strong) UIButton *forwardBtn;
+@property (nonatomic, strong) NSURL *redirectUrl;
 
 @end
 
@@ -53,6 +54,7 @@
     [self.web addObserver:self forKeyPath:@"canGoForward" options:NSKeyValueObservingOptionNew context:nil];
     
     self.navigationController.toolbar.barTintColor = [UIColor whiteColor];
+    self.navigationController.navigationBar.barTintColor = [UIColor whiteColor];
 }
 
 - (void)setupBarbuttons {
@@ -147,13 +149,26 @@
 }
 // MARK:- web navigation delegate
 
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    if (self.redirectUrl && [error.localizedDescription containsString:self.redirectUrl.host]) {
+        NSLog(@"redirect failed");
+        if (self.openInSafariWhenFailed) {
+            [[UIApplication sharedApplication] openURL:self.redirectUrl];
+        }
+    }
+    
+}
+
 - (void)webView:(WKWebView *)webView didReceiveServerRedirectForProvisionalNavigation:(WKNavigation *)navigation {
     if ([webView.URL.absoluteString containsString:@"apps.apple.com"] ||
         [webView.URL.absoluteString containsString:@"itunes.apple.com"]) {
         
         [[UIApplication sharedApplication] openURL:webView.URL];
+        
+        [self close];
         return;
     }
+    self.redirectUrl = webView.URL;
 }
 
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {

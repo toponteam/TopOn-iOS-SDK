@@ -19,8 +19,7 @@
 
 @interface ATNativeADOfferManager()
 @property(nonatomic, readonly) ATSerialThreadSafeAccessor *offerCacheAccessor;
-@property(nonatomic, readonly) NSMutableDictionary *offers;
-@property(nonatomic, readonly) NSMutableDictionary *statusStorage;
+
 @end
 
 @implementation ATNativeADOfferManager

@@ -40,15 +40,20 @@ NSString *const kATInterstitialExtraAdSize600_600 = @"600_600";
 NSString *const kATInterstitialExtraAdSize600_900 = @"600_900";
 @implementation ATAdManager (Interstitial)
 -(BOOL) interstitialReadyForPlacementID:(NSString*)placementID {
-    BOOL ready = [self interstitialReadyForPlacementID:placementID scene:nil caller:ATAdManagerReadyAPICallerReady interstitial:nil];
+    return [self interstitialReadyForPlacementID:placementID sendTK:YES];
+}
+
+-(BOOL) interstitialReadyForPlacementID:(NSString*)placementID sendTK:(BOOL)send {
+    BOOL ready = [self interstitialReadyForPlacementID:placementID scene:nil caller:ATAdManagerReadyAPICallerReady interstitial:nil sendTK:send];
     NSMutableDictionary *info = [NSMutableDictionary dictionaryWithDictionary:[ATGeneralAdAgentEvent apiLogInfoWithPlacementID:placementID format:ATAdFormatInterstitial api:kATAPIIsReady]];
     info[@"result"] = ready ? @"YES" : @"NO";
     [ATLogger logMessage:[NSString stringWithFormat:@"\nAPI invocation info:\n*****************************\n%@ \n*****************************", info] type:ATLogTypeTemporary];
     return ready;
 }
 
--(BOOL) interstitialReadyForPlacementID:(NSString*)placementID scene:(NSString*)scene caller:(ATAdManagerReadyAPICaller)caller interstitial:(ATInterstitial* __strong*)interstitial {
-    return [[ATAdManager sharedManager] adReadyForPlacementID:placementID scene:scene caller:caller context:^BOOL(NSDictionary *__autoreleasing *extra) {
+-(BOOL) interstitialReadyForPlacementID:(NSString*)placementID scene:(NSString*)scene caller:(ATAdManagerReadyAPICaller)caller interstitial:(ATInterstitial* __strong*)interstitial sendTK:(BOOL)send {
+    return [[ATAdManager sharedManager] adReadyForPlacementID:placementID scene:scene caller:caller sendTK:send context:^BOOL(NSDictionary *__autoreleasing *extra) {
+        
         ATInterstitial *localInterstitial = [[ATInterstitialManager sharedManager] interstitialForPlacementID:placementID invalidateStatus:caller == ATAdManagerReadyAPICallerShow extra:extra];
         if (interstitial != nil) { *interstitial = localInterstitial; }
         return localInterstitial != nil;
@@ -61,7 +66,7 @@ NSString *const kATInterstitialExtraAdSize600_900 = @"600_900";
     if ([[ATWaterfallManager sharedManager] loadingAdForPlacementID:placementID]) {
         checkLoadModel.isLoading = YES;
     }
-    if ([self interstitialReadyForPlacementID:placementID scene:nil caller:ATAdManagerReadyAPICallerReady interstitial:&interstitial]) {
+    if ([self interstitialReadyForPlacementID:placementID scene:nil caller:ATAdManagerReadyAPICallerReady interstitial:&interstitial sendTK:YES]) {
         checkLoadModel.isReady = YES;
         NSMutableDictionary *delegateExtra = [NSMutableDictionary dictionaryWithDictionary:[interstitial.customEvent delegateExtra]];
         if ([delegateExtra containsObjectForKey:kATADDelegateExtraIDKey]) { [delegateExtra removeObjectForKey:kATADDelegateExtraIDKey]; }
@@ -73,7 +78,6 @@ NSString *const kATInterstitialExtraAdSize600_900 = @"600_900";
     return checkLoadModel;
 }
 
-
 -(void) showInterstitialWithPlacementID:(NSString*)placementID scene:(NSString*)scene inViewController:(UIViewController*)viewController delegate:(id<ATInterstitialDelegate>)delegate {
     [ATLogger logMessage:[NSString stringWithFormat:@"\nAPI invocation info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent apiLogInfoWithPlacementID:placementID format:3 api:kATAPIShow]] type:ATLogTypeTemporary];
     NSString *showingScene = nil;
@@ -84,7 +88,7 @@ NSString *const kATInterstitialExtraAdSize600_900 = @"600_900";
     }
     NSError *error = nil;
     ATInterstitial *interstitial = nil;
-    if ([self interstitialReadyForPlacementID:placementID scene:showingScene caller:ATAdManagerReadyAPICallerShow interstitial:&interstitial]) {
+    if ([self interstitialReadyForPlacementID:placementID scene:showingScene caller:ATAdManagerReadyAPICallerShow interstitial:&interstitial sendTK:YES]) {
         interstitial.scene = showingScene;
         viewController.ad = interstitial;
         [interstitial.customEvent saveShowAPIContext];

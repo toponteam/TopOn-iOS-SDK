@@ -1,0 +1,6 @@
+framework module AnyThinkVungleAdapter {
+  umbrella header "AnyThinkVungleAdapter.h"
+
+  export *
+  module * { export * }
+}

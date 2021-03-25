@@ -7,16 +7,37 @@
 //
 
 #import "ATPlacementModel.h"
+#import "NSData+KAKit.h"
 
 NSString *const kPlacementModelCacheDateKey = @"placement_cache_date";
 NSString *const kPlacementModelCustomDataKey = @"custom_data";
-@interface ATPlacementModel()
+
+@implementation ATPlatfromInfo
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+    self = [super init];
+    if (self) {
+        _token = dictionary[@"token"];
+        _dataType = [dictionary[@"rtye"] integerValue];
+    }
+    return self;
+}
+
 @end
+
+@interface ATPlacementModel()
+
+/** platforms */
+@property(nonatomic, strong) NSMutableDictionary *platforms;
+@end
+
 @implementation ATPlacementModel
 -(instancetype) initWithDictionary:(NSDictionary *)dictionary associatedCustomData:(NSDictionary*)customData placementID:(NSString*)placementID {
     self = [super initWithDictionary:dictionary];
     if (self != nil) {
         _placementID = placementID;
+        _platforms = [NSMutableDictionary new];
+        
         if ([customData isKindOfClass:[NSDictionary class]]) {
             _associatedCustomData = [NSDictionary dictionaryWithDictionary:customData];
         } else {
@@ -42,6 +63,8 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
         _trafficGroupID = dictionary[@"t_g_id"];
         _usesDefaultMyOffer = [dictionary[@"u_n_f_sw"] integerValue];
         _autoloadingEnabled = [dictionary[@"ra"] boolValue];
+        
+        [self generateIrld:dictionary];
         if ([dictionary[@"tp_ps"] isKindOfClass:[NSDictionary class]]) {
             NSMutableDictionary *tppsDict = [NSMutableDictionary dictionaryWithDictionary:dictionary[@"tp_ps"]];
             tppsDict[@"pucs"] = dictionary[@"pucs"];
@@ -56,12 +79,30 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
         _loadCapDuration = [dictionary[@"load_cap_time"] doubleValue] / 1000.0f;
         _expectedNumberOfOffers = [dictionary[@"cached_offers_num"] integerValue];
         
+        //in house list
+        NSMutableArray<ATUnitGroupModel*>* inhouseUgs = [NSMutableArray<ATUnitGroupModel*> array];
+        NSArray<NSDictionary*>* inhouseList = dictionary[@"inh_list"];
+        [inhouseList enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            NSMutableDictionary *unitGroupDict = [NSMutableDictionary dictionaryWithDictionary:obj];
+            unitGroupDict[@"header_bidding"] = @YES;
+            [inhouseUgs addObject:[[ATUnitGroupModel alloc] initWithDictionary:unitGroupDict]];
+        }];
+        _inhouseUnitGroups = inhouseUgs;
+        
         NSMutableArray<ATUnitGroupModel*>* unitGroups = [NSMutableArray<ATUnitGroupModel*> array];
         NSArray<NSDictionary*>* unitGroupDicts = dictionary[@"ug_list"];
         [unitGroupDicts enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             [unitGroups addObject:[[ATUnitGroupModel alloc] initWithDictionary:obj]];
         }];
+        
+        NSMutableArray<ATUnitGroupModel*>* onlineApiUnitGroups = [NSMutableArray<ATUnitGroupModel*> array];
+        NSArray<NSDictionary*>* onlineApiUnitGroupDicts = dictionary[@"ol_list"];
+        [onlineApiUnitGroupDicts enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            [unitGroups addObject:[[ATUnitGroupModel alloc] initWithDictionary:obj]];
+            [onlineApiUnitGroups addObject:[[ATUnitGroupModel alloc] initWithDictionary:obj]];
+        }];
         _unitGroups = unitGroups;
+        _olApiUnitGroups = onlineApiUnitGroups;
         
         NSMutableArray<ATUnitGroupModel*>* headerBiddingUnitGroups = [NSMutableArray<ATUnitGroupModel*> array];
         NSArray<NSDictionary*>* headerBiddingUnitGroupDicts = dictionary[@"hb_list"];
@@ -108,9 +149,16 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
         }];
         _offers = offers;
         _callback = dictionary[@"callback"];
-        
+        _FBHBTimeOut = [dictionary[@"fbhb_bid_wtime"] integerValue]/1000;
         _adxSettingDict = dictionary[@"adx_st"];
+        _olApiSettingDict = dictionary[@"adx_st"];
+        _currency = _callback[@"acct_cy"];
+        if (_callback[@"exch_r"]) {
+            _exchangeRate = [[NSDecimalNumber decimalNumberWithString:[NSString stringWithFormat:@"%@",_callback[@"exch_r"]]] stringValue];
+        }
         
+        // v5.7.10
+        _campaign = @"";
     }
     return self;
 }
@@ -123,6 +171,9 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
     return [NSString stringWithFormat:@"%@", @{@"placement_id":_placementID != nil ? _placementID : @"", @"unit_group_ids":[_unitGroups mutableArrayValueForKey:@"unitGroupID"] != nil ? [_unitGroups mutableArrayValueForKey:@"unitGroupID"] : @[]}];
 }
 
+- (NSArray<ATPlatfromInfo *> *)revenueToPlatforms {
+    return self.platforms;
+}
 /**
  * Using NSClassFromString to walk around the dependency on Native framework.
  */
@@ -135,6 +186,43 @@ NSString *const kPlacementModelCustomDataKey = @"custom_data";
     if (NSClassFromString(@"ATSplashManager") != nil) classes[@4] = NSClassFromString(@"ATSplashManager");
     return classes[@(self.format)];
 }
+
+- (void)generateIrld:(NSDictionary *)dictionary {
+    NSString *platformStr = [dictionary[@"ilrd"] stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+    NSData *platformData = [platformStr dataUsingEncoding:NSUTF8StringEncoding];
+    NSDictionary *platforms = platformData.dictionary;
+    if ([platforms isKindOfClass:[NSDictionary class]] == NO) {
+        return;
+    }
+    
+    for (NSString *key in [platforms allKeys]) {
+               
+        ATPlatfromInfo *info = [[ATPlatfromInfo alloc]initWithDictionary:platforms[key]];
+        [self.platforms setValue:info forKey:key];
+    }
+}
+
+// MARK:- methods claimed in .h
+- (BOOL)needConvertPrice {
+    if (self.currency) {
+        return [self.currency isEqualToString:@"USD"] == NO;
+    }
+    return NO;
+}
+
+- (NSString *)convertedPrice:(NSString *)price {
+    if (price == nil || price.length == 0 ) {
+        return @"0";
+    }
+    
+    if ([self needConvertPrice] == NO || self.exchangeRate == nil) {
+        return price;
+    }
+    NSDecimalNumber *priceDecimal = [NSDecimalNumber decimalNumberWithString:price];
+    NSDecimalNumber *rateDecimal = [NSDecimalNumber decimalNumberWithString:self.exchangeRate];
+    return [[priceDecimal decimalNumberByMultiplyingBy:rateDecimal] stringValue];
+}
+
 @end
 
 @implementation ATPlacementModelExtra

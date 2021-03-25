@@ -40,8 +40,21 @@
 }
 
 +(NSString*)resourcePathForURL:(NSString*)resourceURL {
-    NSString *format = [[resourceURL componentsSeparatedByString:@"."] lastObject];
-    return resourceURL.md5 != nil ? [NSString stringWithFormat:@"%@%@", [[ATOfferResourceLoader resourceRootPath] stringByAppendingPathComponent:resourceURL.md5], format != nil ? [@"." stringByAppendingString:format] : @""] : @"";
+    
+    NSString *tempStr = [NSURL URLWithString:resourceURL].path;
+    NSString *format = [[tempStr componentsSeparatedByString:@"."] lastObject];
+    NSString *md5 = resourceURL.md5;
+    if ([Utilities isEmpty:md5]) {
+        return @"";
+    }
+    NSString *localPath = [[ATOfferResourceLoader resourceRootPath] stringByAppendingPathComponent:resourceURL.md5];
+    if ([format isEqualToString:@"mp4"]) {
+        return [NSString stringWithFormat:@"%@.%@",localPath,format];
+    }
+    return localPath;
+//    NSString *format = [[tempStr componentsSeparatedByString:@"."] lastObject];
+//    return resourceURL.md5 != nil ? [NSString stringWithFormat:@"%@%@", [[ATOfferResourceLoader resourceRootPath] stringByAppendingPathComponent:resourceURL.md5], format != nil ? [@"." stringByAppendingString:format] : @""] : @"";
+    
 }
 
 static NSString *const kOfferLoadingErrorDomain = @"com.anythink.OfferResourceLoading";
@@ -88,7 +101,7 @@ static NSString *const kOfferLoadingErrorDomain = @"com.anythink.OfferResourceLo
                                             downloadResult = 1;
                                             numberOfSucDownloads++;
                                             NSString *resourcePath = [ATOfferResourceLoader resourcePathForURL:resourceURL];
-                                            [data writeToFile:resourcePath atomically:YES];
+                                            BOOL success = [data writeToFile:resourcePath atomically:YES];
                                             [resourceModel setResourcePath:resourcePath forURL:resourceURL];
                                             [resourceModel accumulateLength:[data length]];
                                         } else {
@@ -109,7 +122,8 @@ static NSString *const kOfferLoadingErrorDomain = @"com.anythink.OfferResourceLo
                                         
                                         if (numberOfFinishedDownload == [offerModel.resourceURLs count]) {
                                             requestFinish = YES;
-                                            if (!requestTimeout) { [weakSelf finishResourceDownloadWithOfferModel:offerModel resourceModel:resourceModel error:numberOfSucDownloads == [offerModel.resourceURLs count] ? nil : [NSError errorWithDomain:kOfferLoadingErrorDomain code:10001 userInfo:@{NSLocalizedDescriptionKey:@"Offer has failed to load resource", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"%@", errorDict]}]]; }
+                                            if (!requestTimeout) {
+                                                [weakSelf finishResourceDownloadWithOfferModel:offerModel resourceModel:resourceModel error:numberOfSucDownloads == [offerModel.resourceURLs count] ? nil : [NSError errorWithDomain:kOfferLoadingErrorDomain code:10001 userInfo:@{NSLocalizedDescriptionKey:@"Offer has failed to load resource", NSLocalizedFailureReasonErrorKey:[NSString stringWithFormat:@"%@", errorDict]}]]; }
                                         }
                                     });
                                 }] resume];

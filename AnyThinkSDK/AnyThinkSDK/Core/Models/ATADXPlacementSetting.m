@@ -29,9 +29,18 @@
         self.closeButtonAppearanceInterval = [infoDictionary[@"s_c_t"] doubleValue];
         self.unMute = [infoDictionary[@"v_m"] boolValue];
         
-//        self.storekitTime = ATLoadStorekitTimePreload;
-//        self.bannerAppearanceInterval = -1;
-//        self.videoClickable = ATVideoClickableNone;
+        self.bannerSize = infoDictionary[@"size"];
+        self.splashCountDownTime = [infoDictionary[@"countdown"] integerValue];
+        self.skipable = [infoDictionary[@"allows_skip"] boolValue];
+        self.splashOrientation = [infoDictionary[@"orientation"] integerValue];
+        self.showBannerCloseBtn = ![infoDictionary[@"close_button"] boolValue];
+        
+        self.lastOfferidsNum = [dictionary[@"l_o_num"] integerValue];
+        self.deeplinkClickMoment = [dictionary[@"dp_cm"] integerValue];
+        // v 5.7.9
+        self.closeBtnDelayMaxTime = [dictionary[@"ec_l_t"] integerValue]/1000;
+        self.closeBtnDelayMinTime = [dictionary[@"ec_s_t"] integerValue]/1000;
+        self.closeBtnDelayRate = [dictionary[@"ec_r"] integerValue]/100;
     }
     return self;
 }

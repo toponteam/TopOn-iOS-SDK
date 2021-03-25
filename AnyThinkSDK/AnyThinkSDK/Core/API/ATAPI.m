@@ -37,6 +37,11 @@ NSString *const kATADDelegateExtraScenarioRewardNameKey = @"scenario_reward_name
 NSString *const kATADDelegateExtraScenarioRewardNumberKey = @"scenario_reward_number";
 NSString *const kATADDelegateExtraPlacementRewardNameKey = @"placement_reward_name";
 NSString *const kATADDelegateExtraPlacementRewardNumberKey = @"placement_reward_number";
+NSString *const kATADDelegateExtraExtInfoKey = @"ext_info";
+NSString *const kATADDelegateExtraOfferIDKey = @"offer_id";
+NSString *const kATADDelegateExtraCreativeIDKey = @"creative_id";
+NSString *const kATADDelegateExtraIsDeeplinkKey = @"is_deeplink";
+NSString *const kATADDelegateExtraRVUserCustomData = @"reward_custom_data";
 
 NSString *const kNativeADAssetsAdvertiserKey = @"advertiser";
 NSString *const kNativeADAssetsMainTextKey = @"main_text";
@@ -130,6 +135,11 @@ NSString *const kNetworkNameFyber = @"Fyber";
 NSString *const kNetworkNameGoogleAdManager = @"GoogleAdManager";
 NSString *const kNetworkNameADX = @"Adx";
 NSString *const kNetworkNameHelium = @"Helium";
+NSString *const kNetworkNameMintegralOnlineApi = @"MintegralOnlineApi";
+NSString *const kNetworkNameGDTOnlineApi = @"GDTOnlineApi";
+NSString *const kNetworkNameKidoz = @"Kidoz";
+NSString *const kNetworkNameMyTarget = @"MyTarget";
+NSString *const kNetworkNameMobrain = @"Mobrain";
 
 NSString *const kInmobiGDPRStringKey = @"gdpr";
 NSString *const kInmobiConsentStringKey = @"consent_string";
@@ -186,6 +196,8 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
 @interface ATAPI()
 @property(atomic) BOOL logEnabled_impl;
 @property(atomic) BOOL MPisInit;
+@property(atomic) BOOL adLogoHidden;
+@property(atomic) BOOL isOfm;
 
 @property(nonatomic, readonly) ATThreadSafeAccessor *networkVersionsAccessor;
 @property(nonatomic, readonly) NSMutableDictionary *networkVersionsInfo;
@@ -223,7 +235,7 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
 }
 
 +(NSDictionary<NSNumber*, NSString*>*)networkNameMap {
-    return @{@1:kNetworkNameFacebook, @2:kNetworkNameAdmob, @3:kNetworkNameInmobi, @4:kNetworkNameFlurry, @5:kNetworkNameApplovin, @6:kNetworkNameMintegral, @7:kNetworkNameMopub, @8:kNetworkNameGDT, @9:kNetworkNameChartboost, @10:kNetworkNameTapjoy, @11:kNetworkNameIronSource, @12:kNetworkNameUnityAds, @13:kNetworkNameVungle, @14:kNetworkNameAdColony, @15:kNetworkNameTT, @17:kNetworkNameOneway, @18:kNetworkNameMobPower, @20:kNetworkNameYeahmobi, @21:kNetworkNameAppnext, @22:kNetworkNameBaidu, @23:kNetworkNameNend, @24:kNetworkNameMaio, @25:kNetworkNameStartApp, @28:kNetworkNameKS, @29:kNetworkNameSigmob, @33:kNetworkNameGoogleAdManager,@35:kNetworkNameMyOffer, @36:kNetworkNameOgury, @37:kNetworkNameFyber, @66:kNetworkNameADX, @40:kNetworkNameHelium};
+    return @{@1:kNetworkNameFacebook, @2:kNetworkNameAdmob, @3:kNetworkNameInmobi, @4:kNetworkNameFlurry, @5:kNetworkNameApplovin, @6:kNetworkNameMintegral, @7:kNetworkNameMopub, @8:kNetworkNameGDT, @9:kNetworkNameChartboost, @10:kNetworkNameTapjoy, @11:kNetworkNameIronSource, @12:kNetworkNameUnityAds, @13:kNetworkNameVungle, @14:kNetworkNameAdColony, @15:kNetworkNameTT, @17:kNetworkNameOneway, @18:kNetworkNameMobPower, @20:kNetworkNameYeahmobi, @21:kNetworkNameAppnext, @22:kNetworkNameBaidu, @23:kNetworkNameNend, @24:kNetworkNameMaio, @25:kNetworkNameStartApp, @28:kNetworkNameKS, @29:kNetworkNameSigmob, @33:kNetworkNameGoogleAdManager,@35:kNetworkNameMyOffer, @36:kNetworkNameOgury, @37:kNetworkNameFyber, @66:kNetworkNameADX, @40:kNetworkNameHelium,@41:kNetworkNameMintegralOnlineApi,@42:kNetworkNameGDTOnlineApi,@45:kNetworkNameKidoz,@32:kNetworkNameMyTarget,@46:kNetworkNameMobrain};
 }
 
 +(NSDate*)firstLaunchDate {
@@ -320,8 +332,8 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
                 frameworksKey:@[@"Chartboost.framework",@"HeliumSdk.framework",@"HeliumAdapterChartboost.framework"]},
         @"TikTok":@{dependenciesKey:@{@"AnyThinkTTNativeAdapter":@[@"BUNativeAdsManager", @"BUAdSlot", @"BUNativeAd"],
                                       @"AnyThinkTTRewardedVideoAdapter":@[@"BURewardedVideoModel", @"BURewardedVideoAd"],
-                                      @"AnyThinkTTBannerAdapter":@[@"BUBannerAdView", @"BUSize", @"BUNativeExpressBannerView"],
-                                      @"AnyThinkTTInterstitialAdapter":@[@"BUFullscreenVideoAd", @"BUInterstitialAd", @"BUNativeExpressInterstitialAd"],
+                                      @"AnyThinkTTBannerAdapter":@[@"BUSize", @"BUNativeExpressBannerView"],
+                                      @"AnyThinkTTInterstitialAdapter":@[@"BUFullscreenVideoAd", @"BUNativeExpressInterstitialAd"],
                                       @"AnyThinkTTSplashAdapter":@[@"BUSplashAdView"] },
                     frameworksKey:@[@"BUAdSDK.framework"],
                     resourceBundleKey:@"BUAdSDK" },
@@ -369,7 +381,7 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
                                   @"AnyThinkKSInterstitialAdapter":@[@"KSFullscreenVideoAd"] },
                 frameworksKey:@[@"KSAdSDK.framework"]},
         @"Sigmob":@{dependenciesKey:@{@"AnyThinkSigmobRewardedVideoAdapter":@[@"WindAdRequest", @"WindRewardedVideoAd"],
-                                      @"AnyThinkSigmobInterstitialAdapter":@[@"WindFullscreenVideoAd", @"WindAdRequest"],
+                                      @"AnyThinkSigmobInterstitialAdapter":@[@"WindInterstitialAd", @"WindAdRequest"],
                                       @"AnyThinkSigmobSplashAdapter":@[@"WindSplashAd"] },
                     frameworksKey:@[@"WindSDK.framework"],
                     resourceBundleKey:@"Sigmob" },
@@ -377,16 +389,22 @@ static NSString *kUserDefaultConsentInfoConsentKey = @"consent";
                 dependenciesKey:@{@"AnyThinkOguryRewardedVideoAdapter":@[@"OguryAdsOptinVideo"],
                                   @"AnyThinkOguryInterstitialAdapter":@[@"OguryAdsInterstitial"] },
                 frameworksKey:@[@"OMSDK_Oguryco.framework", @"OguryAds.framework", @"OguryChoiceManager.framework"] },
-        @"MyOffer":@{
-                dependenciesKey:@{@"AnyThinkMyOfferRewardedVideoAdapter":@[@"ATMyOfferOfferManager"],
-                                  @"AnyThinkMyOfferInterstitialAdapter":@[@"ATMyOfferOfferManager"] },
-                frameworksKey:@[@"AnyThinkMyOffer.framework"] },
         @"Fyber":@{
                 dependenciesKey:@{@"AnyThinkFyberRewardedVideoAdapter":@[@"IAAdRequest", @"IAVideoContentController", @"IAFullscreenUnitController", @"IAAdSpot"],
                                   @"AnyThinkFyberInterstitialAdapter":@[@"IAAdRequest", @"IAVideoContentController", @"IAFullscreenUnitController", @"IAAdSpot"],
                                   @"AnyThinkFyberBannerAdapter":@[@"IAAdRequest", @"IAViewUnitController", @"IAAdSpot"] },
                 frameworksKey:@[@"IASDKCore.framework", @"IASDKMRAID.framework", @"IASDKVideo.framework"],
-                resourceBundleKey:@"IASDKResources" }
+                resourceBundleKey:@"IASDKResources" },
+        @"Kidoz":@{
+                dependenciesKey:@{@"AnyThinkKidozRewardedVideoAdapter":@[@"KidozSDK"],
+                                  @"AnyThinkKidozInterstitialAdapter":@[@"KidozSDK"],
+                                  @"AnyThinkKidozBannerAdapter":@[@"KidozSDK"] },
+                frameworksKey:@[@"libKidozSDK.a"] },
+        @"MyTarget":@{
+                dependenciesKey:@{@"AnyThinkMyTargetRewardedVideoAdapter":@[@"MTRGRewardedAd",@"MTRGReward"],
+                                  @"AnyThinkMyTargetInterstitialAdapter":@[@"MTRGInterstitialAd"],
+                                  @"AnyThinkMyTargetBannerAdapter":@[@"MTRGAdView"] },
+                frameworksKey:@[@"MyTargetSDK.framework"] }
     };
     
     NSMutableArray<NSDictionary*>* results = [NSMutableArray<NSDictionary*> array];
@@ -496,7 +514,7 @@ static NSString *const UAInfoUAKey = @"ua";
     self = [super init];
     if (self != nil) {
         _networkVersionsAccessor = [ATThreadSafeAccessor new];
-        _networkVersionsInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"", kNetworkNameFacebook, @"", kNetworkNameInmobi, @"", kNetworkNameAdmob, @"", kNetworkNameFlurry, @"", kNetworkNameMintegral, @"", kNetworkNameApplovin, @"", kNetworkNameMopub, @"", kNetworkNameGDT, @"", kNetworkNameTapjoy, @"", kNetworkNameChartboost, @"", kNetworkNameIronSource, @"", kNetworkNameVungle, @"", kNetworkNameAdColony, @"", kNetworkNameUnityAds, @"", kNetworkNameTT, @"", kNetworkNameOneway, @"", kNetworkNameMobPower, @"", kNetworkNameAppnext, @"", kNetworkNameYeahmobi, @"", kNetworkNameBaidu, @"", kNetworkNameNend, @"", kNetworkNameMaio, @"", kNetworkNameStartApp, @"", kNetworkNameKS,@"", kNetworkNameSigmob, @"",kNetworkNameOgury, @"",kNetworkNameMyOffer, @"", kNetworkNameFyber, @"", kNetworkNameGoogleAdManager, nil];
+        _networkVersionsInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"", kNetworkNameFacebook, @"", kNetworkNameInmobi, @"", kNetworkNameAdmob, @"", kNetworkNameFlurry, @"", kNetworkNameMintegral, @"", kNetworkNameApplovin, @"", kNetworkNameMopub, @"", kNetworkNameGDT, @"", kNetworkNameTapjoy, @"", kNetworkNameChartboost, @"", kNetworkNameIronSource, @"", kNetworkNameVungle, @"", kNetworkNameAdColony, @"", kNetworkNameUnityAds, @"", kNetworkNameTT, @"", kNetworkNameOneway, @"", kNetworkNameMobPower, @"", kNetworkNameAppnext, @"", kNetworkNameYeahmobi, @"", kNetworkNameBaidu, @"", kNetworkNameNend, @"", kNetworkNameMaio, @"", kNetworkNameStartApp, @"", kNetworkNameKS,@"", kNetworkNameSigmob, @"",kNetworkNameOgury, @"",kNetworkNameMyOffer, @"", kNetworkNameFyber, @"", kNetworkNameGoogleAdManager, @"", kNetworkNameKidoz,@"",kNetworkNameMyTarget,@"",kNetworkNameMobrain,nil];
         _dataConsentSet = [self retrieveDataConsentSet];
         _dataConsentSettingAccessor = [ATThreadSafeAccessor new];
         _networkInitFlags = [NSMutableDictionary<NSString*, NSNumber*> dictionary];
@@ -510,6 +528,8 @@ static NSString *const UAInfoUAKey = @"ua";
         
         _exludeAppleIdListAccessor = [ATThreadSafeAccessor new];
         _deniedUploadInfoListAccessor = [ATThreadSafeAccessor new];
+        
+        _isOfm = NO;
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleApplicationWillResignActiveNotification:) name:UIApplicationWillResignActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleApplicationDidBecomeActiveNotification:) name:UIApplicationDidBecomeActiveNotification object:nil];
@@ -619,12 +639,24 @@ static NSString *const psIDInfoIDKey = @"id";
     return [ATAPI sharedInstance].logEnabled_impl;
 }
 
++(BOOL)isOfm {
+    return [ATAPI sharedInstance].isOfm;
+}
+
 +(BOOL) getMPisInit {
     return [ATAPI sharedInstance].MPisInit;
 }
 
 +(void) setMPisInit:(BOOL)MPisInit{
     [ATAPI sharedInstance].MPisInit = MPisInit;
+}
+
++ (void)setAdLogoVisible:(BOOL)adLogoVisible {
+    [ATAPI sharedInstance].adLogoHidden = !adLogoVisible;
+}
+
++ (BOOL)adLogoVisible {
+    return [ATAPI sharedInstance].adLogoHidden;
 }
 
 -(ATDataConsentSet) retrieveDataConsentSet {
@@ -638,12 +670,17 @@ static NSString *const psIDInfoIDKey = @"id";
 
 #pragma mark - 
 -(BOOL) startWithAppID:(NSString*)appID appKey:(NSString*)appKey error:(NSError**)error {
+    return [self startWithAppID:appID appKey:appKey error:error isOfm:NO shouldUpdateOfm:NO completion:nil];
+}
+
+-(BOOL) startWithAppID:(NSString*)appID appKey:(NSString*)appKey error:(NSError**)error isOfm:(BOOL)isOfm shouldUpdateOfm:(BOOL)shouldUpdateOfm completion:(void (^)(NSDictionary *, NSError *)) completion {
     [ATLogger logMessage:@"startWithAppID" type:ATLogTypeInternal];
     _appID = appID;
     _appKey = appKey;
+    _isOfm = isOfm;
     void(^initSDK)(void) = ^{
-        if (_psID_impl == nil) { [self loadPSID:NO]; }
-        [self applyAppSetting];
+        if (self->_psID_impl == nil) { [self loadPSID:NO]; }
+        [self applyAppSettingWithCompletion:completion shouldUpdateOfm:shouldUpdateOfm];
     };
     BOOL initSucceeded = YES;
     if (self.dataConsentSet == ATDataConsentSetUnknown) {
@@ -651,6 +688,9 @@ static NSString *const psIDInfoIDKey = @"id";
             initSucceeded = NO;
             if (error != nil) {
                 *error = [NSError errorWithDomain:ATSDKInitErrorDomain code:ATSDKInitErrorCodeDataConsentNotSet userInfo:@{NSLocalizedDescriptionKey:kInitErrorDescriptionDataConsentNotSet, NSLocalizedFailureReasonErrorKey:kInitErrorReasonDataConsentNotSet}];
+            }
+            if(completion != nil){
+                completion(nil, *error);
             }
         } else {
             initSucceeded = YES;
@@ -664,8 +704,8 @@ static NSString *const psIDInfoIDKey = @"id";
     return initSucceeded;
 }
 
--(void) applyAppSetting {
-    if ([[ATAppSettingManager sharedManager] currentSettingExpired]) {
+-(void) applyAppSettingWithCompletion:(void (^)(NSDictionary * setting, NSError * error)) completion shouldUpdateOfm:(BOOL)shouldUpdateOfm {
+    if ([[ATAppSettingManager sharedManager] currentSettingExpired] || shouldUpdateOfm) {
         [[ATAppSettingManager sharedManager] requestAppSettingCompletion:^(NSDictionary *setting, NSError *error) {
             if (error == nil) {
                 //Use the new setting
@@ -679,10 +719,16 @@ static NSString *const psIDInfoIDKey = @"id";
                     [[ATAgentEvent sharedAgent] uploadIfNeed];
                 }
             }
+            if(completion != nil){
+                completion(setting, error);
+            }
         }];
     } else {
         //Use the current setting
         [[ATAgentEvent sharedAgent] uploadIfNeed];
+        if(completion != nil){
+            completion(nil, nil);
+        }
     }
 }
 
@@ -719,6 +765,8 @@ static NSString *const psIDInfoIDKey = @"id";
     [set formUnionWithCharacterSet:[NSCharacterSet lowercaseLetterCharacterSet]];
     [set formUnionWithCharacterSet:[NSCharacterSet uppercaseLetterCharacterSet]];
     [set addCharactersInString:@"_"];
+    [set addCharactersInString:@"-"];
+    [set addCharactersInString:@"."];
     return set;
 }
 
@@ -732,7 +780,7 @@ static NSString *const psIDInfoIDKey = @"id";
         customData[kATCustomDataChannelKey] = _channel;
         _customData = customData;
     } else {
-        [ATLogger logError:[NSString stringWithFormat:@"The passed channel is not valid:%@; it should be of length between [1, 32], containing only '_', [0-9], [a-z], [A-Z]", channel] type:ATLogTypeExternal];
+        [ATLogger logError:[NSString stringWithFormat:@"The passed channel is not valid:%@; it should be of length between [1, 32], containing only '_', '-', '.', [0-9], [a-z], [A-Z]", channel] type:ATLogTypeExternal];
     }
 }
 
@@ -746,7 +794,7 @@ static NSString *const psIDInfoIDKey = @"id";
         customData[kATCustomDataSubchannelKey] = _subchannel;
         _customData = customData;
     } else {
-        [ATLogger logError:[NSString stringWithFormat:@"The passed channel is not valid:%@; it should be of length between [1, 32], containing only '_', [0-9], [a-z], [A-Z]", subchannel] type:ATLogTypeExternal];
+        [ATLogger logError:[NSString stringWithFormat:@"The passed channel is not valid:%@; it should be of length between [1, 32], containing only '_', '-', '.', [0-9], [a-z], [A-Z]", subchannel] type:ATLogTypeExternal];
     }
 }
 
@@ -755,7 +803,7 @@ static NSString *const psIDInfoIDKey = @"id";
 }
 
 -(NSString*)version {
-    return @"UA_5.7.3";
+    return @"UA_5.7.24";
 }
 
 -(void) setDataConsentSet:(ATDataConsentSet)dataConsentSet consentString:(NSDictionary<NSString *,NSString *> *)consentString {
@@ -803,7 +851,7 @@ static NSString *const psIDInfoIDKey = @"id";
 #pragma mark - internal methods
 -(void) setNetworkVersions:(NSDictionary<NSString *,NSString *> *)networkVersions {
     [networkVersions enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
-        if ([@[kNetworkNameAdmob, kNetworkNameFacebook, kNetworkNameApplovin, kNetworkNameFlurry, kNetworkNameInmobi, kNetworkNameMintegral, kNetworkNameMopub, kNetworkNameGDT, kNetworkNameTapjoy, kNetworkNameChartboost, kNetworkNameIronSource, kNetworkNameVungle, kNetworkNameAdColony, kNetworkNameUnityAds, kNetworkNameTT, kNetworkNameOneway, kNetworkNameMobPower, kNetworkNameAppnext, kNetworkNameYeahmobi, kNetworkNameBaidu, kNetworkNameNend, kNetworkNameMaio, kNetworkNameStartApp, kNetworkNameKS,kNetworkNameOgury, kNetworkNameSigmob, kNetworkNameMyOffer, kNetworkNameFyber, kNetworkNameGoogleAdManager] containsObject:key] && [obj isKindOfClass:[NSString class]])
+        if ([@[kNetworkNameAdmob, kNetworkNameFacebook, kNetworkNameApplovin, kNetworkNameFlurry, kNetworkNameInmobi, kNetworkNameMintegral, kNetworkNameMopub, kNetworkNameGDT, kNetworkNameTapjoy, kNetworkNameChartboost, kNetworkNameIronSource, kNetworkNameVungle, kNetworkNameAdColony, kNetworkNameUnityAds, kNetworkNameTT, kNetworkNameOneway, kNetworkNameMobPower, kNetworkNameAppnext, kNetworkNameYeahmobi, kNetworkNameBaidu, kNetworkNameNend, kNetworkNameMaio, kNetworkNameStartApp, kNetworkNameKS,kNetworkNameOgury, kNetworkNameSigmob, kNetworkNameMyOffer, kNetworkNameFyber, kNetworkNameGoogleAdManager, kNetworkNameKidoz,kNetworkNameMyTarget,kNetworkNameMobrain] containsObject:key] && [obj isKindOfClass:[NSString class]])
             [[ATAPI sharedInstance] setVersion:obj forNetwork:key];
     }];
 }

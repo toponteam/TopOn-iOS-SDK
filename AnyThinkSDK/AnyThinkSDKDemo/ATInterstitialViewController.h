@@ -12,7 +12,6 @@ extern NSString *const kFacebookPlacement;
 extern NSString *const kFacebookHeaderBiddingPlacement;
 extern NSString *const kAdMobPlacement;
 extern NSString *const kApplovinPlacement;
-extern NSString *const kFlurryPlacement;
 extern NSString *const kMopubPlacementName;
 extern NSString *const kMopubVideoPlacementName;
 extern NSString *const kMintegralPlacement;
@@ -28,8 +27,6 @@ extern NSString *const kUnityAdsPlacementName;
 extern NSString *const kAllPlacementName;
 extern NSString *const kTTPlacementName;
 extern NSString *const kTTVideoPlacement;
-extern NSString *const kOnewayPlacementName;
-extern NSString *const kYeahmobiPlacement;
 extern NSString *const kAppnextPlacement;
 extern NSString *const kBaiduPlacement;
 extern NSString *const kNendPlacement;
@@ -46,7 +43,10 @@ extern NSString *const kStartAppVideoPlacement;
 extern NSString *const kFyberPlacement;
 extern NSString *const kGAMPlacement;
 extern NSString *const kHeliumPlacement;
-
+extern NSString *const kADXPlacement;
+extern NSString *const kOnlineApiPlacement;
+extern NSString *const kKidozPlacement;
+extern NSString *const kMyTargetPlacement;
 
 @interface ATInterstitialViewController : UIViewController
 -(instancetype) initWithPlacementName:(NSString*)name;

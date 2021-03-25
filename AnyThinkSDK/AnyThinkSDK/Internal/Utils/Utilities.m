@@ -21,6 +21,9 @@
 #import <execinfo.h>
 #import <sys/sysctl.h>
 #import <WebKit/WebKit.h>
+#import "AppsFlyerLibProtocol.h"
+#import "AdjustProtocol.h"
+
 #pragma clang diagnostic ignored "-Wcast-qual"
 static NSString *const kAESEncryptionKey = @"0123456789abecef";
 void AT_SafelyRun(void(^Block)(void)) {
@@ -117,8 +120,19 @@ BOOL AT_ProxyEnabled(void) {
     }
 }
 
++ (NSString*)localizationForLearnMore {
+    if ([self isMandarin]) {
+        return @"了解更多";
+    }
+    return @"Learn More";
+}
+
 +(NSString*)screenResolution {
     return [[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoScreenKey] == NO ? [NSString stringWithFormat:@"%ld*%ld", (NSInteger)(CGRectGetWidth([UIScreen mainScreen].bounds) * [UIScreen mainScreen].scale), (NSInteger)(CGRectGetHeight([UIScreen mainScreen].bounds) * [UIScreen mainScreen].scale)] : @"";
+}
+
++ (UIEdgeInsets)safeAreaInsets {
+    return ([[UIApplication sharedApplication].keyWindow respondsToSelector:@selector(safeAreaInsets)] ? [UIApplication sharedApplication].keyWindow.safeAreaInsets : UIEdgeInsetsZero);
 }
 
 +(NSString*)appBundleName {
@@ -334,10 +348,67 @@ NSString *const kCallStackSymbolCallerClassKey = @"caller_class";
     return NO;
 }
 
-+(BOOL)isEmpty:(id)object {
-    return (object == nil || [object isKindOfClass:[NSNull class]] || ([object respondsToSelector:@selector(length)] && [(NSData *)object length] == 0) || ([object respondsToSelector:@selector(count)] && [(NSArray *)object count] == 0));
++ (BOOL)isMandarin {
+    NSArray *languages = [NSLocale preferredLanguages];
+    NSString *currentLanguage = [languages objectAtIndex:0];
+    return [currentLanguage containsString:@"zh-Hans"] || [currentLanguage containsString:@"zh-Hant"];
 }
 
++(BOOL)isEmpty:(id)object {
+    
+    if (object == nil || [object isKindOfClass:[NSNull class]]) {
+        return YES;
+    }
+    
+    if ([object respondsToSelector:@selector(length)]) {
+        return [object length] == 0;
+    }
+    
+    if ([object respondsToSelector:@selector(count)]) {
+        return [object count] == 0;
+    }
+    return NO;
+}
+
++ (void)reportProfit:(id<ATAd>)ad time:(NSNumber *)time {
+
+    if (ad == nil) {
+        return;
+    }
+    NSString *extraID = [NSString stringWithFormat:@"%@_%@_%@",ad.requestID,ad.unitGroup.unitID, time];
+
+    Class class = NSClassFromString(@"AppsFlyerLib");
+    ATPlatfromInfo *platform = [ad.placementModel revenueToPlatforms][@(ATRevenueToPlatformAppsflyer).stringValue];
+
+    if (class && platform) {
+        
+        id revenue = @([ad.price doubleValue] / 1000.f);
+        if (platform.dataType == 2) {
+            revenue = ad.price;
+        }
+        NSDictionary *dic = @{@"af_order_id": extraID,
+                              @"af_content_id":ad.placementModel.placementID,
+                              @"af_content":@(ad.placementModel.format),
+                              @"af_revenue":revenue,
+                              @"af_currency":ad.placementModel.currency,
+        };
+        
+        id<AppsFlyerLibProtocol> appsflyer = (id<AppsFlyerLibProtocol>)[class shared];
+        [appsflyer logEvent:@"af_ad_view" withValues:dic];
+    }
+    
+    Class eventClass = NSClassFromString(@"ADJEvent");
+    ATPlatfromInfo *platform_adjust = [ad.placementModel revenueToPlatforms][@(ATRevenueToPlatformAdjust).stringValue];
+
+    if (eventClass && platform_adjust) {
+
+        id<AdjustEventProtocol> adjustEvent = (id<AdjustEventProtocol>)[eventClass eventWithEventToken:platform_adjust.token];
+        [adjustEvent setRevenue:[ad.price doubleValue]/1000.f currency:ad.placementModel.currency];
+        [adjustEvent setTransactionId:extraID];
+        id<AdjustProtocol> adjustClass = (id<AdjustProtocol>)NSClassFromString(@"Adjust");
+        [adjustClass trackEvent:adjustEvent];
+    }
+}
 @end
 
 @implementation NSDate(ATUtilities)
@@ -467,9 +538,14 @@ NSString *const kCallStackSymbolCallerClassKey = @"caller_class";
 @implementation NSArray (ATKit)
 -(NSString*) jsonString_anythink {
     NSError *error;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:self
-                                                       options:kNilOptions
-                                                         error:&error];
+    NSData *jsonData;
+    @try {
+        jsonData = [NSJSONSerialization dataWithJSONObject:self
+                                                           options:kNilOptions
+                                                             error:&error];
+    } @catch (NSException *exception) {
+        return @"[]";
+    } @finally {}
     
     if (!jsonData) {
         return @"[]";

@@ -22,13 +22,11 @@ typedef NS_ENUM(NSInteger, ATMyOfferTrackerEvent) {
     ATMyOfferTrackerEventEndCardClose = 8
 };
 
-extern NSString *const kATMyOfferTrackerExtraLifeCircleID;
-extern NSString *const kATMyOfferTrackerExtraScene;
 @interface ATMyOfferTracker : NSObject
 +(instancetype) sharedTracker;
 -(void) trackEvent:(ATMyOfferTrackerEvent)event offerModel:(ATMyOfferOfferModel*)offerModel extra:(NSDictionary*)extra;
 -(void) impressionOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel extra:(NSDictionary*)extra;
--(void) clickOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting *)setting extra:(NSDictionary*)extra;
+//-(void) clickOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting *)setting extra:(NSDictionary*)extra;
 -(void) clickOfferWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting *)setting extra:(NSDictionary*)extra skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *) viewController circleId:(NSString *) circleId;
 -(void)preloadStorekitForOfferModel:(ATMyOfferOfferModel *)offerModel setting:(ATMyOfferSetting *) setting  viewController:(UIViewController *)viewController circleId:(NSString *) circleId skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate;
 @end

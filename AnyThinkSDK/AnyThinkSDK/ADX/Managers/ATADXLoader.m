@@ -78,7 +78,7 @@
                 if(bidArray != nil && bidArray.count>0){
                     content = offerModelDict[@"at_content"];
                 }
-                _offerModelDict[obj] = [[ATADXOfferModel alloc] initWithDictionary:offerModelDict content:content];
+                self->_offerModelDict[obj] = [[ATADXOfferModel alloc] initWithDictionary:offerModelDict content:content];
             }
         }];
     });
@@ -119,7 +119,29 @@
                     [resultDictionary setObject:requestID forKey:@"at_request_id"];
                     NSArray<NSDictionary*>* bidArray = resultDictionary[@"seatbid"];
                     if(bidArray != nil && bidArray.count>0){
-                        NSDictionary* contentDict = @{@"s_c_t":content[@"s_c_t"],@"v_m":content[@"v_m"]};
+                        NSMutableDictionary* contentDict = [NSMutableDictionary dictionary];
+                        if (content[@"s_c_t"] != nil) {
+                            contentDict[@"s_c_t"] = content[@"s_c_t"];
+                        }
+                        if (content[@"v_m"] != nil) {
+                            contentDict[@"v_m"] = content[@"v_m"];
+                        }
+                        if (content[@"size"] != nil) {
+                            contentDict[@"size"] = content[@"size"];
+                        }
+                        if (content[@"countdown"] != nil) {
+                            contentDict[@"countdown"] = content[@"countdown"];
+                        }
+                        if (content[@"allows_skip"] != nil) {
+                            contentDict[@"allows_skip"] = content[@"allows_skip"];
+                        }
+                        if (content[@"orientation"] != nil) {
+                            contentDict[@"orientation"] = content[@"orientation"];
+                        }
+                        if (content[@"close_button"] != nil) {
+                            contentDict[@"close_button"] = content[@"close_button"];
+                        }
+                        
                         [resultDictionary setObject:contentDict forKey:@"at_content"];
                     }
                     ATADXOfferModel* offerModel = [[ATADXOfferModel alloc] initWithDictionary:resultDictionary content:content];
@@ -187,7 +209,7 @@
                                        @"nw_ver":@{},//[Utilities networkVersions]
                                        @"orient":[Utilities screenOrientation],
                                        @"system":@(1),
-                                       @"gdpr_cs":[NSString stringWithFormat:@"%ld", [[ATAppSettingManager sharedManager] commonTkDataConsentSet]],
+                                       @"gdpr_cs":[NSString stringWithFormat:@"%d", [[ATAppSettingManager sharedManager] commonTkDataConsentSet]],
                                        @"t_g_id":placementModel.trafficGroupID,
                                        @"gro_id":@(placementModel.groupID)
                                        };
@@ -231,7 +253,7 @@
 
 -(void) saveOfferWithDictionary:(NSDictionary*)resultDictionary offerModel:(ATADXOfferModel *) offerModel saveKey:(NSString *) saveKey{
     [_adxLoaderAccessor writeWithBlock:^{
-        [_offerModelDict setObject:offerModel forKey:saveKey];
+        [self->_offerModelDict setObject:offerModel forKey:saveKey];
         NSString *path = [self offerModelPathForSaveKey:saveKey];
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:resultDictionary options:0 error:0];
         NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
@@ -241,7 +263,7 @@
 }
 -(void) removeOfferModel:(ATADXOfferModel*)offerModel {
     [_adxLoaderAccessor writeWithBlock:^{
-        [_offerModelDict removeObjectForKey:[self saveKeyWithPlacementID:offerModel.placementID unitID:offerModel.unitID]];
+        [self->_offerModelDict removeObjectForKey:[self saveKeyWithPlacementID:offerModel.placementID unitID:offerModel.unitID]];
         [[NSFileManager defaultManager] removeItemAtPath:[self offerModelPathForSaveKey:[self saveKeyWithPlacementID:offerModel.placementID unitID:offerModel.unitID]] error:nil];
     }];
   

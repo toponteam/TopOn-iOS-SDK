@@ -17,9 +17,8 @@
 #import "ATAgentEvent.h"
 #import "ATMyOfferProgressHud.h"
 #import <SafariServices/SFSafariViewController.h>
+#import "ATCommonOfferTracker.h"
 
-NSString *const kATADXTrackerExtraLifeCircleID = @"adx_life_circle_id";
-NSString *const kATADXTrackerExtraScene = @"adx_scene";
 @interface ATADXTracker()<SFSafariViewControllerDelegate>
 @property(nonatomic, readonly) NSMutableArray<NSDictionary*>* failedEventStorage;
 @property(nonatomic, readonly) ATThreadSafeAccessor *failedEventStorageAccessor;
@@ -66,7 +65,11 @@ static NSString *kFailedEventStorageParametersKey = @"parameters";
                 NSString *address = obj[kFailedEventStorageAddressKey];
                 NSDictionary *parameters = obj[kFailedEventStorageParametersKey];
                 if ([address isKindOfClass:[NSString class]] && [address length] > 0) {
-                    [self sendTKEventWithAddress:address parameters:[parameters isKindOfClass:[NSDictionary class]] ? parameters : nil retry:YES];
+                    [[ATCommonOfferTracker sharedTracker] sendTKEventWithAddress:address parameters:[parameters isKindOfClass:[NSDictionary class]] ? parameters : nil retry:YES completionHandler:^(BOOL retry){
+                        if(retry){
+                            [self appendFailedEventWithAddress:address parameters:[parameters isKindOfClass:[NSDictionary class]] ? parameters : nil];
+                        }
+                    }];
                 }
             }
         }];
@@ -77,23 +80,23 @@ static NSString *kFailedEventStorageParametersKey = @"parameters";
     return [[Utilities documentsPath] stringByAppendingPathComponent:@"com.anythink.ADXTKEvents"];
 }
 
-NSDictionary *ADXExtractParameterFromURL(NSURL *URL, NSDictionary *extra) {
-    NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
-    NSArray<NSString*>*queries = [URL.query componentsSeparatedByString:@"&"];
-    [queries enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSArray<NSString*>* components = [obj componentsSeparatedByString:@"="];
-        if ([components count] == 2) { parameters[components[0]] = components[1]; }
-    }];
-    parameters[@"t"] = [NSString stringWithFormat:@"%@", [Utilities normalizedTimeStamp]];
-    if ([extra[kATADXTrackerExtraLifeCircleID] isKindOfClass:[NSString class]]) { parameters[@"req_id"] = extra[kATADXTrackerExtraLifeCircleID]; }
-    if ([extra[kATADXTrackerExtraScene] isKindOfClass:[NSString class]]) { parameters[@"scenario"] = extra[kATADXTrackerExtraScene]; }
-    return parameters;
-}
-
-NSString *ADXExtractAddressFromURL(NSURL *URL) {
-    NSString *address = [NSString stringWithFormat:@"%@://%@%@", URL.scheme, URL.host, URL.path];
-    return address;
-}
+//NSDictionary *ADXExtractParameterFromURL(NSURL *URL, NSDictionary *extra) {
+//    NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
+//    NSArray<NSString*>*queries = [URL.query componentsSeparatedByString:@"&"];
+//    [queries enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+//        NSArray<NSString*>* components = [obj componentsSeparatedByString:@"="];
+//        if ([components count] == 2) { parameters[components[0]] = components[1]; }
+//    }];
+//    parameters[@"t"] = [NSString stringWithFormat:@"%@", [Utilities normalizedTimeStamp]];
+//    if ([extra[kATOfferTrackerExtraLifeCircleID] isKindOfClass:[NSString class]]) { parameters[@"req_id"] = extra[kATOfferTrackerExtraLifeCircleID]; }
+//    if ([extra[kATOfferTrackerExtraScene] isKindOfClass:[NSString class]]) { parameters[@"scenario"] = extra[kATOfferTrackerExtraScene]; }
+//    return parameters;
+//}
+//
+//NSString *ADXExtractAddressFromURL(NSURL *URL) {
+//    NSString *address = [NSString stringWithFormat:@"%@://%@%@", URL.scheme, URL.host, URL.path];
+//    return address;
+//}
 
 NSArray<NSURL*>* ADXBuildTKURL(ATADXOfferModel *offerModel, ATADXTrackerEvent event, NSDictionary *extra) {
     NSMutableArray *urlArrays = [NSMutableArray array];
@@ -104,9 +107,12 @@ NSArray<NSURL*>* ADXBuildTKURL(ATADXOfferModel *offerModel, ATADXTrackerEvent ev
             [offerModel.trackingMapDict enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
                 tkUrl = [tkUrl stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"{%@}", key] withString:obj];
             }];
-            if (tkUrl.length > 0) {
-                NSURL *url = [NSURL URLWithString:[tkUrl stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-                if (url != nil) {
+            if ([Utilities isEmpty:tkUrl] == NO) {
+                NSURL *url = [NSURL URLWithString:tkUrl];
+                if ([Utilities isEmpty:url]) {
+                    url = [NSURL URLWithString:[tkUrl stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+                }
+                if ([Utilities isEmpty:url] == NO) {
                     [urlArrays addObject:url];
                 }
             }
@@ -129,7 +135,15 @@ NSArray<NSString*>* ADXRetrieveTKURL(ATADXOfferModel *offerModel, ATADXTrackerEv
              @(ATADXTrackerEventVideoMute):offerModel.videoMuteTKUrl.count > 0 ? offerModel.videoMuteTKUrl : @[],
              @(ATADXTrackerEventVideoUnMute):offerModel.videoUnMuteTKUrl.count > 0 ? offerModel.videoUnMuteTKUrl : @[],
              @(ATADXTrackerEventVideoPaused):offerModel.videoPausedTKUrl.count > 0 ? offerModel.videoPausedTKUrl : @[],
-             @(ATADXTrackerEventNTKurl):offerModel.nTKurl.count > 0 ? offerModel.nTKurl : @[]
+             @(ATADXTrackerEventNTKurl):offerModel.nTKurl.count > 0 ? offerModel.nTKurl : @[],
+             @(ATADXTrackerEventVideoResumed):offerModel.videoResumedTKUrl.count > 0 ? offerModel.videoResumedTKUrl : @[],
+             @(ATADXTrackerEventVideoSkip):offerModel.videoSkipTKUrl.count > 0 ? offerModel.videoSkipTKUrl : @[],
+             @(ATADXTrackerEventVideoPlayFail):offerModel.videoFailTKUrl.count > 0 ? offerModel.videoFailTKUrl : @[],
+             @(ATADXTrackerEventVideoDeeplinkStart):offerModel.deeplinkStartTKUrl.count > 0 ? offerModel.deeplinkStartTKUrl : @[],
+             @(ATADXTrackerEventVideoDeeplinkSuccess):offerModel.deeplinkSuccessUrl.count > 0 ? offerModel.deeplinkSuccessUrl : @[],
+             @(ATADXTrackerEventVideoRewarded): offerModel.videoRewardedTKUrl.count > 0 ? offerModel.videoRewardedTKUrl : @[],
+             @(ATADXTrackerEventVideoLoaded): offerModel.videoDataLoadedTKUrl.count > 0 ? offerModel.videoDataLoadedTKUrl : @[],
+
     }[@(event)];
 }
 
@@ -147,43 +161,59 @@ NSDictionary* ADXRetrievetTPTKDict(ATADXOfferModel *offerModel, ATADXTrackerEven
              @(ATADXTrackerEventVideoMute):offerModel.at_videoMuteTKUrl != nil ? offerModel.at_videoMuteTKUrl : @{},
              @(ATADXTrackerEventVideoUnMute):offerModel.at_videoUnMuteTKUrl != nil ? offerModel.at_videoUnMuteTKUrl : @{},
              @(ATADXTrackerEventVideoPaused):offerModel.at_videoPausedTKUrl != nil ? offerModel.at_videoPausedTKUrl : @{},
-             @(ATADXTrackerEventNTKurl):offerModel.at_nTKurl != nil ? offerModel.at_nTKurl : @{}
+             @(ATADXTrackerEventNTKurl):offerModel.at_nTKurl != nil ? offerModel.at_nTKurl : @{},
+             @(ATADXTrackerEventVideoResumed):offerModel.at_videoResumedTKUrl.count > 0 ? offerModel.at_videoResumedTKUrl : @{},
+             @(ATADXTrackerEventVideoSkip):offerModel.at_videoSkipTKUrl.count > 0 ? offerModel.at_videoSkipTKUrl : @{},
+             @(ATADXTrackerEventVideoDeeplinkStart):offerModel.at_deeplinkStartTKUrl.count > 0 ? offerModel.at_deeplinkStartTKUrl : @{},
+             @(ATADXTrackerEventVideoDeeplinkSuccess):offerModel.at_deeplinkSuccessUrl.count > 0 ? offerModel.at_deeplinkSuccessUrl : @{},
+             @(ATADXTrackerEventVideoRewarded): offerModel.at_videoRewardedTKUrl.count > 0 ? offerModel.at_videoRewardedTKUrl : @{},
+             @(ATADXTrackerEventVideoLoaded): offerModel.at_videoDataLoadedTKUrl.count > 0 ? offerModel.at_videoDataLoadedTKUrl : @{}
     }[@(event)];
 }
 
--(void) trackEvent:(ATADXTrackerEvent)event offerModel:(ATADXOfferModel*)offerModel extra:(NSDictionary*)extra {
-    NSArray<NSURL*>* tkURLs = ADXBuildTKURL(offerModel, event, extra);
-    if (tkURLs.count > 0) {
-        __weak typeof(self) weakSelf = self;
-        [tkURLs enumerateObjectsUsingBlock:^(NSURL * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [weakSelf.redirectorsAccessor writeWithBlock:^{
-                __weak __block ATOfferSessionRedirector *weakRedirector = nil;
-                __block ATOfferSessionRedirector *redirector = [ATOfferSessionRedirector redirectorWithURL:obj completion:^(NSURL *finalURL, NSError *error) {
-                    [weakSelf.redirectorsAccessor writeWithBlock:^{
-                        [weakSelf.redirectors removeObject:weakRedirector];
-                    }];
-                }];
-                weakRedirector = redirector;
-                [weakSelf.redirectors addObject:redirector];
-            }];
-        }];
+- (void)trackWithUrls:(NSArray<NSString *> *)urls offerModel:(ATADXOfferModel *)offerModel extra:(NSDictionary *)extra {
+    
+    if ([Utilities isEmpty:urls]) {
+        return;
     }
-
-    //topon tk http
-    NSMutableDictionary *tkMapDict = [NSMutableDictionary dictionaryWithDictionary:offerModel.trackingMapDict];
-    NSDictionary *tpTKDict = ADXRetrievetTPTKDict(offerModel, event);
-    if (tpTKDict.count>0 && [ATAppSettingManager sharedManager].adxSetting.trackerHttpAdress != nil) {
-        [tkMapDict addEntriesFromDictionary:tpTKDict];
-        [self sendTKEventWithAddress:[ATAppSettingManager sharedManager].adxSetting.trackerHttpAdress parameters:tkMapDict retry:YES];
+    NSArray<NSURL *> *kUrls = [self getProcessedUrlsWithUlrStrings:urls model:offerModel event:0 extra:extra];
+    if (kUrls.count) {
+        [[ATCommonOfferTracker sharedTracker] sendNoticeWithUrls:kUrls completion:^(NSURL * _Nonnull finalURL, NSError * _Nonnull error) {
+            
+        }];
     }
 }
 
--(void) sendTKEventWithAddress:(NSString*)address parameters:(NSDictionary*)parameters retry:(BOOL)retry{
-    [[ATNetworkingManager sharedManager] sendHTTPRequestToAddress:address HTTPMethod:ATNetworkingHTTPMethodPOST parameters:parameters gzip:NO completion:^(NSData * _Nonnull data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        if (retry && (error.code == NSURLErrorNetworkConnectionLost || error.code == NSURLErrorNotConnectedToInternet || error.code == 53)) {
-            [self appendFailedEventWithAddress:address parameters:parameters];
-        }
-    }];
+-(void) trackEvent:(ATADXTrackerEvent)event offerModel:(ATADXOfferModel*)offerModel extra:(NSDictionary*)extra {
+    //send network notice url
+//    NSArray<NSURL*>* tkURLs = ADXBuildTKURL(offerModel, event, extra);
+//    if (tkURLs.count > 0) {
+//        [[ATCommonOfferTracker sharedTracker] sendNoticeWithUrls:tkURLs completion:nil];
+//    }
+    NSArray<NSString*> *tkURLStrArray = ADXRetrieveTKURL(offerModel, event);
+    NSArray<NSURL *> *kUrls = [self getProcessedUrlsWithUlrStrings:tkURLStrArray model:offerModel event:event extra:extra];
+    if (kUrls) {
+        [[ATCommonOfferTracker sharedTracker] sendNoticeWithUrls:kUrls completion:^(NSURL * _Nonnull finalURL, NSError * _Nonnull error) {
+            
+        }];
+    }
+    
+    //sent tk notice url
+
+    NSMutableDictionary *tkMapDict = [NSMutableDictionary dictionaryWithCapacity:0];
+    if ([Utilities isEmpty:offerModel.trackingMapDict] == NO) {
+        [tkMapDict addEntriesFromDictionary:offerModel.trackingMapDict];
+    }
+
+    NSDictionary *tpTKDict = ADXRetrievetTPTKDict(offerModel, event);
+    if (tpTKDict.count>0 && [ATAppSettingManager sharedManager].adxSetting.trackerHttpAdress != nil) {
+        [tkMapDict addEntriesFromDictionary:tpTKDict];
+        [[ATCommonOfferTracker sharedTracker] sendTKEventWithAddress:[ATAppSettingManager sharedManager].adxSetting.trackerHttpAdress parameters:tkMapDict retry:YES completionHandler:^(BOOL retry){
+            if(retry){
+                [self appendFailedEventWithAddress:[ATAppSettingManager sharedManager].adxSetting.trackerHttpAdress parameters:tkMapDict];
+            }
+        }];
+    }
 }
 
 -(void) appendFailedEventWithAddress:(NSString*)address parameters:(NSDictionary*)parameters {
@@ -202,164 +232,24 @@ NSString *ADXAppendLifeCircleIDToURL(NSString *URL, NSString *lifeCircleID) {
     return [lifeCircleID isKindOfClass:[NSString class]] ? ([URL stringByReplacingOccurrencesOfString:@"{req_id}" withString:lifeCircleID]) : URL;
 }
 
--(void) impressionOfferWithOfferModel:(ATADXOfferModel*)offerModel extra:(NSDictionary*)extra {
-    if (offerModel.impTKUrl.count > 0) {
-        __weak typeof(self) weakSelf = self;
-        [offerModel.impTKUrl enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [weakSelf.redirectorsAccessor writeWithBlock:^{
-                __weak __block ATOfferSessionRedirector *weakRedirector = nil;
-                __block ATOfferSessionRedirector *redirector = [ATOfferSessionRedirector redirectorWithURL:[NSURL URLWithString:obj] completion:^(NSURL *finalURL, NSError *error) {
-                    [weakSelf.redirectorsAccessor writeWithBlock:^{
-                        [weakSelf.redirectors removeObject:weakRedirector];
-                    }];
-                }];
-                weakRedirector = redirector;
-                [weakSelf.redirectors addObject:redirector];
-            }];
-        }];
-    }
+-(void) clickOfferWithOfferModel:(ATADXOfferModel*)offerModel setting:(ATADXPlacementSetting *)setting extra:(NSDictionary*)extra  clickCallbackHandler:(void (^ __nullable)(BOOL success))clickCallback{
+    [self clickOfferWithOfferModel:offerModel setting:setting extra:extra skDelegate:nil viewController:nil circleId:nil clickCallbackHandler:clickCallback];
 }
 
--(void) clickOfferWithOfferModel:(ATADXOfferModel*)offerModel setting:(ATADXPlacementSetting *)setting extra:(NSDictionary*)extra {
-    [self clickOfferWithOfferModel:offerModel setting:setting extra:extra skDelegate:nil viewController:nil circleId:nil];
-}
-
--(void) clickOfferWithOfferModel:(ATADXOfferModel*)offerModel setting:(ATADXPlacementSetting *)setting extra:(NSDictionary*)extra skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *)viewController circleId:(NSString *) circleId{
-    if (offerModel.clickURL != nil) {
-        if (offerModel.linkType == ATLinkTypeSafari) {
-            dispatch_async(dispatch_get_main_queue(), ^{ [[UIApplication sharedApplication] openURL:[NSURL URLWithString:ADXAppendLifeCircleIDToURL(offerModel.clickURL, extra[kATADXTrackerExtraLifeCircleID])]]; });
-        } else if (offerModel.linkType == ATLinkTypeWebView) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                ATOfferWebViewController *webVC = [ATOfferWebViewController new];
-                webVC.urlString = offerModel.clickURL;
-                webVC.storeUrlStr = offerModel.storeURL;
-                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:webVC];
-                nav.modalPresentationStyle = UIModalPresentationFullScreen;
-                [viewController presentViewController:nav animated:YES completion:nil];
-            });
-        }else if (offerModel.linkType == ATLinkTypeInnerSafari) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                
-                if ([offerModel.clickURL hasPrefix:@"http"] == NO &&
-                    [offerModel.clickURL hasPrefix:@"https"] == NO) {
-                    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:ADXAppendLifeCircleIDToURL(offerModel.clickURL, extra[kATADXTrackerExtraLifeCircleID])]];
-                    return;
-                }
-                
-                NSString *url = [offerModel.clickURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-
-                SFSafariViewController *safari = [[SFSafariViewController alloc]initWithURL: [NSURL URLWithString:url]];
-                safari.delegate = self;
-                UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:safari];
-                nav.modalPresentationStyle = UIModalPresentationFullScreen;
-                [viewController presentViewController:nav animated:YES completion:nil];
-
-            });
+-(void) clickOfferWithOfferModel:(ATADXOfferModel*)offerModel setting:(ATADXPlacementSetting *)setting extra:(NSDictionary*)extra skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *)viewController circleId:(NSString *) circleId  clickCallbackHandler:(void (^ __nullable)(BOOL success))clickCallback {
+    [[ATCommonOfferTracker sharedTracker] clickOfferWithOfferModel:offerModel setting:setting circleID:circleId delegate:skDelegate viewController:viewController  extra:extra clickCallbackHandler:^(ATClickType clickType, BOOL isEnd, BOOL success) {
+        if (clickCallback && (clickType == ATClickTypeDeepLinkUrl || ATClickTypeClickJumpUrl) && isEnd) {
+            clickCallback(success);
         }
-        else {
-            if (ADXValidateFinalURL([NSURL URLWithString:offerModel.clickURL])) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if(setting.storekitTime != ATATLoadStorekitTimeNone && offerModel.pkgName != nil  && [Utilities higherThanIOS13]){
-                        [self presentStorekitViewControllerWithCircleId:circleId pkgName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID skDelegate:skDelegate viewController:viewController];
-                    }else{
-                        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:ADXAppendLifeCircleIDToURL(offerModel.clickURL, extra[kATADXTrackerExtraLifeCircleID])]];
-                    }
-                });
-            } else {
-                if (setting.clickMode == ATClickModeAsync && offerModel.storeURL != nil) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        if(setting.storekitTime != ATATLoadStorekitTimeNone && offerModel.pkgName != nil && [Utilities higherThanIOS13]){
-                            [self presentStorekitViewControllerWithCircleId:circleId pkgName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID skDelegate:skDelegate viewController:viewController];
-                        }else{
-                            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:offerModel.storeURL]];
-                        }
-                    });
-                }
-                __weak typeof(self) weakSelf = self;
-                [_redirectorsAccessor writeWithBlock:^{
-                    if (setting.clickMode == ATClickModeSync) { dispatch_async(dispatch_get_main_queue(), ^{ [ATMyOfferProgressHud showProgressHud:[UIApplication sharedApplication].keyWindow]; }); }
-                    __weak __block ATOfferSessionRedirector *weakRedirector = nil;
-                    __block ATOfferSessionRedirector *redirector = [ATOfferSessionRedirector redirectorWithURL:[NSURL URLWithString:ADXAppendLifeCircleIDToURL(offerModel.clickURL, extra[kATADXTrackerExtraLifeCircleID])] completion:^(NSURL *finalURL, NSError *error) {
-                        if (setting.clickMode == ATClickModeSync) { dispatch_async(dispatch_get_main_queue(), ^{ [ATMyOfferProgressHud hideProgressHud:[UIApplication sharedApplication].keyWindow]; }); }
-                        if (error == nil || ADXValidateFinalURL(finalURL)) {
-                            [weakSelf.redirectorsAccessor writeWithBlock:^{ [weakSelf.redirectors removeObject:weakRedirector]; }];
-                            if (setting.clickMode == ATClickModeSync && ADXValidateFinalURL(finalURL)) { dispatch_async(dispatch_get_main_queue(), ^{
-                                if(setting.storekitTime != ATATLoadStorekitTimeNone && offerModel.pkgName != nil  && [Utilities higherThanIOS13]){
-                                    [self presentStorekitViewControllerWithCircleId:circleId pkgName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID skDelegate:skDelegate viewController:viewController];
-                                }else{
-                                    [[UIApplication sharedApplication] openURL:finalURL];
-                                }
-                            }); }
-                        } else {
-                            if (setting.clickMode == ATClickModeSync && offerModel.storeURL != nil) {
-                                dispatch_async(dispatch_get_main_queue(), ^{
-                                    if(setting.storekitTime != ATATLoadStorekitTimeNone && offerModel.pkgName != nil  && [Utilities higherThanIOS13]){
-                                        [self presentStorekitViewControllerWithCircleId:circleId pkgName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID skDelegate:skDelegate viewController:viewController];
-                                    }else{
-                                        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:offerModel.storeURL]];
-                                    }
-                                });
-                            }
-                            //agent event for click failed
-                            [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyClickRedirectFailedKey placementID:setting.placementID unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoMyOfferOfferIDKey:offerModel.offerID, kAgentEventExtraInfoAdTypeKey:@1, kAgentEventExtraInfoAdClickUrlKey:offerModel.clickURL != nil ? [offerModel.clickURL stringUrlEncode] : @"", kAgentEventExtraInfoAdLastUrlKey:finalURL != nil? [finalURL.absoluteString stringUrlEncode]:@"",  kAgentEventExtraInfoLoadingFailureReasonKey:[NSString stringWithFormat:@"%@", error], kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@(error.code)}];
-                        }
-                    }];
-                    weakRedirector = redirector;
-                    [weakSelf.redirectors addObject:redirector];
-                }];
-            }//End of else of final url
-        }//end of safari jump type
-    }
-}
-
-BOOL ADXValidateFinalURL(NSURL *URL) {
-    return [URL isKindOfClass:[NSURL class]] && ([[ATAppSettingManager sharedManager].trackingSetting.tcHosts containsObject:URL.host]);
+    }];
 }
 
 -(void)preloadStorekitForOfferModel:(ATADXOfferModel *)offerModel setting:(ATADXPlacementSetting *) setting viewController:(UIViewController *)viewController circleId:(NSString *) circleId  skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate {
-    
-    if(setting != nil && setting.storekitTime == ATLoadStorekitTimePreload && [Utilities higherThanIOS13]){
-        //TODO preload storekit
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if(offerModel != nil && offerModel.pkgName != nil){
-                __block ATStoreProductViewController* storekitVC = [ATStoreProductViewController storekitWithPackageName:offerModel.pkgName skDelegate:skDelegate];
-                [storekitVC atLoadProductWithPackageName:offerModel.pkgName placementID:setting.placementID offerID:offerModel.offerID pkgName:offerModel.pkgName finished:^(BOOL result, NSError *error, NSTimeInterval loadTime) {
-                    
-                    if(result){
-                        [self setStorekitViewControllerWithPkgName:offerModel.pkgName storekitVC:storekitVC];
-                    }
-                }];
-            }
-        });
-    }
+    [[ATCommonOfferTracker sharedTracker] preloadStorekitForOfferModel:offerModel setting:setting viewController:viewController circleId:circleId skDelegate:skDelegate];
 }
 
--(void)presentStorekitViewControllerWithCircleId:(NSString *) circleId pkgName:(NSString *) pkgName placementID:(NSString *)placementID offerID:(NSString *)offerID  skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *)viewController {
-    ATStoreProductViewController* storekitVC = [self getStorekitViewControllerWithPkgName:pkgName skDelegate:skDelegate parentVC:viewController];
-    storekitVC.skDelegate = skDelegate;
-    [ATStoreProductViewController at_presentStorekit:storekitVC presenting:viewController];
-    if(!storekitVC.loadSuccessed){
-        [storekitVC atLoadProductWithPackageName:pkgName placementID:placementID offerID:offerID pkgName:pkgName finished:nil];
-    }
-}
-
--(ATStoreProductViewController *)getStorekitViewControllerWithPkgName:(NSString *) pkgName skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate parentVC:(UIViewController *) parentVC {
-    __weak typeof(self) weakSelf = self;
-    return [_storekitStorageAccessor readWithBlock:^id {
-        if(weakSelf.preloadStorekitDict[pkgName] != nil && (((ATStoreProductViewController*)weakSelf.preloadStorekitDict[pkgName]).parentVC == nil || [((ATStoreProductViewController*)weakSelf.preloadStorekitDict[pkgName]).parentVC isEqual:parentVC])){
-            return weakSelf.preloadStorekitDict[pkgName];
-        }else{
-            ATStoreProductViewController* storekitVC = [ATStoreProductViewController storekitWithPackageName:pkgName skDelegate:skDelegate];
-            return storekitVC;
-        }
-    }];
-}
-
--(void )setStorekitViewControllerWithPkgName:(NSString *) pkgName storekitVC:(ATStoreProductViewController *) storekitVC{
-    __weak typeof(self) weakSelf = self;
-    [_storekitStorageAccessor writeWithBlock:^ {
-        weakSelf.preloadStorekitDict[pkgName] = storekitVC;
-    }];
+-(void)presentStorekitViewControllerWithCircleId:(NSString *) circleId offerModel:(ATADXOfferModel *)offerModel pkgName:(NSString *) pkgName placementID:(NSString *)placementID offerID:(NSString *)offerID  skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *)viewController {
+    [[ATCommonOfferTracker sharedTracker] presentStorekitViewControllerWithCircleId:circleId offerModel:offerModel pkgName:pkgName placementID:placementID offerID:offerID skDelegate:skDelegate viewController:viewController];
 }
 
 // MARK:- SFSafariViewControllerDelegate
@@ -373,4 +263,62 @@ BOOL ADXValidateFinalURL(NSURL *URL) {
     NSLog(@"redirect to: %@",URL.absoluteString);
 }
 
+// MARK:- private
+- (NSArray<NSURL *> *)getProcessedUrlsWithUlrStrings:(NSArray<NSString *> *)tkUrlStrings model:(ATADXOfferModel *)model event:(ATADXTrackerEvent)event extra:(NSDictionary*)extra {
+    NSMutableArray *urls = [[NSMutableArray alloc]initWithCapacity:tkUrlStrings.count];
+    for (NSString *item in tkUrlStrings) {
+        NSString *finalItem = item;
+        if ([Utilities isEmpty:model.trackingMapDict] == NO) {
+            for (NSString *key in model.trackingMapDict.allKeys) {
+                @autoreleasepool {
+                    NSString *replaceKey = [NSString stringWithFormat:@"{%@}",key];
+                    finalItem = [finalItem stringByReplacingOccurrencesOfString:replaceKey withString:model.trackingMapDict[key]];
+                }
+            }
+        }
+        
+        // for video
+        NSDictionary *infoForVideo = @{@"{__VIDEO_TIME__}":@(model.videoLength).stringValue,
+                                       @"{__BEGIN_TIME__}":@(model.videoResumeTime).stringValue,
+                                       @"{__END_TIME__}":@(model.videoCurrentTime).stringValue,
+                                       @"{__PLAY_FIRST_FRAME__}":model.videoResumeTime > 0 ? @"0" : @"1",
+                                       @"{__PLAY_LAST_FRAME__}":(model.videoLength <= model.videoCurrentTime + model.videoResumeTime) ? @"1" : @"0",
+                                       @"{__SCENE__}":@"2",
+                                       @"{__TYPE__}":model.videoResumeTime > 0 ? @"2":@"1",
+                                       @"{__BEHAVIOR__}":@"1",
+                                       @"{__STATUS__}":event == ATADXTrackerEventVideoPlayFail ? @"2":@"0"
+        };
+        for (NSString *key in infoForVideo) {
+            finalItem = [finalItem stringByReplacingOccurrencesOfString:key withString:infoForVideo[key]];
+        }
+        for (NSString *key in extra) {
+            NSString *value = [NSString stringWithFormat:@"%@",extra[key]];
+            finalItem = [finalItem stringByReplacingOccurrencesOfString:key withString:value];
+        }
+        
+        for (NSString *key in model.tapInfoDict) {
+            NSString *value = [NSString stringWithFormat:@"%@",model.tapInfoDict[key]];
+            finalItem = [finalItem stringByReplacingOccurrencesOfString:key withString: value];
+        }
+        
+        NSTimeInterval timeInterval = (NSInteger)[[NSDate date] timeIntervalSince1970];
+        finalItem = [finalItem stringByReplacingOccurrencesOfString:kATOfferTrackerTimestamp withString:@(timeInterval).stringValue];
+        finalItem = [finalItem stringByReplacingOccurrencesOfString:kATOfferTrackerMilliTimestamp withString:@(timeInterval * 1000).stringValue];
+        finalItem = [finalItem stringByReplacingOccurrencesOfString:kATOfferTrackerEndTimestamp withString:@(timeInterval).stringValue];
+        finalItem = [finalItem stringByReplacingOccurrencesOfString:kATOfferTrackerEndMilliTimestamp withString:@(timeInterval * 1000).stringValue];
+        
+        finalItem = [finalItem stringByReplacingOccurrencesOfString:@"{" withString:@""];
+        finalItem = [finalItem stringByReplacingOccurrencesOfString:@"}" withString:@""];
+        
+        NSURL *url = [NSURL URLWithString:finalItem];
+        if ([Utilities isEmpty:url]) {
+            url = [NSURL URLWithString:[finalItem stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+        }
+        if ([Utilities isEmpty:url] == NO) {
+            [urls addObject:url];
+        }
+    }
+    model.tapInfoDict = nil;
+    return urls;
+}
 @end

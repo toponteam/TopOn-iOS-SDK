@@ -13,6 +13,10 @@
 @class ATUnitGroupModel;
 @class ATNativeADCache;
 @interface ATNativeADOfferManager : NSObject<ATAdManagement>
+
+@property(nonatomic, readonly) NSMutableDictionary *offers;
+@property(nonatomic, readonly) NSMutableDictionary *statusStorage;
+
 +(instancetype)sharedManager;
 -(ATNativeADCache*)nativeAdWithPlacementID:(NSString*)placementID extra:(NSDictionary*__autoreleasing*)extra;
 -(ATNativeADCache*)nativeAdWithPlacementID:(NSString*)placementID invalidateStatus:(BOOL)invalidateStatus extra:(NSDictionary*__autoreleasing*)extra;

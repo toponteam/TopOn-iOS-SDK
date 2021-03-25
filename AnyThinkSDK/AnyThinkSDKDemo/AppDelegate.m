@@ -9,97 +9,67 @@
 #import "AppDelegate.h"
 #import "NSString+KAKit.h"
 #import "Utilities.h"
-//iOS 14
-//#import <AppTrackingTransparency/AppTrackingTransparency.h>
+#import <AppTrackingTransparency/ATTrackingManager.h>
+#import "Adjust.h"
+#import "TopOnAdManager.h"
 
-@import AnyThinkSDK;
-@interface AppDelegate ()
+@interface AppDelegate ()< AdjustDelegate>
 
 @end
 
 @implementation AppDelegate
 
+//AdjustDelegate
+- (void)adjustEventTrackingSucceeded:(ADJEventSuccess *)eventSuccessResponseData {
+    
+}
+
+- (void)adjustEventTrackingFailed:(ADJEventFailure *)eventFailureResponseData {
+    
+}
+
+- (void)adjustSessionTrackingFailed:(ADJSessionFailure *)sessionFailureResponseData {
+    
+}
+
+- (void)adjustSessionTrackingSucceeded:(ADJSessionSuccess *)sessionSuccessResponseData {
+    
+}
+
+- (void)adjustAttributionChanged:(ADJAttribution *)attribution {
+    
+}
+
+// AppsFlyerLibDelegate
+- (void)onConversionDataFail:(NSError *)error {
+    
+}
+
+- (void)onConversionDataSuccess:(NSDictionary *)conversionInfo {
+    
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     
-    NSLog(@"check idfa:%@, check idfv:%@", [Utilities advertisingIdentifier], [Utilities idfv]);
-    NSLog(@"check idfa:%d, check idfv:%d", [Utilities validateDeviceId:[Utilities advertisingIdentifier]], [Utilities validateDeviceId:[Utilities idfv]]);
-    NSLog(@"check test id:%d", [Utilities validateDeviceId:@"0000-0000-0000-000"]);
-    NSLog(@"check test id:%d", [Utilities validateDeviceId:@"00000000000000"]);
-    NSLog(@"check test id:%d", [Utilities validateDeviceId:@"adda-dddd-0000000-00"]);
+//    Class class = NSClassFromString(@"AppsFlyerLib");
+//    SEL selector = NSSelectorFromString(@"shared");
+//    if (class && selector) {
+//        NSObject *object = [class performSelector:selector];
+//        BOOL hasDevKey = NO;
+//        @try {
+//            hasDevKey = [object valueForKey:@"appsFlyerDevKey"];
+//        } @catch (NSException *exception) {
+//
+//        } @finally {
+//
+//        }
+//        if (hasDevKey) {
+//            [object setValue:@"ReCBbbrTheTUi5DUFJtkHR" forKey:@"appsFlyerDevKey"];
+//        }
+//    }
 
-    [ATAPI setLogEnabled:YES];
-    [ATAPI integrationChecking];
-    
-    //channel&subchannle -> customData.channel&subchannel
-    [ATAPI sharedInstance].channel = @"test_channel";
-    [ATAPI sharedInstance].subchannel = @"test_subchannel";
-    [ATAPI sharedInstance].customData = @{kATCustomDataUserIDKey:@"test_custom_user_id",
-                                          kATCustomDataChannelKey:@"custom_data_channel",
-                                          kATCustomDataSubchannelKey:@"custom_data_subchannel",
-                                          kATCustomDataAgeKey:@18,
-                                          kATCustomDataGenderKey:@1,
-                                          kATCustomDataNumberOfIAPKey:@19,
-                                          kATCustomDataIAPAmountKey:@20.0f,
-                                          kATCustomDataIAPCurrencyKey:@"usd",
-                                          kATCustomDataSegmentIDKey:@16382351
-    };
-    
-    //customData.channel&subchannel -> channel&subchannle
-//    [ATAPI sharedInstance].customData = @{kATCustomDataChannelKey:@"custom_data_channel",
-//                                          kATCustomDataSubchannelKey:@"custom_data_subchannel"
-//    };
-//    [ATAPI sharedInstance].channel = @"test_channel";
-//    [ATAPI sharedInstance].subchannel = @"test_subchannel";
-    
-    //setting custom data for placement, channel&subchannel will be ignored
-    [[ATAPI sharedInstance] setCustomData:@{kATCustomDataChannelKey:@"placement_custom_data_channel",
-                                          kATCustomDataSubchannelKey:@"placement_custom_data_subchannel"
-    } forPlacementID:@"b5c1b048c498b9"];
-    
-    [[ATAPI sharedInstance] setExludeAppleIdArray:@[@"id529479190"]];
-    
-//    [[ATAPI sharedInstance] setDeniedUploadInfoArray:@[kATDeviceDataInfoOSVersionNameKey,
-//                                                       kATDeviceDataInfoOSVersionCodeKey,
-//                                                       kATDeviceDataInfoPackageNameKey,
-//                                                       kATDeviceDataInfoAppVersionCodeKey,
-//                                                       kATDeviceDataInfoAppVersionNameKey,
-//                                                       kATDeviceDataInfoBrandKey,
-//                                                       kATDeviceDataInfoModelKey,
-//                                                       kATDeviceDataInfoScreenKey,
-//                                                       kATDeviceDataInfoNetworkTypeKey,
-//                                                       kATDeviceDataInfoMNCKey,
-//                                                       kATDeviceDataInfoMCCKey,
-//                                                       kATDeviceDataInfoLanguageKey,
-//                                                       kATDeviceDataInfoTimeZoneKey,
-//                                                       kATDeviceDataInfoUserAgentKey,
-//                                                       kATDeviceDataInfoOrientKey,
-//                                                       kATDeviceDataInfoIDFAKey,
-//                                                       kATDeviceDataInfoIDFVKey]];
-    
-    [[ATAPI sharedInstance] getUserLocationWithCallback:^(ATUserLocation location) {
-        if (location == ATUserLocationInEU) {
-            NSLog(@"----------ATUserLocationInEU");
-            if ([ATAPI sharedInstance].dataConsentSet == ATDataConsentSetUnknown) {
-                NSLog(@"----------ATDataConsentSetUnknown");
-            }
-        }else if (location == ATUserLocationOutOfEU){
-            NSLog(@"----------ATUserLocationOutOfEU");
-        }else{
-            NSLog(@"----------ATUserLocationUnknown");
-        }
-    }];
-    
-    if (@available(iOS 14, *)) {
-        //iOS 14
-//        [ATTrackingManager requestTrackingAuthorizationWithCompletionHandler:^(ATTrackingManagerAuthorizationStatus status) {
-            [[ATAPI sharedInstance] startWithAppID:@"a5b0e8491845b3" appKey:@"7eae0567827cfe2b22874061763f30c9" error:nil];
-//        }];
-    } else {
-        // Fallback on earlier versions
-        [[ATAPI sharedInstance] startWithAppID:@"a5b0e8491845b3" appKey:@"7eae0567827cfe2b22874061763f30c9" error:nil];
-    }
+    [[TopOnAdManager sharedManager] initSDKAPIWithAPIType:TopOnAPITypeTopOn];
     
     return YES;
 }

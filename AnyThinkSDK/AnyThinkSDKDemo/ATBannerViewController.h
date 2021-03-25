@@ -11,7 +11,6 @@ extern NSString *const kInmobiPlacement;
 extern NSString *const kFacebookPlacement;
 extern NSString *const kAdMobPlacement;
 extern NSString *const kApplovinPlacement;
-extern NSString *const kFlurryPlacement;
 extern NSString *const kMopubPlacementName;
 extern NSString *const kGDTPlacement;
 extern NSString *const kMopubVideoPlacementName;
@@ -24,7 +23,6 @@ extern NSString *const kAdcolonyPlacementName;
 extern NSString *const kUnityAdsPlacementName;
 extern NSString *const kAllPlacementName;
 extern NSString *const kTTPlacementName;
-extern NSString *const kYeahmobiPlacement;
 extern NSString *const kAppnextPlacement;
 extern NSString *const kBaiduPlacement;
 extern NSString *const kNendPlacement;
@@ -38,6 +36,10 @@ extern NSString *const kVunglePlacementName;
 extern NSString *const kAdcolonyPlacementName;
 extern NSString *const kGAMPlacement;
 extern NSString *const kMyOfferPlacement;
+extern NSString *const kADXPlacement;
+extern NSString *const kOnlineApiPlacement;
+extern NSString *const kKidozPlacement;
+extern NSString *const kMyTargetPlacement;
 
 @interface ATBannerViewController : UIViewController
 -(instancetype) initWithPlacementName:(NSString*)name;

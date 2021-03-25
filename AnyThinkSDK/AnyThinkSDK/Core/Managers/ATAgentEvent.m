@@ -118,7 +118,34 @@ NSString *const kAgentEventExtraInfoAdPkgNameKey = @"ad_pkg_name";
 NSString *const kAgentEventExtraInfoIsSuccessKey = @"is_success";
 NSString *const kAgentEventExtraInfoLoadStartTimeKey = @"load_start_time";
 NSString *const kAgentEventExtraInfoLoadStopTimeKey = @"load_stop_time";
+NSString *const kAgentEventExtraInfoAdDeeplinkUrlKey = @"ad_deeplink_url";
+NSString *const kAgentEventExtraInfoDeeplinkOrJumpKey = @"is_deeplink_or_jump";
 
+NSString *const kAgentEventExtraInfoCallStackSymbols = @"callStackSymbols";
+NSString *const kAgentEventExtraInfoCrashReason = @"CrashReason";
+
+NSString *const kAgentEventExtraInfoBundleInfo = @"bundle_info";
+NSString *const kAgentEventExtraInfoOfferMetaDataID = @"offer_metaData_id";
+NSString *const kAgentEventExtraInfoOfferTitle = @"offer_title";
+NSString *const kAgentEventExtraInfoOfferContent = @"offer_content";
+NSString *const kAgentEventExtraInfoOfferIconUrl = @"offer_icon_url";
+NSString *const kAgentEventExtraInfoOfferFullImageUrl = @"offer_full_image_url";
+NSString *const kAgentEventExtraInfoOfferVideoUrl = @"offer_video_url";
+NSString *const kAgentEventExtraInfoOfferImageUrls = @"offer_image_urls";
+
+// feed back
+NSString *const kAgentEventExtraInfoFeedbackType = @"feedback_type";
+NSString *const kAgentEventExtraInfoFeedbackAdvice = @"feedback_advice";
+
+
+//OFM
+NSString *const kAgentEventExtraOFMSDKInitiationSystemKey = @"ofm_system";
+NSString *const kAgentEventExtraOFMSDKTrafficGroupIDKey = @"ofm_tid";
+NSString *const kAgentEventExtraOFMSDKInitiationStrategyTypeKey = @"ofm_tType";
+//NSString *const kAgentEventExtraOFMSDKInitiationResultKey = @"ofm_init_result";
+
+NSString *const kATAgentEventKeyOFMSDKLoadFailedErrorCodeKey = @"ofm_load_errCode";
+NSString *const kATAgentEventKeyOFMSDKLoadFailedErrorMsgKey = @"ofm_load_errMsg";
 
 NSString *const kATAgentEventKeyLoadFail = @"1004630";
 NSString *const kATAgentEventKeyRequestFail = @"1004631";
@@ -138,6 +165,13 @@ NSString *const kATAgentEventKeyAppLifecycleKey = @"1004644";
 NSString *const kATAgentEventKeyBidInfoProcessingKey = @"1004646";
 NSString *const kATAgentEventKeyClickRedirectFailedKey = @"1004648";
 NSString *const kATAgentEventKeyPreloadStorekitResultKey = @"1004649";
+NSString *const kATAgentEventKeyDeepLinkResultKey = @"1004650";
+NSString *const kATAgentEventKeyFeedbackKey = @"1004652";
+NSString *const kATAgentEventKeyCrashInfoKey = @"1004653";
+
+//OFM
+NSString *const kATAgentEventKeyOFMSDKInitiationKey = @"1004654";
+NSString *const kATAgentEventKeyOFMSDKLoadFailedKey = @"1004655";
 
 @interface ATAgentEvent()
 @property(nonatomic, readonly) NSMutableArray<NSDictionary*>* ramData;
@@ -200,7 +234,16 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
                 if (!succeed) {
                     [weakSelf.diskDataAccessor writeWithBlock:^{
                         [weakSelf.diskData addObjectsFromArray:dataToUpload];
-                        [weakSelf.diskData writeToFile:[ATAgentEvent diskEventsArchivePath] atomically:YES];
+                        @try {
+                            [weakSelf.diskData writeToFile:[ATAgentEvent diskEventsArchivePath] atomically:YES];
+                        } @catch (NSException *exception) {
+                            NSLog(@"writeToFile crash reason:%@", exception.reason);
+                            [self saveEventWithKey:kATAgentEventKeyCrashInfoKey placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoCrashReason: exception.reason, kAgentEventExtraInfoCallStackSymbols: [NSThread callStackSymbols].firstObject}];
+
+                            
+                        } @finally {
+                        }
+
                     }];
                 }
             }];
@@ -290,7 +333,17 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
                 if (!succeed && diskData) {
                     [accessor writeWithBlock:^{
                         [data addObjectsFromArray:dataToUpload];
-                        [data writeToFile:[ATAgentEvent diskEventsArchivePath] atomically:YES];
+                        @try {
+                            if (data && [Utilities isEmpty:data] == NO) {
+                                [data writeToFile:[ATAgentEvent diskEventsArchivePath] atomically:YES];
+                            }
+                        } @catch (NSException *exception) {
+                            NSLog(@"writeToFile crash reason:%@", exception.reason);
+                           
+                            [self saveEventWithKey:kATAgentEventKeyCrashInfoKey placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoCrashReason: exception.reason, kAgentEventExtraInfoCallStackSymbols: [NSThread callStackSymbols].firstObject}];
+
+                        } @finally {
+                        }
                     }];
                 }
             }];
@@ -302,8 +355,17 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
                 weakSelf.ramDataLastUploadDate = [NSDate date];
             }
         }
-        if (diskData) {
-            [data writeToFile:[ATAgentEvent diskEventsArchivePath] atomically:YES];
+        
+        
+        if (diskData && data && [Utilities isEmpty:data] == NO) {
+            @try {
+                [data writeToFile:[ATAgentEvent diskEventsArchivePath] atomically:YES];
+            } @catch (NSException *exception) {
+                NSLog(@"writeToFile crash reason:%@", exception.reason);
+                [self saveEventWithKey:kATAgentEventKeyCrashInfoKey placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoCrashReason: exception.reason, kAgentEventExtraInfoCallStackSymbols: [NSThread callStackSymbols].firstObject}];
+
+            } @finally {
+            }
         }
     }];
 }
@@ -317,12 +379,39 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
                                                                                                                                               }];
 }
 
+- (BOOL)agentEventDropKey:(NSString*)key {
+    NSArray *dropKeys = @[kATAgentEventKeyRequestFail,
+                          kATAgentEventKeyClose,
+                          kATAgentEventKeyFailToPlay,
+                          kATAgentEventKeyAdSourceStatusFillKey,
+                          kATAgentEventKeyMetadataAndAdDataLoadingTimeKey,
+                          kATAgentEventKeyBidInfoProcessingKey,
+                          kATAgentEventKeyAdShowDurationKey];
+    
+    return [dropKeys containsObject:key];
+}
+
 -(void) saveEventWithKey:(NSString*)key placementID:(NSString*)placementID unitGroupModel:(nullable ATUnitGroupModel*)unitGroupModel extraInfo:(NSDictionary*)extraInfo {
     ATTrackingSetting *trackingSetting = [ATAppSettingManager sharedManager].trackingSetting;
     ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
+    
+    if (key != nil && trackingSetting != nil && [self agentEventDropKey:key] && [trackingSetting.agentEventDropNetworks containsObject:@([extraInfo[kAgentEventExtraInfoNetworkFirmIDKey] integerValue]).stringValue]) {
+        return;
+    }
+    
     if (key != nil && !((placementModel != nil && [trackingSetting.agentEventDropFormats[key] containsObject:@(placementModel.format).stringValue]) || (placementModel == nil && trackingSetting.agentEventDropFormats[key] != nil))) {
         NSDictionary *eventDict = [ATAgentEvent eventParametersWithKey:key forPlacementID:placementID unitGroupModel:unitGroupModel extraInfo:extraInfo];
-        [self appendEvent:eventDict usingTrackingSetting:trackingSetting diskData:!((placementModel != nil && [trackingSetting.agentEventRTFormats[key] containsObject:@(placementModel.format).stringValue]) || (placementModel == nil && trackingSetting.agentEventRTFormats[key] != nil))];
+        @try {
+            [self appendEvent:eventDict usingTrackingSetting:trackingSetting diskData:!((placementModel != nil && [trackingSetting.agentEventRTFormats[key] containsObject:@(placementModel.format).stringValue]) || (placementModel == nil && trackingSetting.agentEventRTFormats[key] != nil))];
+
+        } @catch (NSException *exception) {
+            NSLog(@"reason:%@",exception.reason);
+            NSArray *symbols = @[[NSThread callStackSymbols].firstObject ? [NSThread callStackSymbols].firstObject : @"",
+                                 [NSString stringWithFormat:@"eventDict:%@",eventDict]];
+            [self saveEventWithKey:kATAgentEventKeyCrashInfoKey placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoCrashReason: exception.reason, kAgentEventExtraInfoCallStackSymbols: symbols}];
+        } @finally {
+            
+        }
 //        NSLog(@"\n**************************Marvin_da_event**************************\n%@\n**************************da_event**************************\n", eventDict);
     }
 }
@@ -360,7 +449,7 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
 +(NSDictionary<NSString*, NSString*>*)msgKeysForAgentEventKey:(NSString*)key {
     return @{kATAgentEventKeyLoadFail:@{kAgentEventExtraInfoLoadingFailureReasonKey:@"msg",
                                         kGeneralAdAgentEventExtraInfoLoadErrorCodeKey:@"msg1"
-    },
+                                        },
              kATAgentEventKeyRequestFail:@{kAgentEventExtraInfoNetworkFirmIDKey:@"msg",
                                                kAgentEventExtraInfoUnitGroupUnitIDKey:@"msg1",
                                                kAgentEventExtraInfoPriorityKey:@"msg2",
@@ -485,8 +574,40 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
                                                     kAgentEventExtraInfoLoadStartTimeKey:@"msg4",
                                                     kAgentEventExtraInfoLoadStopTimeKey:@"msg5"
                                                     
+             },
+             kATAgentEventKeyDeepLinkResultKey:@{kAgentEventExtraInfoMyOfferOfferIDKey:@"msg",
+                                                 kAgentEventExtraInfoAdTypeKey:@"msg1",
+                                                 kAgentEventExtraInfoAdDeeplinkUrlKey:@"msg2",
+                                                 kAgentEventExtraInfoIsSuccessKey:@"msg3",
+                                                 kAgentEventExtraInfoDeeplinkOrJumpKey:@"msg4",
+             },
+             kATAgentEventKeyFeedbackKey:@{kAgentEventExtraInfoNetworkFirmIDKey:@"msg",
+                                           kAgentEventExtraInfoAdSourceIDKey:@"msg1",
+                                           kAgentEventExtraInfoAdTypeKey:@"msg2",
+                                           kAgentEventExtraInfoFeedbackType:@"msg3",
+                                           kAgentEventExtraInfoFeedbackAdvice:@"msg4",
+                                           kAgentEventExtraInfoMyOfferOfferIDKey:@"msg5",
+                                           kAgentEventExtraInfoOfferMetaDataID:@"msg6",
+                                           kAgentEventExtraInfoBundleInfo:@"msg7",
+                                           kAgentEventExtraInfoOfferTitle:@"msg8",
+                                           kAgentEventExtraInfoOfferContent:@"msg9",
+                                           kAgentEventExtraInfoOfferIconUrl:@"msg10",
+                                           kAgentEventExtraInfoOfferFullImageUrl:@"msg11",
+                                           kAgentEventExtraInfoOfferVideoUrl:@"msg12",
+                                           kAgentEventExtraInfoOfferImageUrls:@"msg13"
+             },
+             kATAgentEventKeyCrashInfoKey:@{kAgentEventExtraInfoCallStackSymbols:@"msg",
+                                            kAgentEventExtraInfoCrashReason:@"msg1"},
+             kATAgentEventKeyOFMSDKInitiationKey:@{kAgentEventExtraOFMSDKInitiationSystemKey:@"msg",
+                                                 kAgentEventExtraOFMSDKTrafficGroupIDKey:@"msg1",
+                                                 kAgentEventExtraOFMSDKInitiationStrategyTypeKey:@"msg2"
+             },
+             kATAgentEventKeyOFMSDKLoadFailedKey:@{kAgentEventExtraOFMSDKInitiationSystemKey:@"msg",
+                                                 kAgentEventExtraOFMSDKTrafficGroupIDKey:@"msg1",
+                                                 kATAgentEventKeyOFMSDKLoadFailedErrorCodeKey:@"msg2",
+                                                   kATAgentEventKeyOFMSDKLoadFailedErrorMsgKey:@"msg3"
              }
-             }[key];
+    }[key];
 }
 
 +(NSDictionary*)parametersWithEventData:(NSArray*)data {
@@ -538,7 +659,9 @@ static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyN
     
     NSString *ABTestID = [ATAppSettingManager sharedManager].ABTestID;
     if (ABTestID != nil) { parameters[@"abtest_id"] = ABTestID; }
-    
+    if (![kATSDKCustomChannel isEqualToString:@"0"]){
+        parameters[@"cs_cl"] = kATSDKCustomChannel;
+    }
     [parameters addEntriesFromDictionary:nonSubjectFields];
     [parameters addEntriesFromDictionary:protectedFields];
     return parameters;

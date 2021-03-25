@@ -8,11 +8,20 @@
 
 #import <Foundation/Foundation.h>
 #import "ATAdManagement.h"
+
 extern NSString *const kATSplashExtraContainerViewKey;
 extern NSString *const kATSplashExtraWindowKey;
 extern NSString *const kATSplashExtraWindowSceneKey;
 extern NSString *const kATSplashExtraLoadingStartDateKey;
 extern NSString *const kATSplashExtraBackgroundImageViewKey;
+
+@class ATSplash;
 @interface ATSplashManager : NSObject<ATAdManagement>
 +(instancetype) sharedManager;
+
+- (void)saveAdWithoutPlacementSetting:(ATSplash *)splash extra:(NSDictionary *)extra placementID:(NSString *)placementID;
+//- (ATSplash *)splashReadyWithPlacementID:(NSString *)placementID;
+- (ATSplash *)splashForPlacementID:(NSString*)placementID invalidateStatus:(BOOL)invalidateStatus extra:(NSDictionary* __autoreleasing*)extra;
+- (void)ckearDefaultSplash;
+
 @end

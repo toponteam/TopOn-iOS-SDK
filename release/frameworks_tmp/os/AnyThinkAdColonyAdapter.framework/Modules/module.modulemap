@@ -1,0 +1,6 @@
+framework module AnyThinkAdColonyAdapter {
+  umbrella header "AnyThinkAdColonyAdapter.h"
+
+  export *
+  module * { export * }
+}

@@ -22,13 +22,6 @@ typedef NS_ENUM(NSInteger, ATMyOfferFormat) {
     ATMyOfferFormatSplash = 4
 };
 
-extern NSString *const kATMyOfferBannerSize320_50;
-extern NSString *const kATMyOfferBannerSize320_90;
-extern NSString *const kATMyOfferBannerSize300_250;
-extern NSString *const kATMyOfferBannerSize728_90;
-
-
-
 @interface ATMyOfferOfferManager : NSObject
 +(instancetype) sharedManager;
 -(BOOL) resourceReadyForOfferModel:(ATMyOfferOfferModel*)offerModel;

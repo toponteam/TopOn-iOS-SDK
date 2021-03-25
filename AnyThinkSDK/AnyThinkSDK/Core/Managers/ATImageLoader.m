@@ -33,6 +33,14 @@
 }
 
 -(void) loadImageWithURL:(NSURL*)URL completion:(void(^)(UIImage *image, NSError *error))completion {
+    if ([Utilities isEmpty:URL]) {
+        if (completion) {
+            NSString *reason = [NSString stringWithFormat:@"URL:%@ is nil or uncorrect",URL.absoluteString];
+            NSError *error = [NSError errorWithDomain:reason code:1 userInfo:nil];
+            completion(nil,error);
+        }
+        return;
+    }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         //Check the cache first before attempting the downloading/read from disk.
         UIImage *image = [self cachedImageWithURL:URL];

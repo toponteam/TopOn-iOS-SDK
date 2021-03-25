@@ -121,6 +121,8 @@ extern NSString *const kAgentEventExtraInfoAdPkgNameKey;
 extern NSString *const kAgentEventExtraInfoIsSuccessKey;
 extern NSString *const kAgentEventExtraInfoLoadStartTimeKey;
 extern NSString *const kAgentEventExtraInfoLoadStopTimeKey;
+extern NSString *const kAgentEventExtraInfoAdDeeplinkUrlKey;
+
 
 extern NSString *const kATAgentEventKeyLoadFail;
 extern NSString *const kATAgentEventKeyFailToPlay;
@@ -140,6 +142,39 @@ extern NSString *const kATAgentEventKeyAdShowDurationKey;
 extern NSString *const kATAgentEventKeyBidInfoProcessingKey;
 extern NSString *const kATAgentEventKeyClickRedirectFailedKey;
 extern NSString *const kATAgentEventKeyPreloadStorekitResultKey;
+extern NSString *const kATAgentEventKeyDeepLinkResultKey;
+extern NSString *const kAgentEventExtraInfoDeeplinkOrJumpKey;
+
+extern NSString *const kATAgentEventKeyCrashInfoKey;
+extern NSString *const kAgentEventExtraInfoCallStackSymbols;
+extern NSString *const kAgentEventExtraInfoCrashReason;
+
+extern NSString *const kATAgentEventKeyFeedbackKey;
+
+extern NSString *const kAgentEventExtraInfoBundleInfo;
+extern NSString *const kAgentEventExtraInfoOfferMetaDataID;
+extern NSString *const kAgentEventExtraInfoOfferTitle;
+extern NSString *const kAgentEventExtraInfoOfferContent;
+extern NSString *const kAgentEventExtraInfoOfferIconUrl;
+extern NSString *const kAgentEventExtraInfoOfferFullImageUrl;
+extern NSString *const kAgentEventExtraInfoOfferVideoUrl;
+extern NSString *const kAgentEventExtraInfoOfferImageUrls;
+
+// feed back
+extern NSString *const kAgentEventExtraInfoFeedbackType;
+extern NSString *const kAgentEventExtraInfoFeedbackAdvice;
+
+//OFM
+extern NSString *const kAgentEventExtraOFMSDKInitiationSystemKey;
+extern NSString *const kAgentEventExtraOFMSDKTrafficGroupIDKey;
+extern NSString *const kAgentEventExtraOFMSDKInitiationStrategyTypeKey;
+//extern NSString *const kAgentEventExtraOFMSDKInitiationResultKey;
+
+extern NSString *const kATAgentEventKeyOFMSDKLoadFailedErrorCodeKey;
+extern NSString *const kATAgentEventKeyOFMSDKLoadFailedErrorMsgKey;
+
+extern NSString *const kATAgentEventKeyOFMSDKInitiationKey;
+extern NSString *const kATAgentEventKeyOFMSDKLoadFailedKey;
 
 typedef NS_ENUM(NSInteger, ATAgentEventAdNotReason) {
     ATAgentEventAdNotReasonStatusFalse = 0,

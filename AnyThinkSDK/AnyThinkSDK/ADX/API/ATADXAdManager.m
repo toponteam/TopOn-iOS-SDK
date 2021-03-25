@@ -12,6 +12,7 @@
 #import "ATOfferResourceLoader.h"
 #import "ATOfferResourceManager.h"
 #import "ATBidInfoManager.h"
+#import "ATADXTracker.h"
 
 @implementation ATADXAdManager
 
@@ -29,9 +30,12 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
         void (^loadOfferCompletion)(ATADXOfferModel *offerModel, NSError *error) = ^(ATADXOfferModel *offerModel, NSError *error) {
                //load res
-               if ([delegate respondsToSelector:@selector(didLoadMetaDataSuccessWithPlacementID:)]) { [delegate didLoadMetaDataSuccessWithPlacementID:setting.placementID unitID:unitGroupModel.unitID]; }
+            if ([delegate respondsToSelector:@selector(didLoadMetaDataSuccessWithPlacementID:unitID:)]) {
+                [delegate didLoadMetaDataSuccessWithPlacementID:setting.placementID unitID:unitGroupModel.unitID];
+                [[ATADXTracker sharedTracker] trackEvent:ATADXTrackerEventVideoLoaded offerModel:offerModel extra:nil];
+            }
                if(error != nil) {
-                   if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:error:)]) { [delegate didFailToLoadADWithPlacementID:setting.placementID unitID:unitGroupModel.unitID error:error]; }
+                   if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:unitID:error:)]) { [delegate didFailToLoadADWithPlacementID:setting.placementID unitID:unitGroupModel.unitID error:error]; }
                }else{
                    __block ATADXPlacementSetting* adxSetting = offerModel.adxSetting != nil?offerModel.adxSetting:setting;
                    [[ATOfferResourceLoader sharedLoader] loadOfferWithOfferModel:offerModel placementID:adxSetting.placementID resourceDownloadTimeout:adxSetting.resourceDownloadTimeout extra:nil completion:^(NSError *error) {
@@ -39,13 +43,12 @@
                            if ([delegate respondsToSelector:@selector(didLoadADSuccessWithPlacementID:unitID:)]) { [delegate didLoadADSuccessWithPlacementID:adxSetting.placementID unitID:unitGroupModel.unitID]; }
                        }else{
                            [[ATADXLoader sharedLoader] removeOfferModel:offerModel];
-                           ATBidInfo *bidInfo = [[ATBidInfoManager sharedManager] bidInfoForPlacementID:setting.placementID unitGroupModel:unitGroupModel requestID:requestID];
+//                           ATBidInfo *bidInfo = [[ATBidInfoManager sharedManager] bidInfoForPlacementID:setting.placementID unitGroupModel:unitGroupModel requestID:requestID];
                            [[ATBidInfoManager sharedManager] invalidateBidInfoForPlacementID:setting.placementID unitGroupModel:unitGroupModel requestID:requestID];
                            if ([delegate respondsToSelector:@selector(didFailToLoadADWithPlacementID:unitID:error:)]) { [delegate didFailToLoadADWithPlacementID:adxSetting.placementID unitID:unitGroupModel.unitID error:error]; }
                        }
                    }];
                }
-               
            };
            
            if([[ATADXLoader sharedLoader] readyADXAdWithUnitGroupModel:unitGroupModel placementID:setting.placementID]){

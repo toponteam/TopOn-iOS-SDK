@@ -204,17 +204,30 @@ NSString *const kATExtraNativeImageSizeKey = @"native_image_size";
         }
         [[ATCapsManager sharedManager] increaseCapWithPlacementID:_placementID unitGroupID:_currentOffer.unitGroup.unitGroupID requestID:_currentOffer.requestID];
         [[ATCapsManager sharedManager] setLastShowTimeWithPlacementID:_placementID unitGroupID:_currentOffer.unitGroup.unitGroupID];
-        
-        //Tracking
-        [self.customEvent trackNativeAdShow:refresh];
-        
-        //Notify delegate
-        if ([self.delegate respondsToSelector:@selector(didShowNativeAdInAdView:placementID:extra:)]) {
-          [_delegate didShowNativeAdInAdView:[self embededAdView] placementID:_placementID extra:[self.customEvent delegateExtra]];
-        }
-        
-        // remove Native offer
-        [[ATNativeADOfferManager sharedManager] removeCahceForPlacementID:_placementID unitGroupModel:_currentOffer.unitGroup];
+
+        [self checkSizeAfterOneSecond:refresh];
+    }
+}
+
+- (void)checkSizeAfterOneSecond:(BOOL)refresh {
+
+    CGRect adRect = self.frame;
+    CGRect windowRect = [UIApplication sharedApplication].keyWindow.frame;
+    CGRect intersection = CGRectIntersection(adRect, windowRect);
+    CGFloat interSize = intersection.size.width * intersection.size.height;
+    CGFloat adSize = adRect.size.width * adRect.size.height;
+    if (interSize > adSize/2) {
+        [self nativeBannerShowOfferCallback:refresh];
+    }
+}
+
+- (void)nativeBannerShowOfferCallback:(BOOL)refresh {
+    //Tracking
+    [self.customEvent trackNativeAdShow:refresh];
+    
+    //Notify delegate
+    if ([self.delegate respondsToSelector:@selector(didShowNativeAdInAdView:placementID:extra:)]) {
+      [_delegate didShowNativeAdInAdView:[self embededAdView] placementID:_placementID extra:[self.customEvent delegateExtra]];
     }
 }
 
@@ -226,6 +239,12 @@ NSString *const kATExtraNativeImageSizeKey = @"native_image_size";
 -(void) notifyNativeAdClick {
     if ([self.delegate respondsToSelector:@selector(didClickNativeAdInAdView:placementID:extra:)]) {
         [self.delegate didClickNativeAdInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra]];
+    }
+}
+
+- (void)notifyDeeplinkOrJumpResult:(BOOL)success {
+    if ([self.delegate respondsToSelector:@selector(didDeepLinkOrJumpInAdView:placementID:extra:result:)]) {
+        [self.delegate didDeepLinkOrJumpInAdView:self placementID:_placementID extra:[self.customEvent delegateExtra] result:success];
     }
 }
 

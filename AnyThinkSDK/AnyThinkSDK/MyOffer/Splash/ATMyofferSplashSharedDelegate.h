@@ -14,17 +14,6 @@
 #import "ATMyOfferSetting.h"
 #import "ATMyOfferOfferModel.h"
 
-extern NSString *const kATMyOfferSplashShowingExtraRecommendTitleKey;
-extern NSString *const kATMyOfferSplashShowingExtraCTAButtonBackgroundColorKey;
-extern NSString *const kATMyOfferSplashShowingExtraCTAButtonTitleColorKey;
-extern NSString *const kATMyOfferSplashShowingExtraContainerViewKey;
-extern NSString *const kATMyOfferSplashShowingExtraCountdownIntervalKey;
-extern NSString *const kATMyOfferSplashShowingExtraStyleKey;
-
-extern NSString *const kATMyOfferSplashShowingExtraStylePortrait;
-extern NSString *const kATMyOfferSplashShowingExtraStyleLandscape;
-
-
 @interface ATMyOfferSplashSharedDelegate : NSObject<SKStoreProductViewControllerDelegate>
 +(instancetype) sharedDelegate;
 - (void)showSplashInKeyWindow:(UIWindow *)window containerView:(UIView *)containerView offerModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting*)setting  delegate:(id<ATMyOfferSplashDelegate>)delegate;

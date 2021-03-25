@@ -11,9 +11,9 @@
 #import "ATMyOfferBannerDelegate.h"
 #import "ATMyOfferSetting.h"
 #import "ATMyOfferOfferModel.h"
-#import "ATMyOfferBannerView.h"
+#import "ATOfferBannerView.h"
 
 @interface ATMyOfferBannerSharedDelegate : NSObject
 +(instancetype) sharedDelegate;
--(ATMyOfferBannerView*)retrieveBannerViewWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting*)setting  extra:(NSDictionary *)extra delegate:(id<ATMyOfferBannerDelegate>) delegate;
+-(ATOfferBannerView *)retrieveBannerViewWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting*)setting  extra:(NSDictionary *)extra delegate:(id<ATMyOfferBannerDelegate>) delegate;
 @end

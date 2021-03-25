@@ -13,6 +13,8 @@
 #import "ATThreadSafeAccessor.h"
 #import "ATCapsManager.h"
 #import "ATAdStorageUtility.h"
+#import "ATAgentEvent.h"
+
 #pragma mark - waterfall
 @interface ATWaterfall()
 @property(nonatomic, readonly) NSString *placementID;
@@ -48,7 +50,9 @@
 }
 
 -(void) requestUnitGroup:(ATUnitGroupModel*)unitGroup {
-    [_requestSentUnitGroups addObject:unitGroup];
+    if (unitGroup) {
+        [_requestSentUnitGroups addObject:unitGroup];
+    }
 }
 
 -(NSUInteger) numberOfTimeoutRequests {
@@ -75,6 +79,9 @@
 }
 
 -(void) finishUnitGroup:(ATUnitGroupModel*)unitGroup withType:(ATUnitGroupFinishType)type {
+    if (unitGroup == nil) {
+        return;
+    }
     if (type == ATUnitGroupFinishTypeTimeout) {
         [_timeoutUnitGroups addObject:unitGroup];
     } else {
@@ -94,7 +101,9 @@
     NSArray<ATUnitGroupModel*> *array = [_unitGroups sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
         NSString *lhs = [self priceForUnitGroup:obj1];
         NSString *rhs = [self priceForUnitGroup:obj2];
-        return [rhs compare:lhs options:NSNumericSearch];
+        NSDecimalNumber *obj1_num = [NSDecimalNumber decimalNumberWithString:lhs];
+        NSDecimalNumber *obj2_num = [NSDecimalNumber decimalNumberWithString:rhs];
+        return [obj2_num compare:obj1_num];
     }];
     _unitGroups = array.mutableCopy;
 }
@@ -117,8 +126,12 @@
 -(void) insertUnitGroup:(ATUnitGroupModel*)unitGroup price:(NSString *)price {
     __block NSUInteger indexToInsert = [_unitGroups count];
     [_unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        
         NSString *innerPrice = [ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID];
-        if ([price compare: innerPrice options:NSNumericSearch] == NSOrderedDescending) {
+
+        NSDecimalNumber *innerNum = [NSDecimalNumber decimalNumberWithString:innerPrice];
+        NSDecimalNumber *priceNum = [NSDecimalNumber decimalNumberWithString:price];
+        if ([priceNum compare: innerNum] == NSOrderedDescending) {
             indexToInsert = idx;
             *stop = YES;
         }
@@ -127,21 +140,30 @@
 }
 
 -(ATUnitGroupModel*)unitGroupWithMaximumPrice {
-    NSMutableArray<ATUnitGroupModel*> *unitGroups = [NSMutableArray<ATUnitGroupModel*> arrayWithArray:_unitGroups];
-    [unitGroups removeObjectsInArray:_requestSentUnitGroups];
-//    __block ATUnitGroupModel *unitGroup = [unitGroups firstObject];
-//    [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) { if ([ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID] > [ATBidInfoManager priceForUnitGroup:unitGroup placementID:_placementID requestID:_requestID]) { unitGroup = obj; } }];
-//    return unitGroup;
-    if (unitGroups.count <= 1) {
-        return unitGroups.firstObject;
+   
+    @try {
+        NSMutableArray<ATUnitGroupModel*> *unitGroups = [NSMutableArray<ATUnitGroupModel*> arrayWithArray:_unitGroups];
+        NSArray *requestSentUGsCopy = [_requestSentUnitGroups copy];
+        [unitGroups removeObjectsInArray:requestSentUGsCopy];
+        if (unitGroups.count <= 1) {
+            return unitGroups.firstObject;
+        }
+        NSArray<ATUnitGroupModel *> *array = [unitGroups sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+            
+            NSString *lhs = [self priceForUnitGroup:obj1];
+            NSString *rhs = [self priceForUnitGroup:obj2];
+            NSDecimalNumber *obj1_num = [NSDecimalNumber decimalNumberWithString:lhs];
+            NSDecimalNumber *obj2_num = [NSDecimalNumber decimalNumberWithString:rhs];
+            return [obj2_num compare:obj1_num];
+        }];
+        return array.firstObject;
+    } @catch (NSException *exception) {
+        NSLog(@"removeObjectsInArray crash: %@",exception.reason);
+        [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyCrashInfoKey placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoCrashReason: exception.reason, kAgentEventExtraInfoCallStackSymbols: [NSThread callStackSymbols].firstObject}];
+
+        return nil;
+    } @finally {
     }
-    NSArray<ATUnitGroupModel *> *array = [unitGroups sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
-        
-        NSString *lhs = [self priceForUnitGroup:obj1];
-        NSString *rhs = [self priceForUnitGroup:obj2];
-        return [rhs compare:lhs options:NSNumericSearch];
-    }];
-    return array.firstObject;
     
 }
 
@@ -169,7 +191,9 @@
         
         NSString *lhs = [self priceForUnitGroup:obj1];
         NSString *rhs = [self priceForUnitGroup:obj2];
-        return [lhs compare:rhs options:NSNumericSearch];
+        NSDecimalNumber *obj1_num = [NSDecimalNumber decimalNumberWithString:lhs];
+        NSDecimalNumber *obj2_num = [NSDecimalNumber decimalNumberWithString:rhs];
+        return [obj1_num compare:obj2_num];
     }];
     return array.firstObject;
 }
@@ -232,20 +256,14 @@
         
         NSString * objPrice = [ATBidInfoManager priceForUnitGroup:obj placementID:_placementID requestID:_requestID];
         NSString * ugPrice = [ATBidInfoManager priceForUnitGroup:maxUG placementID:_placementID requestID:_requestID];
-
+        NSDecimalNumber *objNum = [NSDecimalNumber decimalNumberWithString:objPrice];
+        NSDecimalNumber *ugNum  = [NSDecimalNumber decimalNumberWithString:ugPrice];
         if (![shownUGIDs containsObject:obj.unitID] &&
-            [objPrice compare:ugPrice options:NSNumericSearch] == NSOrderedDescending) {
+            [objNum compare:ugNum] == NSOrderedDescending) {
             maxUG = obj;
         }
     }];
     return maxUG;
-//    NSArray<ATUnitGroupModel *> *array = [shownUGIDs sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
-//
-//        NSString *lhs = [ATBidInfoManager priceForUnitGroup:obj1 placementID:_placementID requestID:_requestID];
-//        NSString *rhs = [ATBidInfoManager priceForUnitGroup:obj2 placementID:_placementID requestID:_requestID];
-//        return [rhs compare:lhs options:NSNumericSearch];
-//    }];
-//    return array.firstObject;
 }
 
 -(void) finish {

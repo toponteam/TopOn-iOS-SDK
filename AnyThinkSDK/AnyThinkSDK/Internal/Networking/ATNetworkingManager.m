@@ -23,10 +23,8 @@
 
 #ifdef UNDER_DEVELOPMENT
 NSString *const kAPIDomain = @"test.aa.toponad.com";//@"18.140.1.181:8080";//@"test.go-api.toponad.com";//@"test.aa.toponad.com";//
-NSString *const kADXReqDomain = @"test.adx.api.toponad.com";//@"52.2.132.38:3020";//
 #else
 NSString *const kAPIDomain = @"api.anythinktech.com";//@"52.2.132.38:3020";//
-NSString *const kADXReqDomain = @"adx.api.anythinktech.com";//@"52.2.132.38:3020";//
 #endif
 
 @implementation ATNetworkingManager
@@ -72,8 +70,10 @@ NSString *const kADXReqDomain = @"adx.api.anythinktech.com";//@"52.2.132.38:3020
     [request setHTTPBody:gzip ? [bodyData gzippedData_ATKit] : bodyData];
     [request setValue:@"application/json;charset=utf-8" forHTTPHeaderField:@"Content-Type"];
     [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
-    [request setValue:@"gzip" forHTTPHeaderField:@"Content-Encoding"];
-    if (gzip) { [request setValue:@"gzip" forHTTPHeaderField:@"Request-Encoding"]; }
+    if (gzip) {
+        [request setValue:@"gzip" forHTTPHeaderField:@"Content-Encoding"];
+        [request setValue:@"gzip" forHTTPHeaderField:@"Request-Encoding"];
+    }
     if ([[ATAPI sharedInstance] isContainsForDeniedUploadInfoArray:kATDeviceDataInfoUserAgentKey]) {
         [request setValue:[[ATAPI sharedInstance] version] forHTTPHeaderField:@"User-Agent"];
     }
@@ -97,15 +97,15 @@ NSString *const kADXReqDomain = @"adx.api.anythinktech.com";//@"52.2.132.38:3020
 }
 
 +(BOOL) gzipBodyForRequestToDomain:(NSString*)domain path:(NSString*)path HTTPMethod:(ATNetworkingHTTPMethod)method parameters:(id)parameters {
-    return !([domain isEqualToString:kAPIDomain] && ([path isEqualToString:@"v1/open/app"] || [path isEqualToString:@"v1/open/placement"]) || [domain isEqualToString:kADXReqDomain]);
+    return !([domain isEqualToString:kAPIDomain] && ([path isEqualToString:@"v1/open/app"] || [path isEqualToString:@"v1/open/placement"]));
 }
 
 -(NSString*)schemeWithDomain:(NSString*)domain {
 #ifdef UNDER_DEVELOPMENT
-    return @{kAPIDomain:@"http", kADXReqDomain:@"http"
+    return @{kAPIDomain:@"http"
              }[domain];
 #else
-    return @{kAPIDomain:@"https", kADXReqDomain:@"https"
+    return @{kAPIDomain:@"https"
              }[domain];
 #endif
     

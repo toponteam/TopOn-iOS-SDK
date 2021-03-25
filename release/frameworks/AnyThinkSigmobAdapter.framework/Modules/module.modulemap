@@ -1,0 +1,6 @@
+framework module AnyThinkSigmobAdapter {
+  umbrella header "AnyThinkSigmobAdapter.h"
+
+  export *
+  module * { export * }
+}

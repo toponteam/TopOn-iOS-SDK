@@ -24,6 +24,8 @@ NSString *const kATAdLoadingExtraUserDataKeywordKey = @"user_data_keyword";
 NSString *const kATAdLoadingExtraUserIDKey = @"userID";
 NSString *const kATAdLoadingExtraLocationKey = @"location";
 NSString *const kATAdLoadingExtraMediaExtraKey = @"media_ext";
+NSString *const kATAdLoadingExtraRewardNameKey = @"rewardName";
+NSString *const kATAdLoadingExtraRewardAmountKey = @"rewardAmount";
 
 NSString *const kATRewardedVideoCallbackExtraAdsourceIDKey = @"adsource_id";
 NSString *const kATRewardedVideoCallbackExtraNetworkIDKey = @"network_firm_id";
@@ -33,15 +35,19 @@ NSString *const kATRewardedVideoCallbackExtraPriority = @"adsource_index";
 
 @implementation ATAdManager (RewardedVideo)
 -(BOOL) rewardedVideoReadyForPlacementID:(NSString*)placementID {
-    BOOL ready = [self rewardedVideoReadyForPlacementID:placementID scene:nil caller:ATAdManagerReadyAPICallerReady rewardedVidel:nil];
+    return [self rewardedVideoReadyForPlacementID:placementID sendTK:YES];
+}
+
+-(BOOL) rewardedVideoReadyForPlacementID:(NSString*)placementID sendTK:(BOOL)send {
+    BOOL ready = [self rewardedVideoReadyForPlacementID:placementID scene:nil caller:ATAdManagerReadyAPICallerReady rewardedVidel:nil sendTK:send];
     NSMutableDictionary *info = [NSMutableDictionary dictionaryWithDictionary:[ATGeneralAdAgentEvent apiLogInfoWithPlacementID:placementID format:ATAdFormatRewardedVideo api:kATAPIIsReady]];
     info[@"result"] = ready ? @"YES" : @"NO";
     [ATLogger logMessage:[NSString stringWithFormat:@"\nAPI invocation info:\n*****************************\n%@ \n*****************************", info] type:ATLogTypeTemporary];
     return ready;
 }
 
--(BOOL) rewardedVideoReadyForPlacementID:(NSString*)placementID scene:(NSString*)scene caller:(ATAdManagerReadyAPICaller)caller rewardedVidel:(ATRewardedVideo *__strong *)rewardedVideo {
-    return [[ATAdManager sharedManager] adReadyForPlacementID:placementID scene:scene caller:caller context:^BOOL(NSDictionary *__autoreleasing *extra) {
+-(BOOL) rewardedVideoReadyForPlacementID:(NSString*)placementID scene:(NSString*)scene caller:(ATAdManagerReadyAPICaller)caller rewardedVidel:(ATRewardedVideo *__strong *)rewardedVideo sendTK:(BOOL)send {
+    return [[ATAdManager sharedManager] adReadyForPlacementID:placementID scene:scene caller:caller sendTK:send context:^BOOL(NSDictionary *__autoreleasing *extra) {
         ATRewardedVideo *localRV = [[ATRewardedVideoManager sharedManager] rewardedVideoForPlacementID:placementID invalidateStatus:caller == ATAdManagerReadyAPICallerShow extra:extra];
         if (rewardedVideo != nil) { *rewardedVideo = localRV; }
         return localRV != nil;
@@ -54,13 +60,13 @@ NSString *const kATRewardedVideoCallbackExtraPriority = @"adsource_index";
     if ([[ATWaterfallManager sharedManager] loadingAdForPlacementID:placementID]) {
         checkLoadModel.isLoading = YES;
     }
-    if ([self rewardedVideoReadyForPlacementID:placementID scene:nil caller:ATAdManagerReadyAPICallerReady rewardedVidel:&rewardedVideo]) {
+    if ([self rewardedVideoReadyForPlacementID:placementID scene:nil caller:ATAdManagerReadyAPICallerReady rewardedVidel:&rewardedVideo sendTK:YES]) {
         checkLoadModel.isReady = YES;
         NSMutableDictionary *delegateExtra = [NSMutableDictionary dictionaryWithDictionary:[rewardedVideo.customEvent delegateExtra]];
         if ([delegateExtra containsObjectForKey:kATADDelegateExtraIDKey]) { [delegateExtra removeObjectForKey:kATADDelegateExtraIDKey]; }
         checkLoadModel.adOfferInfo = delegateExtra;
     }
-    NSMutableDictionary *info = [NSMutableDictionary dictionaryWithDictionary:[ATGeneralAdAgentEvent apiLogInfoWithPlacementID:placementID format:ATAdFormatInterstitial api:kATAPICheckLoadStatus]];
+    NSMutableDictionary *info = [NSMutableDictionary dictionaryWithDictionary:[ATGeneralAdAgentEvent apiLogInfoWithPlacementID:placementID format:ATAdFormatRewardedVideo api:kATAPICheckLoadStatus]];
     info[@"result"] = @{@"isLoading":checkLoadModel.isLoading ? @"YES" : @"NO", @"isReady":checkLoadModel.isReady ? @"YES" : @"NO", @"adOfferInfo":![Utilities isBlankDictionary:checkLoadModel.adOfferInfo] ? checkLoadModel.adOfferInfo : @{}};
     [ATLogger logMessage:[NSString stringWithFormat:@"\nAPI invocation info:\n*****************************\n%@ \n*****************************", info] type:ATLogTypeTemporary];
     return checkLoadModel;
@@ -76,7 +82,7 @@ NSString *const kATRewardedVideoCallbackExtraPriority = @"adsource_index";
     }
     NSError *error = nil;
     ATRewardedVideo *rewardedVideo = nil;
-    if ([self rewardedVideoReadyForPlacementID:placementID scene:showingScene caller:ATAdManagerReadyAPICallerShow rewardedVidel:&rewardedVideo]) {
+    if ([self rewardedVideoReadyForPlacementID:placementID scene:showingScene caller:ATAdManagerReadyAPICallerShow rewardedVidel:&rewardedVideo sendTK:YES]) {
         rewardedVideo.scene = showingScene;
         viewController.ad = rewardedVideo;
         [rewardedVideo.customEvent saveShowAPIContext];

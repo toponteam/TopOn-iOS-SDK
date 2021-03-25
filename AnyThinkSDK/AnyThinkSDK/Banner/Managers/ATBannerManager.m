@@ -22,8 +22,7 @@ NSString *const kBannerPresentModalViewControllerNotification = @"com.anythink.k
 NSString *const kBannerDismissModalViewControllerNotification = @"com.anythink.kBannerDismissModalViewControllerNotification";
 NSString *const kBannerNotificationUserInfoRequestIDKey = @"request_id";
 @interface ATBannerManager()
-@property(nonatomic, readonly) NSMutableDictionary *statusStorage;
-@property(nonatomic, readonly) NSMutableDictionary<NSString*, NSMutableDictionary<NSString*, id>*>*bannerStorage;
+
 @property(nonatomic, readonly) ATSerialThreadSafeAccessor *bannerStorageAccessor;
 @end
 @implementation ATBannerManager

@@ -25,6 +25,7 @@
 #import "ATAdManager+Internal.h"
 #import "ATLoadingScheduler.h"
 #import "ATAdStorageUtility.h"
+
 NSString *const kExtraInfoRootViewControllerKey = @"root_view_controller";
 NSString *const kAdLoadingExtraAutoloadFlagKey = @"auto_load";
 NSString *const kExtraInfoAdSizeKey = @"ad_size";
@@ -39,11 +40,18 @@ NSString *const kAdAssetsCustomEventKey = @"custom_event";
 NSString *const kAdAssetsCustomObjectKey = @"custom_object";
 NSString *const kAdAssetsUnitIDKey = @"unit_id";
 NSString *const kAdAssetsPriceKey = @"price";
+NSString *const kAdAssetsBidIDKey = @"bidId";
 @protocol ATAdReady<NSObject>
--(BOOL) nativeAdReadyForPlacementID:(NSString*)placementID;
--(BOOL) interstitialReadyForPlacementID:(NSString*)placementID;
--(BOOL) bannerAdReadyForPlacementID:(NSString*)placementID;
--(BOOL) rewardedVideoReadyForPlacementID:(NSString*)placementID;
+- (BOOL)nativeAdReadyForPlacementID:(NSString*)placementID;
+- (BOOL)nativeAdReadyForPlacementID:(NSString*)placementID sendTK:(BOOL)send;
+- (BOOL)interstitialReadyForPlacementID:(NSString*)placementID;
+- (BOOL)interstitialReadyForPlacementID:(NSString*)placementID sendTK:(BOOL)send;
+- (BOOL)bannerAdReadyForPlacementID:(NSString*)placementID;
+- (BOOL)bannerAdReadyForPlacementID:(NSString*)placementID sendTK:(BOOL)send;
+- (BOOL)rewardedVideoReadyForPlacementID:(NSString*)placementID;
+- (BOOL)rewardedVideoReadyForPlacementID:(NSString*)placementID sendTK:(BOOL)send;
+- (BOOL)splashReadyForPlacementID:(NSString *)placementID;
+- (BOOL)splashReadyForPlacementID:(NSString *)placementID sendTK:(BOOL)send;
 @end
 
 @interface ATAdManager()<ATAdReady>
@@ -311,11 +319,15 @@ lastExtra info is saved as below:
  *Internal method, invoked by the various storage managers.
  */
 
--(BOOL) adReadyForPlacementID:(NSString*)placementID caller:(ATAdManagerReadyAPICaller)caller context:(BOOL(^)(NSDictionary *__autoreleasing *extra))context {
-    return [[ATAdManager sharedManager] adReadyForPlacementID:placementID scene:nil caller:caller context:context];
+- (BOOL)adReadyForPlacementID:(NSString*)placementID caller:(ATAdManagerReadyAPICaller)caller context:(BOOL(^)(NSDictionary *__autoreleasing *extra))context {
+    return [self adReadyForPlacementID:placementID scene:nil caller:caller context:context];
 }
 
--(BOOL) adReadyForPlacementID:(NSString*)placementID scene:(NSString*)scene caller:(ATAdManagerReadyAPICaller)caller context:(BOOL(^)(NSDictionary *__autoreleasing *extra))context {
+- (BOOL)adReadyForPlacementID:(NSString *)placementID scene:(NSString *)scene caller:(ATAdManagerReadyAPICaller)caller context:(BOOL (^)(NSDictionary *__autoreleasing *))context {
+    return [self adReadyForPlacementID:placementID scene:scene caller:caller sendTK:YES context:context];
+}
+
+- (BOOL)adReadyForPlacementID:(NSString*)placementID scene:(NSString*)scene caller:(ATAdManagerReadyAPICaller)caller sendTK:(BOOL)send context:(BOOL(^)(NSDictionary *__autoreleasing *extra))context {
     if ([placementID isKindOfClass:[NSString class]] && [placementID length] > 0) {
         ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
         NSMutableDictionary *extraInfo = [NSMutableDictionary dictionaryWithDictionary:@{kAdStorageExtraPlacementIDKey:placementID,
@@ -351,6 +363,10 @@ lastExtra info is saved as below:
                     if (extra[kATTrackerExtraAdObjectKey] != nil) { extraInfo[kATTrackerExtraAdObjectKey] = extra[kATTrackerExtraAdObjectKey]; }
                     finalWaterfall = extra[kAdStorageExtraFinalWaterfallKey];
                     if ([extra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { extraInfo[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
+                    if([ATAPI isOfm]){
+                        extraInfo[kATTrackerExtraOFMTrafficIDKey] = extra[kATTrackerExtraOFMTrafficIDKey]==nil?@(0):extra[kATTrackerExtraOFMTrafficIDKey];
+                        extraInfo[kATTrackerExtraOFMSystemKey] = @(1);
+                    }
                 } else {//Logically, control currently will never reach this point
                     extraInfo[kAgentEventExtraInfoNotReadyReasonKey] = @3;
                     ready = NO;
@@ -365,76 +381,59 @@ lastExtra info is saved as below:
         }
         
         extraInfo[kAdStorageExtraReadyFlagKey] = @(ready ? 1 : 0);
-        if (ready && caller == ATAdManagerReadyAPICallerShow) {
-            NSMutableDictionary *trackingInfo = [NSMutableDictionary dictionaryWithDictionary:@{kATTrackerExtraUnitIDKey:extraInfo[kAdStoreageExtraUnitGroupUnitID] != nil ? extraInfo[kAdStoreageExtraUnitGroupUnitID] : @"",
-                                                                                                kATTrackerExtraNetworkFirmIDKey:extraInfo[kAdStorageExtraNetworkFirmIDKey] != nil ? extraInfo[kAdStorageExtraNetworkFirmIDKey] : @(0),
-                                                                                                kATTrackerExtraASResultKey:extraInfo[kAdStorageExtraUnitGroupInfosKey] != nil ?
-                                                                                                extraInfo[kAdStorageExtraUnitGroupInfosKey] : @[]}];
-            if ([extraInfo[kAdStorageExtraHeaderBiddingInfo] isKindOfClass:[NSDictionary class]]) { trackingInfo[kATTrackerExtraHeaderBiddingInfoKey] = extraInfo[kAdStorageExtraHeaderBiddingInfo]; }
-            if (extraInfo[kATTrackerExtraAppIDKey] != nil) { trackingInfo[kATTrackerExtraAppIDKey] = extraInfo[kATTrackerExtraAppIDKey]; }
-            if (latestRequestID != nil) { trackingInfo[kATTrackerExtraLastestRequestIDKey] = latestRequestID; }
-            trackingInfo[kATTrackerExtraLastestRequestIDMatchFlagKey] = @(latestRequestIDDifferFlag);
-            if ([extraInfo[kAdLoadingExtraFilledByReadyFlagKey] boolValue]) { trackingInfo[kATTrackerExtraAdFilledByReadyFlagKey] = @YES; }
-            if ([extraInfo[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]) { trackingInfo[kATTrackerExtraAutoloadOnCloseFlagKey] = @YES; }
-            if ([extraInfo[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey] boolValue]) { trackingInfo[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey] = @YES; }
-            if (extraInfo[kATTrackerExtraRefreshFlagKey] != nil) { trackingInfo[kATTrackerExtraRefreshFlagKey] = extraInfo[kATTrackerExtraRefreshFlagKey]; }
-            if (extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey] != nil) { trackingInfo[kATTrackerExtraMyOfferDefaultFalgKey] = extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey]; }
-            if (extraInfo[kATTrackerExtraAdObjectKey] != nil) { trackingInfo[kATTrackerExtraAdObjectKey] = extraInfo[kATTrackerExtraAdObjectKey]; }
-            if (scene != nil) { trackingInfo[kATTrackerExtraAdShowSceneKey] = scene; }
-            if ([extraInfo[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { trackingInfo[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
-            [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:extraInfo[kAdStorageExtraRequestIDKey] trackType:ATNativeAdTrackTypeShowAPICall extra:trackingInfo];
-            [[ATCapsManager sharedManager] recordShowForPlacementID:placementID unitGroupUnitID:extraInfo[kAdStoreageExtraUnitGroupUnitID] requestID:extraInfo[kAdStorageExtraRequestIDKey]];
-        } else {
-            //agent event
-            NSMutableDictionary *agentEventExtraInfo = [NSMutableDictionary dictionaryWithDictionary:@{kAgentEventExtraInfoReadyFlagKey:@(ready ? 1 : 0), kAgentEventExtraInfoASResultKey:extraInfo[kAdStorageExtraUnitGroupInfosKey] != nil ? extraInfo[kAdStorageExtraUnitGroupInfosKey] : @[]}];
-            if (latestRequestID != nil) { agentEventExtraInfo[kAgentEventExtraInfoLatestRequestIDKey] = latestRequestID; }
-            agentEventExtraInfo[kAgentEventExtraInfoLatestRequestIDDifferFlagKey] = @(latestRequestIDDifferFlag);
-            if (extraInfo[kAdStorageExtraRequestIDKey] != nil) { agentEventExtraInfo[kAgentEventExtraInfoRequestIDKey] = extraInfo[kAdStorageExtraRequestIDKey]; }
-            if (extraInfo[kAgentEventExtraInfoNotReadyReasonKey] != nil) { agentEventExtraInfo[kAgentEventExtraInfoNotReadyReasonKey] = extraInfo[kAgentEventExtraInfoNotReadyReasonKey]; }
-            if (extraInfo[kAdStorageExtraNetworkFirmIDKey] != nil) { agentEventExtraInfo[kAgentEventExtraInfoNetworkFirmIDKey] = extraInfo[kAdStorageExtraNetworkFirmIDKey]; }
-            if (extraInfo[kAdStoreageExtraUnitGroupUnitID] != nil) { agentEventExtraInfo[kAgentEventExtraInfoUnitGroupUnitIDKey] = extraInfo[kAdStoreageExtraUnitGroupUnitID]; }
-            if (extraInfo[kAdStorageExtraNetworkSDKVersion] != nil) { agentEventExtraInfo[kAgentEventExtraInfoNetworkSDKVersionKey] = extraInfo[kAdStorageExtraNetworkSDKVersion]; }
-            if (extraInfo[kAdStorageExtraPriorityKey] != nil) { agentEventExtraInfo[kAgentEventExtraInfoPriorityKey] = extraInfo[kAdStorageExtraPriorityKey]; }
-            if (extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey] != nil) { agentEventExtraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey] = extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey]; }
-            agentEventExtraInfo[kAgentEventExtraInfoAdFilledByReadyFlagKey] = @([extraInfo[kAdLoadingExtraFilledByReadyFlagKey] boolValue] ? 1 : 0);
-            agentEventExtraInfo[kAgentEventExtraInfoAutoloadOnCloseFlagKey] = @([extraInfo[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0);
-            //Add failed hb adsource
-            if (!ready && extraInfo[kAdStorageExtraRequestIDKey] != nil) {
-                NSArray<ATUnitGroupModel*>* sortedAdSource = [finalWaterfall.unitGroups count] > 0 ? finalWaterfall.unitGroups : @[];
-                NSMutableArray<NSDictionary*>* adsourceResults = [NSMutableArray<NSDictionary*> array];
-                if ([extraInfo[kAdStorageExtraUnitGroupInfosKey] isKindOfClass:[NSArray class]]) { [adsourceResults addObjectsFromArray:extraInfo[kAdStorageExtraUnitGroupInfosKey]]; }
-                
-                NSMutableArray<ATUnitGroupModel*>* hbAdSource = [NSMutableArray arrayWithArray:placementModel.S2SHeaderBiddingUnitGroups];
-                [hbAdSource removeObjectsInArray:sortedAdSource];
-                [hbAdSource enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                    NSInteger adsourceNotReadyReason = 0;
-                    if ([ATAdStorageUtility validateCapsForUnitGroup:obj placementID:placementID]) {
-                        if ([ATAdStorageUtility validatePacingForUnitGroup:obj placementID:placementID]) {
-                            adsourceNotReadyReason = 5;//bid request failed
-                        } else {//pacing
-                            adsourceNotReadyReason = 3;
-                        }
-                    } else {//caps
-                        adsourceNotReadyReason = 2;
-                    }
-                    [adsourceResults addObject:@{kAdStorageExtraUnitGroupInfoPriorityKey:@-1,
-                                                 kAdStorageExtraUnitGroupInfoUnitIDKey:obj.unitID != nil ? obj.unitID : @"",
-                                                 kAdStorageExtraUnitGroupInfoNetworkFirmIDKey:@(obj.networkFirmID),
-                                                 kAdStorageExtraUnitGroupInfoNetworkSDKVersionKey:[[ATAPI sharedInstance] versionForNetworkFirmID:obj.networkFirmID],
-                                                 kAdStorageExtraUnitGroupInfoReadyFlagKey:@0,
-                                                 kAdStorageExtraNotReadyReasonKey:@(adsourceNotReadyReason)
-                                                 }];
-                }];
-                
-                //Add caped/pacinged adsource for header bidding
-                if ([placementModel.S2SHeaderBiddingUnitGroups count] > 0) {
-                    NSMutableArray<ATUnitGroupModel*>* adSources = [NSMutableArray<ATUnitGroupModel*> arrayWithArray:placementModel.unitGroups];
-                    [adSources removeObjectsInArray:sortedAdSource];
-                    [adSources enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        // send tk
+        if (send) {
+            if (ready && caller == ATAdManagerReadyAPICallerShow) {
+                NSMutableDictionary *trackingInfo = @{
+                    kATTrackerExtraUnitIDKey:extraInfo[kAdStoreageExtraUnitGroupUnitID] != nil ? extraInfo[kAdStoreageExtraUnitGroupUnitID] : @"",
+                    kATTrackerExtraNetworkFirmIDKey:extraInfo[kAdStorageExtraNetworkFirmIDKey] != nil ? extraInfo[kAdStorageExtraNetworkFirmIDKey] : @(0),
+                    kATTrackerExtraASResultKey:extraInfo[kAdStorageExtraUnitGroupInfosKey] != nil ? extraInfo[kAdStorageExtraUnitGroupInfosKey] : @[]
+                }.mutableCopy;
+                if ([extraInfo[kAdStorageExtraHeaderBiddingInfo] isKindOfClass:[NSDictionary class]]) { trackingInfo[kATTrackerExtraHeaderBiddingInfoKey] = extraInfo[kAdStorageExtraHeaderBiddingInfo]; }
+                if (extraInfo[kATTrackerExtraAppIDKey] != nil) { trackingInfo[kATTrackerExtraAppIDKey] = extraInfo[kATTrackerExtraAppIDKey]; }
+                if (latestRequestID != nil) { trackingInfo[kATTrackerExtraLastestRequestIDKey] = latestRequestID; }
+                trackingInfo[kATTrackerExtraLastestRequestIDMatchFlagKey] = @(latestRequestIDDifferFlag);
+                if ([extraInfo[kAdLoadingExtraFilledByReadyFlagKey] boolValue]) { trackingInfo[kATTrackerExtraAdFilledByReadyFlagKey] = @YES; }
+                if ([extraInfo[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]) { trackingInfo[kATTrackerExtraAutoloadOnCloseFlagKey] = @YES; }
+                if ([extraInfo[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey] boolValue]) { trackingInfo[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey] = @YES; }
+                if (extraInfo[kATTrackerExtraRefreshFlagKey] != nil) { trackingInfo[kATTrackerExtraRefreshFlagKey] = extraInfo[kATTrackerExtraRefreshFlagKey]; }
+                if (extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey] != nil) { trackingInfo[kATTrackerExtraMyOfferDefaultFalgKey] = extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey]; }
+                if (extraInfo[kATTrackerExtraAdObjectKey] != nil) { trackingInfo[kATTrackerExtraAdObjectKey] = extraInfo[kATTrackerExtraAdObjectKey]; }
+                if (scene != nil) { trackingInfo[kATTrackerExtraAdShowSceneKey] = scene; }
+                if ([extraInfo[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { trackingInfo[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
+                if([ATAPI isOfm]){
+                    trackingInfo[kATTrackerExtraOFMTrafficIDKey] = extraInfo[kATTrackerExtraOFMTrafficIDKey]==nil?@(0):extraInfo[kATTrackerExtraOFMTrafficIDKey];
+                    trackingInfo[kATTrackerExtraOFMSystemKey] = @(1);
+                }
+                [[ATTracker sharedTracker] trackWithPlacementID:placementID requestID:extraInfo[kAdStorageExtraRequestIDKey] trackType:ATNativeAdTrackTypeShowAPICall extra:trackingInfo];
+                [[ATCapsManager sharedManager] recordShowForPlacementID:placementID unitGroupUnitID:extraInfo[kAdStoreageExtraUnitGroupUnitID] requestID:extraInfo[kAdStorageExtraRequestIDKey]];
+            } else {
+                //agent event
+                NSMutableDictionary *agentEventExtraInfo = [NSMutableDictionary dictionaryWithDictionary:@{kAgentEventExtraInfoReadyFlagKey:@(ready ? 1 : 0), kAgentEventExtraInfoASResultKey:extraInfo[kAdStorageExtraUnitGroupInfosKey] != nil ? extraInfo[kAdStorageExtraUnitGroupInfosKey] : @[]}];
+                if (latestRequestID != nil) { agentEventExtraInfo[kAgentEventExtraInfoLatestRequestIDKey] = latestRequestID; }
+                agentEventExtraInfo[kAgentEventExtraInfoLatestRequestIDDifferFlagKey] = @(latestRequestIDDifferFlag);
+                if (extraInfo[kAdStorageExtraRequestIDKey] != nil) { agentEventExtraInfo[kAgentEventExtraInfoRequestIDKey] = extraInfo[kAdStorageExtraRequestIDKey]; }
+                if (extraInfo[kAgentEventExtraInfoNotReadyReasonKey] != nil) { agentEventExtraInfo[kAgentEventExtraInfoNotReadyReasonKey] = extraInfo[kAgentEventExtraInfoNotReadyReasonKey]; }
+                if (extraInfo[kAdStorageExtraNetworkFirmIDKey] != nil) { agentEventExtraInfo[kAgentEventExtraInfoNetworkFirmIDKey] = extraInfo[kAdStorageExtraNetworkFirmIDKey]; }
+                if (extraInfo[kAdStoreageExtraUnitGroupUnitID] != nil) { agentEventExtraInfo[kAgentEventExtraInfoUnitGroupUnitIDKey] = extraInfo[kAdStoreageExtraUnitGroupUnitID]; }
+                if (extraInfo[kAdStorageExtraNetworkSDKVersion] != nil) { agentEventExtraInfo[kAgentEventExtraInfoNetworkSDKVersionKey] = extraInfo[kAdStorageExtraNetworkSDKVersion]; }
+                if (extraInfo[kAdStorageExtraPriorityKey] != nil) { agentEventExtraInfo[kAgentEventExtraInfoPriorityKey] = extraInfo[kAdStorageExtraPriorityKey]; }
+                if (extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey] != nil) { agentEventExtraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey] = extraInfo[kAgentEventExtraInfoMyOfferDefaultFlagKey]; }
+                agentEventExtraInfo[kAgentEventExtraInfoAdFilledByReadyFlagKey] = @([extraInfo[kAdLoadingExtraFilledByReadyFlagKey] boolValue] ? 1 : 0);
+                agentEventExtraInfo[kAgentEventExtraInfoAutoloadOnCloseFlagKey] = @([extraInfo[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue] ? 1 : 0);
+                //Add failed hb adsource
+                if (!ready && extraInfo[kAdStorageExtraRequestIDKey] != nil) {
+                    NSArray<ATUnitGroupModel*>* sortedAdSource = [finalWaterfall.unitGroups count] > 0 ? finalWaterfall.unitGroups : @[];
+                    NSMutableArray<NSDictionary*>* adsourceResults = [NSMutableArray<NSDictionary*> array];
+                    if ([extraInfo[kAdStorageExtraUnitGroupInfosKey] isKindOfClass:[NSArray class]]) { [adsourceResults addObjectsFromArray:extraInfo[kAdStorageExtraUnitGroupInfosKey]]; }
+                    
+                    NSMutableArray<ATUnitGroupModel*>* hbAdSource = [NSMutableArray arrayWithArray:placementModel.S2SHeaderBiddingUnitGroups];
+                    [hbAdSource removeObjectsInArray:sortedAdSource];
+                    [hbAdSource enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                         NSInteger adsourceNotReadyReason = 0;
                         if ([ATAdStorageUtility validateCapsForUnitGroup:obj placementID:placementID]) {
                             if ([ATAdStorageUtility validatePacingForUnitGroup:obj placementID:placementID]) {
-//                                adsourceNotReadyReason = 5;//bid request failed
+                                adsourceNotReadyReason = 5;//bid request failed
                             } else {//pacing
                                 adsourceNotReadyReason = 3;
                             }
@@ -449,13 +448,39 @@ lastExtra info is saved as below:
                                                      kAdStorageExtraNotReadyReasonKey:@(adsourceNotReadyReason)
                                                      }];
                     }];
+                    
+                    //Add caped/pacinged adsource for header bidding
+                    if ([placementModel.S2SHeaderBiddingUnitGroups count] > 0) {
+                        NSMutableArray<ATUnitGroupModel*>* adSources = [NSMutableArray<ATUnitGroupModel*> arrayWithArray:placementModel.unitGroups];
+                        [adSources removeObjectsInArray:sortedAdSource];
+                        [adSources enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                            NSInteger adsourceNotReadyReason = 0;
+                            if ([ATAdStorageUtility validateCapsForUnitGroup:obj placementID:placementID]) {
+                                if ([ATAdStorageUtility validatePacingForUnitGroup:obj placementID:placementID]) {
+    //                                adsourceNotReadyReason = 5;//bid request failed
+                                } else {//pacing
+                                    adsourceNotReadyReason = 3;
+                                }
+                            } else {//caps
+                                adsourceNotReadyReason = 2;
+                            }
+                            [adsourceResults addObject:@{kAdStorageExtraUnitGroupInfoPriorityKey:@-1,
+                                                         kAdStorageExtraUnitGroupInfoUnitIDKey:obj.unitID != nil ? obj.unitID : @"",
+                                                         kAdStorageExtraUnitGroupInfoNetworkFirmIDKey:@(obj.networkFirmID),
+                                                         kAdStorageExtraUnitGroupInfoNetworkSDKVersionKey:[[ATAPI sharedInstance] versionForNetworkFirmID:obj.networkFirmID],
+                                                         kAdStorageExtraUnitGroupInfoReadyFlagKey:@0,
+                                                         kAdStorageExtraNotReadyReasonKey:@(adsourceNotReadyReason)
+                                                         }];
+                        }];
+                    }
+                    
+                    if ([adsourceResults count] > 0) { agentEventExtraInfo[kAgentEventExtraInfoASResultKey] = adsourceResults; }
                 }
                 
-                if ([adsourceResults count] > 0) { agentEventExtraInfo[kAgentEventExtraInfoASResultKey] = adsourceResults; }
+                [[ATAgentEvent sharedAgent] saveEventWithKey:caller == ATAdManagerReadyAPICallerShow ? kATAgentEventKeyShowFail : kATAgentEventKeyReady placementID:placementID unitGroupModel:nil extraInfo:agentEventExtraInfo];
             }
-            
-            [[ATAgentEvent sharedAgent] saveEventWithKey:caller == ATAdManagerReadyAPICallerShow ? kATAgentEventKeyShowFail : kATAgentEventKeyReady placementID:placementID unitGroupModel:nil extraInfo:agentEventExtraInfo];
         }
+        
         if (!ready) { [[ATPlacementSettingManager sharedManager] setStatus:ready forPlacementID:placementID]; }
         return ready;
     } else {
@@ -464,24 +489,28 @@ lastExtra info is saved as below:
     }
 }
 
--(BOOL) adReadyForPlacementID:(NSString*)placementID {
+-(BOOL) adReadyForPlacementID:(NSString*)placementID sendTK:(BOOL)send {
     ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
     if (placementModel.format == ATAdFormatNative) {
-        return [[ATAdManager sharedManager] respondsToSelector:@selector(nativeAdReadyForPlacementID:)] ? [[ATAdManager sharedManager] nativeAdReadyForPlacementID:placementID] : NO;
+        return [self nativeAdReadyForPlacementID:placementID sendTK:send];
     } else if (placementModel.format == ATAdFormatRewardedVideo) {
-        return [[ATAdManager sharedManager] respondsToSelector:@selector(rewardedVideoReadyForPlacementID:)] ? [[ATAdManager sharedManager] rewardedVideoReadyForPlacementID:placementID] : NO;
+        return [self rewardedVideoReadyForPlacementID:placementID sendTK:send];
     } else if (placementModel.format == ATAdFormatInterstitial) {
-        return [[ATAdManager sharedManager] respondsToSelector:@selector(interstitialReadyForPlacementID:)] ? [[ATAdManager sharedManager] interstitialReadyForPlacementID:placementID] : NO;
+        return [self interstitialReadyForPlacementID:placementID sendTK:send];
     } else if (placementModel.format == ATAdFormatBanner) {
-        return [[ATAdManager sharedManager] respondsToSelector:@selector(bannerAdReadyForPlacementID:)] ? [[ATAdManager sharedManager] bannerAdReadyForPlacementID:placementID] : NO;
+        return [self bannerAdReadyForPlacementID:placementID sendTK:send];
     } else if (placementModel.format == ATAdFormatSplash) {
-        return NO;
+        return [self splashReadyForPlacementID:placementID sendTK:send];
     } else {
         return NO;
     }
 }
 
--(void) clearCacheWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel {
+- (BOOL)adReadyForPlacementID:(NSString *)placementID {
+    return [self adReadyForPlacementID:placementID sendTK:YES];
+}
+
+- (void)clearCacheWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel {
     [[NSClassFromString(@{@(ATAdFormatNative):@"ATNativeADOfferManager",
                           @(ATAdFormatRewardedVideo):@"ATRewardedVideoManager",
                           @(ATAdFormatInterstitial):@"ATInterstitialManager",

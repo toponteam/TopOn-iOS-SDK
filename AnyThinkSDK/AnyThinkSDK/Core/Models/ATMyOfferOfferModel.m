@@ -35,17 +35,15 @@
         
         self.logoURL = dictionary[@"a_c_u"];
         if ([self.logoURL isKindOfClass:[NSString class]] && [self.logoURL length] > 0) { [resourceURLs addObject:self.logoURL]; }
-        
-        self.CTA = dictionary[@"c_t"];
-        
+                
         self.videoURL = dictionary[@"v_u"];
         if (self.videoURL != nil) { [resourceURLs addObject:self.videoURL]; }
         
-        self.interstitalType = [dictionary[@"unit_type"] integerValue];
+        self.interstitialType = [dictionary[@"unit_type"] integerValue];
         self.videoOrientation = [dictionary[@"v_o"] integerValue];
         self.storeURL = dictionary[@"p_u"];
         self.linkType = [dictionary[@"l_t"] integerValue];
-        //        _deepLink = dictionary[@"dl"];
+        self.deeplinkUrl = dictionary[@"dl"];
         self.performsAsynchronousRedirection = [dictionary[@"c_m"] integerValue] + 1;//add one to be the same with adx
         
         self.videoStartTKURL = dictionary[@"t_u"];//@"{sh}://{do}/video_start?p={p}&p2={p2}";//to do
@@ -70,19 +68,19 @@
         
         //v5.6.6
         self.bannerImageUrl = dictionary[@"ext_h_pic"];
-        if(self.bannerImageUrl != nil && self.bannerImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize320_50]){
+        if(self.bannerImageUrl != nil && self.bannerImageUrl.length>0 && [setting.bannerSize isEqualToString:kATOfferBannerSize320_50]){
             [resourceURLs addObject:self.bannerImageUrl];
         }
         self.bannerBigImageUrl = dictionary[@"ext_big_h_pic"];
-        if(self.bannerBigImageUrl != nil && self.bannerBigImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize320_90]){
+        if(self.bannerBigImageUrl != nil && self.bannerBigImageUrl.length>0 && [setting.bannerSize isEqualToString:kATOfferBannerSize320_90]){
             [resourceURLs addObject:self.bannerBigImageUrl];
         }
         self.rectangleImageUrl = dictionary[@"ext_rect_h_pic"];
-        if(self.rectangleImageUrl != nil && self.rectangleImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize300_250]){
+        if(self.rectangleImageUrl != nil && self.rectangleImageUrl.length>0 && [setting.bannerSize isEqualToString:kATOfferBannerSize300_250]){
             [resourceURLs addObject:self.rectangleImageUrl];
         }
         self.homeImageUrl = dictionary[@"ext_home_h_pic"];
-        if(self.homeImageUrl != nil && self.homeImageUrl.length>0 && [setting.bannerSize isEqualToString:kATMyOfferBannerSize728_90]){
+        if(self.homeImageUrl != nil && self.homeImageUrl.length>0 && [setting.bannerSize isEqualToString:kATOfferBannerSize728_90]){
             [resourceURLs addObject:self.homeImageUrl];
         }
         self.pkgName = dictionary[@"p_g"];
@@ -95,8 +93,37 @@
         self.localResourceID = [NSString stringWithFormat:@"%@%@", self.resourceID, setting.placementID].md5;
         
         self.offerModelType = ATOfferModelMyOffer;
+        
+        [self checkCrtType];
+        self.CTA = dictionary[@"c_t"];
+        if (self.crtType == ATOfferCrtTypeOneImage && [Utilities isEmpty:self.CTA]) {
+            self.CTA = [Utilities localizationForLearnMore];
+        }
+        
+        if (self.crtType == ATOfferCrtTypeOneImageWithText) {
+            self.interActableArea = setting.endCardClickable == ATEndCardClickableFullscreen ? ATOfferInterActableAreaAll : ATOfferInterActableAreaVisibleItems;
+            return self;
+        }
+        
+        if (self.crtType == ATOfferCrtTypeOneImage) {
+            // rv iv splash
+            if (format == 1 || format == 3 || format == 4) {
+                self.interActableArea = setting.endCardClickable == ATEndCardClickableFullscreen ? ATOfferInterActableAreaAll : ATOfferInterActableAreaCTA;
+            }
+        }
     }
     return self;
+}
+
+- (void)checkCrtType {
+
+    self.crtType = ATOfferCrtTypeOneImageWithText;
+    if(([Utilities isEmpty:self.bannerImageUrl] == NO) ||
+       ([Utilities isEmpty:self.bannerBigImageUrl] == NO) ||
+       ([Utilities isEmpty:self.rectangleImageUrl] == NO) ||
+       ([Utilities isEmpty:self.homeImageUrl] == NO)) {
+        self.crtType = ATOfferCrtTypeOneImage;
+    }
 }
 
 +(instancetype) mockOfferModel {

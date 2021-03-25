@@ -1,0 +1,6 @@
+framework module AnyThinkGDTAdapter {
+  umbrella header "AnyThinkGDTAdapter.h"
+
+  export *
+  module * { export * }
+}

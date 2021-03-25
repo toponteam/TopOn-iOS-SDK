@@ -163,6 +163,10 @@ static NSString *kOriginalBase64Table = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkl
     return url;
 }
 
+- (instancetype)optional {
+    return self ? self : @"";
+}
+
 - (NSString *)fixECPMLoseWithPrice {
     return [[NSDecimalNumber decimalNumberWithString:self] stringValue];
 }

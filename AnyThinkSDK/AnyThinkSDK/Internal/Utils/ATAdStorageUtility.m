@@ -21,6 +21,9 @@
 #import "ATAdCustomEvent.h"
 #import "ATBidInfoManager.h"
 
+// v5.7.20
+#import "OFMSDKApis.h"
+
 NSString *const kAdStorageExtraNotReadyReasonKey = @"reason";
 NSString *const kAdStorageExtraNeedReloadFlagKey = @"need_reload_flag";
 NSString *const kAdStorageExtraPlacementIDKey = @"placement_id";
@@ -400,6 +403,12 @@ static NSString *const kStatusStorageOfferKey = @"offer";
         if ([ad respondsToSelector:@selector(fillByAutorefresh)] && ad.fillByAutorefresh) { extraInfo[kATTrackerExtraRefreshFlagKey] = @YES; }
         if (ad != nil) { extraInfo[kATTrackerExtraAdObjectKey] = ad; }
         if (finalWaterfall != nil) { extraInfo[kAdStorageExtraFinalWaterfallKey] = finalWaterfall; }
+        if([ATAPI isOfm]){
+            id<ATOFMAPI> ofmApi = [NSClassFromString(@"OFMAPI") sharedInstance];
+            id<ATOFMMediationConfig> config = ofmApi.currentMediationConfig;
+            extraInfo[kATTrackerExtraOFMTrafficIDKey] = @(config.mediationTrafficId);
+            extraInfo[kATTrackerExtraOFMSystemKey] = @1;
+        }
         if (ad.autoReqType == 5) { extraInfo[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
         *extra = extraInfo;
     }
@@ -408,14 +417,16 @@ static NSString *const kStatusStorageOfferKey = @"offer";
 
 +(id<ATAd>) fillIfReadyWithPlacementModel:(ATPlacementModel*)placementModel unitGroupModel:(ATUnitGroupModel*)unitGroupModel requestID:(NSString*)requestID priority:(NSInteger)priority storage:(NSMutableDictionary*)storage statusStorage:(NSMutableDictionary*)statusStorage finalWaterfall:(ATWaterfall*)finalWaterfall {
     id<ATAd> ad = nil;
-    NSMutableDictionary *content = [NSMutableDictionary dictionaryWithObject:@(unitGroupModel.headerBidding) forKey:@"is_hb_adsource"];
-    if ([unitGroupModel.content isKindOfClass:[NSDictionary class]]) { [content addEntriesFromDictionary:unitGroupModel.content]; }
-    if ([unitGroupModel.adapterClass respondsToSelector:@selector(adReadyForInfo:)] && [unitGroupModel.adapterClass adReadyForInfo:content]) {
-        ad = [unitGroupModel.adapterClass respondsToSelector:@selector(readyFilledAdWithPlacementModel:requestID:priority:unitGroup:finalWaterfall:)] ? [unitGroupModel.adapterClass readyFilledAdWithPlacementModel:placementModel requestID:requestID priority:priority unitGroup:unitGroupModel finalWaterfall:finalWaterfall] : nil;
-        if (ad != nil) {
-            [self saveAd:ad finalWaterfall:finalWaterfall toStorage:storage requestID:requestID];
-            [self saveAd:ad toStatusStorage:statusStorage];
-            [[ATLoadingScheduler sharedScheduler] scheduleLoadingWithPlacementModel:placementModel unitGroup:unitGroupModel requestID:requestID extra:@{}];
+    if (unitGroupModel.canAutoReady) {
+        NSMutableDictionary *content = [NSMutableDictionary dictionaryWithObject:@(unitGroupModel.headerBidding) forKey:@"is_hb_adsource"];
+        if ([unitGroupModel.content isKindOfClass:[NSDictionary class]]) { [content addEntriesFromDictionary:unitGroupModel.content]; }
+        if ([unitGroupModel.adapterClass respondsToSelector:@selector(adReadyForInfo:)] && [unitGroupModel.adapterClass adReadyForInfo:content]) {
+            ad = [unitGroupModel.adapterClass respondsToSelector:@selector(readyFilledAdWithPlacementModel:requestID:priority:unitGroup:finalWaterfall:)] ? [unitGroupModel.adapterClass readyFilledAdWithPlacementModel:placementModel requestID:requestID priority:priority unitGroup:unitGroupModel finalWaterfall:finalWaterfall] : nil;
+            if (ad != nil) {
+                [self saveAd:ad finalWaterfall:finalWaterfall toStorage:storage requestID:requestID];
+                [self saveAd:ad toStatusStorage:statusStorage];
+                [[ATLoadingScheduler sharedScheduler] scheduleLoadingWithPlacementModel:placementModel unitGroup:unitGroupModel requestID:requestID extra:@{}];
+            }
         }
     }
     return ad;

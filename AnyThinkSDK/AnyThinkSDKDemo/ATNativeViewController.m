@@ -8,7 +8,7 @@
 
 #import "ATNativeViewController.h"
 #import "MTAutolayoutCategories.h"
-
+#import "TopOnAdManager.h"
 
 
 NSString *const kMPPlacement = @"MobPower";
@@ -17,14 +17,12 @@ NSString *const kFacebookPlacement = @"Facebook";
 NSString *const kFacebookHeaderBiddingPlacement = @"Facebook(Header Bidding)";
 NSString *const kAdMobPlacement = @"AdMob";
 NSString *const kApplovinPlacement = @"Applovin";
-NSString *const kFlurryPlacement = @"Flurry";
 NSString *const kMintegralAdvancedPlacement = @"Mintegral(Advanced)";
 NSString *const kMintegralPlacement = @"Mintegral";
 NSString *const kMopubPlacementName = @"Mopub";
 NSString *const kMopubVideoPlacementName = @"Mopub Video Placement";
 NSString *const kGDTPlacement = @"GDT";
 NSString *const kGDTTemplatePlacement = @"GDT(Template)";
-NSString *const kYeahmobiPlacement = @"Yeahmobi";
 NSString *const kAppnextPlacement = @"Appnext";
 NSString *const kTTFeedPlacementName = @"TT(Feed)";
 NSString *const kTTDrawPlacementName = @"TT(Draw)";
@@ -33,8 +31,7 @@ NSString *const kNendVideoPlacement = @"Nend(Video)";
 NSString *const kSigmobPlacement = @"Sigmob";
 NSString *const kKSDrawPlacement = @"KS(Draw)";
 NSString *const kGAMPlacement = @"GAM";
-
-
+NSString *const kOnlineApiPlacement = @"OnlineApi";
 
 static NSString *const kMPPlacementID = @"b5c2084d12aca4";
 static NSString *const kPlacement0ID = @"b5ad9ba61dcb39";
@@ -46,12 +43,10 @@ static NSString *const kFacebookPlacementID = @"b5b0f551340ea9";
 static NSString *const kFacebookHeaderBiddingPlacementID = @"b5d13342d52304";
 static NSString *const kAdMobPlacementID = @"b5b0f55228375a";
 static NSString *const kApplovinPlacementID = @"b5b0f554ec9c4e";
-static NSString *const kFlurryPlacementID = @"b5b0f554166ad1";
 static NSString *const kMopubPlacementID = @"b5b0f55624527a";
 static NSString *const kGDTPlacementID = @"b5bacac5f73476";
 static NSString *const kGDTTemplatePlacementID = @"b5bacac780e03b";
 static NSString *const kMopubVideoPlacementID = @"b5afbe325b1303";
-static NSString *const kYeahmobiPlacementID = @"b5bc7fb1d0b02f";
 static NSString *const kAppnextPlacementID = @"b5bc7fb2787f1e";
 static NSString *const kAllPlacementID = @"b5b0f5663c6e4a";
 static NSString *const kTTFeedPlacementID = @"b5c2c6d50e7f44";
@@ -61,6 +56,9 @@ static NSString *const kBaiduPlacementID = @"b5d36c4ad68a26";
 static NSString *const kKSPlacementID = @"b5e4613e50cbf2";//@"b5e43ac9ca3fc5";
 static NSString *const kGAMPlacementID = @"b5f238964f3e6f";
 static NSString *const kMyOfferPlacementID = @"b5f33878ee0646";
+static NSString *const kADXPlacementID = @"b5fa25023d0767";
+static NSString *const kOnlineApiPlacementID = @"b5fa2508579446";
+
 
 //static NSString *const kKSDrawPlcementID = @"b5e4613e50cbf2";
 //static NSString *const kTTDrawPlacementID = @"b5c2c6d62b9d65";
@@ -103,6 +101,10 @@ static NSString *const kMyOfferPlacementID = @"b5f33878ee0646";
     _sponsorImageView = [UIImageView autolayoutView];
     _sponsorImageView.contentMode = UIViewContentModeScaleAspectFit;
     [self addSubview:_sponsorImageView];
+    
+    _dislikeButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    _dislikeButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [self addSubview:_dislikeButton];
 }
 
 -(NSArray<UIView*>*)clickableViews {
@@ -133,6 +135,16 @@ static NSString *const kMyOfferPlacementID = @"b5f33878ee0646";
     [self.titleLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
     [self addConstraintsWithVisualFormat:@"|-15-[iconImageView(90)]-8-[titleLabel]-8-[sponsorImageView]-15-|" options:NSLayoutFormatAlignAllTop metrics:nil views:viewsDict];
     [self addConstraintsWithVisualFormat:@"V:|-15-[titleLabel]-8-[textLabel]-8-[ctaLabel]-8-[ratingLabel]-8-[advertiserLabel]" options:NSLayoutFormatAlignAllLeading | NSLayoutFormatAlignAllTrailing metrics:nil views:viewsDict];
+    
+    NSLayoutConstraint *btn_right = [NSLayoutConstraint constraintWithItem:self.dislikeButton attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeRight multiplier:1 constant:-50];
+    NSLayoutConstraint *btn_top = [NSLayoutConstraint constraintWithItem:self.dislikeButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1 constant:-0];
+    NSLayoutConstraint *btn_width = [NSLayoutConstraint constraintWithItem:self.dislikeButton attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:40];
+    NSLayoutConstraint *btn_height = [NSLayoutConstraint constraintWithItem:self.dislikeButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:40];
+    [self addConstraints:@[btn_right,btn_top,btn_width,btn_height]];
+    
+    UIImage *closeImg = [UIImage imageNamed:@"icon_webview_close" inBundle:[NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"AnyThinkSDK" ofType:@"bundle"]] compatibleWithTraitCollection:nil];
+    [_dislikeButton setImage:closeImg forState:0];
+    
 }
 
 -(void) makeConstraintsDrawVideoAssets {
@@ -154,11 +166,9 @@ static NSString *const kMyOfferPlacementID = @"b5f33878ee0646";
 @end
 #endif
 
-#ifdef NATIVE_INTEGRATED
-@interface ATNativeViewController()<ATNativeADDelegate>
-#else
+
 @interface ATNativeViewController()
-#endif
+
 @property(nonatomic, readonly) NSDictionary *placementIDs;
 @property(nonatomic, readonly) NSString *name;
 @property(nonatomic, readonly) UIActivityIndicatorView *loadingView;
@@ -199,10 +209,8 @@ static NSString *const kCallbackKey = @"request";
              kMopubPlacementName:kMopubPlacementID,
              kMopubVideoPlacementName:kMopubVideoPlacementID,
              kApplovinPlacement:kApplovinPlacementID,
-             kFlurryPlacement:kFlurryPlacementID,
              kGDTPlacement:kGDTPlacementID,
              kGDTTemplatePlacement:kGDTTemplatePlacementID,
-             kYeahmobiPlacement:kYeahmobiPlacementID,
              kAppnextPlacement:kAppnextPlacementID,
              kTTFeedPlacementName:kTTFeedPlacementID,
              kNendPlacement:kNendPlacementID,
@@ -211,6 +219,8 @@ static NSString *const kCallbackKey = @"request";
              kKSPlacement:kKSPlacementID,
              kGAMPlacement:kGAMPlacementID,
              kMyOfferPlacement:kMyOfferPlacementID,
+             kADXPlacement:kADXPlacementID,
+             kOnlineApiPlacement:kOnlineApiPlacementID,
              };
 }
 
@@ -263,17 +273,19 @@ static NSString *const kCallbackKey = @"request";
     _failureTipsLabel.textAlignment = NSTextAlignmentCenter;
     [self.view addSubview:_failureTipsLabel];
     _failureTipsLabel.hidden = YES;
-    
-    if ([[ATAdManager sharedManager] nativeAdReadyForPlacementID:_placementIDs[_name]]) {
-        [self showAD];
-    } else {
-        _loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-        _loadingView.center = _failureTipsLabel.center;
-        [_loadingView startAnimating];
-        [self.view addSubview:_loadingView];
-        [self increaseLoad];
-        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdTypeKey:@([@{kGDTPlacement:@(ATGDTNativeAdTypeSelfRendering), kGDTTemplatePlacement:@(ATGDTNativeAdTypeTemplate), kMintegralPlacement:@(ATGDTNativeAdTypeSelfRendering)}[_name] integerValue]), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds) - 50.0f, 350.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388} delegate:self];
+    if([TopOnAdManager sharedManager].currentAPIType == TopOnAPITypeTopOn){
+        if ([[ATAdManager sharedManager] nativeAdReadyForPlacementID:_placementIDs[_name]]) {
+            [self showAD];
+        } else {
+            _loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+            _loadingView.center = _failureTipsLabel.center;
+            [_loadingView startAnimating];
+            [self.view addSubview:_loadingView];
+            [self increaseLoad];
+            [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdTypeKey:@([@{kGDTPlacement:@(ATGDTNativeAdTypeSelfRendering), kGDTTemplatePlacement:@(ATGDTNativeAdTypeTemplate), kMintegralPlacement:@(ATGDTNativeAdTypeSelfRendering)}[_name] integerValue]), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds) - 50.0f, 350.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388} delegate:self];
+        }
     }
+    
 }
 
 -(void) increaseLoad {
@@ -287,10 +299,13 @@ static NSString *const kCallbackKey = @"request";
 }
 
 -(void) readyButtonTapped {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[[ATAdManager sharedManager] nativeAdReadyForPlacementID:_placementIDs[_name]] ? @"Ready!" : @"Not Yet!" message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *action = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
-    [alert addAction:action];
-    [self presentViewController:alert animated:YES completion:nil];
+         ATCheckLoadModel *model = [[ATAdManager sharedManager] checkNativeLoadStatusForPlacementID:_placementIDs[_name]];
+        
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:[[ATAdManager sharedManager] nativeAdReadyForPlacementID:_placementIDs[_name]] ? @"Ready!" : @"Not Yet!" message:nil preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *action = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
+        [alert addAction:action];
+        [self presentViewController:alert animated:YES completion:nil];
+
 }
 
 -(void) removeAdButtonTapped {
@@ -298,7 +313,7 @@ static NSString *const kCallbackKey = @"request";
 }
 
 -(void) clearAdButtonTapped {
-    [[ATAdManager sharedManager] clearCache];
+//    [[ATAdManager sharedManager] clearCache];
 }
 
 -(void) dealloc {
@@ -310,23 +325,26 @@ static NSInteger adViewTag = 3333;
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
     [self increaseLoad];
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdTypeKey:@([@{kGDTPlacement:@(ATGDTNativeAdTypeSelfRendering), kGDTTemplatePlacement:@(ATGDTNativeAdTypeTemplate)}[_name] integerValue]), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds) - 30.0f, 300.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388} delegate:self];
+
+        [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kExtraInfoNativeAdTypeKey:@([@{kGDTPlacement:@(ATGDTNativeAdTypeSelfRendering), kGDTTemplatePlacement:@(ATGDTNativeAdTypeTemplate)}[_name] integerValue]), kExtraInfoNativeAdSizeKey:[NSValue valueWithCGSize:CGSizeMake(CGRectGetWidth(self.view.bounds) - 30.0f, 300.0f)], kATExtraNativeImageSizeKey:kATExtraNativeImageSize690_388} delegate:self];
 }
 
 -(void) showAD {
     //Remove previously shown ad first.
     [self removeAdButtonTapped];
-    ATNativeADConfiguration *config = [[ATNativeADConfiguration alloc] init];
-    config.ADFrame = CGRectMake(.0f, 100.0f, CGRectGetWidth(self.view.bounds), 350.0f);
-    config.mediaViewFrame = CGRectMake(0, 120.0f, CGRectGetWidth(self.view.bounds), 300.0f - 120.0f);
-    config.delegate = self;
-    config.renderingViewClass = [DMADView class];
-    config.rootViewController = self;
-    config.context = @{kATNativeAdConfigurationContextAdOptionsViewFrameKey:[NSValue valueWithCGRect:CGRectMake(CGRectGetWidth(self.view.bounds) - 43.0f, .0f, 43.0f, 18.0f)], kATNativeAdConfigurationContextAdLogoViewFrameKey:[NSValue valueWithCGRect:CGRectMake(.0f, .0f, 54.0f, 18.0f)], kATNativeAdConfigurationContextNetworkLogoViewFrameKey:[NSValue valueWithCGRect:CGRectMake(CGRectGetWidth(config.ADFrame) - 18.0f, CGRectGetHeight(config.ADFrame) - 18.0f, 18.0f, 18.0f)]};
-    UIView *adView = [[ATAdManager sharedManager] retriveAdViewWithPlacementID:_placementIDs[_name] configuration:config];
-    adView.tag = adViewTag;
-    [self.view addSubview:adView];
-    if (adView == nil) NSLog(@"retrive ad view failed");
+        ATNativeADConfiguration *config = [[ATNativeADConfiguration alloc] init];
+        config.ADFrame = CGRectMake(.0f, 100.0f, CGRectGetWidth(self.view.bounds), 350.0f);
+        config.mediaViewFrame = CGRectMake(0, 120.0f, CGRectGetWidth(self.view.bounds), 350.0f - 120.0f);
+        config.delegate = self;
+        // 临时,只在 demo 用.
+        config.renderingViewClass = [DMADView class];
+        config.rootViewController = self;
+        config.context = @{kATNativeAdConfigurationContextAdOptionsViewFrameKey:[NSValue valueWithCGRect:CGRectMake(CGRectGetWidth(self.view.bounds) - 43.0f, .0f, 43.0f, 18.0f)], kATNativeAdConfigurationContextAdLogoViewFrameKey:[NSValue valueWithCGRect:CGRectMake(.0f, .0f, 54.0f, 18.0f)], kATNativeAdConfigurationContextNetworkLogoViewFrameKey:[NSValue valueWithCGRect:CGRectMake(CGRectGetWidth(config.ADFrame) - 18.0f, CGRectGetHeight(config.ADFrame) - 18.0f, 18.0f, 18.0f)]};
+        UIView *adView = [[ATAdManager sharedManager] retriveAdViewWithPlacementID:_placementIDs[_name] configuration:config scene:@"f600938967feb5"];
+        adView.tag = adViewTag;
+        [self.view addSubview:adView];
+        if (adView == nil) NSLog(@"retrive ad view failed");
+    
 }
     
 -(void) didStartPlayingVideoInAdView:(ATNativeADView*)adView placementID:(NSString*)placementID {
@@ -351,9 +369,6 @@ static NSInteger adViewTag = 3333;
     NSLog(@"ATNativeViewController:: didFinishLoadingADWithPlacementID:%@", placementID);
     [_loadingView removeFromSuperview];
     _failureTipsLabel.hidden = YES;
-    if ([self.view viewWithTag:adViewTag] == nil) {
-        [self showAD];
-    }
 }
 
 -(void) didFailToLoadADWithPlacementID:(NSString *)placementID error:(NSError *)error {
@@ -383,6 +398,10 @@ static NSInteger adViewTag = 3333;
     NSLog(@"ATNativeViewController:: didClickNativeAdInAdView:placementID:%@ with extra: %@", placementID,extra);
 }
 
+- (void) didDeepLinkOrJumpInAdView:(ATNativeADView *)adView placementID:(NSString *)placementID extra:(NSDictionary *)extra result:(BOOL)success {
+    NSLog(@"ATNativeViewController:: didDeepLinkOrJumpInAdView:placementID:%@ with extra: %@, success:%@", placementID,extra, success ? @"YES" : @"NO");
+}
+
 -(void) didShowNativeAdInAdView:(ATNativeADView*)adView placementID:(NSString*)placementID extra:(NSDictionary *)extra{
     NSLog(@"ATNativeViewController:: didShowNativeAdInAdView:placementID:%@ with extra: %@", placementID,extra);
     adView.mainImageView.hidden = [adView isVideoContents];
@@ -399,5 +418,49 @@ static NSInteger adViewTag = 3333;
 -(void) didTapCloseButtonInAdView:(ATNativeADView*)adView placementID:(NSString*)placementID extra:(NSDictionary *)extra {
     NSLog(@"ATNativeViewController:: didTapCloseButtonInAdView:placementID:%@ extra:%@", placementID, extra);
 }
+
+-(void) didFinishLoadingOFMADWithPlacementID:(NSString *)placementID {
+    NSLog(@"ATNativeViewController::didFinishLoadingOFMADWithPlacementID:%@", placementID);
+//    [_loadingView removeFromSuperview];
+}
+
+-(void) didFailToLoadOFMADWithPlacementID:(NSString*)placementID error:(NSError*)error {
+    NSLog(@"ATNativeViewController::didFailToLoadOFMADWithPlacementID:%@ error:%@", placementID, error);
+}
+
+-(void) nativeAdDidShowInAdViewForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
+    NSLog(@"ATNativeViewController:: nativeAdDidShowInAdViewForPlacementID:placementID:%@ extra:%@", placementID, extra);
+}
+
+//Called when user click the ad
+-(void) nativeAdDidClickInAdViewForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
+    NSLog(@"ATNativeViewController:: nativeAdDidClickInAdViewForPlacementID:placementID:%@ extra:%@", placementID, extra);
+}
+
+-(void) nativeAdDeepLinkOrJumpForPlacementID:(NSString*)placementID extra:(NSDictionary*)extra result:(BOOL)success {
+    NSLog(@"ATNativeViewController:: nativeAdDeepLinkOrJumpForPlacementID:placementID:%@ extra:%@", placementID, extra);
+}
+
+-(void) nativeAdDidStartPlayingVideoInAdViewForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
+    NSLog(@"ATNativeViewController:: nativeAdDidStartPlayingVideoInAdViewForPlacementID:placementID:%@ extra:%@", placementID, extra);
+}
+
+-(void) nativeAdDidEndPlayingVideoInAdViewForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
+    NSLog(@"ATNativeViewController:: nativeAdDidEndPlayingVideoInAdViewForPlacementID:placementID:%@ extra:%@", placementID, extra);
+}
+
+-(void) nativeAdDidEnterFullScreenVideoInAdViewForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
+    NSLog(@"ATNativeViewController:: nativeAdDidEnterFullScreenVideoInAdViewForPlacementID:placementID:%@ extra:%@", placementID, extra);
+}
+
+-(void) nativeAdDidExitFullScreenVideoInAdViewForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
+    NSLog(@"ATNativeViewController:: nativeAdDidExitFullScreenVideoInAdViewForPlacementID:placementID:%@ extra:%@", placementID, extra);
+}
+
+-(void) nativeAdDidTapCloseButtonInAdViewForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
+    NSLog(@"ATNativeViewController:: nativeAdDidTapCloseButtonInAdViewForPlacementID:placementID:%@ extra:%@", placementID, extra);
+}
+
+
 #endif
 @end

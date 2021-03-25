@@ -26,17 +26,27 @@ typedef NS_ENUM(NSInteger, ATADXTrackerEvent) {
     ATADXTrackerEventVideoMute = 10,
     ATADXTrackerEventVideoUnMute = 11,
     ATADXTrackerEventVideoPaused = 12,
-    ATADXTrackerEventNTKurl = 13
+    ATADXTrackerEventNTKurl = 13,
+    ATADXTrackerEventVideoResumed = 14,
+    ATADXTrackerEventVideoSkip = 15,
+    ATADXTrackerEventVideoPlayFail = 16,
+    ATADXTrackerEventVideoDeeplinkStart = 17,
+    ATADXTrackerEventVideoDeeplinkSuccess = 18,
+    ATADXTrackerEventVideoRewarded,
+    ATADXTrackerEventVideoLoaded,
 };
 
-extern NSString *const kATADXTrackerExtraLifeCircleID;
-extern NSString *const kATADXTrackerExtraScene;
 @interface ATADXTracker : NSObject
 +(instancetype) sharedTracker;
--(void) trackEvent:(ATADXTrackerEvent)event offerModel:(ATADXOfferModel*)offerModel extra:(NSDictionary*)extra;
--(void) impressionOfferWithOfferModel:(ATADXOfferModel*)offerModel extra:(NSDictionary*)extra;
--(void) clickOfferWithOfferModel:(ATADXOfferModel*)offerModel setting:(ATADXPlacementSetting *)setting extra:(NSDictionary*)extra;
--(void) clickOfferWithOfferModel:(ATADXOfferModel*)offerModel setting:(ATADXPlacementSetting *)setting extra:(NSDictionary*)extra skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *) viewController circleId:(NSString *) circleId;
+
+- (void)trackWithUrls:(NSArray<NSString *> *)urls offerModel:(ATADXOfferModel *)offerModel extra:(NSDictionary*)extra;
+- (void)trackEvent:(ATADXTrackerEvent)event offerModel:(ATADXOfferModel*)offerModel extra:(NSDictionary*)extra;
+
+/// sucess: It indicates that whether the deeplink or jump url was invoked sucessfully.
+-(void) clickOfferWithOfferModel:(ATADXOfferModel*)offerModel setting:(ATADXPlacementSetting *)setting extra:(NSDictionary*)extra  clickCallbackHandler:(void (^ __nullable)(BOOL success))clickCallback;
+
+/// sucess: It indicates that whether the deeplink or jump url was invoked sucessfully.
+-(void) clickOfferWithOfferModel:(ATADXOfferModel*)offerModel setting:(ATADXPlacementSetting *)setting extra:(NSDictionary*)extra skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate viewController:(UIViewController *) viewController circleId:(NSString *) circleId  clickCallbackHandler:(void (^ __nullable)(BOOL success))clickCallback;
 -(void)preloadStorekitForOfferModel:(ATADXOfferModel *)offerModel setting:(ATADXPlacementSetting *) setting  viewController:(UIViewController *)viewController circleId:(NSString *) circleId skDelegate:(id<SKStoreProductViewControllerDelegate>)skDelegate;
 
 @end

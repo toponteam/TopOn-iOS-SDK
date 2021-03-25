@@ -73,8 +73,10 @@ static NSString *const requestIDKey = @"request_id";
     ATInterstitial *interstitial = [[ATInterstitial alloc] initWithPriority:[finalWaterfall.unitGroups indexOfObject:unitGroup] placementModel:placementModel requestID:requestID assets:assets unitGroup:unitGroup finalWaterfall:finalWaterfall];
     __weak typeof(self) weakSelf = self;
     [_interstitialStorageAccessor writeWithBlock:^{
-        [ATAdStorageUtility saveAd:interstitial finalWaterfall:finalWaterfall toStorage:weakSelf.interstitialStorage requestID:interstitial.requestID];
-        [ATAdStorageUtility saveAd:interstitial toStatusStorage:weakSelf.statusStorage];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [ATAdStorageUtility saveAd:interstitial finalWaterfall:finalWaterfall toStorage:weakSelf.interstitialStorage requestID:interstitial.requestID];
+            [ATAdStorageUtility saveAd:interstitial toStatusStorage:weakSelf.statusStorage];
+        });
     }];
 }
 

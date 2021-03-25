@@ -31,7 +31,8 @@
 }
 
 -(NSDictionary*)delegateExtra {
-    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(self.banner.unitGroup.headerBidding),kATBannerDelegateExtraPriority:@(self.priorityIndex),kATBannerDelegateExtraPrice:@([self.banner.price doubleValue]), kATADDelegateExtraECPMLevelKey:@(self.banner.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.banner.placementModel.groupID)}];
+    BOOL isBidding = self.banner.unitGroup.headerBidding;
+    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATBannerDelegateExtraNetworkIDKey:@(self.banner.unitGroup.networkFirmID), kATBannerDelegateExtraAdSourceIDKey:self.banner.unitGroup.unitID != nil ? self.banner.unitGroup.unitID : @"",kATBannerDelegateExtraIsHeaderBidding:@(isBidding),kATBannerDelegateExtraPriority:@(self.priorityIndex),kATBannerDelegateExtraPrice:@([self.banner.ecpm doubleValue]), kATADDelegateExtraECPMLevelKey:@(self.banner.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.banner.placementModel.groupID)}];
     NSString *channel = [ATAPI sharedInstance].channel;
     if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
     NSString *subchannel = [ATAPI sharedInstance].subchannel;
@@ -40,16 +41,18 @@
     NSString *extraID = [NSString stringWithFormat:@"%@_%@_%@",self.banner.requestID,self.banner.unitGroup.unitID,self.sdkTime];
     extra[kATADDelegateExtraIDKey] = extraID;
     extra[kATADDelegateExtraAdunitIDKey] = self.banner.placementModel.placementID;
-    extra[kATADDelegateExtraPublisherRevenueKey] = @([self.banner.price doubleValue] / 1000.f);
-    extra[kATADDelegateExtraCurrencyKey] = self.banner.placementModel.callback[@"currency"];
+    extra[kATADDelegateExtraPublisherRevenueKey] = @([self.banner.ecpm doubleValue] / 1000.f);
+    extra[kATADDelegateExtraCurrencyKey] = self.banner.placementModel.currency;
     extra[kATADDelegateExtraCountryKey] = self.banner.placementModel.callback[@"cc"];
     extra[kATADDelegateExtraFormatKey] = @"Banner";
     extra[kATADDelegateExtraPrecisionKey] = self.banner.unitGroup.precision;
     extra[kATADDelegateExtraNetworkTypeKey] = self.banner.unitGroup.networkFirmID == 35 ? @"Cross_promotion":@"Network";
-    
+    [extra AT_setDictValue:self.banner.scene key:kATADDelegateExtraScenarioIDKey];
     //add adsource unit_id value
     extra[kATADDelegateExtraNetworkPlacementIDKey] = self.networkUnitId != nil ? self.networkUnitId:@"";
-    
+    if ([self.networkCustomInfo count] > 0) {
+        extra[kATADDelegateExtraExtInfoKey] = self.networkCustomInfo;
+    }
     return extra;
 }
 
@@ -79,6 +82,10 @@
 
 -(void) cleanup {
     [ATLogger logMessage:@"ATBannerCustomEvent cleanup(Added for testing memory issues)." type:ATLogTypeInternal];
+}
+
+-(void) removedFromWindow {
+    [ATLogger logMessage:@"ATBannerCustomEvent bannerView removedFromWindow." type:ATLogTypeInternal];
 }
 
 -(void) dealloc {
@@ -117,14 +124,31 @@
     NSDictionary *loadExtra = [self.localInfo isKindOfClass:[NSDictionary class]] ? self.localInfo : nil;
     NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.banner requestID:self.banner.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.banner.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.banner.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.banner.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
     if (self.banner.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
+    if([ATAPI isOfm]){
+        trackingExtra[kATTrackerExtraOFMTrafficIDKey] = self.localInfo[kATTrackerExtraOFMTrafficIDKey];
+        trackingExtra[kATTrackerExtraOFMSystemKey] = @(1);
+    }
+    [trackingExtra AT_setDictValue:self.banner.scene key:kATTrackerExtraAdShowSceneKey];
     [[ATTracker sharedTracker] trackClickWithAd:self.ad extra:trackingExtra];
     
     if ([self.delegate respondsToSelector:@selector(bannerView:didClickWithPlacementID: extra:)]) {
         [self.delegate bannerView:self.bannerView didClickWithPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra]];
     }
-
 }
 
+- (BOOL)sendImpressionTrackingIfNeed {
+    return NO;
+}
+
+- (void)trackBannerAdDeeplinkOrJumpResult:(BOOL)success {
+    if ([self.delegate respondsToSelector:@selector(bannerView:didDeepLinkOrJumpForPlacementID:extra:result:)]) {
+        [self.delegate bannerView:self.bannerView didDeepLinkOrJumpForPlacementID:self.banner.placementModel.placementID extra:[self delegateExtra] result:success];
+    }
+}
+
+- (void)trackBannerAdImpression {
+    [self.bannerView sendImpressionTracking];
+}
 -(void) handleClose {
     [super handleClose];
     if (self.banner != nil) { [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyClose placementID:self.banner.placementModel.placementID unitGroupModel:nil

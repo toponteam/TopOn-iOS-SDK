@@ -20,12 +20,10 @@ static NSString *const kFacebookPlacementID = @"b5b0f551340ea9";
 static NSString *const kFacebookNativePlacementID = @"b5ee89fd60cddc";
 static NSString *const kAdMobPlacementID = @"b5b0f55228375a";
 static NSString *const kApplovinPlacementID = @"b5b0f554ec9c4e";
-static NSString *const kFlurryPlacementID = @"b5b0f554166ad1";
 static NSString *const kMopubPlacementID = @"b5b0f55624527a";
 static NSString *const kGDTPlacementID = @"b5bacac5f73476";
 static NSString *const kGDTTemplatePlacementID = @"b5bacac780e03b";
 static NSString *const kMopubVideoPlacementID = @"b5afbe325b1303";
-static NSString *const kYeahmobiPlacementID = @"b5bc7fb1d0b02f";
 static NSString *const kAppnextPlacementID = @"b5bc7fb2787f1e";
 static NSString *const kAllPlacementID = @"b5b0f5663c6e4a";
 static NSString *const kTTFeedPlacementID = @"b5c2c6d50e7f44";
@@ -61,10 +59,8 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
                           kMopubPlacementName:kMopubPlacementID,
                           kMopubVideoPlacementName:kMopubVideoPlacementID,
                           kApplovinPlacement:kApplovinPlacementID,
-                          kFlurryPlacement:kFlurryPlacementID,
                           kGDTPlacement:kGDTPlacementID,
                           kGDTTemplatePlacement:kGDTTemplatePlacementID,
-                          kYeahmobiPlacement:kYeahmobiPlacementID,
                           kAppnextPlacement:kAppnextPlacementID,
                           kTTFeedPlacementName:kTTFeedPlacementID,
                           kTTDrawPlacementName:kTTDrawPlacementID,
@@ -74,6 +70,11 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
         _placementID = _placementIDs[_name];
     }
     return self;
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+    [self removeAdButtonTapped];
 }
 
 - (void)viewDidLoad {
@@ -151,6 +152,7 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
     [self.view addSubview:bannerView];
 }
 #pragma mark - native banner delegate(s)
+
 -(void) didFinishLoadingNativeBannerAdWithPlacementID:(NSString *)placementID {
     NSLog(@"ATNativeBannerViewController::didFinishLoadingNativeBannerAdWithPlacementID:%@", placementID);
     if ([self.view viewWithTag:3333] == nil) { [self showAd]; }
@@ -162,6 +164,10 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
 
 -(void) didShowNativeBannerAdInView:(ATNativeBannerView*)bannerView placementID:(NSString*)placementID extra:(NSDictionary *)extra{
     NSLog(@"ATNativeBannerViewController::didShowNativeBannerAdInView:%@ placementID:%@ with extra: %@",bannerView, placementID,extra);
+}
+
+- (void)didNativeBannerDeeplinkOrJumpInView:(ATNativeBannerView *)bannerView placementID:(NSString *)placementID extra:(NSDictionary *)extra result:(BOOL)success {
+    NSLog(@"ATNativeBannerViewController::didNativeBannerDeeplinkOrJumpInView:%@ placementID:%@ with extra: %@, result:%@",bannerView, placementID,extra, success ? @"YES" : @"NO");
 }
 
 -(void) didClickNativeBannerAdInView:(ATNativeBannerView*)bannerView placementID:(NSString*)placementID extra:(NSDictionary *)extra{
@@ -179,4 +185,5 @@ static NSString *const kKSPlacementID = @"b5e4613e50cbf2";
 -(void) didFailToAutorefreshNativeBannerAdInView:(ATNativeBannerView*)bannerView placementID:(NSString*)placementID extra:(NSDictionary *)extra error:(NSError*)error {
     NSLog(@"ATNativeBannerViewController::didFailToAutorefreshNativeBannerAdInView:%@ placementID:%@ error:%@", bannerView, placementID, error);
 }
+
 @end

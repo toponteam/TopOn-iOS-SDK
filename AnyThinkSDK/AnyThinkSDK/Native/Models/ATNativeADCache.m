@@ -36,7 +36,10 @@
         _appID = assets[kATAdAssetsAppIDKey];
         _priorityIndex = [ATAdCustomEvent calculateAdPriority:self];
         _priorityLevel = _placementModel.maxConcurrentRequestCount > 0 ? (_priorityIndex / _placementModel.maxConcurrentRequestCount) + 1 : 1;
-        _price = unitGroup.headerBidding ? assets[kAdAssetsPriceKey] : unitGroup.price;
+        NSString *bidPrice = assets[kAdAssetsPriceKey];
+        _price = unitGroup.headerBidding ? bidPrice : unitGroup.price;
+        
+        _bidId = unitGroup.headerBidding ? assets[kAdAssetsBidIDKey] : @"";
         if ([assets[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue]) { _autoReqType = 5; }
     }
     return self;
@@ -44,6 +47,15 @@
 
 -(BOOL) ready {
     return YES;
+}
+
+- (NSString *)ecpm {
+    if (self.unitGroup.headerBidding) {
+        NSDecimalNumber *priceDecimal = [NSDecimalNumber decimalNumberWithString:self.price];
+        NSDecimalNumber *rateDecimal = [NSDecimalNumber decimalNumberWithString:self.placementModel.exchangeRate];
+        return [[priceDecimal decimalNumberByMultiplyingBy:rateDecimal] stringValue];
+    }
+    return self.unitGroup.ecpmByCurrency;
 }
 
 -(NSString*)description {

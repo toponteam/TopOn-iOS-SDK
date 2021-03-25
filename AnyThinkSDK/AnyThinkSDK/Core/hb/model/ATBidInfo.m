@@ -45,12 +45,11 @@
         if(_networkFirmID == ATNetworkFirmIdADX){
             //for adx
             _expireDate = [[NSDate date] dateByAddingTimeInterval:expire/1000.0f];
+            _offerDataDict = dictionary[@"offer_data"];
         }else{
             //use setting
             _expireDate = [[NSDate date] dateByAddingTimeInterval:expirationInterval];
         }
-
-
     }
     return self;
 }
@@ -68,12 +67,13 @@
         NSTimeInterval expireTimestamp = [dictionary[@"expire_timestamp"] doubleValue];
         _networkFirmID = [dictionary[@"nw_firm_id"] integerValue];
         _expireDate = [NSDate dateWithTimeIntervalSince1970:expireTimestamp];
+        _offerDataDict = dictionary[@"offer_data"];
     }
     return self;
 }
 
 -(NSDictionary *) serializationToDictionary {
-    return @{@"at_placement_id":_placementID, @"bid_id":_bidId, @"price":_price, @"lurl":_lURL,  @"at_unit_id":_unitGroupUnitID, @"expire_timestamp":@([_expireDate timeIntervalSince1970]), @"nw_firm_id":@(_networkFirmID)};
+    return @{@"at_placement_id":_placementID, @"bid_id":_bidId, @"price":_price, @"lurl":_lURL,  @"at_unit_id":_unitGroupUnitID, @"expire_timestamp":@([_expireDate timeIntervalSince1970]), @"nw_firm_id":@(_networkFirmID),@"offer_data":_offerDataDict != nil ? _offerDataDict : @{}};
 }
 
 -(BOOL) isValid {

@@ -9,8 +9,7 @@
 
 #import <Foundation/Foundation.h>
 #import<StoreKit/StoreKit.h>
-#import "ATMyOfferSetting.h"
-#import "ATMyOfferOfferModel.h"
+#import "ATOfferModel.h"
 
 @interface ATStoreProductViewController : UIViewController<SKStoreProductViewControllerDelegate>
 
@@ -34,6 +33,6 @@
 + (void)at_presentStorekit:(ATStoreProductViewController *)presentedVC presenting:(UIViewController *)presentingVC;
 + (void)at_dismissStorekit:(ATStoreProductViewController *)presentedVC;
 
-- (void)atLoadProductWithPackageName:(NSString *)packageName placementID:(NSString *)placementID offerID:(NSString *)offerID pkgName:(NSString *)pkgName finished:(void (^)(BOOL result, NSError *error, NSTimeInterval loadTime))finished;
+- (void)atLoadProductWithOfferModel:(ATOfferModel *)offerModel packageName:(NSString *)packageName placementID:(NSString *)placementID offerID:(NSString *)offerID pkgName:(NSString *)pkgName finished:(void (^)(BOOL result, NSError *error, NSTimeInterval loadTime))finished;
 
 @end

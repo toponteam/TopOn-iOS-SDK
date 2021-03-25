@@ -26,7 +26,13 @@
         self.splashOrientation = [dictionary[@"orient"] integerValue];
         self.storekitTime = [dictionary[@"skit_time"] integerValue] + 1;//add one to be the same with adx
         self.showBannerCloseBtn = ![dictionary[@"cl_btn"] boolValue];
+        
+        self.deeplinkClickMoment  = ATDeepLinkModeNone;
 
+        // v 5.7.9
+        self.closeBtnDelayMaxTime = [dictionary[@"ec_l_t"] integerValue]/1000;
+        self.closeBtnDelayMinTime = [dictionary[@"ec_s_t"] integerValue]/1000;
+        self.closeBtnDelayRate = [dictionary[@"ec_r"] integerValue]/100;
     }
     return self;
 }

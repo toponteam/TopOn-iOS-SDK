@@ -17,6 +17,8 @@
 -(void) myOfferRewardedVideoClickOffer:(ATMyOfferOfferModel*)offer;
 -(void) myOfferRewardedVideoCloseOffer:(ATMyOfferOfferModel*)offer;
 -(void) myOfferRewardedVideoRewardOffer:(ATMyOfferOfferModel*)offer;
+-(void) myOfferRewardedVideoFeedbackViewDidSelectItemAtIndex:(NSInteger)index extraMsg:(NSString *)msg offer:(ATMyOfferOfferModel*)offer;
+
 -(NSString*) lifeCircleIDForOffer:(ATMyOfferOfferModel*)offer;
 -(NSString*) sceneForOffer:(ATMyOfferOfferModel*)offer;
 @end

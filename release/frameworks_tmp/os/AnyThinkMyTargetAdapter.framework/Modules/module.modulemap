@@ -1,0 +1,6 @@
+framework module AnyThinkMyTargetAdapter {
+  umbrella header "AnyThinkMyTargetAdapter.h"
+
+  export *
+  module * { export * }
+}

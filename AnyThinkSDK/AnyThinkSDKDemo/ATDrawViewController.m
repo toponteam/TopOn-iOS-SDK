@@ -128,6 +128,7 @@ static NSString *const kCallbackKey = @"request";
 
 }
 - (void) readyButtonTapped {
+    ATCheckLoadModel *model = [[ATAdManager sharedManager] checkNativeLoadStatusForPlacementID:_placementIDs[_name]];
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:[[ATAdManager sharedManager] nativeAdReadyForPlacementID:_placementIDs[_name]] ? @"Ready!" : @"Not Yet!" message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *action = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
     [alert addAction:action];
@@ -153,9 +154,7 @@ static NSString *const kCallbackKey = @"request";
     NSLog(@"ATNativeDrawViewController:: didFinishLoadingADWithPlacementID:%@", placementID);
     [_loadingView removeFromSuperview];
     _failureTipsLabel.hidden = YES;
-    if ([self.view viewWithTag:3333] == nil) {
-        [self showAD];
-    }
+    
 }
 
 -(void) didFailToLoadADWithPlacementID:(NSString *)placementID error:(NSError *)error {

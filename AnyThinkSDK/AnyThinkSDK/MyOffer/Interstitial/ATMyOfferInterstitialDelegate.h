@@ -16,6 +16,7 @@
 -(void) myOfferInterstitialVideoEndOffer:(ATMyOfferOfferModel*)offer;
 -(void) myOfferInterstitialClickOffer:(ATMyOfferOfferModel*)offer;
 -(void) myOfferInterstitialCloseOffer:(ATMyOfferOfferModel*)offer;
+-(void) myOfferInterstitialFeedbackViewDidSelectItemAtIndex:(NSInteger)index extraMsg:(NSString *)msg offer:(ATMyOfferOfferModel*)offer;
 -(NSString*) lifeCircleIDForOffer:(ATMyOfferOfferModel*)offer;
 -(NSString*) sceneForOffer:(ATMyOfferOfferModel*)offer;
 @end

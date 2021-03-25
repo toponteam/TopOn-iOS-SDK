@@ -378,6 +378,12 @@ static CGFloat kStarDimension = 12.0f;
     if ([_delegate respondsToSelector:@selector(didClickNativeBannerAdInView:placementID:)]) { [_delegate didClickNativeBannerAdInView:self placementID:placementID]; }
 }
 
+- (void)didDeepLinkOrJumpInAdView:(ATNativeADView *)adView placementID:(NSString *)placementID extra:(NSDictionary *)extra result:(BOOL)success {
+    if ([_delegate respondsToSelector:@selector(didNativeBannerDeeplinkOrJumpInView:placementID:extra:result:)]) {
+        [_delegate didNativeBannerDeeplinkOrJumpInView:adView placementID:placementID extra:extra result:success];
+    }
+}
+
 -(void) didShowNativeAdInAdView:(ATNativeADView*)adView placementID:(NSString*)placementID {
     adView.mainImageView.image = adView.nativeAd.mainImage;
     if (self.shouldNotifyShow) {

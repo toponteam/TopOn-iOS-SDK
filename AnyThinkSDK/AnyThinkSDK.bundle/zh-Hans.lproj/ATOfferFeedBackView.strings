@@ -1,0 +1,69 @@
+
+/* Class = "UIButton"; normalTitle = "Show Failed"; ObjectID = "4oS-Ej-rAC"; */
+"4oS-Ej-rAC.normalTitle" = "黑白屏";
+
+/* Class = "UIButton"; selectedTitle = "Show Failed"; ObjectID = "4oS-Ej-rAC"; */
+"4oS-Ej-rAC.selectedTitle" = "黑白屏";
+
+/* Class = "UIButton"; normalTitle = "Can't close"; ObjectID = "5hW-nx-TJo"; */
+"5hW-nx-TJo.normalTitle" = "无法关闭";
+
+/* Class = "UIButton"; selectedTitle = "Can't close"; ObjectID = "5hW-nx-TJo"; */
+"5hW-nx-TJo.selectedTitle" = "无法关闭";
+
+/* Class = "UIButton"; normalTitle = "Plagiarism"; ObjectID = "CHm-JG-Flb"; */
+"CHm-JG-Flb.normalTitle" = "内容抄袭";
+
+/* Class = "UIButton"; selectedTitle = "Plagiarism"; ObjectID = "CHm-JG-Flb"; */
+"CHm-JG-Flb.selectedTitle" = "内容抄袭";
+
+/* Class = "UIButton"; normalTitle = "Submit"; ObjectID = "LZc-GO-ri7"; */
+"LZc-GO-ri7.normalTitle" = "提交";
+
+/* Class = "UIButton"; selectedTitle = "Submit"; ObjectID = "LZc-GO-ri7"; */
+"LZc-GO-ri7.selectedTitle" = "提交";
+
+/* Class = "UIButton"; normalTitle = "Fraud ads"; ObjectID = "N4U-Xn-unG"; */
+"N4U-Xn-unG.normalTitle" = "虚假欺诈";
+
+/* Class = "UIButton"; selectedTitle = "Fraud ads"; ObjectID = "N4U-Xn-unG"; */
+"N4U-Xn-unG.selectedTitle" = "虚假欺诈";
+
+/* Class = "UIButton"; normalTitle = "Video freeze"; ObjectID = "Pev-HW-1Zh"; */
+"Pev-HW-1Zh.normalTitle" = "广告卡顿";
+
+/* Class = "UIButton"; selectedTitle = "Video freeze"; ObjectID = "Pev-HW-1Zh"; */
+"Pev-HW-1Zh.selectedTitle" = "广告卡顿";
+
+/* Class = "UILabel"; text = "Abnormal"; ObjectID = "Sfo-cg-mKD"; */
+"Sfo-cg-mKD.text" = "异常广告";
+
+/* Class = "UILabel"; text = "Report"; ObjectID = "X0b-5m-rRh"; */
+"X0b-5m-rRh.text" = "举报广告";
+
+/* Class = "UIButton"; normalTitle = "Vulgar porn"; ObjectID = "hDZ-px-ABS"; */
+"hDZ-px-ABS.normalTitle" = "内容低俗";
+
+/* Class = "UIButton"; selectedTitle = "Vulgar porn"; ObjectID = "hDZ-px-ABS"; */
+"hDZ-px-ABS.selectedTitle" = "内容低俗";
+
+/* Class = "UILabel"; text = "Suggestion"; ObjectID = "iST-IK-Gva"; */
+"iST-IK-Gva.text" = "其他建议";
+
+/* Class = "UIButton"; normalTitle = "Induce click"; ObjectID = "m7i-aV-aeV"; */
+"m7i-aV-aeV.normalTitle" = "诱导点击";
+
+/* Class = "UIButton"; selectedTitle = "Induce click"; ObjectID = "m7i-aV-aeV"; */
+"m7i-aV-aeV.selectedTitle" = "诱导点击";
+
+/* Class = "UIButton"; normalTitle = "Boring"; ObjectID = "nIz-fW-Qpt"; */
+"nIz-fW-Qpt.normalTitle" = "不感兴趣";
+
+/* Class = "UIButton"; selectedTitle = "Boring"; ObjectID = "nIz-fW-Qpt"; */
+"nIz-fW-Qpt.selectedTitle" = "不感兴趣";
+
+/* Class = "UIButton"; normalTitle = "Illegal"; ObjectID = "pHV-A0-qeL"; */
+"pHV-A0-qeL.normalTitle" = "违法违规";
+
+/* Class = "UIButton"; selectedTitle = "Illegal"; ObjectID = "pHV-A0-qeL"; */
+"pHV-A0-qeL.selectedTitle" = "违法违规";

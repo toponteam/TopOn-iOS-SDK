@@ -1,0 +1,6 @@
+framework module AnyThinkFacebookAdapter {
+  umbrella header "AnyThinkFacebookAdapter.h"
+
+  export *
+  module * { export * }
+}

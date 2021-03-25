@@ -19,5 +19,6 @@
 -(ATADXOfferModel*) offerModelWithPlacementID:(NSString *) placementID unitGroupModel:(ATUnitGroupModel*)unitGroupModel;
 -(void) removeOfferModel:(ATADXOfferModel*)offerModel;
 -(void) clearOfferModelWithUnitGroupModel:(ATUnitGroupModel*)unitGroupModel placementID:(NSString *) placementID;
-
+-(void) saveOfferWithDictionary:(NSDictionary*)resultDictionary offerModel:(ATADXOfferModel *) offerModel saveKey:(NSString *) saveKey;
+-(NSString*) saveKeyWithPlacementID:(NSString*)placementID unitID:(NSString *) unitID;
 @end

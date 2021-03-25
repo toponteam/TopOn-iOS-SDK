@@ -7,9 +7,14 @@
 //
 
 #import "TopOnAdManager.h"
-#import <AnyThinkRewardedVideo/AnyThinkRewardedVideo.h>
-@interface TopOnAdManager()<ATRewardedVideoDelegate>
-@end
+//iOS 14
+#import <AppTrackingTransparency/AppTrackingTransparency.h>
+
+@import AnyThinkSDK;
+
+NSInteger const TopOnAPITypeTopOn = 1;
+
+
 @implementation TopOnAdManager
 +(instancetype) sharedManager {
     static TopOnAdManager *sharedManager = nil;
@@ -21,51 +26,87 @@
     return sharedManager;
 }
 
--(BOOL) rewardedVideoReadyForPlacementID:(NSString*)placementID {
-    return [[ATAdManager sharedManager] rewardedVideoReadyForPlacementID:placementID];
-}
+-(void) initSDKAPIWithAPIType:(NSInteger)apiType {
+    self.currentAPIType = apiType;
 
--(void) loadRewardedVideoForPlacementID:(NSString*)placementID {
-    [[ATAdManager sharedManager] loadADWithPlacementID:placementID extra:@{kATAdLoadingExtraUserIDKey:[[[UIDevice currentDevice] identifierForVendor] UUIDString] != nil ? [[[UIDevice currentDevice] identifierForVendor] UUIDString] : @""} delegate:self];
-}
+        [ATAPI setLogEnabled:YES];
+        [ATAPI integrationChecking];
+        
+        //channel&subchannle -> customData.channel&subchannel
+        [ATAPI sharedInstance].channel = @"test_channel";
+        [ATAPI sharedInstance].subchannel = @"test_subchannel";
+        [ATAPI sharedInstance].customData = @{kATCustomDataUserIDKey:@"test_custom_user_id",
+                                              kATCustomDataChannelKey:@"custom_data_channel",
+                                              kATCustomDataSubchannelKey:@"custom_data_subchannel",
+                                              kATCustomDataAgeKey:@18,
+                                              kATCustomDataGenderKey:@1,
+                                              kATCustomDataNumberOfIAPKey:@19,
+                                              kATCustomDataIAPAmountKey:@20.0f,
+                                              kATCustomDataIAPCurrencyKey:@"usd",
+                                              kATCustomDataSegmentIDKey:@16382351
+        };
+        
+        //customData.channel&subchannel -> channel&subchannle
+    //    [ATAPI sharedInstance].customData = @{kATCustomDataChannelKey:@"custom_data_channel",
+    //                                          kATCustomDataSubchannelKey:@"custom_data_subchannel"
+    //    };
+    //    [ATAPI sharedInstance].channel = @"test_channel";
+    //    [ATAPI sharedInstance].subchannel = @"test_subchannel";
+        
+        //setting custom data for placement, channel&subchannel will be ignored
+        [[ATAPI sharedInstance] setCustomData:@{kATCustomDataChannelKey:@"placement_custom_data_channel",
+                                              kATCustomDataSubchannelKey:@"placement_custom_data_subchannel"
+        } forPlacementID:@"b5c1b048c498b9"];
+        
+        [[ATAPI sharedInstance] setExludeAppleIdArray:@[@"id529479190"]];
+        
+    //    [[ATAPI sharedInstance] setDeniedUploadInfoArray:@[kATDeviceDataInfoOSVersionNameKey,
+    //                                                       kATDeviceDataInfoOSVersionCodeKey,
+    //                                                       kATDeviceDataInfoPackageNameKey,
+    //                                                       kATDeviceDataInfoAppVersionCodeKey,
+    //                                                       kATDeviceDataInfoAppVersionNameKey,
+    //                                                       kATDeviceDataInfoBrandKey,
+    //                                                       kATDeviceDataInfoModelKey,
+    //                                                       kATDeviceDataInfoScreenKey,
+    //                                                       kATDeviceDataInfoNetworkTypeKey,
+    //                                                       kATDeviceDataInfoMNCKey,
+    //                                                       kATDeviceDataInfoMCCKey,
+    //                                                       kATDeviceDataInfoLanguageKey,
+    //                                                       kATDeviceDataInfoTimeZoneKey,
+    //                                                       kATDeviceDataInfoUserAgentKey,
+    //                                                       kATDeviceDataInfoOrientKey,
+    //                                                       kATDeviceDataInfoIDFAKey,
+    //                                                       kATDeviceDataInfoIDFVKey]];
+        
+        [[ATAPI sharedInstance] getUserLocationWithCallback:^(ATUserLocation location) {
+            if (location == ATUserLocationInEU) {
+                NSLog(@"----------ATUserLocationInEU");
+                if ([ATAPI sharedInstance].dataConsentSet == ATDataConsentSetUnknown) {
+                    NSLog(@"----------ATDataConsentSetUnknown");
+                }
+            }else if (location == ATUserLocationOutOfEU){
+                NSLog(@"----------ATUserLocationOutOfEU");
+            }else{
+                NSLog(@"----------ATUserLocationUnknown");
+            }
+        }];
+        
+    //    [ATAPI setAdLogoVisible:YES];
+        
+        if (@available(iOS 14, *)) {
+            //iOS 14
+            [ATTrackingManager requestTrackingAuthorizationWithCompletionHandler:^(ATTrackingManagerAuthorizationStatus status) {
+                [[ATAPI sharedInstance] startWithAppID:@"a5b0e8491845b3" appKey:@"7eae0567827cfe2b22874061763f30c9" error:nil];
+            }];
+        } else {
+            // Fallback on earlier versions
+            [[ATAPI sharedInstance] startWithAppID:@"a5b0e8491845b3" appKey:@"7eae0567827cfe2b22874061763f30c9" error:nil];
+        }
+        
 
--(void) showRewardedVideoForPlacementID:(NSString*)placementID inViewController:(UIViewController*)viewController {
-    [[ATAdManager sharedManager] showRewardedVideoWithPlacementID:placementID inViewController:viewController delegate:self];
 }
-
--(void) didFinishLoadingADWithPlacementID:(NSString *)placementID {
-    NSLog(@"TopOnAdManager::didFinishLoadingADWithPlacementID");
+-(void) initSDKAPIWithAppID:(NSString*)appID appKey:(NSString*)appKey {
     
 }
 
--(void) didFailToLoadADWithPlacementID:(NSString*)placementID error:(NSError*)error {
-    NSLog(@"TopOnAdManager::didFailToLoadADWithPlacementID:%@ error:%@", placementID, error);
-}
-#pragma mark - showing delegate
--(void) rewardedVideoDidRewardSuccessForPlacemenID:(NSString *)placementID extra:(NSDictionary *)extra{
-    NSLog(@"TopOnAdManager::rewardedVideoDidRewardSuccessForPlacemenID:%@ extra:%@",placementID,extra);
-}
-
--(void) rewardedVideoDidStartPlayingForPlacementID:(NSString *)placementID extra:(NSDictionary *)extra {
-    NSLog(@"TopOnAdManager::rewardedVideoDidStartPlayingForPlacementID:%@ extra:%@", placementID, extra);
-   
-}
-
-
--(void) rewardedVideoDidEndPlayingForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
-    NSLog(@"TopOnAdManager::rewardedVideoDidEndPlayingForPlacementID:%@ extra:%@", placementID, extra);
-}
-
--(void) rewardedVideoDidFailToPlayForPlacementID:(NSString*)placementID error:(NSError*)error extra:(NSDictionary *)extra {
-    NSLog(@"TopOnAdManager::rewardedVideoDidFailToPlayForPlacementID:%@ error:%@ extra:%@", placementID, error, extra);
-}
-
--(void) rewardedVideoDidCloseForPlacementID:(NSString*)placementID rewarded:(BOOL)rewarded extra:(NSDictionary *)extra {
-    NSLog(@"TopOnAdManager::rewardedVideoDidCloseForPlacementID:%@, rewarded:%@ extra:%@", placementID, rewarded ? @"yes" : @"no", extra);
-}
-
-
--(void) rewardedVideoDidClickForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
-    NSLog(@"TopOnAdManager::rewardedVideoDidClickForPlacementID:%@ extra:%@", placementID, extra);
-}
 @end

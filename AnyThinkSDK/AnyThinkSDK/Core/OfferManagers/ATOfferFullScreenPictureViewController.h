@@ -15,13 +15,12 @@ NS_ASSUME_NONNULL_BEGIN
 -(void)offerFullScreenPictureEndCardDidShowWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
 -(void)offerFullScreenPictureDidClickAdWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
 -(void)offerFullScreenPictureEndCardDidCloseWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
-
+-(void)offerFullScreenPictureFeedbackViewDidSelectItemAtIndex:(NSInteger)index offerModel:(ATOfferModel *)offerModel extraMsg:(NSString *)msg;
 @end
 
 @interface ATOfferFullScreenPictureViewController : UIViewController
 
 @property (nonatomic , weak) id<ATOfferFullScreenPictureDelegate> delegate;
-
 - (instancetype)initWithOfferModel:(ATOfferModel*)offerModel rewardedVideoSetting:(ATOfferSetting *)setting;
 
 @end

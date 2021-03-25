@@ -35,6 +35,9 @@
 #import "ATBidTrackingModel.h"
 #import "ATThreadSafeAccessor.h"
 
+@implementation ATHBRequest
+
+@end
 
 @interface ATHeaderBiddingManager()
 @property(nonatomic, readonly) ATSerialThreadSafeAccessor *headerBiddingResponseAccessor;
@@ -109,8 +112,12 @@ void LogHeaderBiddingLog(NSString* log) { [ATLogger logMessage:[NSString stringW
                         LogHeaderBiddingLog([NSString stringWithFormat:@"Bid price:%@, max making price:%@, min making price:%@, waterfall.filled:%@", bidInfo.price, maxMarkingPrice, minMarkingPrice, waterfallWrapper.filled ? @YES : @NO]);
                         processingResult[ctypeKey] = waterfallWrapper.filled ? maxMarkingPrice : minMarkingPrice;
                         NSString *bidInfoPrice = [NSString stringWithFormat:@"%@", bidInfo.price];
-                        BOOL condition_max = waterfallWrapper.filled && [bidInfoPrice compare: maxMarkingPrice options:NSNumericSearch] == NSOrderedDescending;
-                        BOOL condition_min = !waterfallWrapper.filled && [bidInfoPrice compare: minMarkingPrice options:NSNumericSearch] == NSOrderedDescending;
+                        NSDecimalNumber *bidInfoNum = [NSDecimalNumber decimalNumberWithString:bidInfoPrice];
+                        NSDecimalNumber *maxMarkingNum = [NSDecimalNumber decimalNumberWithString:maxMarkingPrice];
+                        NSDecimalNumber *minMarkingNum = [NSDecimalNumber decimalNumberWithString:minMarkingPrice];
+                        
+                        BOOL condition_max = waterfallWrapper.filled && [bidInfoNum compare: maxMarkingNum] == NSOrderedDescending;
+                        BOOL condition_min = !waterfallWrapper.filled && [bidInfoNum compare: minMarkingNum] == NSOrderedDescending;
                         if (condition_max || condition_min) {
                             LogHeaderBiddingLog(@"Insert into hb waterfall");
                             [finalWaterfall insertUnitGroup:unitGroupModel price:bidInfoPrice];
@@ -188,9 +195,25 @@ void LogHeaderBiddingLog(NSString* log) { [ATLogger logMessage:[NSString stringW
     return unitGroupModel;
 }
 
--(void) startLoadingHeaderBiddingWithRequestID:(NSString*)requestID headerBiddingUnitGroups:(NSArray<ATUnitGroupModel*>*)headerBiddingUnitGroups s2sHBUnitGroups:(NSArray<ATUnitGroupModel*>*)s2sHBUnitGroups offerCachedHBUnitGroups:(NSArray<ATUnitGroupModel*>*)offerCachedHBUGs unitGroupsWithHistoryBidInfo:(NSArray<ATUnitGroupModel*>*)unitGroupsWithHistoryBidInfo inactiveUGInfo:(NSArray<NSDictionary*>*)inactiveUGInfo inactiveHBUGInfo:(NSArray<NSDictionary*>*)inactiveHBUGInfo placementModel:(ATPlacementModel*)placementModel extra:(NSDictionary*)extra delegate:(id<ATAdLoadingDelegate>)delegate {
-    _headerBiddingUnitGroups = headerBiddingUnitGroups;
-    _s2sHBUnitGroups = s2sHBUnitGroups;
+// MARK:- methods claimed in .h
+//- (void)startLoadingHeaderBidingInfoWithRequest:(ATHBRequest *)request {
+//
+//}
+
+- (void)startLoadingHeaderBidingInfoWithRequest:(ATHBRequest *)request {
+    _headerBiddingUnitGroups = request.headerBiddingUnitGroups;
+    _s2sHBUnitGroups = request.s2sHBUnitGroups;
+    NSArray<ATUnitGroupModel *> *headerBiddingUnitGroups = request.headerBiddingUnitGroups;
+    NSArray<ATUnitGroupModel *> *s2sHBUnitGroups = request.s2sHBUnitGroups;
+    NSArray<ATUnitGroupModel *> *offerCachedHBUGs = request.offerCachedHBUGs;
+    NSArray<ATUnitGroupModel *> *unitGroupsWithHistoryBidInfo = request.unitGroupsWithHistoryBidInfo;
+    NSString *requestID = request.requestID;
+    NSArray *inactiveUGInfo = request.inactiveUGInfo;
+    NSArray *inactiveHBUGInfo = request.inactiveHBUGInfo;
+    ATPlacementModel *placementModel = request.placementModel;
+    NSDictionary *extra = request.extra;
+    id<ATAdLoadingDelegate> delegate = request.delegate;
+    
     self.bidTotalNum = [headerBiddingUnitGroups count] + [s2sHBUnitGroups count];
     _bidJobModel = [[ATBidJobModel alloc] initBidJobModelWithRequestID:requestID headerBiddingUnitGroups:headerBiddingUnitGroups s2sHBUnitGroups:s2sHBUnitGroups placementModel:placementModel];
     NSDate *bidStartDate = [NSDate date];
@@ -217,7 +240,7 @@ void LogHeaderBiddingLog(NSString* log) { [ATLogger logMessage:[NSString stringW
                 [[ATAdLoader sharedLoader] updateS2SBidRequestFailureForPlacemetModel:placementModel unitGroupModel:[self unitGroupModelWithUnitID:key]];
             }];
             if(bidTime < placementModel.headerBiddingRequestTolerateInterval && self.bidResponseNum < self.bidTotalNum){
-                //<2s, just cache ,wait for other return
+                // <2s, just cache ,wait for other return
                 [self.cacheResponseSuccessList addEntriesFromDictionary:bidInfos];
                 
             }else{
@@ -232,6 +255,10 @@ void LogHeaderBiddingLog(NSString* log) { [ATLogger logMessage:[NSString stringW
             NSMutableDictionary *info = [NSMutableDictionary dictionaryWithDictionary:obj.content != nil ? obj.content : @{}];
             info[kADapterCustomInfoStatisticsInfoKey] = [ATAdLoader statisticsInfoWithPlacementModel:placementModel unitGroupModel:obj finalWaterfall:nil requestID:requestID bidRequest:YES];
             if([obj.adapterClass respondsToSelector:@selector(bidRequestWithPlacementModel:unitGroupModel:info:completion:)]){
+                
+                if (obj.networkFirmID == 1) { // facebook in-house list
+                    placementModel.waterfallA = request.unitGroups;
+                }
                 [obj.adapterClass bidRequestWithPlacementModel:placementModel unitGroupModel:obj info:info completion:^(ATBidInfo *bidInfo, NSError *error) {
                     //adapter callback block async
                     self.bidResponseNum = self.bidResponseNum + 1;
@@ -251,7 +278,7 @@ void LogHeaderBiddingLog(NSString* log) { [ATLogger logMessage:[NSString stringW
                         bidInfos[bidInfo.unitGroupUnitID] = bidInfo;
                     }
                     if(bidTime < placementModel.headerBiddingRequestTolerateInterval && self.bidResponseNum < self.bidTotalNum){
-                        //<2s, just cache ,wait for other return
+                        // <2s, just cache ,wait for other return
                         if(bidInfo != nil){
                             [self.cacheResponseSuccessList addEntriesFromDictionary:bidInfos];
                         }
@@ -296,7 +323,7 @@ void LogHeaderBiddingLog(NSString* log) { [ATLogger logMessage:[NSString stringW
                 [[ATTracker sharedTracker] trackWithPlacementID:placementModel.placementID requestID:requestID trackType:ATNativeAdTrackTypeBidSort extra:@{kATTrackerExtraHeaderBiddingInfoKey:[ATAdLoader bidSortTKExtraWithPlacementID:placementModel.placementID requestID:requestID bidStartDate:bidStartDate inactiveHBUnitGroupInfo:inactiveHBUGInfo inactiveUGInfo:inactiveUGInfo failedHBUGInfo:self.responseFailedList sortedUGs:finalWaterfall.unitGroups offerCachedUnitGroups:offerCachedHBUGs unitGroupsWithHistoryBidInfo:unitGroupsWithHistoryBidInfo]}];
             }
             //TODO check finish waterfall
-            if(!finished && [waterfall.unitGroups count] == 0){
+            if(!finished && [waterfall.unitGroups count] == 0 && headerBiddingWaterfall.unitGroups.count == 0){
                 LogHeaderBiddingLog(@"Not finish, will check waterfall&headerBiddingWaterfall status");
                 [waterfallWrapper finish];
                 [[ATAdLoader sharedLoader] notifyFailureWithPlacementModel:placementModel requestID:requestID extra:extra error:[NSError errorWithDomain:ATSDKAdLoadingErrorMsg code:ATADLoadingErrorCodeADOfferLoadingFailed userInfo:@{NSLocalizedDescriptionKey:ATSDKAdLoadFailedErrorMsg, NSLocalizedFailureReasonErrorKey:@"Bid request have failed"}] delegate:delegate];

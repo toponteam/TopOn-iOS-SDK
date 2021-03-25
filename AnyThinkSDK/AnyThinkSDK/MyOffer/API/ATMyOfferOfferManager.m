@@ -18,11 +18,6 @@
 #import "ATMyOfferNativeSharedDelegate.h"
 #import "ATAPI.h"
 
-NSString *const kATMyOfferBannerSize320_50 = @"320x50";
-NSString *const kATMyOfferBannerSize320_90 = @"320x90";
-NSString *const kATMyOfferBannerSize300_250 = @"300x250";
-NSString *const kATMyOfferBannerSize728_90 = @"728x90";
-
 @interface ATMyOfferOfferManager()
 @end
 @implementation ATMyOfferOfferManager

@@ -10,11 +10,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSInteger const TopOnAPITypeTopOn;
+
 @interface TopOnAdManager : NSObject
 +(instancetype) sharedManager;
--(BOOL) rewardedVideoReadyForPlacementID:(NSString*)placementID;
--(void) loadRewardedVideoForPlacementID:(NSString*)placementID;
--(void) showRewardedVideoForPlacementID:(NSString*)placementID inViewController:(UIViewController*)viewController;
+@property (atomic, readwrite) NSInteger currentAPIType;
+-(void) initSDKAPIWithAPIType:(NSInteger)apiType;
+-(void) initSDKAPIWithAppID:(NSString*)appID appKey:(NSString*)appKey;
 @end
 
 NS_ASSUME_NONNULL_END

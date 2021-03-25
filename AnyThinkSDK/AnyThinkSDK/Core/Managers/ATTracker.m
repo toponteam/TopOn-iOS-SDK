@@ -54,6 +54,12 @@ NSString *const kATTrackerExtraASIDKey = @"as_id";
 NSString *const kATTrackerExtraFormatKey = @"ad_format";
 NSString *const kATTrackerExtraRequestExpectedOfferNumberFlagKey = @"req_expected_offer_num_flag";
 
+// for OFM
+NSString *const kATTrackerExtraOFMTrafficIDKey = @"ofm_tid";
+NSString *const kATTrackerExtraOFMSystemKey = @"ofm_system";
+NSString *const kATTrackerExtraOFMPreECPMKey = @"pre_ecpm";
+NSString *const kATTrackerExtraOFMKey = @"is_ofm";
+
 static NSString *const kBase64Table1 = @"dMWnhbeyKr0J+IvLNOx3BFkEuml92/5fjSqGT7R8pZVciPHAstC4UXa6QDw1gozY";
 static NSString *const kBase64Table2 = @"xZnV5k+DvSoajc7dRzpHLYhJ46lt0U3QrWifGyNgb9P1OIKmCEuq8sw/XMeBAT2F";
 static NSString *const kAESEncryptionKey = @"0123456789abecef";
@@ -125,9 +131,13 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
 -(void) trackWithPlacementID:(NSString*)placementID requestID:(NSString*)requestID trackType:(ATNativeADTrackType)trackType extra:(NSDictionary*)extra {
     NSDictionary *dataElement = [ATTracker dataElementWithPlacementID:placementID requestID:requestID trackType:trackType extra:[extra isKindOfClass:[NSDictionary class]] ? [NSDictionary dictionaryWithDictionary:extra] : nil];
     ATPlacementModel *placementModel = [[ATPlacementSettingManager sharedManager] placementSettingWithPlacementID:placementID];
+    
+    if (![Utilities isEmpty:extra[kATTrackerExtraNetworkFirmIDKey]] && [[ATAppSettingManager sharedManager].trackingSetting.tcTKSkipNetworks containsObject:@([extra[kATTrackerExtraNetworkFirmIDKey] integerValue]).stringValue]) {
+        return;
+    }
+    
     if ((placementModel != nil && ![[ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(trackType).stringValue] containsObject:@(placementModel.format).stringValue]) || (extra[kATTrackerExtraFormatKey] != nil && ![[ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(trackType).stringValue] containsObject:[NSString stringWithFormat:@"%@", extra[kATTrackerExtraFormatKey]]]) || (placementModel == nil && [ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(trackType).stringValue] != nil)) {
         [self appendDataElement:dataElement];
-//        NSLog(@"\n**************************Marvin_tk_element**************************\n%@\n**************************tk_element**************************\n", dataElement);
     }
     
     if (trackType == ATNativeAdTrackTypeShowAPICall) {
@@ -140,17 +150,15 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
 -(void) trackClickWithAd:(nonnull id<ATAd>)ad extra:(nullable NSDictionary*)extra {
     NSDictionary *dataElement = [ATTracker dataElementWithPlacementID:ad.placementModel.placementID requestID:ad.requestID trackType:ATNativeADTrackTypeADClicked extra:extra];
     ATPlacementModel *placementModel = ad.placementModel;
-        if ((placementModel != nil && ![[ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(ATNativeADTrackTypeADClicked).stringValue] containsObject:@(placementModel.format).stringValue]) || (placementModel == nil && [ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(ATNativeADTrackTypeADClicked).stringValue] != nil)) {
-            if (!(ad.unitGroup.clickTkDelayMin == -1 && ad.unitGroup.clickTkDelayMax == -1)) {
-                    NSTimeInterval delayTime = (ad.unitGroup.clickTkDelayMin + arc4random_uniform(ad.unitGroup.clickTkDelayMax - ad.unitGroup.clickTkDelayMin)) / 1000.0f;
-                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayTime * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                        [ATTracker sendData:@[dataElement] address:ad.unitGroup.clickTkAddress retryIfTimeout:YES];
-            //                    NSLog(@"\n**************************Marvin_tk_element**************************\n%@\n**************************tk_element**************************\n", dataElement);
-                    });
-                }
-        }
+    ATUnitGroupModel *unitGroupModel = ad.unitGroup;
     
+    if (![Utilities isEmpty:@(unitGroupModel.networkFirmID)] && [[ATAppSettingManager sharedManager].trackingSetting.tcTKSkipNetworks containsObject:@(unitGroupModel.networkFirmID).stringValue]) {
+        return;
+    }
     
+    if ((placementModel != nil && ![[ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(ATNativeADTrackTypeADClicked).stringValue] containsObject:@(placementModel.format).stringValue]) || (placementModel == nil && [ATAppSettingManager sharedManager].trackingSetting.tcTKSkipFormats[@(ATNativeADTrackTypeADClicked).stringValue] != nil)) {
+        [self appendDataElement:dataElement];
+    }
     
     NSString *notificationName = [ATAppSettingManager sharedManager].clickNotificationName;
     if (ad.unitGroup.postsNotificationOnClick && notificationName != nil) { [[NSNotificationCenter defaultCenter] postNotificationName:notificationName object:ad.customObject userInfo:@{@"data":dataElement, @"common":[ATTracker commonParameters], @"nw_id":@(ad.unitGroup.networkFirmID), @"format":@(ad.placementModel.format)}]; }
@@ -161,6 +169,7 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
 }
 
 -(void) appendDataElement:(NSDictionary*)element {
+//    NSLog(@"\n**************************Marvin_tk_element**************************\n%@\n**************************tk_element**************************\n", element);
     __weak typeof(self) weakSelf = self;
     [_accessor writeWithBlock:^{
         if ([element isKindOfClass:[NSDictionary class]]) { [weakSelf.data addObject:element]; }
@@ -271,7 +280,7 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
     if (extra[kATTrackerExtraASIDKey] != nil) { element[@"asid"] = extra[kATTrackerExtraASIDKey]; }
     if (extra[kATTrackerExtraUGUnitIDKey] != nil) { element[@"unit_id"] = extra[kATTrackerExtraUGUnitIDKey]; }
     if (extra[kATTrackerExtraTrafficGroupIDKey] != nil) { element[@"traffic_group_id"] = extra[kATTrackerExtraTrafficGroupIDKey]; }
-    
+
     if (extra[kATTrackerExtraAdShowSDKTimeKey] != nil) {
         element[kATTrackerExtraAdShowSDKTimeKey] = extra[kATTrackerExtraAdShowSDKTimeKey];
     } else {
@@ -281,42 +290,52 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
 
     if (placementModel != nil) {
         element[@"format"] = @(placementModel.format);
-        element[@"gro_id"] = @(placementModel.groupID);
     }
     if (extra[kATTrackerExtraFormatKey] != nil) { element[@"format"] = extra[kATTrackerExtraFormatKey]; }
-    if (placementModel.asid != nil) { element[@"asid"] = placementModel.asid; }
-    if (placementModel.trafficGroupID != nil) { element[@"traffic_group_id"] = placementModel.trafficGroupID; }
+    if(extra[kATTrackerExtraOFMSystemKey] == nil || [extra[kATTrackerExtraOFMSystemKey] isEqual:@(1)]){
+        if (placementModel != nil) {
+            element[@"gro_id"] = @(placementModel.groupID);
+        }
+        if (placementModel.asid != nil) { element[@"asid"] = placementModel.asid; }
+        if (placementModel.trafficGroupID != nil) { element[@"traffic_group_id"] = placementModel.trafficGroupID; }
+        //Load
+        if (extra[kATTrackerExtraSDKCalledFlagKey] != nil) { element[@"isload"] = [extra[kATTrackerExtraSDKCalledFlagKey] doubleValue] ? @1 : @0; }
+        if (extra[kATTrackerExtraSDKNotCalledReasonKey] != nil) { element[@"reason"] = extra[kATTrackerExtraSDKNotCalledReasonKey]; }
+        if (extra[kATTrackerExtraLoadTimeKey] != nil) { element[@"loadtime"] = extra[kATTrackerExtraLoadTimeKey]; }
+        if (extra[kATTrackerExtraUnitIDKey] != nil) { element[@"unit_id"] = extra[kATTrackerExtraUnitIDKey]; }
+        if (extra[kATTrackerExtraRefreshFlagKey] != nil || extra[kATTrackerExtraAutoloadOnCloseFlagKey] != nil) { element[@"refresh"] = @(([extra[kATTrackerExtraRefreshFlagKey] boolValue] || [extra[kATTrackerExtraAutoloadOnCloseFlagKey] boolValue]) ? 1 : 0); }
+        if (extra[kATTrackerExtraAutoloadFlagKey] != nil || extra[kATTrackerExtraAdFilledByReadyFlagKey] != nil || extra[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey] != nil || extra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] != nil) { element[@"auto_req"] = @([extra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue] ? 5 : ([extra[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey] boolValue] ? 4 :([extra[kATTrackerExtraAdFilledByReadyFlagKey] boolValue] ? 3 : ([extra[kATTrackerExtraAutoloadFlagKey] boolValue] ? 1 : 2)))); }
+        if (extra[kATTrackerExtraDefaultLoadFlagKey] != nil) { element[@"aprn_auto_req"] = @([extra[kATTrackerExtraDefaultLoadFlagKey] boolValue] ? 1 : 0); }
+        
+        
+        //Fill
+        if (extra[kATTrackerExtraFilledWithinNetworkTimeoutFlagKey] != nil) { element[@"status"] = @([extra[kATTrackerExtraFilledWithinNetworkTimeoutFlagKey] boolValue] ? 1 : 0); }
+        if (extra[kATTrackerExtraFillRequestFlagKey] != nil) { element[@"flag"] = extra[kATTrackerExtraFillRequestFlagKey]; }
+        if (extra[kATTrackerExtraFillTimeKey] != nil) { element[@"filledtime"] = extra[kATTrackerExtraFillTimeKey]; }
+        
+        //Header Biding
+        if ([extra[kATTrackerExtraHeaderBiddingInfoKey] isKindOfClass:[NSDictionary class]]) { [element addEntriesFromDictionary:extra[kATTrackerExtraHeaderBiddingInfoKey]]; }
+        
+        //Show
+        if (extra[kATTrackerExtraASResultKey] != nil) { element[@"as_result"] = extra[kATTrackerExtraASResultKey]; }
+        if (extra[kATTrackerExtraLastestRequestIDKey] != nil) { element[@"new_req_id"] = extra[kATTrackerExtraLastestRequestIDKey]; }
+        if (extra[kATTrackerExtraLastestRequestIDMatchFlagKey] != nil) { element[@"req_id_match"] = extra[kATTrackerExtraLastestRequestIDMatchFlagKey]; }
+
+        if (extra[kATTrackerExtraMyOfferDefaultFalgKey] != nil) { element[@"myoffer_showtype"] = extra[kATTrackerExtraMyOfferDefaultFalgKey]; }
+        
+        //scene
+        if (extra[kATTrackerExtraAdShowSceneKey] != nil) { element[@"scenario"] = extra[kATTrackerExtraAdShowSceneKey]; }
+    }
+   
     if ([ATAPI sharedInstance].psID != nil) { element[@"ps_id"] = [ATAPI sharedInstance].psID; }
     if (placementID != nil && [[ATPlacementSettingManager sharedManager] sessionIDForPlacementID:placementID] != nil) { element[@"sessionid"] = [[ATPlacementSettingManager sharedManager] sessionIDForPlacementID:placementID]; }
-    //Load
-    if (extra[kATTrackerExtraSDKCalledFlagKey] != nil) { element[@"isload"] = [extra[kATTrackerExtraSDKCalledFlagKey] doubleValue] ? @1 : @0; }
-    if (extra[kATTrackerExtraSDKNotCalledReasonKey] != nil) { element[@"reason"] = extra[kATTrackerExtraSDKNotCalledReasonKey]; }
-    if (extra[kATTrackerExtraLoadTimeKey] != nil) { element[@"loadtime"] = extra[kATTrackerExtraLoadTimeKey]; }
+    
     
     //Request
-    if (extra[kATTrackerExtraUnitIDKey] != nil) { element[@"unit_id"] = extra[kATTrackerExtraUnitIDKey]; }
+    
     if (extra[kATTrackerExtraNetworkFirmIDKey] != nil) { element[@"nw_firm_id"] = extra[kATTrackerExtraNetworkFirmIDKey]; }
-    if (extra[kATTrackerExtraRefreshFlagKey] != nil || extra[kATTrackerExtraAutoloadOnCloseFlagKey] != nil) { element[@"refresh"] = @(([extra[kATTrackerExtraRefreshFlagKey] boolValue] || [extra[kATTrackerExtraAutoloadOnCloseFlagKey] boolValue]) ? 1 : 0); }
-    if (extra[kATTrackerExtraAutoloadFlagKey] != nil || extra[kATTrackerExtraAdFilledByReadyFlagKey] != nil || extra[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey] != nil || extra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] != nil) { element[@"auto_req"] = @([extra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] boolValue] ? 5 : ([extra[kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey] boolValue] ? 4 :([extra[kATTrackerExtraAdFilledByReadyFlagKey] boolValue] ? 3 : ([extra[kATTrackerExtraAutoloadFlagKey] boolValue] ? 1 : 2)))); }
-    if (extra[kATTrackerExtraDefaultLoadFlagKey] != nil) { element[@"aprn_auto_req"] = @([extra[kATTrackerExtraDefaultLoadFlagKey] boolValue] ? 1 : 0); }
     
-    //Fill
-    if (extra[kATTrackerExtraFilledWithinNetworkTimeoutFlagKey] != nil) { element[@"status"] = @([extra[kATTrackerExtraFilledWithinNetworkTimeoutFlagKey] boolValue] ? 1 : 0); }
-    if (extra[kATTrackerExtraFillRequestFlagKey] != nil) { element[@"flag"] = extra[kATTrackerExtraFillRequestFlagKey]; }
-    if (extra[kATTrackerExtraFillTimeKey] != nil) { element[@"filledtime"] = extra[kATTrackerExtraFillTimeKey]; }
-    
-    //Header Biding
-    if ([extra[kATTrackerExtraHeaderBiddingInfoKey] isKindOfClass:[NSDictionary class]]) { [element addEntriesFromDictionary:extra[kATTrackerExtraHeaderBiddingInfoKey]]; }
-    
-    //Show
-    if (extra[kATTrackerExtraASResultKey] != nil) { element[@"as_result"] = extra[kATTrackerExtraASResultKey]; }
-    if (extra[kATTrackerExtraLastestRequestIDKey] != nil) { element[@"new_req_id"] = extra[kATTrackerExtraLastestRequestIDKey]; }
-    if (extra[kATTrackerExtraLastestRequestIDMatchFlagKey] != nil) { element[@"req_id_match"] = extra[kATTrackerExtraLastestRequestIDMatchFlagKey]; }
-
-    if (extra[kATTrackerExtraMyOfferDefaultFalgKey] != nil) { element[@"myoffer_showtype"] = extra[kATTrackerExtraMyOfferDefaultFalgKey]; }
-    
-    //scene
-    if (extra[kATTrackerExtraAdShowSceneKey] != nil) { element[@"scenario"] = extra[kATTrackerExtraAdShowSceneKey]; }
+   
     
     //add statistics for show&impression
     if (trackType == ATNativeADTrackTypeADShow || trackType == ATNativeAdTrackTypeShowAPICall || trackType == ATNativeADTrackTypeADClicked) {
@@ -325,6 +344,12 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
                                             @"pds":@([[ATCapsManager sharedManager] capByDayWithPlacementID:placementModel.placementID] + (trackType == ATNativeAdTrackTypeShowAPICall ? 1 : 0)),
                                             @"phs":@([[ATCapsManager sharedManager] capByHourWithPlacementID:placementModel.placementID] + (trackType == ATNativeAdTrackTypeShowAPICall ? 1 : 0)),
         }];
+    }
+    //only for ofm
+    if([ATAPI isOfm]){
+        [element AT_setDictValue:extra[kATTrackerExtraOFMTrafficIDKey] key:kATTrackerExtraOFMTrafficIDKey];
+        [element AT_setDictValue:extra[kATTrackerExtraOFMSystemKey] key:kATTrackerExtraOFMSystemKey];
+
     }
     return element;
 }
@@ -353,6 +378,12 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
     
     common[@"tcp_tk_da_type"] = @([ATAppSettingManager sharedManager].trackingSetting.trackerTCPType);
     common[@"tcp_rate"] = [[ATAppSettingManager sharedManager].trackingSetting.trackerTCPRate length] > 0 ? [ATAppSettingManager sharedManager].trackingSetting.trackerTCPRate : @"";
+    if (![kATSDKCustomChannel isEqualToString:@"0"]){
+        common[@"cs_cl"] = kATSDKCustomChannel;
+    }
+    if([ATAPI isOfm]){
+        common[@"is_ofm"] = @1;
+    }
     
     if ([[ATAppSettingManager sharedManager] shouldUploadProtectedFields]) {
         [common addEntriesFromDictionary:@{@"os_vn":[Utilities systemName] != nil ? [Utilities systemName] : @"not_known",
@@ -390,6 +421,6 @@ static NSString *const kAESEncryptionKey = @"0123456789abecef";
 }
 
 +(NSDictionary*)headerBiddingTrackingExtraWithAd:(id<ATAd>)ad requestID:(NSString*)requestID {
-    return @{@"bidtype":@(ad.unitGroup.headerBidding ? 1 : 0), @"bidprice":ad.price != nil ? ad.price : @"0"};
+    return @{@"bidtype":@(ad.unitGroup.headerBidding ? 1 : 0), @"bidprice":ad.price != nil ? ad.price : @"0", @"bid_id" : ad.bidId != nil ? ad.bidId : @""};
 }
 @end

@@ -18,6 +18,8 @@
 
 NSString *const kATAppSettingGDPAFlag = @"gdpr_ia";
 NSString *const kATAppSettingGDPRPolicyURLKey = @"gdpr_nu";
+NSString *const kATSDKCustomChannel = @"0";
+NSString *const kATSDKInhouseBiddingUrl = @"https://bks.joypacgames.com/bks";
 
 static NSString *const kATAppSettingDataProtectedArea = @"gdpr_a";
 static NSString *const kATAppSettingExpireIntervalKey = @"scet";
@@ -25,6 +27,8 @@ static NSString *const kATAppSettingSplashTimeoutKey = @"pl_n";
 static NSString *const kATAppSettingDefaultFlagKey = @"embeded_default_setting";
 static NSString *const kATAppSettingUsesServerConsentFlagKey = @"gdpr_so";
 static NSString *const kATAppSettingThirdPartySDKConsentDefaultFlagKey = @"nw_eu_def";
+static NSString *const kATAppSettingCOPPASetting = @"coppa_sw";
+static NSString *const kATAppSettingCCPASetting = @"ccpa_sw";
 
 static NSString *const kUserDefaultsATIDKey = @"com.anythink.data.up_id";
 static NSString *const kUserDefaultsGDPRFlagKey = @"com.anythink.data.gdpr_flag";
@@ -37,6 +41,7 @@ static NSString *const kUserDefaultsBKUPIDKey = @"com.exc.C43EB5CC.bk";
 @property(nonatomic) NSDictionary *currentSetting_impl;
 @property(nonatomic) ATTrackingSetting *trackingSetting_impl;
 @property(nonatomic) ATADXSetting *adxSetting_impl;
+@property(nonatomic) ATOnlineApiSetting *onlineApiSetting_impl;
 @property(nonatomic, readonly) NSDate *currentSettingExpireDate;
 @property(atomic) BOOL loading;
 @property(nonatomic, readonly) NSArray<NSString*>* GDPRAreas;
@@ -87,7 +92,9 @@ static NSString *const kSettingArchiveExpireDateKey = @"expire_date";
             if ([_currentSetting_impl[@"n_l"] isKindOfClass:[NSString class]]) { _notifications = [NSJSONSerialization JSONObjectWithData:[_currentSetting_impl[@"n_l"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
             [self preinitFilterAdapter:_currentSetting_impl[@"preinit"]];
             
-             _adxSetting_impl = [_currentSetting_impl[@"adx"] isKindOfClass:[NSDictionary class]] ? [[ATADXSetting alloc] initWithDictionary:_currentSetting_impl[@"adx"]] : [ATADXSetting defaultSetting];
+            _adxSetting_impl = [_currentSetting_impl[@"adx"] isKindOfClass:[NSDictionary class]] ? [[ATADXSetting alloc] initWithDictionary:_currentSetting_impl[@"adx"]] : [ATADXSetting defaultSetting];
+
+            _onlineApiSetting_impl = [_currentSetting_impl[@"adx"] isKindOfClass:[NSDictionary class]] ? [[ATOnlineApiSetting alloc] initWithDictionary:_currentSetting_impl[@"adx"]] : [ATOnlineApiSetting defaultSetting];
             
             _currentSettingExpireDate = archivedSettingInfo[kSettingArchiveExpireDateKey];
             if ([_currentSettingExpireDate isKindOfClass:[NSDate class]]) {
@@ -121,7 +128,10 @@ static NSString *const kSettingArchiveExpireDateKey = @"expire_date";
         _currentSettingExpireDate = [NSDate dateWithTimeIntervalSinceNow:[_currentSetting_impl[kATAppSettingExpireIntervalKey] floatValue] / 1000.0f];
         if ([_currentSetting_impl[@"n_l"] isKindOfClass:[NSString class]]) { _notifications = [NSJSONSerialization JSONObjectWithData:[_currentSetting_impl[@"n_l"] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
         [self preinitFilterAdapter:_currentSetting_impl[@"preinit"]];
-         if ([_currentSetting_impl[@"adx"] isKindOfClass:[NSDictionary class]]) { _adxSetting_impl = [[ATADXSetting alloc] initWithDictionary:_currentSetting_impl[@"adx"]]; }
+         if ([_currentSetting_impl[@"adx"] isKindOfClass:[NSDictionary class]]) {
+             _adxSetting_impl = [[ATADXSetting alloc] initWithDictionary:_currentSetting_impl[@"adx"]];
+             _onlineApiSetting_impl = [[ATOnlineApiSetting alloc] initWithDictionary:_currentSetting_impl[@"adx"]];
+         }
         NSDictionary *settingToSave = @{kSettingArchiveSettingKey:_currentSetting_impl, kSettingArchiveExpireDateKey:_currentSettingExpireDate};
         [settingToSave writeToFile:[ATAppSettingManager appSettingFilePath] atomically:YES];
         if ([currentSetting count] > 0) { [self scheduleSettingUpdate:_currentSetting_impl]; }
@@ -139,6 +149,10 @@ static NSString *const kSettingArchiveExpireDateKey = @"expire_date";
 
 -(ATADXSetting*) adxSetting {
     return [_settingAccessor readWithBlock:^id{ return _adxSetting_impl; }];
+}
+
+-(ATOnlineApiSetting*) onlineApiSetting {
+    return [_settingAccessor readWithBlock:^id{ return _onlineApiSetting_impl; }];
 }
 
 +(BOOL) validateATID:(NSString*)ATID {
@@ -351,6 +365,17 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
     }
 }
 
+- (BOOL)complyWithCCPA {
+    NSInteger value = [self.currentSetting[kATAppSettingCCPASetting] integerValue];
+    return value == 3;
+}
+
+- (BOOL)complyWithCOPPA {
+    NSInteger value = [self.currentSetting[kATAppSettingCOPPASetting] integerValue];
+    NSInteger age = [[ATAPI sharedInstance].customData[kATCustomDataAgeKey] integerValue];
+    return value == 2 && age <= 13;
+}
+
 -(NSString*) ATID {
     if (_kATID == nil) {
         if (_currentSetting_impl[@"upid"]) {
@@ -506,7 +531,7 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
                             @"ua":@""};
     }
     
-    NSDictionary *nonSubjectFields = @{@"app_id":[ATAPI sharedInstance].appID,
+    NSDictionary *nonSubjectFields = @{@"app_id":[Utilities isEmpty:[ATAPI sharedInstance].appID] == NO ? [ATAPI sharedInstance].appID : @"",
                                        @"platform":[Utilities platform],
                                        @"package_name":[Utilities appBundleID],
                                        @"app_vn":[Utilities appBundleVersion],
@@ -524,6 +549,16 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
     if ([[ATAPI sharedInstance].subchannel length] > 0) { parameters[@"sub_channel"] = [ATAPI sharedInstance].subchannel; }
     parameters[@"first_init_time"] = @((NSUInteger)([[ATAPI firstLaunchDate] timeIntervalSince1970] * 1000.0f));
     parameters[@"days_from_first_init"] = @([[NSDate date] numberOfDaysSinceDate:[ATAPI firstLaunchDate]]);
+    if (![kATSDKCustomChannel isEqualToString:@"0"]){
+        parameters[@"cs_cl"] = kATSDKCustomChannel;
+    }
+    if([ATAPI isOfm]){
+        parameters[@"is_ofm"] = @1;
+        //send custom data when is_ofm
+        if(![Utilities isEmpty:[ATAPI sharedInstance].customData]){
+            parameters[@"custom"] = [ATAPI sharedInstance].customData;
+        }
+    }
     return parameters;
 }
 
@@ -588,6 +623,18 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
         if ([dictionary[key] isKindOfClass:[NSString class]] && [dictionary[key]
             dataUsingEncoding:NSUTF8StringEncoding] != nil) { _tcTKSkipFormats = [NSJSONSerialization JSONObjectWithData:[dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil]; }
 //        _tcTKSkipFormats = @{@"1":@[@"1", @"2"]};
+        
+        key = @"da_no_nt_k";
+        if ([dictionary[key] isKindOfClass:[NSString class]] && [dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] != nil) {
+            _agentEventDropNetworks = [NSJSONSerialization JSONObjectWithData:[dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil];
+        }
+//        _agentEventDropNetworks = @[@"15",@"8"];
+        
+        key = @"tk_no_nt_t";
+        if ([dictionary[key] isKindOfClass:[NSString class]] && [dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] != nil) {
+            _tcTKSkipNetworks = [NSJSONSerialization JSONObjectWithData:[dictionary[key] dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:nil];
+        }
+//        _tcTKSkipNetworks = @[@"15",@"8"];
     }
     return self;
 }
@@ -621,6 +668,33 @@ NSInteger ConvertDevDataConsentSet(ATDataConsentSet consent) {
         _trackerTCPPort = [dictionary[@"tk_tcp_port"] intValue];
         _trackerNetType = [dictionary[@"tk_sw"] intValue];
         
+    }
+    return self;
+}
+@end
+
+@implementation ATOnlineApiSetting
++(instancetype) defaultSetting {
+    return [[self alloc] initWithDictionary:@{@"ol_req_addr":@"https://adx.anythinktech.com/openapi/req",
+                                              @"ol_sw":@1,
+                                              @"tk_addr":@"https://adxtk.anythinktech.com/v1",
+                                              @"tk_sw":@1,
+                                              kATAppSettingDefaultFlagKey:@YES
+                                              }];
+}
+
+-(instancetype) initWithDictionary:(NSDictionary *)dictionary {
+    self = [super initWithDictionary:dictionary];
+    if (self != nil) {
+        _reqHttpAddress = dictionary[@"ol_req_addr"];
+        _reqTCPAdress = dictionary[@"ol_tcp_addr"];
+        _reqTCPPort = [dictionary[@"ol_tcp_port"] intValue];
+        _reqNetType = [dictionary[@"ol_sw"] intValue];
+        
+        _trackerHttpAdress = dictionary[@"tk_addr"];
+        _trackerTCPAdress = dictionary[@"tk_tcp_addr"];
+        _trackerTCPPort = [dictionary[@"tk_tcp_port"] intValue];
+        _trackerNetType = [dictionary[@"tk_sw"] intValue];
     }
     return self;
 }

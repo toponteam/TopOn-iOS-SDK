@@ -41,7 +41,7 @@ static NSString *kEventKey = @"1004620";
     return sharedEvent;
 }
 
-+(NSDictionary*)apiLogInfoWithPlacementID:(NSString*)placementID format:(NSInteger)format api:(NSString*)api {
++(NSDictionary*)apiLogInfoWithPlacementID:(NSString*)placementID format:(ATAdFormat)format api:(NSString*)api {
     return @{@"placement_id":[NSString stringWithFormat:@"%@", placementID],
              @"ad_type":[self adFormatStringWithFormat:format],
              @"api":[NSString stringWithFormat:@"%@", api],
@@ -54,9 +54,9 @@ static NSString *kEventKey = @"1004620";
         NSMutableDictionary *info = [NSMutableDictionary dictionaryWithDictionary:@{@"placement_id":[NSString stringWithFormat:@"%@", ad.placementModel.placementID],
                                                                                     @"ad_type":[self adFormatStringWithFormat:ad.placementModel.format],
                                                                                     @"action":[self actionStringWithEventType:eventType],
-                                                                                    @"postion":@(ad.priority),
+                                                                                    @"position":@(ad.priority),
                                                                                     @"adsource_id":ad.unitGroup.unitID != nil ? ad.unitGroup.unitID : @"",
-                                                                                    @"network":[self networkNameWithNetworkFirmID:ad.unitGroup.networkFirmID],
+                                                                                    @"network":ad.unitGroup.networkName,
                                                                                     @"sdk_version":[[ATAPI sharedInstance] versionForNetworkFirmID:ad.unitGroup.networkFirmID] != nil ? [[ATAPI sharedInstance] versionForNetworkFirmID:ad.unitGroup.networkFirmID] : @"",
                                                                                     @"network_unit_info":ad.unitGroup.content != nil ? ad.unitGroup.content : @{},
                                                                                     @"hourly_frequency":@([[ATCapsManager sharedManager] capByHourWithPlacementID:ad.placementModel.placementID unitGroupID:ad.unitGroup.unitGroupID requestID:ad.requestID]),
@@ -77,7 +77,7 @@ static NSString *kEventKey = @"1004620";
     NSMutableArray<NSString*>* nws = [NSMutableArray<NSString*> array];
     NSArray<ATUnitGroupModel*>* unitGroups = ad.finalWaterfall.unitGroups;
     [unitGroups enumerateObjectsUsingBlock:^(ATUnitGroupModel * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [nws addObject:[self networkNameWithNetworkFirmID:obj.networkFirmID]];
+        [nws addObject:obj.networkName];
     }];
     return nws;
 }
@@ -125,13 +125,21 @@ static NSString *kEventKey = @"1004620";
     if (self != nil) {
         _showTimes = 0;
         NSArray<ATUnitGroupModel*>* unitGroups = finalWaterfall.unitGroups;
-        _priority = [unitGroups indexOfObject:unitGroup];
+        @try{
+            _priority = [unitGroups indexOfObject:unitGroup];
+        } @catch (NSException *exception) {
+            NSLog(@"NSArray indexOfObject crash: %@",exception.reason);
+            _priority = 0;
+        return nil;
+        } @finally {
+        }
         _placementModel = placementModel;
         _requestID = requestID;
         _cacheDate = [NSDate date];
         _unitGroup = unitGroup;
         _unitID = placementModel.placementID;
         _finalWaterfall = finalWaterfall;
+        _price = unitGroup.price ? unitGroup.price : @"0";
     }
     return self;
 }

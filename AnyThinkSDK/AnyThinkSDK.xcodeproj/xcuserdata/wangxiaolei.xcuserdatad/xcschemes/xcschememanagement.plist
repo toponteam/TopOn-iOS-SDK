@@ -4,6 +4,11 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>AnyThinkAdColonyAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>19</integer>
+		</dict>
 		<key>AnyThinkAdColonyInterstitialAdapter.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -13,6 +18,11 @@
 		<dict>
 			<key>orderHint</key>
 			<integer>9</integer>
+		</dict>
+		<key>AnyThinkAdmobAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>18</integer>
 		</dict>
 		<key>AnyThinkAdmobBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -34,6 +44,11 @@
 			<key>orderHint</key>
 			<integer>7</integer>
 		</dict>
+		<key>AnyThinkApplovinAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>21</integer>
+		</dict>
 		<key>AnyThinkApplovinBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -54,6 +69,11 @@
 			<key>orderHint</key>
 			<integer>10</integer>
 		</dict>
+		<key>AnyThinkAppnextAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>7</integer>
+		</dict>
 		<key>AnyThinkAppnextBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -73,6 +93,11 @@
 		<dict>
 			<key>orderHint</key>
 			<integer>11</integer>
+		</dict>
+		<key>AnyThinkBaiduAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>25</integer>
 		</dict>
 		<key>AnyThinkBaiduBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -102,7 +127,12 @@
 		<key>AnyThinkBanner.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>5</integer>
+			<integer>10</integer>
+		</dict>
+		<key>AnyThinkChartboostAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>6</integer>
 		</dict>
 		<key>AnyThinkChartboostInterstitialAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -113,6 +143,11 @@
 		<dict>
 			<key>orderHint</key>
 			<integer>13</integer>
+		</dict>
+		<key>AnyThinkFacebookAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>16</integer>
 		</dict>
 		<key>AnyThinkFacebookBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -154,6 +189,16 @@
 			<key>orderHint</key>
 			<integer>15</integer>
 		</dict>
+		<key>AnyThinkFyberAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>14</integer>
+		</dict>
+		<key>AnyThinkGDTAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>11</integer>
+		</dict>
 		<key>AnyThinkGDTBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -184,6 +229,11 @@
 			<key>orderHint</key>
 			<integer>82</integer>
 		</dict>
+		<key>AnyThinkInmobiAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>9</integer>
+		</dict>
 		<key>AnyThinkInmobiBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -207,7 +257,12 @@
 		<key>AnyThinkInterstitial.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>4</integer>
+			<integer>23</integer>
+		</dict>
+		<key>AnyThinkIronSourceAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>27</integer>
 		</dict>
 		<key>AnyThinkIronSourceInterstitialAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -229,6 +284,16 @@
 			<key>orderHint</key>
 			<integer>8</integer>
 		</dict>
+		<key>AnyThinkKuaiShouAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>22</integer>
+		</dict>
+		<key>AnyThinkMaioAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>12</integer>
+		</dict>
 		<key>AnyThinkMaioInterstitialAdapter.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -238,6 +303,11 @@
 		<dict>
 			<key>orderHint</key>
 			<integer>19</integer>
+		</dict>
+		<key>AnyThinkMintegralAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>17</integer>
 		</dict>
 		<key>AnyThinkMintegralBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -258,6 +328,11 @@
 		<dict>
 			<key>orderHint</key>
 			<integer>20</integer>
+		</dict>
+		<key>AnyThinkMopubAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>4</integer>
 		</dict>
 		<key>AnyThinkMopubBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -297,7 +372,12 @@
 		<key>AnyThinkNative.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>3</integer>
+			<integer>1</integer>
+		</dict>
+		<key>AnyThinkNendAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>5</integer>
 		</dict>
 		<key>AnyThinkNendBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -319,6 +399,11 @@
 			<key>orderHint</key>
 			<integer>22</integer>
 		</dict>
+		<key>AnyThinkOguryAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>28</integer>
+		</dict>
 		<key>AnyThinkOguryInterstitialAdapter.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -339,20 +424,30 @@
 			<key>orderHint</key>
 			<integer>23</integer>
 		</dict>
+		<key>AnyThinkPangleAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
 		<key>AnyThinkRewardedVideo.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>2</integer>
+			<integer>20</integer>
 		</dict>
 		<key>AnyThinkSDK.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>1</integer>
+			<integer>2</integer>
 		</dict>
 		<key>AnyThinkSDKDemo.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
+		</dict>
+		<key>AnyThinkSigmobAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>26</integer>
 		</dict>
 		<key>AnyThinkSigmobInterstitialAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -372,7 +467,12 @@
 		<key>AnyThinkSplash.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>6</integer>
+			<integer>24</integer>
+		</dict>
+		<key>AnyThinkStartAppAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>8</integer>
 		</dict>
 		<key>AnyThinkTTBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -399,6 +499,11 @@
 			<key>orderHint</key>
 			<integer>31</integer>
 		</dict>
+		<key>AnyThinkTapjoyAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>13</integer>
+		</dict>
 		<key>AnyThinkTapjoyInterstitialAdapter.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -408,6 +513,11 @@
 		<dict>
 			<key>orderHint</key>
 			<integer>25</integer>
+		</dict>
+		<key>AnyThinkUnityAdsAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>15</integer>
 		</dict>
 		<key>AnyThinkUnityAdsBannerAdapter.xcscheme_^#shared#^_</key>
 		<dict>
@@ -423,6 +533,11 @@
 		<dict>
 			<key>orderHint</key>
 			<integer>27</integer>
+		</dict>
+		<key>AnyThinkVungleAdapter.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>29</integer>
 		</dict>
 		<key>AnyThinkVungleInterstitialAdapter.xcscheme_^#shared#^_</key>
 		<dict>

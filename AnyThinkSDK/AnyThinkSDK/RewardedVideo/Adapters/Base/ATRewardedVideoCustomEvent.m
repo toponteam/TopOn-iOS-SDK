@@ -18,13 +18,15 @@
 #import "ATAppSettingManager.h"
 #import "ATPlacementModel.h"
 #import "ATRewardedVideoManager.h"
+#import "ATFBBiddingManager.h"
+#import "ATAdManager+RewardedVideo.h"
 
 @interface ATRewardedVideoCustomEvent()
 
 @end
 @implementation ATRewardedVideoCustomEvent
 -(NSDictionary*)delegateExtra {
-    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@([self.rewardedVideo.price doubleValue]), kATADDelegateExtraECPMLevelKey:@(self.rewardedVideo.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.rewardedVideo.placementModel.groupID)}];
+    NSMutableDictionary *extra = [NSMutableDictionary dictionaryWithDictionary:@{kATRewardedVideoCallbackExtraAdsourceIDKey:self.rewardedVideo.unitGroup.unitID != nil ? self.rewardedVideo.unitGroup.unitID : @"", kATRewardedVideoCallbackExtraNetworkIDKey:@(self.rewardedVideo.unitGroup.networkFirmID),kATRewardedVideoCallbackExtraIsHeaderBidding:@(self.rewardedVideo.unitGroup.headerBidding),kATRewardedVideoCallbackExtraPriority:@(self.priorityIndex),kATRewardedVideoCallbackExtraPrice:@([self.ad.ecpm doubleValue]), kATADDelegateExtraECPMLevelKey:@(self.rewardedVideo.unitGroup.ecpmLevel), kATADDelegateExtraSegmentIDKey:@(self.rewardedVideo.placementModel.groupID)}];
     if (self.rewardedVideo.scene != nil) { extra[kATADDelegateExtraScenarioIDKey] = self.rewardedVideo.scene; }
     NSString *channel = [ATAPI sharedInstance].channel;
     if (channel != nil) { extra[kATADDelegateExtraChannelKey] = channel; }
@@ -34,8 +36,8 @@
     NSString *extraID = [NSString stringWithFormat:@"%@_%@_%@",self.rewardedVideo.requestID,self.rewardedVideo.unitGroup.unitID,self.sdkTime];
     extra[kATADDelegateExtraIDKey] = extraID;
     extra[kATADDelegateExtraAdunitIDKey] = self.rewardedVideo.placementModel.placementID;
-    extra[kATADDelegateExtraPublisherRevenueKey] = @([self.rewardedVideo.price doubleValue] / 1000.f);
-    extra[kATADDelegateExtraCurrencyKey] = self.rewardedVideo.placementModel.callback[@"currency"];
+    extra[kATADDelegateExtraPublisherRevenueKey] = @([self.rewardedVideo.ecpm doubleValue] / 1000.f);
+    extra[kATADDelegateExtraCurrencyKey] = self.rewardedVideo.placementModel.currency;
     extra[kATADDelegateExtraCountryKey] = self.rewardedVideo.placementModel.callback[@"cc"];
     extra[kATADDelegateExtraFormatKey] = @"RewardedVideo";
     extra[kATADDelegateExtraPrecisionKey] = self.rewardedVideo.unitGroup.precision;
@@ -60,6 +62,10 @@
     
     //add adsource unit_id value
     extra[kATADDelegateExtraNetworkPlacementIDKey] = self.networkUnitId != nil ? self.networkUnitId:@"";
+    if ([self.networkCustomInfo count] > 0) {
+        extra[kATADDelegateExtraExtInfoKey] = self.networkCustomInfo;
+    }
+    [extra AT_setDictValue:self.localInfo[kATAdLoadingExtraMediaExtraKey] key:kATADDelegateExtraRVUserCustomData];
     return extra;
 }
 
@@ -75,7 +81,12 @@
     [super handleClose];
     if (self.rewardedVideo != nil) {
         if (self.rewardedVideo.placementModel.autoRefresh) {
-            [[ATAdManager sharedManager]loadADWithPlacementID:self.rewardedVideo.placementModel.placementID extra:@{kAdLoadingExtraAutoLoadOnCloseFlagKey:@YES} delegate:nil];
+            NSMutableDictionary *loadInfoExtra = [NSMutableDictionary dictionary];
+            if ([self.localInfo isKindOfClass:[NSDictionary class]] && [Utilities isEmpty:self.localInfo] == NO) {
+                [loadInfoExtra addEntriesFromDictionary:self.localInfo];
+            }
+            loadInfoExtra[kAdLoadingExtraAutoLoadOnCloseFlagKey] = @(YES);
+            [[ATAdManager sharedManager]loadADWithPlacementID:self.rewardedVideo.placementModel.placementID extra:loadInfoExtra delegate:nil];
         }
         NSDictionary *loadExtra = [self.localInfo isKindOfClass:[NSDictionary class]] ? self.localInfo : nil;
         [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyClose placementID:self.rewardedVideo.placementModel.placementID unitGroupModel:nil
@@ -127,7 +138,14 @@
     NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.rewardedVideo requestID:self.rewardedVideo.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.rewardedVideo.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.rewardedVideo.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @([loadExtra[kAdLoadingExtraFilledByReadyFlagKey] boolValue]), kATTrackerExtraAdFilledByReadyFlagKey, @([loadExtra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraAutoloadOnCloseFlagKey, @(self.rewardedVideo.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey,self.sdkTime,kATTrackerExtraAdShowSDKTimeKey, nil];
     if (self.rewardedVideo.scene != nil) { trackingExtra[kATTrackerExtraAdShowSceneKey] = self.rewardedVideo.scene; }
     if (self.rewardedVideo.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
+    if([ATAPI isOfm]){
+        trackingExtra[kATTrackerExtraOFMTrafficIDKey] = self.localInfo[kATTrackerExtraOFMTrafficIDKey]==nil?@(0):self.localInfo[kATTrackerExtraOFMTrafficIDKey];
+        trackingExtra[kATTrackerExtraOFMSystemKey] = @(1);
+    }
     [[ATTracker sharedTracker] trackWithPlacementID:self.rewardedVideo.placementModel.placementID requestID:self.rewardedVideo.requestID trackType:ATNativeADTrackTypeADShow extra:trackingExtra];
+    
+    [Utilities reportProfit:self.rewardedVideo time:self.sdkTime];
+    [[ATFBBiddingManager sharedManager] notifyDisplayWinnerWithID:self.rewardedVideo.unitGroup.unitID placementID:self.rewardedVideo.placementModel.placementID];
 }
 
 -(void) trackRewardedVideoAdClick {
@@ -137,6 +155,10 @@
         NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.rewardedVideo requestID:self.rewardedVideo.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.rewardedVideo.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.rewardedVideo.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @([loadExtra[kAdLoadingExtraFilledByReadyFlagKey] boolValue]), kATTrackerExtraAdFilledByReadyFlagKey, @([loadExtra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraAutoloadOnCloseFlagKey, @(self.rewardedVideo.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
         if (self.rewardedVideo.scene != nil) { trackingExtra[kATTrackerExtraAdShowSceneKey] = self.rewardedVideo.scene; }
         if (self.rewardedVideo.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
+        if([ATAPI isOfm]){
+            trackingExtra[kATTrackerExtraOFMTrafficIDKey] = self.localInfo[kATTrackerExtraOFMTrafficIDKey];
+            trackingExtra[kATTrackerExtraOFMSystemKey] = @(1);
+        }
         [[ATTracker sharedTracker] trackClickWithAd:self.ad extra:trackingExtra];
 
     }
@@ -152,6 +174,10 @@
         NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.rewardedVideo requestID:self.rewardedVideo.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.rewardedVideo.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.rewardedVideo.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @([loadExtra[kAdLoadingExtraFilledByReadyFlagKey] boolValue]), kATTrackerExtraAdFilledByReadyFlagKey, @([loadExtra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraAutoloadOnCloseFlagKey, @(self.rewardedVideo.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
         if (self.rewardedVideo.scene != nil) { trackingExtra[kATTrackerExtraAdShowSceneKey] = self.rewardedVideo.scene; }
         if (self.rewardedVideo.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
+        if([ATAPI isOfm]){
+            trackingExtra[kATTrackerExtraOFMTrafficIDKey] = self.localInfo[kATTrackerExtraOFMTrafficIDKey]==nil?@(0):self.localInfo[kATTrackerExtraOFMTrafficIDKey];
+            trackingExtra[kATTrackerExtraOFMSystemKey] = @(1);
+        }
         [[ATTracker sharedTracker] trackWithPlacementID:self.rewardedVideo.placementModel.placementID requestID:self.rewardedVideo.requestID trackType:ATNativeAdTrackTypeVideoStart extra:trackingExtra];
     }
     
@@ -166,6 +192,10 @@
         NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@([loadExtra[kAdLoadingExtraRefreshFlagKey] boolValue]), kATTrackerExtraRefreshFlagKey, @([loadExtra[kAdLoadingExtraAutoloadFlagKey] boolValue]), kATTrackerExtraAutoloadFlagKey, @([loadExtra[kAdLoadingExtraDefaultLoadKey] boolValue]), kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.rewardedVideo requestID:self.rewardedVideo.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.rewardedVideo.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.rewardedVideo.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @([loadExtra[kAdLoadingExtraFilledByReadyFlagKey] boolValue]), kATTrackerExtraAdFilledByReadyFlagKey, @([loadExtra[kAdLoadingExtraAutoLoadOnCloseFlagKey] boolValue]), kATTrackerExtraAutoloadOnCloseFlagKey, @(self.rewardedVideo.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey, nil];
         if (self.rewardedVideo.scene != nil) { trackingExtra[kATTrackerExtraAdShowSceneKey] = self.rewardedVideo.scene; }
         if (self.rewardedVideo.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
+        if([ATAPI isOfm]){
+            trackingExtra[kATTrackerExtraOFMTrafficIDKey] = self.localInfo[kATTrackerExtraOFMTrafficIDKey]==nil?@(0):self.localInfo[kATTrackerExtraOFMTrafficIDKey];
+            trackingExtra[kATTrackerExtraOFMSystemKey] = @(1);
+        }
         [[ATTracker sharedTracker] trackWithPlacementID:self.rewardedVideo.placementModel.placementID requestID:self.rewardedVideo.requestID trackType:ATNativeAdTrackTypeVideoEnd extra:trackingExtra];
     }
     
@@ -199,6 +229,7 @@
     }else{
         assets = [NSMutableDictionary dictionary];
     }
+    
     if(adObject != nil){
         assets[kAdAssetsCustomObjectKey] = adObject;
     }
@@ -214,4 +245,9 @@
     }
 }
 
+- (void)trackRewardedVideoAdDeeplinkOrJumpResult:(BOOL)success {
+    if ([self.delegate respondsToSelector:@selector(rewardedVideoDidDeepLinkOrJumpForPlacementID:extra:result:)]) {
+        [self.delegate rewardedVideoDidDeepLinkOrJumpForPlacementID:self.rewardedVideo.placementModel.placementID extra:[self delegateExtra] result:success];
+    }
+}
 @end

@@ -525,6 +525,16 @@ static NSString *kLanguageConfigurationSkip = @"skip";
     }
 }
 
+- (void)didDeepLinkOrJumpInAdView:(ATNativeADView *)adView placementID:(NSString *)placementID extra:(NSDictionary *)extra result:(BOOL)success {
+    
+    NSLog(@"ATNativeSplashWrapper:: didDeepLinkOrJumpInAdView:placementID:%@,extra:%@, result:%@", placementID, extra, success ? @"YES":@"NO");
+
+    id<ATNativeSplashDelegate> delegate = [self delegateForPlacementID:placementID];
+    if ([delegate respondsToSelector:@selector(didNativeSplashDeeplinkOrJumpForPlacementID:extra:result:)]) {
+        [delegate didNativeSplashDeeplinkOrJumpForPlacementID:placementID extra:extra result:success];
+    }
+}
+
 -(void) didShowNativeAdInAdView:(ATNativeADView*)adView placementID:(NSString*)placementID {
     NSLog(@"ATNativeSplashWrapper:: didShowNativeAdInAdView:placementID:%@", placementID);
     adView.mainImageView.image = adView.nativeAd.mainImage;

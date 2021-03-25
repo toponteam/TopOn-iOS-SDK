@@ -15,6 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (copy, nonatomic) NSString *urlString;
 @property (copy, nonatomic) NSString *storeUrlStr;
 
+// When true, it will open the url in safari after the redirection is failed.
+@property (nonatomic) BOOL openInSafariWhenFailed;
+
 @end
 
 NS_ASSUME_NONNULL_END

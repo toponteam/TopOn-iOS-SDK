@@ -12,6 +12,8 @@
 #import "ATAdManager.h"
 #import "ATRewardedVideoDelegate.h"
 #import "ATAdManager+RewardedVideo.h"
+#import "TopOnAdManager.h"
+
 @interface ATRewardedVideoVideoViewController ()<ATRewardedVideoDelegate>
 @property(nonatomic, readonly) NSString *name;
 @property(nonatomic, readonly) NSDictionary *placementIDs;
@@ -37,8 +39,11 @@ NSString *const kNendPlacement = @"Nend";
 NSString *const kMaioPlacement = @"Maio";
 NSString *const kKSPlacement = @"KS";
 NSString *const kMyOfferPlacement = @"MyOffer";
+NSString *const kADXPlacement = @"ADX";
 NSString *const kOguryPlacement = @"Ogury";
 NSString *const kHeliumPlacement = @"Helium";
+NSString *const kKidozPlacement = @"Kidoz";
+NSString *const kMyTargetPlacement = @"MyTarget";
 
 static NSString *const kPlacement0ID = @"b5ad9ba61dcb39";
 static NSString *const kInmobiPlacementID = @"b5b44a03522f92";
@@ -48,7 +53,6 @@ static NSString *const kFacebookPlacementID = @"b5b44a02112383";
 static NSString *const kFacebookHeaderBiddingPlacementID = @"b5d133438158c6";
 static NSString *const kAdMobPlacementID = @"b5b44a02bf08c0";
 static NSString *const kApplovinPlacementID = @"b5b44a0646e64b";
-static NSString *const kFlurryPlacementID = @"b5b44a042a4950";
 static NSString *const kMopubPlacementID = @"b5b44a088ba48d";
 static NSString *const kMopubVideoPlacementID = @"b5b44a088ba48d";
 static NSString *const kGDTPlacementID = @"b5c0f7cd196a4c";
@@ -60,9 +64,7 @@ static NSString *const kAdcolonyRVPlacementID = @"b5b44a0de295ad";//to be modifi
 static NSString *const kUnityAdsPlacementID = @"b5b44a0c7b9b64";//to be modified
 static NSString *const kAllPlacementID = @"b5b44a0f115321";
 static NSString *const kTTPlacementID = @"b5b72b21184aa8";
-static NSString *const kYeahmobiPlacementID = @"b5bc7fb44d382f";
 static NSString *const kAppnextPlacementID = @"b5bc7fb4fd15e6";
-static NSString *const kOnewayPlacementID = @"b5baf668a68f6b";
 static NSString *const kBaiduPlacementID = @"b5c04dd81c1af3";
 static NSString *const kNendPlacementID = @"b5cb96d6f68fdb";
 static NSString *const kMaioPlacementID = @"b5cb96ce0b931e";
@@ -74,7 +76,10 @@ static NSString *const kStartAppPlacementID = @"b5e7319f619931";
 static NSString *const kFyberPlacementID = @"b5e96db106d8f2";
 static NSString *const kGAMPlacementID = @"b5f23897bba4ca";
 static NSString *const kHeliumPlacementID = @"b5f583ea323756";
-
+static NSString *const kADXPlacementID = @"b5fa2500639c86";
+static NSString *const kOnlineApiPlacementID = @"b5fa250b176abb";
+static NSString *const kKidozPlacementID = @"b5feaa2c0a6191";
+static NSString *const kMyTargetPlacementID = @"b5feaa2f32f161";
 
 @implementation ATRewardedVideoVideoViewController
 -(instancetype) initWithPlacementName:(NSString*)name {
@@ -99,10 +104,7 @@ static NSString *const kHeliumPlacementID = @"b5f583ea323756";
                           kVunglePlacementName:kVungleRVPlacementID,
                           kAdcolonyPlacementName:kAdcolonyRVPlacementID,
                           kUnityAdsPlacementName:kUnityAdsPlacementID,
-                          kFlurryPlacement:kFlurryPlacementID,
                           kTTPlacementName:kTTPlacementID,
-                          kOnewayPlacementName:kOnewayPlacementID,
-                          kYeahmobiPlacement:kYeahmobiPlacementID,
                           kAppnextPlacement:kAppnextPlacementID,
                           kBaiduPlacement:kBaiduPlacementID,
                           kNendPlacement:kNendPlacementID,
@@ -114,7 +116,11 @@ static NSString *const kHeliumPlacementID = @"b5f583ea323756";
                           kStartAppPlacement:kStartAppPlacementID,
                           kFyberPlacement:kFyberPlacementID,
                           kGAMPlacement:kGAMPlacementID,
-                          kHeliumPlacement:kHeliumPlacementID
+                          kHeliumPlacement:kHeliumPlacementID,
+                          kADXPlacement:kADXPlacementID,
+                          kOnlineApiPlacement:kOnlineApiPlacementID,
+                          kKidozPlacement:kKidozPlacementID,
+                          kMyTargetPlacement:kMyTargetPlacementID
                           };
     }
     return self;
@@ -162,13 +168,14 @@ static NSString *const kHeliumPlacementID = @"b5f583ea323756";
 }
 
 -(void) removeAdButtonTapped {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[[ATAdManager sharedManager] rewardedVideoReadyForPlacementID:_placementIDs[_name]] ? @"Ready!" : @"Not Yet!" message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *action = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
-    [alert addAction:action];
-    [self presentViewController:alert animated:YES completion:nil];
-    
-//    //check load status
-//    [[ATAdManager sharedManager] checkRewardedVideoLoadStatusForPlacementID:_placementIDs[_name]];
+        [[ATAdManager sharedManager] checkRewardedVideoLoadStatusForPlacementID:_placementIDs[_name]];
+
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:[[ATAdManager sharedManager] rewardedVideoReadyForPlacementID:_placementIDs[_name]] ? @"Ready!" : @"Not Yet!" message:nil preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *action = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil];
+        [alert addAction:action];
+        [self presentViewController:alert animated:YES completion:nil];
+        return;
+
 }
 
 -(void) clearAdButtonTapped {
@@ -183,10 +190,13 @@ static NSString *const kHeliumPlacementID = @"b5f583ea323756";
 //    _reload = YES;
     _failureTipsLabel.hidden = YES;
     [self.view addSubview:_loadingView];
-    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{ kATAdLoadingExtraMediaExtraKey:@"media_val", kATAdLoadingExtraUserIDKey:@"rv_test_user_id"} customData:nil delegate:self];
+    
+
+    [[ATAdManager sharedManager] loadADWithPlacementID:_placementIDs[_name] extra:@{kATAdLoadingExtraMediaExtraKey:@"media_val", kATAdLoadingExtraUserIDKey:@"rv_test_user_id",kATAdLoadingExtraRewardNameKey:@"reward_Name",kATAdLoadingExtraRewardAmountKey:@(3)} delegate:self];
 }
 
 -(void) showAD {
+
     [[ATAdManager sharedManager] showRewardedVideoWithPlacementID:_placementIDs[_name] scene:@"f5e54970dc84e6" inViewController:self delegate:self];
 }
 
@@ -231,5 +241,20 @@ static NSString *const kHeliumPlacementID = @"b5f583ea323756";
 
 -(void) rewardedVideoDidClickForPlacementID:(NSString*)placementID extra:(NSDictionary *)extra {
     NSLog(@"ATRewardedVideoVideoViewController::rewardedVideoDidClickForPlacementID:%@ extra:%@", placementID, extra);
+}
+
+- (void)rewardedVideoDidDeepLinkOrJumpForPlacementID:(NSString *)placementID extra:(NSDictionary *)extra result:(BOOL)success {
+    NSLog(@"ATRewardedVideoVideoViewController:: rewardedVideoDidDeepLinkOrJumpForPlacementID:placementID:%@ with extra: %@, success:%@", placementID,extra, success ? @"YES" : @"NO");
+
+}
+
+// MARK:- OFMAdLoadingDelegate
+- (void)didFinishLoadingOFMADWithPlacementID:(NSString *)placementID {
+    NSLog(@"ATRewardedVideoVideoViewController::didFinishLoadingOFMADWithPlacementID:%@", placementID);
+
+}
+
+- (void)didFailToLoadOFMADWithPlacementID:(NSString *)placementID error:(NSError *)error {
+    NSLog(@"ATRewardedVideoVideoViewController::didFailToLoadOFMADWithPlacementID:%@ error:%@", placementID, error);
 }
 @end

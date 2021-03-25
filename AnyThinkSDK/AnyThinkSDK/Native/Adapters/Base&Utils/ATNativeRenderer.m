@@ -36,6 +36,7 @@
 }
 
 -(void) renderOffer:(ATNativeADCache *)offer {
+    
     if ([self.ADView respondsToSelector:@selector(advertiserLabel)]) [self.ADView advertiserLabel].text = offer.advertiser;
     if ([self.ADView respondsToSelector:@selector(titleLabel)]) [self.ADView titleLabel].text = offer.title;
     if ([self.ADView respondsToSelector:@selector(textLabel)]) [self.ADView textLabel].text = offer.mainText;
@@ -45,8 +46,20 @@
     if ([self.ADView respondsToSelector:@selector(sponsorImageView)]) [self.ADView sponsorImageView].image = offer.sponsorImage;
     if ([self.ADView respondsToSelector:@selector(ctaLabel)]) [self.ADView ctaLabel].text = offer.ctaText;
     if ([self.ADView respondsToSelector:@selector(ratingLabel)]) [self.ADView ratingLabel].text = offer.rating != nil ? [NSString stringWithFormat:@"%@", offer.rating] : @"";
-}
+    
+    if ([self.ADView respondsToSelector:@selector(dislikeButton)] && self.ADView.dislikeButton) {
+        [self.ADView.dislikeButton addTarget:self action:@selector(closeAct) forControlEvents:UIControlEventTouchUpInside];
+    }
 
+}
+- (void)closeAct {
+    
+    if ([self.ADView.delegate respondsToSelector:@selector(didTapCloseButtonInAdView:placementID:extra:)]) {
+        ATNativeADCache *cache = (ATNativeADCache *)self.ADView.nativeAd;
+
+        [self.ADView.delegate didTapCloseButtonInAdView:self.ADView placementID:cache.placementModel.placementID extra:[self.ADView.customEvent delegateExtraWithNativeAD:cache]];
+    }
+}
 /**
  * The default implemention return the offer's value of isVideoContents; but for some network(mintegral for instance), this infomation's contained in it's media view, therefore the subclass has to override this method to give the correct return value.
  */

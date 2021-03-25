@@ -21,9 +21,11 @@
 #import <objc/runtime.h>
 #import "ATPlacementSettingManager.h"
 #import "ATAdManager+Banner.h"
+#import "ATAdStorageUtility.h"
+#import "ATFBBiddingManager.h"
 
 @interface ATAdManager(BannerImp)
--(BOOL) bannerReadyForPlacementID:(NSString*)placementID caller:(ATAdManagerReadyAPICaller)caller banner:(ATBanner*__strong*)banner;
+-(BOOL) bannerReadyForPlacementID:(NSString*)placementID caller:(ATAdManagerReadyAPICaller)caller banner:(ATBanner*__strong*)banner sendTK:(BOOL)send;
 @end
 @interface ATBanner(RefreshFlag)
 @property(nonatomic, getter=isForRefresh) BOOL forRefresh;
@@ -91,6 +93,9 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
             [ATLogger logMessage:@"Underlieing banner not found." type:ATLogTypeInternal];
         }
         [[self viewWithTag:kUnderlineBannerViewTag] removeFromSuperview];
+        if (_banner.scene) {
+            banner.scene = _banner.scene;
+        }
         _banner = banner;
         [[ATPlacementSettingManager sharedManager] setStatus:NO forPlacementID:_banner.placementModel.placementID];
         _banner.customEvent.bannerView = self;
@@ -98,7 +103,9 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
         _banner.customEvent.sdkTime = [Utilities normalizedTimeStamp];
         if ([_banner.bannerView isKindOfClass:[UIView class]]) {
             [self addSubview:_banner.bannerView];
-            _banner.bannerView.frame = CGRectMake((_banner.customEvent.size.width - CGRectGetWidth(_banner.bannerView.frame)) / 2.0f, (_banner.customEvent.size.height - CGRectGetHeight(_banner.bannerView.frame)) / 2.0f, CGRectGetWidth(_banner.bannerView.frame), CGRectGetHeight(_banner.bannerView.frame));
+            if (_banner.bannerView.frame.size.width && _banner.bannerView.frame.size.height) { // not support for autolayout views 
+                _banner.bannerView.frame = CGRectMake((_banner.customEvent.size.width - CGRectGetWidth(_banner.bannerView.frame)) / 2.0f, (_banner.customEvent.size.height - CGRectGetHeight(_banner.bannerView.frame)) / 2.0f, CGRectGetWidth(_banner.bannerView.frame), CGRectGetHeight(_banner.bannerView.frame));
+            }
             _banner.bannerView.tag = kUnderlineBannerViewTag;
         }
         /*
@@ -117,8 +124,12 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
         
         //Delegate
         if (refresh) {
-            [[ATAdManager sharedManager] bannerReadyForPlacementID:banner.placementModel.placementID caller:ATAdManagerReadyAPICallerShow banner:nil];
+            [[ATAdManager sharedManager] bannerReadyForPlacementID:banner.placementModel.placementID caller:ATAdManagerReadyAPICallerShow banner:nil sendTK:NO];
             if ([_delegate respondsToSelector:@selector(bannerView:didAutoRefreshWithPlacement:extra:)]) { [_delegate bannerView:self didAutoRefreshWithPlacement:_banner.placementModel.placementID extra:[_banner.customEvent delegateExtra]]; }
+            [Utilities reportProfit:_banner time:_banner.customEvent.sdkTime];
+            
+            BOOL alsoSendImpressionTracking = [self.banner.customEvent sendImpressionTrackingIfNeed];
+            [self sendShowTK:alsoSendImpressionTracking];
 
         }
         
@@ -170,7 +181,9 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
     ATBanner *banner = [[ATAdManager sharedManager] offerWithPlacementID:_banner.placementModel.placementID error:nil refresh:NO];
     banner.forRefresh = [noti.userInfo isKindOfClass:[NSDictionary class]] && [noti.userInfo[kAdLoadingExtraRefreshFlagKey] boolValue];
     if (banner != nil && !banner.forRefresh) {
-        if ([_delegate respondsToSelector:@selector(bannerView:didShowAdWithPlacementID:extra:)]) { [_delegate bannerView:self didShowAdWithPlacementID:banner.placementModel.placementID extra:[_banner.customEvent delegateExtra]]; }
+        if ([_delegate respondsToSelector:@selector(bannerView:didShowAdWithPlacementID:extra:)]) { [_delegate bannerView:self didShowAdWithPlacementID:banner.placementModel.placementID extra:[_banner.customEvent delegateExtra]];
+//            [Utilities reportProfit:_banner time:_banner.customEvent.sdkTime];
+        }
     }
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{ weakSelf.banner = banner; });
@@ -227,8 +240,13 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
             [self handleApplicationDidBecomeActiveNotification:nil];
             _removedFromWindow = NO;
         } else {
-            if ([_delegate respondsToSelector:@selector(bannerView:didShowAdWithPlacementID:extra:)]) { [_delegate bannerView:self didShowAdWithPlacementID:_banner.placementModel.placementID extra:[_banner.customEvent delegateExtra]]; }
-
+            if ([_delegate respondsToSelector:@selector(bannerView:didShowAdWithPlacementID:extra:)]) { [_delegate bannerView:self didShowAdWithPlacementID:_banner.placementModel.placementID extra:[_banner.customEvent delegateExtra]];
+            }
+            [Utilities reportProfit:_banner time:_banner.customEvent.sdkTime];
+            
+            BOOL alsoSendImpressionTracking = [self.banner.customEvent sendImpressionTrackingIfNeed];
+            [self sendShowTK:alsoSendImpressionTracking];
+            
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadSuccessNotification:) name:kATADLoadingOfferSuccessfullyLoadedNotification object:nil];
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadNotification:) name:kATADLoadingStartLoadNotification object:nil];
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleLoadFailureNotification:) name:kATADLoadingFailedToLoadNotification object:nil];
@@ -237,6 +255,7 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
         _removedFromWindow = YES;
         [ATLogger logMessage:@"ATBannerView::BannerView's being removed from its super view." type:ATLogTypeInternal];
         [self handleApplicationDidEnterBackgroundNotification:nil];
+        [_banner.customEvent removedFromWindow];
     }
 }
 
@@ -259,11 +278,34 @@ static NSUInteger kUnderlineBannerViewTag = 20181208;
         _banner.showTimes++;
         [[ATCapsManager sharedManager] increaseCapWithPlacementID:_banner.placementModel.placementID unitGroupID:_banner.unitGroup.unitGroupID requestID:_banner.requestID];
         [[ATCapsManager sharedManager] setLastShowTimeWithPlacementID:_banner.placementModel.placementID unitGroupID:_banner.unitGroup.unitGroupID];
-        NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@(refresh), kATTrackerExtraRefreshFlagKey, @NO, kATTrackerExtraAutoloadFlagKey, @NO, kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.banner requestID:self.banner.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.banner.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.banner.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.banner.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey,self.banner.customEvent.sdkTime,kATTrackerExtraAdShowSDKTimeKey, nil];
-        if (self.banner.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES; }
-        [[ATTracker sharedTracker] trackWithPlacementID:self.banner.placementModel.placementID requestID:self.banner.requestID trackType:ATNativeADTrackTypeADShow extra:trackingExtra];
-
+        
         [ATLogger logMessage:[NSString stringWithFormat:@"\nImpression with ad info:\n*****************************\n%@ \n*****************************", [ATGeneralAdAgentEvent logInfoWithAd:_banner event:ATGeneralAdAgentEventTypeImpression extra:refresh ? @{kAdLoadingExtraRefreshFlagKey:@1} : nil error:nil]] type:ATLogTypeTemporary];
     }
 }
+
+/// refer to v5.7.6 - 1.1
+- (void)sendImpressionTracking {
+    NSDictionary *trackingExtra = [self trackingData];
+    [[ATTracker sharedTracker] trackWithPlacementID:self.banner.placementModel.placementID requestID:self.banner.requestID trackType:ATNativeADTrackTypeADShow extra:trackingExtra];
+    [[ATFBBiddingManager sharedManager] notifyDisplayWinnerWithID:self.banner.unitGroup.unitID placementID:self.banner.placementModel.placementID];
+}
+
+- (void)sendShowTK:(BOOL)alsoSendImpressionTK {
+    if (alsoSendImpressionTK) {
+        [self sendImpressionTracking];
+    }
+}
+
+- (NSDictionary *)trackingData {
+    NSMutableDictionary *trackingExtra = [NSMutableDictionary dictionaryWithObjectsAndKeys:@(self.banner.isForRefresh), kATTrackerExtraRefreshFlagKey, @NO, kATTrackerExtraAutoloadFlagKey, @NO, kATTrackerExtraDefaultLoadFlagKey, [ATTracker headerBiddingTrackingExtraWithAd:self.banner requestID:self.banner.requestID], kATTrackerExtraHeaderBiddingInfoKey, self.banner.unitGroup.unitID, kATTrackerExtraUnitIDKey, @(self.banner.unitGroup.networkFirmID), kATTrackerExtraNetworkFirmIDKey, @(self.banner.renewed), kATTrackerExtraOfferLoadedByAdSourceStatusFlagKey,self.banner.customEvent.sdkTime,kATTrackerExtraAdShowSDKTimeKey,nil];
+    [trackingExtra AT_setDictValue:self.banner.scene key:kATTrackerExtraAdShowSceneKey];
+    if (self.banner.autoReqType == 5) { trackingExtra[kATTrackerExtraRequestExpectedOfferNumberFlagKey] = @YES;
+    }
+    if([ATAPI isOfm] && _banner.customEvent != nil){
+        trackingExtra[kATTrackerExtraOFMTrafficIDKey] = _banner.customEvent.localInfo[kATTrackerExtraOFMTrafficIDKey]==nil?@(0):_banner.customEvent.localInfo[kATTrackerExtraOFMTrafficIDKey];
+        trackingExtra[kATTrackerExtraOFMSystemKey] = @(1);
+    }
+    return trackingExtra;
+}
+
 @end

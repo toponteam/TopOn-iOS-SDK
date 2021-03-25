@@ -7,6 +7,7 @@
 //
 
 #import "ATMyOfferBannerSharedDelegate.h"
+#import <StoreKit/StoreKit.h>
 #import "Utilities.h"
 #import "ATThreadSafeAccessor.h"
 #import "ATMyOfferOfferManager.h"
@@ -14,17 +15,14 @@
 #import "ATMyOfferCapsManager.h"
 #import "ATPlacementSettingManager.h"
 #import "ATOfferResourceManager.h"
-#import "ATMyOfferBannerView.h"
-#import "Utilities.h"
+#import "ATAdManager+Banner.h"
 
-@interface ATMyOfferBannerSharedDelegate()
+@interface ATMyOfferBannerSharedDelegate()<ATOfferBannerDelegate,SKStoreProductViewControllerDelegate>
+@property(nonatomic, readonly) NSMutableDictionary<NSString*, id<ATMyOfferBannerDelegate>> *delegateStorage;
 @property(nonatomic, readonly) ATThreadSafeAccessor *delegateStorageAccessor;
-
 @property (nonatomic , strong)ATMyOfferOfferModel *offerModel;
 @property (nonatomic) ATMyOfferSetting *setting;
 @property (nonatomic) dispatch_semaphore_t  semaphore;
-
-
 @end
 
 @implementation ATMyOfferBannerSharedDelegate
@@ -40,6 +38,7 @@
 -(instancetype) init {
     self = [super init];
     if (self != nil) {
+        _delegateStorage = [NSMutableDictionary<NSString*, id<ATMyOfferBannerDelegate>> dictionary];
         _delegateStorageAccessor = [ATThreadSafeAccessor new];
         _semaphore = dispatch_semaphore_create(0);
     }
@@ -47,41 +46,46 @@
 }
 
 -(BOOL) checkReadyForOfferModel:(ATMyOfferOfferModel *)offerModel setting:(ATMyOfferSetting *) setting{
-    if([setting.bannerSize isEqualToString:kATMyOfferBannerSize320_50]){
+    if([setting.bannerSize isEqualToString:kATOfferBannerSize320_50]){
         return offerModel.bannerImageUrl != nil && offerModel.bannerImageUrl.length>0 ? [[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.bannerImageUrl] != nil:[[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.iconURL] != nil;
     }
-    if([setting.bannerSize isEqualToString:kATMyOfferBannerSize320_90]){
+    if([setting.bannerSize isEqualToString:kATOfferBannerSize320_90]){
         return offerModel.bannerBigImageUrl != nil && offerModel.bannerBigImageUrl.length>0 ? [[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.bannerBigImageUrl] != nil:[[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.iconURL] != nil;
     }
-    if([setting.bannerSize isEqualToString:kATMyOfferBannerSize300_250]){
+    if([setting.bannerSize isEqualToString:kATOfferBannerSize300_250]){
         return offerModel.rectangleImageUrl != nil && offerModel.rectangleImageUrl.length>0 ? [[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.rectangleImageUrl] != nil:[[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.iconURL] != nil;
     }
     //728*90
     return offerModel.homeImageUrl != nil && offerModel.homeImageUrl.length>0 ? [[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.homeImageUrl] != nil:[[ATOfferResourceManager sharedManager] resourcePathForOfferModel:offerModel resourceURL:offerModel.iconURL] != nil;
 }
 
--(ATMyOfferBannerView*)retrieveBannerViewWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting*)setting  extra:(NSDictionary *)extra delegate:(id<ATMyOfferBannerDelegate>) delegate{
-    
+-(ATOfferBannerView *)retrieveBannerViewWithOfferModel:(ATMyOfferOfferModel*)offerModel setting:(ATMyOfferSetting*)setting  extra:(NSDictionary *)extra delegate:(id<ATMyOfferBannerDelegate>) delegate{
     _setting = setting;
     _offerModel = offerModel;
+    
+    __weak typeof(self) weakSelf = self;
     return [_delegateStorageAccessor readWithBlock:^id{
         if ([[ATOfferResourceManager sharedManager] retrieveResourceModelWithResourceID:offerModel.localResourceID]) {
             if ([self checkReadyForOfferModel:offerModel setting:setting]) {
-                __weak typeof(self) weakSelf = self;
+                [weakSelf.delegateStorage AT_setWeakObject:delegate forKey:offerModel.offerID];
                 
                 CGSize adSize = [Utilities sizeFromString:setting.bannerSize];
-                __block ATMyOfferBannerView* adView = nil;
+                if (offerModel.crtType == ATOfferCrtTypeOneImage && [extra[kATAdLoadingExtraBannerAdSizeKey] respondsToSelector:@selector(CGSizeValue)]) {
+                    adSize = [extra[kATAdLoadingExtraBannerAdSizeKey] CGSizeValue];
+                }
+                __block ATOfferBannerView* adView = nil;
                 if([NSThread isMainThread]){
-                    adView = [[ATMyOfferBannerView alloc] initWithFrame:CGRectMake(.0f, .0f, adSize.width, adSize.height) offerModel:offerModel setting:setting delegate:delegate viewController:[UIApplication sharedApplication].keyWindow.rootViewController];
-                    [adView initMyOfferBannerView];
+                    adView = [[ATOfferBannerView alloc] initWithFrame:CGRectMake(.0f, .0f, adSize.width, adSize.height) offerModel:offerModel setting:setting];
+                    adView.delegate = weakSelf;
+                    [adView initOfferBannerView];
                 } else {
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        adView = [[ATMyOfferBannerView alloc] initWithFrame:CGRectMake(.0f, .0f, adSize.width, adSize.height) offerModel:offerModel setting:setting delegate:delegate viewController:[UIApplication sharedApplication].keyWindow.rootViewController];
-                        [adView initMyOfferBannerView];
+                        adView = [[ATOfferBannerView alloc] initWithFrame:CGRectMake(.0f, .0f, adSize.width, adSize.height) offerModel:offerModel setting:setting];
+                        adView.delegate = weakSelf;
+                        [adView initOfferBannerView];
                         dispatch_semaphore_signal(weakSelf.semaphore);
                     });
                     dispatch_semaphore_wait(weakSelf.semaphore, DISPATCH_TIME_FOREVER);
-                    
                 }
                 
                 [[ATOfferResourceManager sharedManager] updateLastUseDateForResourceWithResourceID:offerModel.localResourceID];
@@ -91,10 +95,7 @@
                 } else {
                     [[ATPlacementSettingManager sharedManager] addCappedMyOfferID:offerModel.offerID];
                 }
-
                 return adView;
-                
-                
             }else {
                 return nil;
             }
@@ -103,4 +104,58 @@
         }
     }];
 }
+
+- (void)offerBannerShowOffer:(ATMyOfferOfferModel *)offerModel {
+    [ATLogger logMessage:@"ATMyOfferBanner::offerBannerShowOffer" type:ATLogTypeExternal];
+    __weak typeof(self) weakSelf = self;
+    [_delegateStorageAccessor readWithBlock:^id{
+        id<ATMyOfferBannerDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
+        NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
+        [[ATMyOfferTracker sharedTracker] impressionOfferWithOfferModel:offerModel extra:@{kATOfferTrackerExtraLifeCircleID:lifeCircleID != nil ? lifeCircleID : @""}];
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        [[ATMyOfferTracker sharedTracker] trackEvent:ATMyOfferTrackerEventImpression offerModel:offerModel extra:trackerExtra];
+        if ([delegate respondsToSelector:@selector(myOfferBannerShowOffer:)]) {
+            [delegate myOfferBannerShowOffer:offerModel];
+        }
+        [[ATMyOfferTracker sharedTracker] preloadStorekitForOfferModel:offerModel setting:weakSelf.setting viewController:[UIApplication sharedApplication].keyWindow.rootViewController circleId:lifeCircleID skDelegate:self];
+        return nil;
+    }];
+}
+
+- (void)offerBannerClickOffer:(ATMyOfferOfferModel *)offerModel {
+    [ATLogger logMessage:@"ATMyOfferBanner::offerBannerClickOffer" type:ATLogTypeExternal];
+    __weak typeof(self) weakSelf = self;
+    [_delegateStorageAccessor readWithBlock:^id{
+        id<ATMyOfferBannerDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
+        NSString *lifeCircleID = [delegate respondsToSelector:@selector(lifeCircleIDForOffer:)] ? [delegate lifeCircleIDForOffer:offerModel] : @"";
+        NSMutableDictionary *trackerExtra = [NSMutableDictionary dictionaryWithObject:lifeCircleID != nil ? lifeCircleID : @"" forKey:kATOfferTrackerExtraLifeCircleID];
+        [[ATMyOfferTracker sharedTracker] clickOfferWithOfferModel:offerModel setting:weakSelf.setting extra:trackerExtra skDelegate:self viewController:[UIApplication sharedApplication].keyWindow.rootViewController circleId:lifeCircleID];
+        [[ATMyOfferTracker sharedTracker] trackEvent:ATMyOfferTrackerEventClick offerModel:offerModel extra:trackerExtra];
+        if ([delegate respondsToSelector:@selector(myOfferBannerClickOffer:)]) {
+            [delegate myOfferBannerClickOffer:offerModel];
+        }
+        return nil;
+    }];
+}
+
+- (void)offerBannerCloseOffer:(ATMyOfferOfferModel *)offerModel {
+    [ATLogger logMessage:@"ATMyOfferBanner::offerBannerCloseOffer" type:ATLogTypeExternal];
+    __weak typeof(self) weakSelf = self;
+    [_delegateStorageAccessor readWithBlock:^id{
+        id<ATMyOfferBannerDelegate> delegate = [weakSelf.delegateStorage AT_weakObjectForKey:offerModel.offerID];
+        if ([delegate respondsToSelector:@selector(myOfferBannerCloseOffer:)]) {
+            [delegate myOfferBannerCloseOffer:offerModel];
+        }
+        return nil;
+    }];
+}
+
+- (void)offerBannerFailToShowOffer:(ATMyOfferOfferModel *)offerModel error:(NSError *)error {
+    [ATLogger logMessage:@"ATMyOfferBanner::offerBannerFailToShowOffer::error" type:ATLogTypeExternal];
+}
+
+- (void)productViewControllerDidFinish:(SKStoreProductViewController*)viewController{
+   //TODO something when storeit is close
+}
+
 @end

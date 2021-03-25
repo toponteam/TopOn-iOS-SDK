@@ -442,7 +442,7 @@ static NSInteger errorCodeDuration = 20 * 60;
                             @"ua":@""};
     }
     NSString *sessionID = [[ATPlacementSettingManager sharedManager] sessionIDForPlacementID:placementID];
-    NSDictionary *nonSubjectFields = @{@"app_id":[ATAPI sharedInstance].appID,
+    NSDictionary *nonSubjectFields = @{@"app_id":[Utilities isEmpty:[ATAPI sharedInstance].appID] == NO ? [ATAPI sharedInstance].appID : @"",
                                        @"platform":[Utilities platform],
                                        @"pl_id":placementID,
                                        @"ps_id":[ATAPI sharedInstance].psID != nil ? [ATAPI sharedInstance].psID : @"",
@@ -471,6 +471,17 @@ static NSInteger errorCodeDuration = 20 * 60;
     
     NSString *ABTestID = [ATAppSettingManager sharedManager].ABTestID;
     if (ABTestID != nil) { parameters[@"abtest_id"] = ABTestID; }
+    if (![kATSDKCustomChannel isEqualToString:@"0"]){
+        parameters[@"cs_cl"] = kATSDKCustomChannel;
+    }
+    
+    if ([ATAPI isOfm]) {
+        parameters[@"is_ofm"] = @1;
+        //send custom data when is_ofm
+        if(![Utilities isEmpty:[ATAPI sharedInstance].customData]){
+            parameters[@"custom"] = [ATAPI sharedInstance].customData;
+        }
+    }
     return parameters;
 
 }

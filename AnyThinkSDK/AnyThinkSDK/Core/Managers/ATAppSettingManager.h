@@ -12,8 +12,12 @@
 //The keyed value stores the flag as to whether or not clients are expected to upload the offer metadata
 extern NSString *const kATAppSettingGDPAFlag;
 extern NSString *const kATAppSettingGDPRPolicyURLKey;
+extern NSString *const kATSDKCustomChannel;
+extern NSString *const kATSDKInhouseBiddingUrl;
+
 @class ATTrackingSetting;
 @class ATADXSetting;
+@class ATOnlineApiSetting;
 @interface ATAppSettingManager : NSObject
 +(instancetype)sharedManager;
 -(void) requestAppSettingCompletion:(void(^)(NSDictionary *setting, NSError *error))completion;
@@ -23,6 +27,8 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
 -(BOOL) currentSettingExpired;
 -(NSTimeInterval) splashTolerateTimeout;
 -(BOOL) usesServerDataConsentSet;
+- (BOOL)complyWithCOPPA;
+- (BOOL)complyWithCCPA;
 -(NSTimeInterval) psIDInterval;
 -(NSTimeInterval) psIDIntervalForHotLaunch;
 -(ATDataConsentSet) serverDataConsentSet;
@@ -40,6 +46,7 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
 @property(nonatomic, readonly) NSDictionary *defaultSetting;
 @property(nonatomic, readonly) ATTrackingSetting *trackingSetting;
 @property(nonatomic, readonly) ATADXSetting *adxSetting;
+@property(nonatomic, readonly) ATOnlineApiSetting *onlineApiSetting;
 
 @property(nonatomic, readonly) NSString *ABTestID;
 
@@ -69,6 +76,7 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
 @property(nonatomic, readonly) NSString *agentEventAddress;
 @property(nonatomic, readonly) NSInteger agentEventNumberThreadhold;
 @property(nonatomic, readonly) NSTimeInterval agentEventInterval;
+@property(nonatomic, readonly) NSArray<NSString*>* agentEventDropNetworks;
 @property(nonatomic, readonly) NSDictionary<NSString*, NSArray<NSString*>*>* agentEventDropFormats;
 @property(nonatomic, readonly) NSDictionary<NSString*, NSArray<NSString*>*>* agentEventRTFormats;
 /*
@@ -85,6 +93,7 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
 //TC
 @property(nonatomic, readonly) NSArray<NSString*>* tcHosts;
 @property(nonatomic, readonly) NSDictionary<NSString*, NSArray<NSString*>*>* tcTKSkipFormats;
+@property(nonatomic, readonly) NSArray<NSString*>* tcTKSkipNetworks;
 @end
 
 @interface ATADXSetting:ATModel
@@ -98,6 +107,19 @@ extern NSString *const kATAppSettingGDPRPolicyURLKey;
 @property(nonatomic, readonly) NSString *bidTCPAdress;
 @property(nonatomic, readonly) NSInteger bidTCPPort;
 @property(nonatomic, readonly) NSInteger bidNetType;
+
+@property(nonatomic, readonly) NSString *trackerHttpAdress;
+@property(nonatomic, readonly) NSString *trackerTCPAdress;
+@property(nonatomic, readonly) NSInteger trackerTCPPort;
+@property(nonatomic, readonly) NSInteger trackerNetType;
+@end
+
+@interface ATOnlineApiSetting:ATModel
++(instancetype) defaultSetting;
+@property(nonatomic, readonly) NSString *reqHttpAddress;
+@property(nonatomic, readonly) NSString *reqTCPAdress;
+@property(nonatomic, readonly) NSInteger reqTCPPort;
+@property(nonatomic, readonly) NSInteger reqNetType;
 
 @property(nonatomic, readonly) NSString *trackerHttpAdress;
 @property(nonatomic, readonly) NSString *trackerTCPAdress;

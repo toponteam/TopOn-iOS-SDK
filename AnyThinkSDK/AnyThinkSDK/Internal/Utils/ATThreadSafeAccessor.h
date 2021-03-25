@@ -11,6 +11,9 @@
  Thread safe accessor provide a way to make data access thread-safe. Client can create an instance of this class for each piece of data which needs protecting and read/write that data using one of the read/write method, providing the read/write block; the blocks provided will be executed in a thread-safe environment.
  To be more specific, multiple read blocks can run in parallel from multiple threads; but the write blocks are critical section that can't be retered.
  */
+
+#define AsyncInMain(x) dispatch_async(dispatch_get_main_queue(),x);
+
 @interface ATThreadSafeAccessor : NSObject
 -(id) readWithBlock:(id(^)(void))readBlock;
 

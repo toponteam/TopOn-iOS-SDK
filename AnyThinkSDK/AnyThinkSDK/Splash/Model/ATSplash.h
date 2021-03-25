@@ -19,7 +19,7 @@
 @property(nonatomic, readonly) NSInteger priority;
 @property(nonatomic, readonly) NSInteger priorityLevel;
 @property(nonatomic, readonly) ATPlacementModel *placementModel;
-@property(nonatomic, readonly) NSString *requestID;
+@property(nonatomic) NSString *requestID;
 @property(nonatomic, readonly) NSString *originalRequestID;
 @property(nonatomic, readonly) NSDate *expireDate;
 @property(nonatomic, readonly) NSDate *cacheDate;
@@ -28,6 +28,13 @@
 @property(nonatomic, readonly) id customObject;
 @property(nonatomic, readonly) ATSplashCustomEvent *customEvent;
 @property(nonatomic, readonly) NSString *price;
+@property(nonatomic, readonly) NSString *bidId;
 @property(nonatomic, readonly, weak) ATWaterfall *finalWaterfall;
 @property(nonatomic, readonly) NSInteger autoReqType;
+
+
+//to do
+// for ad which loads without a placement setting
+@property(nonatomic) Class adapterClass;
+
 @end

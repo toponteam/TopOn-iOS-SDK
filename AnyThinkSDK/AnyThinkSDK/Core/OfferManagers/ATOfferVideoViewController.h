@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "ATOfferSetting.h"
 #import "ATOfferModel.h"
+
 @protocol ATOfferVideoDelegate <NSObject>
 -(void)offerVideoStartPlayWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
 -(void)offerVideoPlay25PercentWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
@@ -23,8 +24,16 @@
 -(void)offerVideoDidCloseWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
 -(void)offerVideoEndCardDidShowWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
 -(void)offerVideoEndCardDidCloseWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
+-(void)offerVideoResumedWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
+-(void)offerVideoSkipWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
+-(void)offerVideoPlayFailWithOfferModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
+
+- (void)offerVideoPlayTime:(NSInteger)second offerModel:(ATOfferModel *)offerModel extra:(NSDictionary *)extra;
+-(void)offerVideoFeedbackViewDidSelectItemAtIndex:(NSInteger)index extraMsg:(NSString *)msg offerModel:(ATOfferModel *)offerModel;
 
 @end
+
+extern NSString *const kVideoCurrentTimeKey;
 
 @interface ATOfferVideoViewController : UIViewController
 @property (nonatomic , weak) id<ATOfferVideoDelegate> delegate;

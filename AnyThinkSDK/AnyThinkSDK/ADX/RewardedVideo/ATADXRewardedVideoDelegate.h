@@ -17,6 +17,9 @@
 -(void) didRewardedVideoClickOffer:(ATADXOfferModel*)offer;
 -(void) didRewardedVideoCloseOffer:(ATADXOfferModel*)offer;
 -(void) didRewardedVideoRewardOffer:(ATADXOfferModel*)offer;
+-(void) didRewardedVideoDeepLinkOrJumpResult:(BOOL)success offer:(ATADXOfferModel *)offer;
+- (void)didRewardedVideoFeedbackViewSelectItemAtIndex:(NSInteger)index extraMsg:(NSString *)msg offer:(ATADXOfferModel *)offer;
+
 -(NSString*) lifeCircleIDForOffer:(ATADXOfferModel*)offer;
 -(NSString*) sceneForOffer:(ATADXOfferModel*)offer;
 @end

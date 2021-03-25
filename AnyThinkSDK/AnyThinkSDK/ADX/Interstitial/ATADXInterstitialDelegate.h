@@ -16,6 +16,9 @@
 -(void) didInterstitialVideoEndOffer:(ATADXOfferModel*)offer;
 -(void) didInterstitialClickOffer:(ATADXOfferModel*)offer;
 -(void) didInterstitialCloseOffer:(ATADXOfferModel*)offer;
+-(void) didInterstitialDeepLinkOrJumpResult:(BOOL)success offer:(ATADXOfferModel *)offer;
+- (void)didIntersititalFeedbackViewSelectItemAtIndex:(NSInteger)index extraMsg:(NSString *)msg offer:(ATADXOfferModel *)offer;
+
 -(NSString*) lifeCircleIDForOffer:(ATADXOfferModel*)offer;
 -(NSString*) sceneForOffer:(ATADXOfferModel*)offer;
 @end

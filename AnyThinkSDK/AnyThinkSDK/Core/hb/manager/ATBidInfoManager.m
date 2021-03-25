@@ -78,7 +78,6 @@
         NSString *path = [[ATBidInfoManager bidInfoCacheArchivePath] stringByAppendingPathComponent:bidInfo.unitGroupUnitID];
         [[bidInfo serializationToDictionary] writeToFile:path atomically:YES];
     }];
-    
 }
 
 -(void) removeDiskBidInfo:(ATBidInfo*)bidInfo {
@@ -199,7 +198,6 @@
             [info invalidate];
             [weakSelf removeDiskBidInfo:info];
         }
-        
     }];
 }
 

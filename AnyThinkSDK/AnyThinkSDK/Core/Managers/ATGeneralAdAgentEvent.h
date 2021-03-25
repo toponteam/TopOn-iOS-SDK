@@ -18,7 +18,7 @@ extern NSString *const kATAPIShow;
 @interface ATGeneralAdAgentEvent : NSObject<ATAgentEventDataStructure>
 +(NSDictionary*)logInfoWithAd:(id<ATAd>)ad event:(NSInteger)eventType extra:(nullable NSDictionary*)extra error:(nullable NSError*)error;
 +(NSString*)adFormatStringWithFormat:(NSInteger)format;
-+(NSDictionary*)apiLogInfoWithPlacementID:(NSString*)placementID format:(NSInteger)format api:(NSString*)api;
++(NSDictionary*)apiLogInfoWithPlacementID:(NSString*)placementID format:(ATAdFormat)format api:(NSString*)api;
 @end
 
 @interface ATPlacementholderAd:NSObject<ATAd>
@@ -38,6 +38,7 @@ extern NSString *const kATAPIShow;
 @property(nonatomic, readonly) id customObject;
 @property(nonatomic, readonly) NSString *unitID;
 @property(nonatomic, readonly) NSString *price;
+@property(nonatomic, readonly) NSString *bidId;
 @property(nonatomic, readonly, weak) ATWaterfall *finalWaterfall;
 @end
 NS_ASSUME_NONNULL_END

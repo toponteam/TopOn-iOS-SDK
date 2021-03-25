@@ -8,6 +8,7 @@
 
 #import "NSDictionary+KAKit.h"
 #import "Utilities.h"
+#import "ATAgentEvent.h"
 
 @implementation NSDictionary (KAKit)
 -(NSString*) jsonString_anythink {
@@ -29,6 +30,7 @@
         ret = [self.allKeys containsObject:key];
     } @catch (NSException *exception) {
         [ATLogger logError:[NSString stringWithFormat:@"Expretion occured:%@", exception] type:ATLogTypeInternal];
+        [[ATAgentEvent sharedAgent] saveEventWithKey:kATAgentEventKeyCrashInfoKey placementID:nil unitGroupModel:nil extraInfo:@{kAgentEventExtraInfoCrashReason: exception.reason, kAgentEventExtraInfoCallStackSymbols: [NSThread callStackSymbols].firstObject}];
     } @finally {
         return ret;
     }
@@ -42,6 +44,9 @@
     return customData;
 }
 
+- (instancetype)optional {
+    return self ? self : @{};
+}
 @end
 
 @interface ATWeakDictionarySlot:NSObject
@@ -71,6 +76,14 @@
 
 -(void) AT_removeWeakObjectForKey:(id)key {
     if (key != nil) { [self removeObjectForKey:key]; }
+}
+
+-(void)AT_setDictValue:(id)value key:(NSString *)key {
+    if(key != nil && key.length > 0){
+        if ([Utilities isEmpty:value] == NO) {
+            self[key] = value;
+        }
+    }
 }
 
 @end

@@ -1,0 +1,6 @@
+framework module AnyThinkKidozAdapter {
+  umbrella header "AnyThinkKidozAdapter.h"
+
+  export *
+  module * { export * }
+}
